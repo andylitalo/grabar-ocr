@@ -1,0 +1,27 @@
+# Bitnami PostgreSQL Helm chart overrides for the grabar translation database
+# helm install grabar-postgres bitnami/postgresql -f postgres-values.yaml -n grabar --create-namespace
+
+auth:
+  database: grabar
+  username: grabar_user
+  existingSecret: grabar-postgres-secret
+  secretKeys:
+    adminPasswordKey: postgres-password
+    userPasswordKey: password
+
+primary:
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: local-path  # k3s default storage class
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+  initdb:
+    scriptsConfigMap: grabar-postgres-init-scripts

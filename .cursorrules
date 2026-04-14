@@ -1,0 +1,53 @@
+# Grabar Digitization Pipeline — Cursor AI Instructions
+
+## Project Context
+This is a Classical Armenian (Grabar / Krapar) digitization pipeline. The goal is to:
+1. Ingest scanned PDF books containing Classical Armenian text in Bolorgir font
+2. Pre-process pages into single-line image crops
+3. Run fine-tuned TrOCR inference to transcribe the Armenian text
+4. Translate the transcribed Grabar text to English via Claude/GPT-4o
+5. Store original image links, Grabar text, and English translations in PostgreSQL
+
+## Architecture
+- **Local Dev (Mac M1 Pro)**: Cursor/Claude Code, SSH, Tailscale VPN
+- **Compute Server (Ubuntu, Ryzen 9, 128GB RAM, RTX 3090/4080 Super)**: k3s cluster, BentoML serving, Airflow
+- **Cloud**: Google Cloud Storage for raw PDFs and intermediate images; OpenAI/Anthropic APIs for translation
+
+## Language & Framework Rules
+- Python 3.11+ throughout
+- Use `uv` for dependency management where possible; otherwise `pip` with pinned versions
+- Async-first: prefer `asyncio`, `httpx`, and `aiofiles` over sync equivalents in service code
+- Type-annotate all function signatures
+- Use `pathlib.Path` instead of `os.path`
+- Kubernetes manifests: plain YAML, no Helm templating unless in `infrastructure/helm_charts/`
+
+## ML / PyTorch Rules
+- All model training scripts must log to Weights & Biases (`wandb`)
+- Evaluation must report Character Error Rate (CER) using `jiwer`
+- BentoML is the ONLY serving layer for TrOCR — do not wrap models in raw FastAPI
+- Adaptive batching must be enabled in all BentoML service definitions
+- GPU device selection via `CUDA_VISIBLE_DEVICES` env var, not hardcoded device indices
+
+## Airflow Rules
+- All DAGs must use the TaskFlow API (`@task` decorator)
+- No `BashOperator` for Python logic — use `@task` with a Python function
+- All GCS interactions go through the `orchestration/plugins/` custom operators
+- DAG schedules use cron expressions, not `timedelta`
+
+## Data & Privacy
+- Never commit raw scan images or PDFs to git — they live in GCS
+- Never commit API keys, GCS credentials, or database passwords — use Kubernetes Secrets
+- The `infrastructure/manifests/secrets*.yaml` files are gitignored
+
+## Classical Armenian Domain Notes
+- The script is Bolorgir (Eastern Armenian block letters)
+- "Pativ" abbreviations are common — TrOCR's language-model decoder must expand these
+- The target audience is Oriental Orthodox Christians; translations should be formal and reverent
+- Source books typically have 3 columns: English | Transliteration | Classical Armenian
+  — the pipeline should isolate only the Classical Armenian column
+
+## Code Style
+- Black formatting, 88-char line length
+- Ruff for linting
+- Docstrings only on public functions with non-obvious behavior
+- Prefer explicit over implicit — no magic globals

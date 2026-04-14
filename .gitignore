@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ML artifacts
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+bentoml/
+
+# Secrets & credentials
+.env
+.env.*
+secrets/
+*.key
+*.pem
+infrastructure/manifests/secrets*.yaml
+
+# Google Cloud
+*.json
+gcloud-credentials/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Data (large files go to GCS)
+data/
+*.pdf
+*.tiff
+*.tif
+
+# BentoML local store
+~/bentoml/
+
+# Docs (local planning documents, not for version control)
+docs/

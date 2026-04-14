@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grabar-ocr-service
+  namespace: grabar
+  labels:
+    app: grabar-ocr-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grabar-ocr-service
+  template:
+    metadata:
+      labels:
+        app: grabar-ocr-service
+    spec:
+      containers:
+        - name: bentoml-service
+          image: grabar-ocr-service:latest  # Built via: bentoml containerize grabar_ocr_service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: "20Gi"
+              nvidia.com/gpu: "1"
+          env:
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0"
+          volumeMounts:
+            - name: model-store
+              mountPath: /bentoml
+      volumes:
+        - name: model-store
+          persistentVolumeClaim:
+            claimName: bentoml-model-store-pvc
+      nodeSelector:
+        nvidia.com/gpu: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grabar-ocr-svc
+  namespace: grabar
+spec:
+  selector:
+    app: grabar-ocr-service
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bentoml-model-store-pvc
+  namespace: grabar
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path

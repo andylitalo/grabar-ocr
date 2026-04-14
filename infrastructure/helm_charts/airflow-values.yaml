@@ -1,0 +1,53 @@
+# Apache Airflow Helm chart overrides
+# helm install airflow apache-airflow/airflow -f airflow-values.yaml -n airflow --create-namespace
+
+executor: KubernetesExecutor
+
+config:
+  core:
+    dags_folder: /opt/airflow/dags
+    load_examples: "False"
+  logging:
+    logging_level: INFO
+
+dags:
+  gitSync:
+    enabled: true
+    repo: git@github.com:andylitalo/grabar-ocr.git
+    branch: main
+    subPath: orchestration/dags
+    sshKeySecret: airflow-git-ssh-key
+
+workers:
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+
+postgresql:
+  enabled: false  # Use the dedicated grabar PostgreSQL instance instead
+
+externalDatabase:
+  type: postgres
+  host: grabar-postgres-svc
+  port: 5432
+  database: airflow
+  user: airflow
+  passwordSecret: airflow-db-secret
+  passwordSecretKey: password
+
+webserverSecretKey: ""  # Set via secret in manifests/
+
+env:
+  - name: AIRFLOW__CORE__FERNET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: airflow-fernet-key
+        key: fernet-key
+  - name: GCS_BUCKET_RAW
+    value: "grabar-raw-pdfs"
+  - name: GCS_BUCKET_INTERMEDIATE
+    value: "grabar-intermediate-images"
