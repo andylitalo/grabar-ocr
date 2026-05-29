@@ -71,7 +71,7 @@ bash install_nvidia_plugin.sh
 ### 2. Fine-Tune TrOCR
 ```bash
 cd ml_vision
-pip install -r requirements.txt
+uv sync
 python scripts/train.py --dataset /path/to/golden_dataset --output ./checkpoints
 python evaluation/cer_eval.py --checkpoint ./checkpoints/best
 ```
