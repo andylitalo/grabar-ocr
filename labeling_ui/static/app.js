@@ -113,6 +113,9 @@ async function loadPage(n) {
   const img = $("page-preview");
   img.src = `${data.page_image_url}?t=${Date.now()}`;
   $("btn-select").disabled = false;
+  // Already-segmented pages (done / in_progress) can be opened straight into the
+  // label+review view without re-cropping (which would discard existing labels).
+  $("btn-open-labels").classList.toggle("hidden", data.status === "unlabeled");
 }
 
 function adjacentPage(dir) {
@@ -464,6 +467,7 @@ $("btn-next-unlabeled").onclick = () => {
   if (p) loadPage(p.n); else alert("No unlabeled pages remaining.");
 };
 $("btn-select").onclick = () => enterCrop();
+$("btn-open-labels").onclick = () => startLabeling();  // skip re-crop for labeled pages
 
 $("btn-back-pages").onclick = () => goToPages();
 $("btn-reset-boxes").onclick = () => {
