@@ -23,6 +23,9 @@ bentoml==1.3.4
 # Experiment tracking
 wandb==0.17.5
 
+# Plotting (CER-vs-training-size scaling curve)
+matplotlib>=3.8
+
 # Data utilities
 numpy==1.26.4
 pandas==2.2.2

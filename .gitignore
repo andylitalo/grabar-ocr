@@ -59,6 +59,9 @@ gcloud-credentials/
 *.log
 logs/
 
+# Experiment tracking (W&B offline runs)
+wandb/
+
 # Data (large files go to GCS)
 data/
 *.pdf

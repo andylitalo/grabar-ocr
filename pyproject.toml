@@ -1,0 +1,59 @@
+[project]
+name = "grabar-ocr"
+version = "0.1.0"
+description = "Classical Armenian (Grabar/Bolorgir) OCR digitization pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    # data_prep runtime (imported by the labeling tool)
+    "pymupdf>=1.24",
+    "opencv-python-headless>=4.10",
+    "pillow>=10.4",
+    "numpy>=1.26",
+    # labeling_ui web server
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.4",
+    "ruff>=0.5",
+]
+# Heavyweight training env. Mirrors the training pins in ml_vision/requirements.txt
+# (serving-only deps like bentoml/torchaudio excluded; numpy/pillow/opencv are in
+# the base deps above). Installed into a dedicated .venv_ml via:
+#   uv venv .venv_ml --python 3.11 && uv pip install --python .venv_ml ".[ml]"
+ml = [
+    "torch==2.3.1",
+    "torchvision==0.18.1",
+    "transformers==4.43.4",
+    "datasets==2.20.0",
+    "accelerate==0.32.1",
+    "evaluate==0.4.2",
+    "jiwer==3.0.4",
+    "wandb==0.17.5",
+    "pandas==2.2.2",
+    "tqdm==4.66.4",
+    "matplotlib>=3.8",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Metadata-only project: no importable package, so `uv pip install .[ml]` builds
+# cleanly without setuptools trying to auto-discover modules.
+py-modules = []
+
+[tool.uv]
+# Governs `uv sync` (lightweight base env only). The heavyweight ML/training env
+# (torch, transformers) is installed explicitly via `uv pip install .[ml]` into
+# .venv_ml and on the GPU server from ml_vision/requirements.txt.
+package = false
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
