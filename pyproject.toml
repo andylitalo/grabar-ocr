@@ -12,6 +12,7 @@ dependencies = [
     # labeling_ui web server
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "jiwer>=3.0",
 ]
 
 [project.optional-dependencies]

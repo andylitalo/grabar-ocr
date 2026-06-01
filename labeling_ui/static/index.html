@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grabar Line Labeler</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Grabar Line Labeler</h1>
+    <div id="crumbs" class="crumbs"></div>
+  </header>
+
+  <main>
+    <!-- ===== PAGE SELECT ===== -->
+    <section id="view-pages" class="view">
+      <div class="panel">
+        <div class="row">
+          <label>Page&nbsp;#
+            <input type="number" id="page-num" min="1" step="1" placeholder="e.g. 335" />
+          </label>
+          <button id="btn-prev">◀ Prev</button>
+          <button id="btn-next">Next ▶</button>
+          <button id="btn-load">Load</button>
+          <span id="page-badge" class="badge"></span>
+          <span class="spacer"></span>
+          <button id="btn-next-unlabeled" class="ghost" title="Jump to the next page with no labels">Next unlabeled →</button>
+        </div>
+        <p id="pages-meta" class="meta"></p>
+      </div>
+      <div class="preview-wrap">
+        <img id="page-preview" alt="page preview" />
+      </div>
+      <div class="panel sticky-bottom">
+        <button id="btn-select" class="primary" disabled>Select this page → crop columns</button>
+      </div>
+    </section>
+
+    <!-- ===== CROP ===== -->
+    <section id="view-crop" class="view hidden">
+      <div class="panel">
+        <div class="row">
+          <button id="btn-back-pages" class="ghost">← Back to pages</button>
+          <span id="crop-title" class="strong"></span>
+          <span class="spacer"></span>
+          <label class="checkbox"><input type="checkbox" id="chk-deskew" checked /> Deskew columns</label>
+          <button id="btn-reset-boxes" class="ghost">Reset boxes</button>
+          <button id="btn-segment" class="primary">Segment lines →</button>
+        </div>
+        <p class="meta">Drag the two boxes over the left and right columns. Drag a corner to resize, the inside to move.</p>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="crop-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- ===== LABEL ===== -->
+    <section id="view-label" class="view hidden">
+      <div class="panel">
+        <div class="row">
+          <button id="btn-back-crop" class="ghost">← Re-crop</button>
+          <span id="label-progress" class="strong"></span>
+          <span id="line-badge" class="badge"></span>
+          <span class="spacer"></span>
+          <button id="btn-review" class="ghost" title="Review model predictions vs. ground truth">Review predictions →</button>
+          <span id="label-counts" class="meta"></span>
+        </div>
+        <div id="pill-strip" class="pill-strip"></div>
+      </div>
+
+      <div class="line-image-wrap">
+        <img id="line-image" alt="line crop" />
+      </div>
+
+      <div class="panel">
+        <textarea id="line-text" rows="2" spellcheck="false"
+                  placeholder="Type the Grabar text — Enter to submit, Shift+Enter for newline"></textarea>
+        <div id="line-pred" class="pred-ref hidden"></div>
+        <div class="row label-actions">
+          <button id="btn-submit" class="primary">Submit ⏎</button>
+          <button id="btn-empty">Empty (Alt+E)</button>
+          <button id="btn-reject" class="danger">Reject (Alt+R)</button>
+          <span class="spacer"></span>
+          <button id="btn-back-line">◀ Back (Alt+←)</button>
+          <button id="btn-next-line">Next ▶ (Alt+→)</button>
+        </div>
+        <p class="meta legend">
+          <b>Enter</b> submit + advance · <b>Shift+Enter</b> newline ·
+          <b>Alt+E</b> empty · <b>Alt+R</b> reject · <b>Alt+←/→</b> back/next · <b>Esc</b> blur
+        </p>
+        <div id="done-summary" class="summary hidden">
+          <div id="done-summary-text"></div>
+          <button id="btn-to-pages" class="primary">← Label another page</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== REVIEW ===== -->
+    <section id="view-review" class="view hidden">
+      <div class="panel">
+        <div class="row">
+          <button id="btn-back-label" class="ghost">← Back to labeling</button>
+          <span class="strong">Prediction review</span>
+          <span id="review-badge" class="badge"></span>
+          <span class="spacer"></span>
+          <span id="review-summary" class="meta"></span>
+        </div>
+        <p class="meta">Worst predictions first (by CER). <span class="diff-sub">substitution</span>,
+          <span class="diff-del">deletion</span>, <span class="diff-ins">insertion</span>.
+          Read-only — predictions come from <code>data/predictions/</code>.</p>
+      </div>
+      <div id="review-list" class="review-list"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

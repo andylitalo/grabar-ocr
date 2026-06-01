@@ -17,6 +17,7 @@ data/phase4_dataset/splits.json, which the training script reads directly.
 
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 from pathlib import Path
@@ -27,6 +28,13 @@ GOLDEN_DIR = REPO / "data/golden"
 LINES_DIR = REPO / "data/lines"
 OUT_BASE = REPO / "data/phase4_dataset"
 SPLITS_PATH = OUT_BASE / "splits.json"
+
+# The scaling experiment records physical line ids ('page_XXXX/line_NNN') against
+# the renumbering produced HERE. Rebuilding renumbers, silently breaking those ids
+# in data/frozen_test_set/manifest.json and data/phase4_scaling/splits_*.json. So
+# once the experiment exists (or has been frozen), refuse to rebuild without --rebuild.
+SCALING_DIR = REPO / "data/phase4_scaling"
+FREEZE_MARKER = SCALING_DIR / ".frozen"
 
 # Fraction of pages held out for the test/eval set (spread evenly across pages).
 TEST_RATIO = 0.2
@@ -105,7 +113,36 @@ def even_test_pages(pages: list[str], test_ratio: float) -> list[str]:
     return [pages[i] for i in idx]
 
 
+def experiment_is_frozen() -> bool:
+    """True if the scaling experiment exists and a rebuild would invalidate its ids."""
+    return FREEZE_MARKER.exists() or SCALING_DIR.is_dir()
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="force the destructive rebuild even when the scaling experiment is frozen "
+        "(this renumbers lines and invalidates frozen_test_set/splits ids)",
+    )
+    args = parser.parse_args()
+
+    if experiment_is_frozen() and not args.rebuild:
+        reason = (
+            f"freeze marker {FREEZE_MARKER.relative_to(REPO)}"
+            if FREEZE_MARKER.exists()
+            else f"{SCALING_DIR.relative_to(REPO)}/ exists"
+        )
+        raise SystemExit(
+            "REFUSING to rebuild data/phase4_dataset/ — the Phase 4 scaling experiment is "
+            f"frozen ({reason}).\n"
+            "Rebuilding renumbers lines and breaks the 'page_XXXX/line_NNN' ids recorded in "
+            "data/frozen_test_set/manifest.json and data/phase4_scaling/splits_*.json.\n"
+            "If you truly mean to rebuild (and re-snapshot the experiment afterward), pass "
+            "--rebuild."
+        )
+
     if OUT_BASE.exists():
         shutil.rmtree(OUT_BASE)  # clean rebuild so removed lines never linger
     OUT_BASE.mkdir(parents=True, exist_ok=True)
