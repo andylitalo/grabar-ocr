@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "black>=24.4",
     "ruff>=0.5",
+    "pytest>=8.0",
 ]
 # Heavyweight training env. Mirrors the training pins in ml_vision/requirements.txt
 # (serving-only deps like bentoml/torchaudio excluded; numpy/pillow/opencv are in
@@ -52,6 +53,12 @@ py-modules = []
 # (torch, transformers) is installed explicitly via `uv pip install .[ml]` into
 # .venv_ml and on the GPU server from ml_vision/requirements.txt.
 package = false
+
+[tool.pytest.ini_options]
+# package = false above means data_prep is not installed; put the repo root on
+# sys.path so `from data_prep.line_cropper import ...` resolves under pytest.
+pythonpath = ["."]
+testpaths = ["data_prep/tests"]
 
 [tool.black]
 line-length = 100

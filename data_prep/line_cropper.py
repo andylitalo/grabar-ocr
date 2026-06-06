@@ -21,6 +21,17 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# Slicing defaults. A run taller than MERGE_FACTOR x the median line height is
+# treated as fused lines and split (over-segmentation guard).
+MIN_LINE_HEIGHT = 5
+THRESHOLD_FRACTION = 0.02
+SMOOTH_WINDOW = 7
+MERGE_FACTOR = 1.6
+# A trough only counts as a real inter-line gap if it dips below this fraction of
+# the smaller flanking peak. Merged Bolorgir lines trough at ~5-40% of the peak;
+# a tall single line (big ascenders/diacritics) has no such deep interior dip.
+TROUGH_DEPTH_FRACTION = 0.6
+
 
 def horizontal_projection(gray: np.ndarray) -> np.ndarray:
     """Return sum of dark (inverted) pixel values per row."""
@@ -28,38 +39,133 @@ def horizontal_projection(gray: np.ndarray) -> np.ndarray:
     return inverted.sum(axis=1).astype(np.float32)
 
 
+def _smooth(profile: np.ndarray, window: int) -> np.ndarray:
+    """Moving-average smooth (numpy-only) to suppress single-row spikes."""
+    if window <= 1:
+        return profile
+    kernel = np.ones(window, dtype=np.float32) / window
+    return np.convolve(profile, kernel, mode="same")
+
+
+def _split_oversized_run(
+    smoothed: np.ndarray,
+    top: int,
+    bottom: int,
+    median_height: float,
+    min_line_height: int,
+    merge_factor: float = MERGE_FACTOR,
+) -> list[tuple[int, int]]:
+    """Split a run taller than ``merge_factor * median_height`` into single lines.
+
+    A run that much taller than the typical line is two-or-more fused lines. We
+    cut it at the deepest interior troughs of the smoothed profile, near the
+    expected line-pitch positions. A cut is only accepted when the trough is
+    clearly below its flanking peaks (so a single tall line is never split) and
+    every resulting piece is at least ``min_line_height`` tall.
+    """
+    height = bottom - top
+    if median_height <= 0 or height <= merge_factor * median_height:
+        return [(top, bottom)]
+
+    n_pieces = max(2, int(round(height / median_height)))
+
+    cuts: list[int] = []
+    for k in range(1, n_pieces):
+        center = top + int(round(k * height / n_pieces))
+        lo = max(top + min_line_height, center - min_line_height)
+        hi = min(bottom - min_line_height, center + min_line_height)
+        if lo >= hi:
+            continue
+        cut = lo + int(np.argmin(smoothed[lo:hi]))
+        left_peak = float(smoothed[top:cut].max()) if cut > top else float(smoothed[cut])
+        right_peak = float(smoothed[cut:bottom].max()) if cut < bottom else float(smoothed[cut])
+        flank = min(left_peak, right_peak)
+        # Reject shallow dips: not a real inter-line gap (guards single tall lines).
+        if flank <= 0 or smoothed[cut] >= TROUGH_DEPTH_FRACTION * flank:
+            continue
+        cuts.append(cut)
+
+    if not cuts:
+        return [(top, bottom)]
+
+    pieces: list[tuple[int, int]] = []
+    prev = top
+    for cut in sorted(set(cuts)):
+        if cut - prev >= min_line_height:
+            pieces.append((prev, cut))
+            prev = cut
+    # Attach the tail; merge it back if it is too short to stand alone.
+    if bottom - prev >= min_line_height or not pieces:
+        pieces.append((prev, bottom))
+    else:
+        last_top, _ = pieces[-1]
+        pieces[-1] = (last_top, bottom)
+
+    return pieces
+
+
 def find_line_boundaries(
     projection: np.ndarray,
-    min_gap_height: int = 5,
-    threshold_fraction: float = 0.02,
+    min_line_height: int = MIN_LINE_HEIGHT,
+    threshold_fraction: float = THRESHOLD_FRACTION,
+    smooth_window: int = SMOOTH_WINDOW,
+    merge_factor: float = MERGE_FACTOR,
 ) -> list[tuple[int, int]]:
     """Identify (top, bottom) row pairs for each text line.
 
-    A row is considered "text" if its projection value exceeds
-    `threshold_fraction` of the maximum projection value.
+    A row is "text" if its (raw) projection exceeds ``threshold_fraction`` of the
+    maximum. Maximal runs of text-rows at least ``min_line_height`` tall are
+    candidate lines; any run taller than ``merge_factor`` x the median line height
+    is treated as two-or-more fused lines and split at its deepest interior
+    troughs (the over-segmentation guard). Smoothing is applied only to the split
+    valley search, never to the threshold detection (it would fuse adjacent lines).
     """
-    max_val = projection.max()
+    projection = projection.astype(np.float32)
+    if projection.size == 0:
+        return []
+
+    # Detect candidate runs on the RAW projection. Smoothing the profile before
+    # thresholding fills shallow inter-line troughs and fuses adjacent lines, so
+    # it is used only to locate split valleys inside oversized runs (below).
+    max_val = float(projection.max())
+    if max_val <= 0:
+        return []
     threshold = threshold_fraction * max_val
     is_text_row = projection > threshold
 
-    boundaries: list[tuple[int, int]] = []
+    runs: list[tuple[int, int]] = []
     in_line = False
     start = 0
-
     for row_idx, is_text in enumerate(is_text_row):
         if is_text and not in_line:
             start = row_idx
             in_line = True
         elif not is_text and in_line:
-            height = row_idx - start
-            if height >= min_gap_height:
-                boundaries.append((start, row_idx))
+            if row_idx - start >= min_line_height:
+                runs.append((start, row_idx))
             in_line = False
+    # Close final line if it runs to the bottom of the image.
+    if in_line and len(is_text_row) - start >= min_line_height:
+        runs.append((start, len(is_text_row)))
 
-    # Close final line if it runs to the bottom of the image
-    if in_line:
-        boundaries.append((start, len(is_text_row)))
+    if not runs:
+        return []
 
+    # Median run height = the typical single-line height; robust to the few
+    # merged (oversized) runs we are about to split.
+    median_height = float(np.median([b - t for t, b in runs]))
+
+    # Smoothed copy used ONLY to locate the deepest interior valley when splitting
+    # an oversized run (suppresses single-row spikes in the trough search).
+    smoothed = _smooth(projection, smooth_window)
+
+    boundaries: list[tuple[int, int]] = []
+    for top, bottom in runs:
+        boundaries.extend(
+            _split_oversized_run(
+                smoothed, top, bottom, median_height, min_line_height, merge_factor
+            )
+        )
     return boundaries
 
 
