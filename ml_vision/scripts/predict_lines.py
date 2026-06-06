@@ -19,9 +19,11 @@ Writes per-line prediction text plus a predictions.json manifest:
 <tag> defaults to "scale_500". predictions.json records the model tag, checkpoint
 path, timestamp, and per-line pred_greedy / pred_beam.
 
-Run (ML env):
-    uv run --python .venv_ml python ml_vision/scripts/predict_lines.py --frozen
-    uv run --python .venv_ml python ml_vision/scripts/predict_lines.py --page page_0550
+Run (ML env): call the .venv_ml interpreter directly. Do NOT use
+`uv run --python .venv_ml` — uv ignores .venv_ml's site-packages and instead
+syncs the base .venv (which has no torch), so the run fails with ModuleNotFound.
+    .venv_ml/bin/python ml_vision/scripts/predict_lines.py --frozen
+    .venv_ml/bin/python ml_vision/scripts/predict_lines.py --page page_0550
 """
 
 from __future__ import annotations

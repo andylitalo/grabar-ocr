@@ -21,9 +21,11 @@ Outputs (under reports/):
 The HTML is a contact sheet of the worst-N lines (crop + ref/pred/CER) so font
 and notation can be eyeballed directly.
 
-Run (ML env, needs jiwer):
-    uv run --python .venv_ml python ml_vision/scripts/analyze_errors.py --frozen
-    uv run --python .venv_ml python ml_vision/scripts/analyze_errors.py --page page_0550
+Run (ML env, needs jiwer): call the .venv_ml interpreter directly. Do NOT use
+`uv run --python .venv_ml` — uv ignores .venv_ml's site-packages and instead
+syncs the base .venv (which has no torch), so the run fails with ModuleNotFound.
+    .venv_ml/bin/python ml_vision/scripts/analyze_errors.py --frozen
+    .venv_ml/bin/python ml_vision/scripts/analyze_errors.py --page page_0550
 """
 
 from __future__ import annotations
