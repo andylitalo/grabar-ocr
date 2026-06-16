@@ -176,12 +176,17 @@ def call_anthropic(model: str, system: str, user: str) -> tuple[str, int, int]:
 def call_openai(model: str, system: str, user: str) -> tuple[str, int, int]:
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    # Non-streaming reasoning requests can run long; cap the per-request wall clock
+    # and disable the SDK's own retries (our _retry handles transient errors) so a
+    # hang fails in minutes, not ~3×10min. reasoning_effort="low" keeps this
+    # mechanical correction task fast and cheap (gpt-5 family reasons by default).
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=300.0, max_retries=0)
 
     def _go():
         return client.chat.completions.create(
             model=model,
             max_completion_tokens=MAX_TOKENS,
+            reasoning_effort="low",
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
