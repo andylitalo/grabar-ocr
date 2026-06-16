@@ -26,30 +26,16 @@ ARMENIAN_COLUMN_CLASS_ID = 2
 
 
 def deskew(image: np.ndarray) -> np.ndarray:
-    """Rotate the image to correct for skew using Hough line detection."""
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-    lines = cv2.HoughLines(edges, 1, np.pi / 180, threshold=200)
-    if lines is None:
-        return image
+    """Deskew an image (back-compat shim).
 
-    angles = []
-    for rho, theta in lines[:, 0]:
-        angle = np.degrees(theta) - 90
-        if abs(angle) < 10:  # Only correct small skew angles
-            angles.append(angle)
+    Delegates to :func:`data_prep.deskew.deskew_page`, the projection-profile
+    deskew that superseded the old Hough-only method. Returns only the corrected
+    image to preserve this function's original signature.
+    """
+    from data_prep.deskew import deskew_page
 
-    if not angles:
-        return image
-
-    median_angle = float(np.median(angles))
-    h, w = image.shape[:2]
-    center = (w // 2, h // 2)
-    rot_mat = cv2.getRotationMatrix2D(center, median_angle, 1.0)
-    deskewed = cv2.warpAffine(image, rot_mat, (w, h), flags=cv2.INTER_LINEAR,
-                               borderMode=cv2.BORDER_REPLICATE)
-    logger.debug("Deskewed by %.2f degrees", median_angle)
-    return deskewed
+    corrected, _ = deskew_page(image)
+    return corrected
 
 
 def detect_armenian_column(
