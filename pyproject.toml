@@ -13,6 +13,11 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "jiwer>=3.0",
+    # Phase 5 LLM post-correction (API-only, no torch) — see ml_vision/scripts/llm_correct.py
+    "anthropic>=0.40",
+    "openai>=1.50",
+    "google-genai>=1.0",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
