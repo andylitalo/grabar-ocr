@@ -27,6 +27,7 @@ from jiwer import cer
 REPO = Path(__file__).resolve().parents[1]
 DATA_PAGES = REPO / "data" / "pages"
 DATA_COLUMNS = REPO / "data" / "columns"
+DATA_COLUMN_BOXES = DATA_COLUMNS / "boxes"
 DATA_LINES = REPO / "data" / "lines"
 DATA_PREDICTIONS = REPO / "data" / "predictions"
 WORK_DIR = REPO / "data" / "_labeling_work"
@@ -52,6 +53,49 @@ def page_pdf_path(n: int) -> Path:
 
 def column_dir(page_id: str, col: int) -> Path:
     return DATA_LINES / page_id / f"column_{col}"
+
+
+# --- column bounding boxes (geometric ground truth) --------------------------
+
+
+def boxes_path(page_id: str) -> Path:
+    """Persisted column boxes for a page, e.g. data/columns/boxes/page_0051.json."""
+    return DATA_COLUMN_BOXES / f"{page_id}.json"
+
+
+def save_boxes(
+    page_id: str, deskew_angle: float, boxes: list[dict], source: str = "human"
+) -> Path:
+    """Persist the column boxes (full-res pixels) and the page's deskew angle.
+
+    ``source`` is "human" when committed through the labeling UI (a human accepted
+    the boxes) or "auto" when written by the headless detector. Only human-sourced
+    boxes are geometric ground truth; validation computes IoU against those alone,
+    never against the detector's own output.
+    """
+    DATA_COLUMN_BOXES.mkdir(parents=True, exist_ok=True)
+    path = boxes_path(page_id)
+    # Never let an auto-written box overwrite a human-verified one.
+    if source == "auto":
+        existing = load_boxes(page_id)
+        if existing and existing.get("source") == "human":
+            return path
+    payload = {
+        "page_id": page_id,
+        "source": source,
+        "deskew_angle": deskew_angle,
+        "boxes": [{k: int(b[k]) for k in ("x1", "y1", "x2", "y2")} for b in boxes],
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
+def load_boxes(page_id: str) -> dict | None:
+    """Load persisted column boxes for a page, or None if not recorded."""
+    path = boxes_path(page_id)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def list_page_numbers() -> list[int]:
