@@ -10,14 +10,14 @@ whose status (labeled / empty-marker / pending / rejected) is looked up by exact
 pixel hash against the committed data/lines crops:
 
   * unchanged crop  -> overlaps exactly one old run == itself        -> carry .txt
-  * split child     -> overlaps a *labeled* old (merged) run         -> NEEDS RELABEL,
-                       the old merged label is attached as a hint
-  * rejected match  -> overlaps a rejected old crop                  -> written to
-                       <column>/rejected/, no label needed
-  * pending / unlabeled page -> overlaps a pending old run           -> stays pending
+  * split child     -> overlaps a *labeled* old (merged) run that the labeler typed
+                       newline-separated -> AUTO-SPLIT the label 1:1 among children
+                       (only flagged for a human if part-count != child-count)
+  * ornament/empty split -> empty markers; rejected match -> <column>/rejected/;
+    pending / unlabeled page -> stays pending
 
-data/lines is never modified. A worklist of crops needing a (re)label is written
-to data/lines_resliced/relabel_worklist.json.
+data/lines is never modified. Any crops that couldn't be auto-split are written to
+data/lines_resliced/relabel_worklist.json (empty when every split divides cleanly).
 
 Run (base env):
     uv run python data_prep/reslice_corpus.py
