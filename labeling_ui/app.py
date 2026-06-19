@@ -78,7 +78,9 @@ def get_page(n: int) -> dict:
         "page_image_url": f"/api/pages/{n}/image.png",
         "image_width": width,
         "image_height": height,
-        "default_columns": pipeline.default_columns(width, height),
+        # Auto-detected boxes (falls back to hardcoded halves when not confident).
+        # The frontend seeds its draggable boxes from this same `default_columns` key.
+        "default_columns": pipeline.suggested_columns(n),
     }
 
 
@@ -110,9 +112,10 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
                 ),
             )
 
-    results = pipeline.crop_columns_and_lines(
-        n, [b.model_dump() for b in req.columns], do_deskew=req.deskew
-    )
+    columns = [b.model_dump() for b in req.columns]
+    results = pipeline.crop_columns_and_lines(n, columns, do_deskew=req.deskew)
+    # Persist the committed boxes as geometric ground truth for this page.
+    storage.save_boxes(page_id, pipeline.deskew_angle(n), columns)
     return {
         "page_id": page_id,
         "columns": results,

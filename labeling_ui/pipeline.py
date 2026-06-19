@@ -2,16 +2,20 @@
 pipeline.py
 Orchestration over the existing data_prep functions.
 
-Turns a selected page PDF into a cached page render, then into per-column PNGs
-(data/columns/) and per-line PNGs (data/lines/). Reuses, and does not
-reimplement:
+Turns a selected page PDF into a cached, full-page-deskewed render, then into
+per-column PNGs (data/columns/) and per-line PNGs (data/lines/). Reuses, and does
+not reimplement:
   - data_prep.pdf_slicer.pdf_to_images  (PDF -> page PNG @ DPI)
-  - data_prep.layout_detector.deskew    (Hough deskew of a column crop)
+  - data_prep.deskew.deskew_page         (projection-profile full-page deskew)
   - data_prep.line_cropper.crop_lines    (column PNG -> line PNGs)
+
+The render the UI draws boxes on is the deskewed page, so the boxes a user sees
+are exactly the geometry that gets cropped (no hidden per-column rotation).
 """
 
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -22,35 +26,61 @@ from . import storage
 
 # Make the sibling `data_prep/` package importable.
 sys.path.insert(0, str(storage.REPO))
-from data_prep.layout_detector import deskew  # noqa: E402
+from data_prep.deskew import deskew_page  # noqa: E402
 from data_prep.line_cropper import crop_lines  # noqa: E402
 from data_prep.pdf_slicer import pdf_to_images  # noqa: E402
 
 RENDER_DPI = 300
 
+# Cache filename for the deskewed render. Versioned apart from any legacy
+# `page.png` so stale, pre-deskew caches are never silently reused.
+_RENDER_NAME = "page_deskew.png"
+# Residual per-column deskew is bounded: the page is already deskewed, so this
+# only mops up tiny leftover skew and must never apply a large rotation.
+_RESIDUAL_MAX_ANGLE = 0.5
+
 
 def render_page(n: int, dpi: int = RENDER_DPI) -> Path:
-    """Render page-1 of data/pages/{n}.pdf to a cached grayscale PNG.
+    """Render page-1 of data/pages/{n}.pdf, deskew it, and cache the result.
 
-    Returns the path to the cached render. Re-renders if missing.
+    Returns the path to the cached deskewed grayscale PNG. The applied skew
+    correction is recorded in a sidecar `page_deskew.json`. Re-renders if missing.
     """
     pdf_path = storage.page_pdf_path(n)
     if not pdf_path.exists():
         raise FileNotFoundError(f"No page PDF at {pdf_path}")
 
     page_id = storage.page_id_for(n)
-    out_png = storage.WORK_DIR / page_id / "page.png"
+    out_png = storage.WORK_DIR / page_id / _RENDER_NAME
     if out_png.exists():
         return out_png
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
     # pdf_to_images names outputs page_0001.png (1-based within the file); a
-    # one-page PDF yields exactly one image, which we move to our cache slot.
+    # one-page PDF yields exactly one image. Render to a temp slot, deskew, cache.
     rendered = pdf_to_images(pdf_path, out_png.parent, dpi=dpi)
     if not rendered:
         raise RuntimeError(f"No pages rendered from {pdf_path}")
-    shutil.move(str(rendered[0]), str(out_png))
+    raw_path = Path(rendered[0])
+    gray = cv2.imread(str(raw_path), cv2.IMREAD_GRAYSCALE)
+    if gray is None:
+        raise RuntimeError(f"Cannot read rendered page: {raw_path}")
+    raw_path.unlink(missing_ok=True)
+
+    deskewed, angle = deskew_page(gray)
+    cv2.imwrite(str(out_png), deskewed)
+    sidecar = out_png.with_suffix(".json")
+    sidecar.write_text(json.dumps({"deskew_angle": angle, "dpi": dpi}), encoding="utf-8")
     return out_png
+
+
+def deskew_angle(n: int) -> float:
+    """Skew correction (degrees) applied to page n's cached render, 0 if unknown."""
+    sidecar = storage.WORK_DIR / storage.page_id_for(n) / _RENDER_NAME
+    sidecar = sidecar.with_suffix(".json")
+    if not sidecar.exists():
+        return 0.0
+    return float(json.loads(sidecar.read_text(encoding="utf-8")).get("deskew_angle", 0.0))
 
 
 def page_dimensions(render_path: Path) -> tuple[int, int]:
@@ -72,6 +102,26 @@ def default_columns(width: int, height: int) -> list[dict]:
         {"x1": mx, "y1": my, "x2": mid - gutter // 2, "y2": height - my},
         {"x1": mid + gutter // 2, "y1": my, "x2": width - mx, "y2": height - my},
     ]
+
+
+def suggested_columns(n: int) -> list[dict]:
+    """Auto-detected column boxes for page n, or the hardcoded halves fallback.
+
+    Runs the vertical-projection detector on the deskewed render. If it is not
+    confident (edge-case layout: header, full-page image, unclear gutter), returns
+    ``default_columns`` so the UI still shows sensible starting boxes to nudge.
+    """
+    from data_prep.column_detector import detect_columns  # noqa: E402
+
+    render_path = render_page(n)
+    page = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
+    if page is None:
+        raise FileNotFoundError(f"Cannot read render: {render_path}")
+    boxes, diag = detect_columns(page)
+    if diag.get("confident") and boxes:
+        return boxes
+    h, w = page.shape[:2]
+    return default_columns(w, h)
 
 
 def _clamp(value: int, lo: int, hi: int) -> int:
@@ -110,7 +160,9 @@ def crop_columns_and_lines(
 
         crop = page[y1:y2, x1:x2]
         if do_deskew:
-            crop = deskew(crop)
+            # The page render is already deskewed; this only corrects tiny
+            # residual per-column skew (bounded), never a large rotation.
+            crop, _ = deskew_page(crop, max_abs_angle=_RESIDUAL_MAX_ANGLE)
 
         column_png = storage.DATA_COLUMNS / f"{page_id}_column_{i}.png"
         cv2.imwrite(str(column_png), crop)

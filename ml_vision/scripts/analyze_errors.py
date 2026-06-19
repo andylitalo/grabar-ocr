@@ -257,13 +257,18 @@ def main() -> None:
     parser.add_argument("--model-tag", default="scale_500")
     args = parser.parse_args()
 
+    # Non-default tags (e.g. an LLM-corrected scale_500_llm_* tag) get the tag in the
+    # report filename so re-scoring a corrected pass doesn't clobber the baseline
+    # report. The default "scale_500" keeps the original stems for back-compat.
+    tag_suffix = "" if args.model_tag == "scale_500" else f"_{args.model_tag}"
+
     if args.frozen:
         rows, meta = gather_frozen(args.model_tag)
-        stem = "phase4_error_analysis_frozen"
+        stem = f"phase4_error_analysis_frozen{tag_suffix}"
         title = f"Phase 4 error analysis — frozen test set ({args.model_tag})"
     else:
         rows, meta = gather_page(args.model_tag, args.page)
-        stem = f"phase4_newpage_{args.page}"
+        stem = f"phase4_newpage_{args.page}{tag_suffix}"
         title = f"Phase 4 error analysis — {args.page} ({args.model_tag})"
 
     if not rows:
