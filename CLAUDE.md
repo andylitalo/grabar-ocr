@@ -7,7 +7,7 @@ Digitize Classical Armenian (Grabar) texts written in Bolorgir script from scann
 Scanned PDFs live in Google Cloud Storage. An Apache Airflow DAG running on a local k3s cluster (Ubuntu server, Ryzen 9, RTX 3090) pulls batches of PDFs, uses `data_prep/` scripts (PyMuPDF + YOLOv8 + horizontal projection) to isolate and slice the Classical Armenian column into individual line images, then sends those images to a BentoML service serving a fine-tuned TrOCR model with adaptive GPU batching. The transcribed Grabar text is forwarded to the Anthropic/OpenAI API for translation, and the final payload is written to PostgreSQL. The developer connects from an M1 Pro MacBook via Tailscale VPN.
 
 ## Gated-Phase Development Model
-All implementation is guided by phase documents in `docs/` (gitignored — local planning only). Each phase has a measurable **gate condition**. We do not write code for Phase N+1 until Phase N's gate is passed and its findings are recorded in the phase doc.
+All implementation is guided by phase documents in `docs/` (version-controlled — shared planning + findings). Each phase has a measurable **gate condition**. We do not write code for Phase N+1 until Phase N's gate is passed and its findings are recorded in the phase doc.
 
 This matters because early phases test assumptions (e.g., "does off-the-shelf TrOCR work at all on Bolorgir?"). If an assumption fails, the next phase changes — often significantly. Building ahead of validation wastes effort and obscures where the real problem is.
 
@@ -25,7 +25,7 @@ ml_vision/          TrOCR fine-tuning, evaluation, BentoML model save
 services/           BentoML OCR API, LLM translation client, DB writer
 orchestration/      Airflow DAGs and custom GCS operators
 infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
-docs/               Local planning docs — gitignored, never commit
+docs/               Phase planning docs + recorded findings (version-controlled)
 ```
 
 ## Key Conventions

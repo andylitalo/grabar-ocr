@@ -73,8 +73,3 @@ ml_vision/tessdata/
 
 # BentoML local store
 ~/bentoml/
-
-# Docs (local planning documents, not for version control)
-docs/*
-# Exception: the hye-tesseract benchmark write-up is shared reference material (Phase 2 follow-up)
-!docs/phase_2_alternatives.md
