@@ -51,15 +51,17 @@ from predict_lines import collect_frozen, collect_page  # reuse identical target
 
 REPO = Path(__file__).resolve().parent.parent.parent
 TESSDATA = REPO / "ml_vision/tessdata"
-LANG = "hye-calfa-n"
+DEFAULT_LANG = "hye-calfa-n"
 PRED_BASE = REPO / "data/predictions"
 
 
-def recognize(image: Image.Image, psm: int) -> str:
+def recognize(image: Image.Image, psm: int, lang: str) -> str:
     """Single Tesseract pass over one line crop. --dpi 300 matches the scan DPI;
-    --tessdata-dir keeps the traineddata repo-local (out of system dirs)."""
+    --tessdata-dir keeps the traineddata repo-local (out of system dirs).
+    Both hye-calfa-n (zero-shot) and hye-grabar (fine-tuned) live under TESSDATA,
+    so only --lang changes between the two models."""
     config = f"--psm {psm} --dpi 300 --tessdata-dir {TESSDATA}"
-    return pytesseract.image_to_string(image, lang=LANG, config=config).strip()
+    return pytesseract.image_to_string(image, lang=lang, config=config).strip()
 
 
 def main() -> None:
@@ -69,12 +71,16 @@ def main() -> None:
     g.add_argument("--page", type=str, help="predict a page, e.g. page_0400_human (reads data/lines/)")
     parser.add_argument("--model-tag", default="tesseract", help="output subdir tag (default: tesseract)")
     parser.add_argument("--psm", type=int, default=13, help="Tesseract page-seg mode (default: 13 raw-line)")
+    parser.add_argument("--lang", default=DEFAULT_LANG,
+                        help="traineddata lang under ml_vision/tessdata "
+                             "(default: hye-calfa-n zero-shot; use hye-grabar for the FT model)")
     args = parser.parse_args()
 
-    if not (TESSDATA / f"{LANG}.traineddata").exists():
-        raise SystemExit(f"Missing {LANG}.traineddata under {TESSDATA.relative_to(REPO)} (see plan §Setup).")
+    lang = args.lang
+    if not (TESSDATA / f"{lang}.traineddata").exists():
+        raise SystemExit(f"Missing {lang}.traineddata under {TESSDATA.relative_to(REPO)} (see plan §Setup).")
 
-    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={LANG} psm={args.psm}")
+    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={lang} psm={args.psm}")
 
     if args.frozen:
         targets = collect_frozen()
@@ -91,7 +97,7 @@ def main() -> None:
     n_empty = 0
     for i, t in enumerate(targets, start=1):
         image = Image.open(t["png"]).convert("RGB")
-        pred = recognize(image, args.psm)
+        pred = recognize(image, args.psm, lang)
         if not pred:
             n_empty += 1
 
@@ -112,7 +118,7 @@ def main() -> None:
         "model_tag": args.model_tag,
         "engine": "tesseract",
         "tesseract_version": str(pytesseract.get_tesseract_version()),
-        "lang": LANG,
+        "lang": lang,
         "psm": args.psm,
         "target": page_key,
         "timestamp": datetime.now(timezone.utc).isoformat(),
