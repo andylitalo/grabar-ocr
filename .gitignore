@@ -68,6 +68,9 @@ data/
 *.tiff
 *.tif
 
+# Tesseract traineddata (large binary; downloaded, not source — Phase 2 hye-tesseract benchmark)
+ml_vision/tessdata/
+
 # BentoML local store
 ~/bentoml/
 
