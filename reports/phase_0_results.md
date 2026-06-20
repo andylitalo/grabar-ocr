@@ -50,7 +50,7 @@
 ## Golden Dataset Location
 
 ```
-data/golden/page_0001/
+data/golden/page_0001_auto/
 ├── line_001.png / line_001.txt
 ├── ...
 ├── line_028.png / line_028.txt  ← empty (section marker)

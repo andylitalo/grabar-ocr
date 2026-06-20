@@ -52,8 +52,11 @@ class LabelRequest(BaseModel):
 @app.get("/api/pages")
 def list_pages() -> dict:
     numbers = storage.list_page_numbers()
+    # The UI operates on the human artifact tree (page_XXXX_human): a person draws
+    # the boxes and transcribes the lines. The auto tree (page_XXXX_auto) is written
+    # headlessly by data_prep.auto_slice and is not edited here.
     pages = [
-        {"n": n, "page_id": storage.page_id_for(n), "status": storage.page_status(storage.page_id_for(n))}
+        {"n": n, "page_id": storage.page_artifact_id(n), "status": storage.page_status(storage.page_artifact_id(n))}
         for n in numbers
     ]
     return {
@@ -70,7 +73,7 @@ def get_page(n: int) -> dict:
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
     width, height = pipeline.page_dimensions(render_path)
-    page_id = storage.page_id_for(n)
+    page_id = storage.page_artifact_id(n)
     return {
         "n": n,
         "page_id": page_id,
@@ -100,7 +103,7 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
     if not storage.page_pdf_path(n).exists():
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
 
-    page_id = storage.page_id_for(n)
+    page_id = storage.page_artifact_id(n)
     if not req.force:
         labeled = [i for i in (1, 2) if storage.column_has_labels(page_id, i)]
         if labeled:
@@ -113,7 +116,9 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
             )
 
     columns = [b.model_dump() for b in req.columns]
-    results = pipeline.crop_columns_and_lines(n, columns, do_deskew=req.deskew)
+    results = pipeline.crop_columns_and_lines(
+        n, columns, do_deskew=req.deskew, method=storage.METHOD_HUMAN
+    )
     # Persist the committed boxes as geometric ground truth for this page.
     storage.save_boxes(page_id, pipeline.deskew_angle(n), columns)
     return {

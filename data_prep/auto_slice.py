@@ -44,7 +44,7 @@ def auto_slice_page(n: int, *, persist_boxes: bool = True, dry_run: bool = False
     Returns a result dict: ``{"page_id", "confident", "reason", "boxes", ...}``.
     When not confident, nothing is written and the page is reported as deferred.
     """
-    page_id = storage.page_id_for(n)
+    page_id = storage.page_artifact_id(n, storage.METHOD_AUTO)
     render_path = pipeline.render_page(n)
     gray = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
     if gray is None:
@@ -69,7 +69,7 @@ def auto_slice_page(n: int, *, persist_boxes: bool = True, dry_run: bool = False
         logger.warning("%s: SKIP — %s", page_id, result["reason"])
         return result
 
-    counts = pipeline.crop_columns_and_lines(n, boxes, do_deskew=True)
+    counts = pipeline.crop_columns_and_lines(n, boxes, do_deskew=True, method=storage.METHOD_AUTO)
     result["line_counts"] = counts
     logger.info("%s: sliced %s", page_id, counts)
     return result

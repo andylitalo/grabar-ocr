@@ -133,14 +133,17 @@ def crop_columns_and_lines(
     columns: list[dict],
     do_deskew: bool = True,
     padding: int = 4,
+    method: str = storage.METHOD_HUMAN,
 ) -> list[dict]:
     """Crop each column from the page render and segment it into line PNGs.
 
     Each rectangle is in full-resolution page pixels. Column i (1-based) is
-    written to data/columns/{page_id}_column_{i}.png, then crop_lines() fills
-    data/lines/{page_id}/column_{i}/. Returns per-column line counts.
+    written to data/columns/{artifact_id}_column_{i}.png, then crop_lines() fills
+    data/lines/{artifact_id}/column_{i}/, where artifact_id = page_XXXX_{method}
+    ("human" via the UI, "auto" via auto_slice). Returns per-column line counts.
+    The render the page is cropped from is method-independent (one deskewed cache).
     """
-    page_id = storage.page_id_for(n)
+    page_id = storage.page_artifact_id(n, method)
     render_path = render_page(n)
     page = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
     if page is None:

@@ -42,7 +42,7 @@ The same error inflates Phase 2's VLM table (sub-100% entries are suspect) and P
 ## Evidence the checkpoints are degenerate
 
 Loading `finetune_poc/checkpoint-144` (the claimed-best "1.0%" model) and generating on its **own
-training page** (`page_0335`):
+training page** (`page_0335_auto`):
 
 - 34/34 predictions identical and empty (only the space token `1437`).
 - 0% Armenian characters produced.
@@ -51,8 +51,8 @@ training page** (`page_0335`):
   token" minimum (which alone drops loss ~10 → ~3, explaining the plateau the report mistook for
   success).
 
-`finetune_phase4/checkpoint-180` behaves identically on both train (`page_0543`) and held-out
-(`page_0559`) pages → this was never a generalization failure.
+`finetune_phase4/checkpoint-180` behaves identically on both train (`page_0543_human`) and held-out
+(`page_0559_human`) pages → this was never a generalization failure.
 
 ## Root cause: optimizer divergence
 
@@ -69,7 +69,7 @@ instead of TrOCR's canonical `</s>`=2); on its own it only changed the failure *
 
 ## Stabilized run — results (`ml_vision/scripts/finetune_lowlr.py`)
 
-- Train = eval = `page_0335` (34 lines), overfit proof-of-concept.
+- Train = eval = `page_0335_auto` (34 lines), overfit proof-of-concept.
 - Best checkpoint: `ml_vision/checkpoints/finetune_lowlr/checkpoint-195` (epoch 39).
 - **Best train-set CER: 0.657 (65.7%)** — vs 93.4% baseline, vs 100% for every prior checkpoint.
 
@@ -126,7 +126,7 @@ penalty signature, not a fundamental inability to read the script.
 4. **Correct the historical reports.** Add a correction banner to `phase_3_results.md` and
    `phase_2_vlm_results.md` (and the `finetune_phase4` numbers) noting the jiwer fraction/percent
    misread.
-5. **Only then redo Phase 4 generalization** — train `page_0335`+`page_0543`, hold out `page_0559`,
+5. **Only then redo Phase 4 generalization** — train `page_0335_auto`+`page_0543_human`, hold out `page_0559_human`,
    with the corrected stable recipe — to get the first *honest* held-out CER.
 
 ## Artifacts

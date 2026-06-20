@@ -33,7 +33,7 @@ Stabilized recipe from `finetune_lowlr.py`, pushed to convergence:
 | gradient_accumulation_steps | 2 (effective batch 8) |
 | max_grad_norm | 1.0 |
 | decoder_start_token_id | eos = 2 (TrOCR canonical) |
-| train = eval | `data/phase4_dataset/page_0335` (34 lines) |
+| train = eval | `data/phase4_dataset/page_0335_auto` (34 lines) |
 
 Training was clean and monotonic — eval_loss 15.0 (ep1) → 0.099 (ep80), grad norms
 stayed ~8–80 (vs the 300–900 divergence of the original `lr=5e-5` recipe).
@@ -82,7 +82,7 @@ unseen data.
 
 ---
 
-## Sample predictions (beam-4, penalty-free) on `page_0335`
+## Sample predictions (beam-4, penalty-free) on `page_0335_auto`
 
 The model reproduces the training lines almost exactly; residual errors are isolated
 character substitutions, not structural failure or repetition.
@@ -95,8 +95,8 @@ character substitutions, not structural failure or repetition.
    / 0.026 beam). The modeling approach is sound.
 2. Repetition penalties are off by default; convergence, not generation tricks, is the
    fix for degeneracy.
-3. **Next:** Phase 4 honest generalization — train `page_0335`+`page_0543`, hold out
-   `page_0559`, penalty-free recipe → `reports/phase_4_results.md`.
+3. **Next:** Phase 4 honest generalization — train `page_0335_auto`+`page_0543_human`, hold out
+   `page_0559_human`, penalty-free recipe → `reports/phase_4_results.md`.
 
 ## Artifacts
 

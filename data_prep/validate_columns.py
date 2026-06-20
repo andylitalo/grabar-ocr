@@ -160,7 +160,9 @@ def check_columns(pages: list[int], scratch: Path | None) -> bool:
     all_ok = True
     confident = 0
     for n in pages:
-        page_id = storage.page_id_for(n)
+        # Gold boxes/line crops live under the human artifact id (page_XXXX_human);
+        # the detector is re-run live for the auto comparison.
+        page_id = storage.page_artifact_id(n, storage.METHOD_HUMAN)
         if not storage.page_pdf_path(n).exists():
             continue
         gray = cv2.imread(str(pipeline.render_page(n)), cv2.IMREAD_GRAYSCALE)

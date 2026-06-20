@@ -45,14 +45,24 @@ def discover_pages() -> list[tuple[str, Path, str]]:
 
     kind is "flat" (lines directly in the dir) or "columns" (column_* subdirs).
     """
+    # Keyed by base page id (page_XXXX, suffix stripped) so a page present in both
+    # data/golden and data/lines dedups to one source, and so only the human-labeled
+    # line tree (page_XXXX_human) is pulled — never the headless auto tree, which
+    # carries no transcriptions. See data/README.md for the method-tag convention.
+    def base_id(name: str) -> str:
+        for suffix in ("_human", "_auto"):
+            if name.endswith(suffix):
+                return name[: -len(suffix)]
+        return name
+
     found: dict[str, tuple[str, Path, str]] = {}
     for src in sorted(GOLDEN_DIR.glob("page_*")):
         if src.is_dir():
-            found[src.name] = (src.name, src, "flat")
-    for src in sorted(LINES_DIR.glob("page_*")):
+            found[base_id(src.name)] = (base_id(src.name), src, "flat")
+    for src in sorted(LINES_DIR.glob("page_*_human")):
         if src.is_dir():
             kind = "columns" if any(src.glob("column_*")) else "flat"
-            found[src.name] = (src.name, src, kind)
+            found[base_id(src.name)] = (base_id(src.name), src, kind)
     return [found[name] for name in sorted(found)]
 
 

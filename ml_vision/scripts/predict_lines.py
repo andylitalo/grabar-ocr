@@ -9,7 +9,8 @@ beam-4, reusing grabar_generation.configure_generation / NUM_BEAMS — see that
 module's hard-won lesson on why repetition penalties hurt). Targets:
 
   --frozen            -> data/frozen_test_set/line_*.png   (the 100-line eval set)
-  --page page_XXXX    -> data/lines/page_XXXX/column_{1,2}/line_*.png
+  --page page_XXXX_M  -> data/lines/page_XXXX_M/column_{1,2}/line_*.png  (M = human|auto;
+                        see data/README.md — the slice method rides on the page id)
 
 Writes per-line prediction text plus a predictions.json manifest:
 
@@ -23,7 +24,8 @@ Run (ML env): call the .venv_ml interpreter directly. Do NOT use
 `uv run --python .venv_ml` — uv ignores .venv_ml's site-packages and instead
 syncs the base .venv (which has no torch), so the run fails with ModuleNotFound.
     .venv_ml/bin/python ml_vision/scripts/predict_lines.py --frozen
-    .venv_ml/bin/python ml_vision/scripts/predict_lines.py --page page_0550
+    .venv_ml/bin/python ml_vision/scripts/predict_lines.py --page page_0550_human
+    .venv_ml/bin/python ml_vision/scripts/predict_lines.py --page page_0487_auto
 """
 
 from __future__ import annotations
@@ -119,7 +121,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     g = parser.add_mutually_exclusive_group(required=True)
     g.add_argument("--frozen", action="store_true", help="predict the frozen 100-line test set")
-    g.add_argument("--page", type=str, help="predict a page, e.g. page_0550 (reads data/lines/)")
+    g.add_argument("--page", type=str, help="predict a page, e.g. page_0550_human or page_0487_auto (reads data/lines/)")
     parser.add_argument("--model-tag", default="scale_500", help="output subdir tag (default: scale_500)")
     parser.add_argument(
         "--checkpoint",

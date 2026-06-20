@@ -51,7 +51,10 @@ OUT_DIR = REPO / "data/lines_resliced"
 WORKLIST = OUT_DIR / "relabel_worklist.json"
 PAD = 4  # must match crop_lines() so unchanged crops are byte-identical
 
-_COL_RE = re.compile(r"^(page_\d+)_column_(\d+)\.png$")
+# Column PNGs are named page_XXXX_<method>_column_Y.png (method in {human, auto};
+# the leading group captures the full method-tagged page id used to find old labels
+# under data/lines/<page_id>/column_Y). See data/README.md.
+_COL_RE = re.compile(r"^(page_\d+(?:_human|_auto)?)_column_(\d+)\.png$")
 
 
 def _crop(image: np.ndarray, top: int, bottom: int) -> np.ndarray:

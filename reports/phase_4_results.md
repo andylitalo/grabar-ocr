@@ -14,7 +14,7 @@
 
 ## TL;DR
 
-- **Held-out CER on `page_0559` (never seen in training): `0.1765` = 17.6%** (greedy).
+- **Held-out CER on `page_0559_human` (never seen in training): `0.1765` = 17.6%** (greedy).
 - **Gate verdict: PARTIAL** (< 0.40 → not a generalization failure; ≥ 0.15 → not yet
   production). Next step is **more labeled data (~500–1000 lines)**, not a recipe change.
 - The model generalizes to a genuinely unseen page producing real Bolorgir, with many
@@ -27,8 +27,8 @@
 
 | | |
 |---|---|
-| Train | `page_0335` + `page_0543` — **119** non-empty lines |
-| Held-out eval | `page_0559` — **89** non-empty lines (never seen in training) |
+| Train | `page_0335_auto` + `page_0543_human` — **119** non-empty lines |
+| Held-out eval | `page_0559_human` — **89** non-empty lines (never seen in training) |
 | Recipe | lr=2e-5 cosine, warmup 30, 40 epochs, grad-accum 2, max_grad_norm 1.0, decoder_start=eos(2) |
 | Decoding | **penalty-free** (see `reports/phase_3_converge_results.md`); per-epoch eval greedy, sample preds beam-4 |
 | Best checkpoint | epoch 36 (loaded via `load_best_model_at_end`) |
@@ -54,7 +54,7 @@ not undertrained (eval_loss flattened at ~0.576).
 
 ---
 
-## Sample predictions (held-out `page_0559`, beam-4, penalty-free)
+## Sample predictions (held-out `page_0559_human`, beam-4, penalty-free)
 
 Real Bolorgir with correct structure and many near-correct lines:
 
@@ -77,8 +77,8 @@ crops noted below.
 A few label files are **multi-text-line crops** with embedded newlines — the line-crop
 slicing merged adjacent text lines:
 
-- `page_0543`: 2 / 90 label files contain > 1 line
-- `page_0559`: 1 / 91 label files contain > 1 line
+- `page_0543_human`: 2 / 90 label files contain > 1 line
+- `page_0559_human`: 1 / 91 label files contain > 1 line
 
 These inflate per-line CER slightly (one image, two lines of target text). Small
 fraction here, but worth fixing in `data_prep` before scaling the dataset.
@@ -120,7 +120,7 @@ the same 9 labeled pages that also supply training lines
 almost certainly seen *other lines from the same scanned page* as each test line —
 same font, ink, column geometry. **2.5% is in-distribution-by-page, not
 new-page generalization.** The only honest new-page number on record was the older
-**17.6%** (page_0559 held out, 119 train lines) — now stale, because page_0559 sits
+**17.6%** (page_0559_human held out, 119 train lines) — now stale, because page_0559_human sits
 inside the scale_500 training pool (76 of its lines are in `splits_500.json`).
 
 ## Honest-measurement finding: the recorded 2.5% is the *tokenizer round-trip* CER
@@ -150,8 +150,8 @@ Full per-line table + worst-25 contact sheet:
 mean Armenian-letter fraction 1.00, 0 empty predictions, 99/100 distinct — **not
 degenerate**.
 
-- **By source page:** error concentrates on **page_0543 (9.0%)**; every other page
-  is ≤ 3.3%, four pages ≤ 1.6%. page_0543's worst lines are the **multi-line crops**
+- **By source page:** error concentrates on **page_0543_human (9.0%)**; every other page
+  is ≤ 3.3%, four pages ≤ 1.6%. page_0543_human's worst lines are the **multi-line crops**
   (one image holding two text lines) flagged in the data-prep caveat above — the
   model transcribes the first visual line and the second is counted as deletions
   (e.g. `line_058`: S4 **D31** I0).
@@ -169,9 +169,9 @@ degenerate**.
 — the model has essentially memorized its training set. The 17 nonzero-CER and
 highest-loss lines are exactly the hard/suspect cases:
 
-- **Top-2 by loss are the known multi-line crops** (`page_0559/line_024`,
-  `page_0543/line_001`) — embedded `\n`, two text lines in one crop.
-- Highest mean loss/CER by page: **page_0543 (0.0010 / 2.3%)** and **page_0559
+- **Top-2 by loss are the known multi-line crops** (`page_0559_human/line_024`,
+  `page_0543_human/line_001`) — embedded `\n`, two text lines in one crop.
+- Highest mean loss/CER by page: **page_0543_human (0.0010 / 2.3%)** and **page_0559_human
   (0.0029 / 0.4%)** — the pages carrying the multi-line crops and the densest
   abbreviation/numeral notation. All other pages ≤ 0.3% train CER.
 
@@ -194,29 +194,29 @@ The labeling app never runs the model; it reads `data/predictions/<tag>/page_XXX
 stored label); the new **Review view** lists crop + GT + prediction with a
 char-level diff, **sorted worst-CER-first**, and the label view shows the prediction
 read-only beneath the textarea (display only, never autofills). Verified on
-page_0559 (mean CER 2.2% — low precisely because it is now in-pool training data).
+page_0559_human (mean CER 2.2% — low precisely because it is now in-pool training data).
 
-## Honest new-page test — page_0400  ✅
+## Honest new-page test — page_0400_human  ✅
 
-page_0400 (a fresh page, in none of the 9 labeled / frozen / split pages) was
+page_0400_human (a fresh page, in none of the 9 labeled / frozen / split pages) was
 hand-labeled in the app — **71 single-line crops, 0 multi-line**, all non-empty —
 then scored with the scale_500 model. Predictions were generated **after** labeling,
 so the ground truth is uncontaminated by the model.
 
 **Honest new-page CER: 1.0% beam (1.2% greedy), raw-GT.**
-Report: `reports/phase4_newpage_page_0400.{csv,json,html}`. Predictions 100%
+Report: `reports/phase4_newpage_page_0400_human.{csv,json,html}`. Predictions 100%
 Armenian, 71/71 distinct, 0 empty — clean generalization, not degenerate.
 
 | measurement | CER | what it answers |
 |---|--:|---|
-| old held-out, 119 train lines (page_0559) | 17.6% | new-page at low data → **data-volume ceiling** |
-| frozen set, 500 train lines (raw-GT) | 4.4% | in-distribution-by-page, **inflated by page_0543 multi-line crops** |
+| old held-out, 119 train lines (page_0559_human) | 17.6% | new-page at low data → **data-volume ceiling** |
+| frozen set, 500 train lines (raw-GT) | 4.4% | in-distribution-by-page, **inflated by page_0543_human multi-line crops** |
 | frozen set, 500 train lines (round-trip) | 2.5% | the optimistic recorded number (tokenizer artifact) |
-| **new page, 500 train lines (page_0400)** | **1.0%** | **true new-page generalization** |
+| **new page, 500 train lines (page_0400_human)** | **1.0%** | **true new-page generalization** |
 
 The new-page number being **lower than the in-distribution 4.4%** is not a paradox:
-the frozen 4.4% is dragged up by page_0543's multi-line-crop deletions, while
-page_0400 was cleanly sliced. With 500 training lines the **data-volume bottleneck
+the frozen 4.4% is dragged up by page_0543_human's multi-line-crop deletions, while
+page_0400_human was cleanly sliced. With 500 training lines the **data-volume bottleneck
 from the original 17.6% result is resolved** — generalization to an unseen page is
 ~1%.
 
@@ -245,7 +245,7 @@ new-page CER (above) sets the realistic input-quality the Phase 5 corrector must
 
 - `ml_vision/scripts/predict_lines.py`, `analyze_errors.py`, `train_example_loss.py`
 - `data_prep/freeze_phase4.py`; `build_phase4_dataset.py` `--rebuild` guard
-- `data/predictions/scale_500/{frozen_test_set,page_0559}/`
+- `data/predictions/scale_500/{frozen_test_set,page_0559_human}/`
 - `reports/phase4_error_analysis_frozen.{csv,json,html}`,
   `reports/phase4_train_example_loss.csv`
 - `data/backups/phase4_frozen_<UTC>.zip`

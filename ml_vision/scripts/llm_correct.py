@@ -29,8 +29,8 @@ directly. Per-run reports go to reports/phase5_correction_*; a rolling
 reports/phase5_correction_summary.{md,csv,json} tabulates every run.
 
 Run (BASE env — SDKs + jiwer, no torch): call the .venv interpreter directly.
-    .venv/bin/python ml_vision/scripts/llm_correct.py --page page_0400 --model claude-opus-4-8
-    .venv/bin/python ml_vision/scripts/llm_correct.py --page page_0499 --model gpt-5.5 --mode minimal-edit
+    .venv/bin/python ml_vision/scripts/llm_correct.py --page page_0400_human --model claude-opus-4-8
+    .venv/bin/python ml_vision/scripts/llm_correct.py --page page_0499_human --model gpt-5.5 --mode minimal-edit
 """
 
 from __future__ import annotations
@@ -586,7 +586,7 @@ def update_summary(res: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--page", required=True, help="contiguous page, e.g. page_0400")
+    parser.add_argument("--page", required=True, help="contiguous page, e.g. page_0400_human")
     parser.add_argument("--model", required=True, choices=list(MODELS),
                         help="LLM corrector model id")
     parser.add_argument("--mode", default="rewrite", choices=["rewrite", "minimal-edit"])

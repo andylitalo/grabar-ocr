@@ -3,9 +3,10 @@ storage.py
 Filesystem layer for the labeling tool.
 
 Single source of truth for on-disk paths and label state. Knows the
-`data/lines/page_XXXX/column_Y/line_NNN.{png,txt}` convention, the `rejected/`
-subdir, and the rules that map files to a line's status. No FastAPI imports —
-pure functions, independently testable.
+`data/lines/page_XXXX_<method>/column_Y/line_NNN.{png,txt}` convention (method in
+{human, auto} — see page_artifact_id and data/README.md), the `rejected/` subdir,
+and the rules that map files to a line's status. No FastAPI imports — pure
+functions, independently testable.
 
 Status model (computed purely from the filesystem):
   - PNG under column_Y/rejected/          -> "rejected"
@@ -42,8 +43,33 @@ _PAGE_PDF_RE = re.compile(r"^(\d+)\.pdf$")
 
 
 def page_id_for(n: int) -> str:
-    """Canonical page id for page number n, e.g. 543 -> 'page_0543'."""
+    """Canonical page id for page number n, e.g. 543 -> 'page_0543'.
+
+    This is the *base* page id, keyed only by page number. It is used for the
+    method-independent render cache (the deskewed page is the same regardless of
+    who draws the column boxes). Derived per-method artifacts (columns, lines,
+    boxes, predictions) live under the method-tagged id from ``page_artifact_id``.
+    """
     return f"page_{n:04d}"
+
+
+# Method tag for derived line/column/box/prediction artifacts. "human" = produced
+# through the labeling UI (a person drew/accepted the boxes); "auto" = produced by
+# the headless detector (data_prep.auto_slice). The tag rides on the page id so it
+# propagates through the whole tree, e.g. page_0487_auto. See data/README.md.
+METHOD_HUMAN = "human"
+METHOD_AUTO = "auto"
+
+
+def page_artifact_id(n: int, method: str = METHOD_HUMAN) -> str:
+    """Method-tagged page id for derived artifacts, e.g. (487, 'auto') -> 'page_0487_auto'.
+
+    Columns (data/columns/<id>_column_Y.png), line dirs (data/lines/<id>/),
+    column boxes (data/columns/boxes/<id>.json), and predictions
+    (data/predictions/<tag>/<id>/) are all keyed by this id, so auto and human
+    runs of the same page coexist instead of overwriting each other.
+    """
+    return f"{page_id_for(n)}_{method}"
 
 
 def page_pdf_path(n: int) -> Path:

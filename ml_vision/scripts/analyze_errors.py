@@ -9,7 +9,8 @@ runs the model — run predict_lines.py first.
   --frozen          GT from data/frozen_test_set/line_NNN.txt; source page joined
                     from data/frozen_test_set/manifest.json (so each line carries
                     the scanned page it came from).
-  --page page_XXXX  GT from data/lines/page_XXXX/column_Y/line_NNN.txt.
+  --page page_XXXX_M  GT from data/lines/page_XXXX_M/column_Y/line_NNN.txt
+                    (M = human|auto; the slice method rides on the page id — see data/README.md).
 
 Per line (sorted worst-CER-first): id, source_page, column, cer (beam), cer_greedy,
 ref_len, n_sub, n_del, n_ins, has_numeral, has_abbrev_mark, ref, pred_greedy,
@@ -25,7 +26,7 @@ Run (ML env, needs jiwer): call the .venv_ml interpreter directly. Do NOT use
 `uv run --python .venv_ml` — uv ignores .venv_ml's site-packages and instead
 syncs the base .venv (which has no torch), so the run fails with ModuleNotFound.
     .venv_ml/bin/python ml_vision/scripts/analyze_errors.py --frozen
-    .venv_ml/bin/python ml_vision/scripts/analyze_errors.py --page page_0550
+    .venv_ml/bin/python ml_vision/scripts/analyze_errors.py --page page_0550_human
 """
 
 from __future__ import annotations
