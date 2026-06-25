@@ -241,6 +241,84 @@ def list_lines(page_id: str) -> dict:
     return {"page_id": page_id, "lines": lines, "counts": counts, "model_tag": model_tag}
 
 
+# --- non-character truth artifact (Phase A detector validation) --------------
+#
+# To measure the pre-OCR non-character detector's recall on production-like auto
+# pages, a human gives a binary verdict on EVERY line of a sampled auto page. The
+# verdicts plus the detector's snapshotted prediction land in one JSON file beside
+# the page's column_*/ dirs. A dedicated file (not an empty .txt) is required: a
+# "character" line has no transcription, so an empty .txt would be ambiguous with
+# the "empty" verdict. This module stays cv2-free — image features are passed in.
+
+
+def nonchar_truth_path(page_id: str) -> Path:
+    """Truth artifact for a page, e.g. data/lines/page_0123_auto/nonchar_truth.json."""
+    return DATA_LINES / page_id / "nonchar_truth.json"
+
+
+def load_nonchar_truth(page_id: str) -> dict | None:
+    """Load the saved non-character truth for a page, or None if not verified."""
+    path = nonchar_truth_path(page_id)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_nonchar_truth(
+    page_id: str,
+    verdicts: dict[str, str],
+    detector_meta: dict,
+    line_features: dict[str, dict],
+) -> Path:
+    """Write the human verdicts + detector snapshot for a verified auto page.
+
+    ``verdicts`` maps "column_Y/line_NNN" -> "empty" | "character" (the human's
+    source of truth). ``line_features`` maps the same line ids to the detector's
+    snapshot ``{non_character, glyph_count, ink_ratio}`` so scoring is reproducible
+    and threshold drift is visible. ``detector_meta`` records the rule used.
+    """
+    from datetime import datetime, timezone
+
+    lines: dict[str, dict] = {}
+    for line_id, truth in verdicts.items():
+        feat = line_features.get(line_id, {})
+        lines[line_id] = {
+            "truth": truth,
+            "detector_nonchar": bool(feat.get("non_character", False)),
+            "glyph_count": feat.get("glyph_count"),
+            "ink_ratio": feat.get("ink_ratio"),
+        }
+    payload = {
+        "page_id": page_id,
+        "verified_by": "human",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "detector": detector_meta,
+        "lines": lines,
+    }
+    path = nonchar_truth_path(page_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def has_auto_lines(n: int) -> bool:
+    """True if page n has any auto-sliced line crops (page_XXXX_auto/column_*/)."""
+    auto_dir = DATA_LINES / page_artifact_id(n, METHOD_AUTO)
+    return auto_dir.is_dir() and any(auto_dir.glob("column_*/line_*.png"))
+
+
+def nonchar_verified(page_id: str) -> bool:
+    """True if a non-character truth file has been saved for this page."""
+    return nonchar_truth_path(page_id).exists()
+
+
+def auto_status(n: int) -> str:
+    """Auto-tree status for the page browser: none / sliced / verified."""
+    if not has_auto_lines(n):
+        return "none"
+    return "verified" if nonchar_verified(page_artifact_id(n, METHOD_AUTO)) else "sliced"
+
+
 def page_status(page_id: str) -> str:
     """Coarse page status for the page browser: unlabeled / in_progress / done."""
     info = list_lines(page_id)

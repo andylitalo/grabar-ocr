@@ -141,6 +141,25 @@ textarea {
 .pill.rejected { background: var(--danger); }
 .pill.current { outline: 2px solid #fff; outline-offset: 1px; }
 
+/* verify-non-character mode pills (Phase A).
+   suggest-empty = detector's un-confirmed guess: same accent hue as .pill.empty
+   but faded + dashed + cross-hatched, visually distinct from a human-confirmed
+   empty (truth-empty, solid). truth-char = confirmed real Grabar line. */
+.pill.suggest-empty {
+  color: var(--ink);
+  border: 1px dashed var(--accent);
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(76, 139, 245, 0.30) 0, rgba(76, 139, 245, 0.30) 3px,
+      rgba(76, 139, 245, 0.10) 3px, rgba(76, 139, 245, 0.10) 6px);
+}
+.pill.truth-empty { background: var(--accent); }
+.pill.truth-char { background: var(--ok); }
+.inline-pill {
+  display: inline-flex; vertical-align: middle;
+  width: 1.1rem; height: 1.1rem; cursor: default;
+}
+
 /* read-only prediction under the textarea */
 .pred-ref {
   margin-top: 0.5rem;

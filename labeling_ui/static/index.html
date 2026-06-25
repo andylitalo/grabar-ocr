@@ -34,6 +34,7 @@
       </div>
       <div class="panel sticky-bottom row">
         <button id="btn-open-labels" class="primary hidden">Open labels / Review →</button>
+        <button id="btn-verify-auto" class="hidden" title="Verify the headless auto-slicer's non-character flags">Verify auto slice →</button>
         <button id="btn-select" class="primary" disabled>Select this page → crop columns</button>
       </div>
     </section>
@@ -61,6 +62,7 @@
       <div class="panel">
         <div class="row">
           <button id="btn-back-crop" class="ghost">← Re-crop</button>
+          <button id="btn-verify-back" class="ghost hidden">← Back to pages</button>
           <span id="label-progress" class="strong"></span>
           <span id="line-badge" class="badge"></span>
           <span class="spacer"></span>
@@ -74,7 +76,32 @@
         <img id="line-image" alt="line crop" />
       </div>
 
-      <div class="panel">
+      <!-- ===== VERIFY NON-CHARACTER (Phase A) ===== -->
+      <div id="verify-panel" class="panel hidden">
+        <p class="meta">Each line is pre-seeded with the detector's guess
+          (<span class="pill suggest-empty inline-pill"></span> = detector says non-character).
+          Fix only the disagreements, then submit.</p>
+        <div class="row label-actions">
+          <button id="btn-verdict-empty">Empty / non-char (Alt+E)</button>
+          <button id="btn-verdict-char">Character (Alt+C / Space)</button>
+          <span id="verdict-current" class="badge"></span>
+          <span id="verdict-detector" class="meta"></span>
+          <span class="spacer"></span>
+          <button id="btn-back-line-v">◀ Back (Alt+←)</button>
+          <button id="btn-next-line-v">Next ▶ (Alt+→)</button>
+        </div>
+        <p class="meta legend">
+          <b>Alt+E</b> empty / non-character · <b>Alt+C</b> or <b>Space</b> character ·
+          <b>Alt+←/→</b> back/next · pre-seeded from the detector — confirm or flip.
+        </p>
+        <div class="row">
+          <button id="btn-submit-truth" class="primary">Submit empty markers</button>
+          <span id="verify-counts" class="meta"></span>
+        </div>
+        <div id="verify-summary" class="summary hidden"></div>
+      </div>
+
+      <div id="transcribe-panel" class="panel">
         <textarea id="line-text" rows="2" spellcheck="false"
                   placeholder="Type the Grabar text — Enter to submit, Shift+Enter for newline"></textarea>
         <div id="line-pred" class="pred-ref hidden"></div>

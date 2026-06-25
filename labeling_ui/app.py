@@ -46,6 +46,11 @@ class LabelRequest(BaseModel):
     text: str = ""
 
 
+class NoncharTruthRequest(BaseModel):
+    # "column_Y/line_NNN" -> "empty" (non-character) | "character" (real Grabar)
+    verdicts: dict[str, str]
+
+
 # --- page browser ------------------------------------------------------------
 
 
@@ -56,7 +61,15 @@ def list_pages() -> dict:
     # the boxes and transcribes the lines. The auto tree (page_XXXX_auto) is written
     # headlessly by data_prep.auto_slice and is not edited here.
     pages = [
-        {"n": n, "page_id": storage.page_artifact_id(n), "status": storage.page_status(storage.page_artifact_id(n))}
+        {
+            "n": n,
+            "page_id": storage.page_artifact_id(n),
+            "status": storage.page_status(storage.page_artifact_id(n)),
+            # Auto tree (page_XXXX_auto) status for the Phase A detector-validation
+            # entry point: none / sliced / verified. Human fields are unchanged.
+            "has_auto": storage.has_auto_lines(n),
+            "auto_status": storage.auto_status(n),
+        }
         for n in numbers
     ]
     return {
@@ -84,6 +97,10 @@ def get_page(n: int) -> dict:
         # Auto-detected boxes (falls back to hardcoded halves when not confident).
         # The frontend seeds its draggable boxes from this same `default_columns` key.
         "default_columns": pipeline.suggested_columns(n),
+        # Phase A: auto-sliced tree status, so the browser can offer "Verify auto slice".
+        "has_auto": storage.has_auto_lines(n),
+        "auto_status": storage.auto_status(n),
+        "auto_page_id": storage.page_artifact_id(n, storage.METHOD_AUTO),
     }
 
 
@@ -133,7 +150,70 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
 
 @app.get("/api/page/{page_id}/lines")
 def get_lines(page_id: str) -> dict:
-    return storage.list_lines(page_id)
+    info = storage.list_lines(page_id)
+    # Additively merge the per-line detector verdict + any saved human truth so the
+    # verify-non-character mode can seed each line. Current consumers ignore the new
+    # keys, so the existing transcription workflow is unaffected.
+    verdicts = pipeline.line_nonchar_verdicts(page_id)
+    truth = storage.load_nonchar_truth(page_id)
+    truth_lines = (truth or {}).get("lines", {})
+    for line in info["lines"]:
+        line_id = f"column_{line['column']}/line_{line['line']:03d}"
+        v = verdicts.get(line_id)
+        if v is not None:
+            line["non_character"] = v["non_character"]
+            line["glyph_count"] = v["glyph_count"]
+            line["ink_ratio"] = v["ink_ratio"]
+        t = truth_lines.get(line_id)
+        if t is not None:
+            line["truth"] = t["truth"]
+    info["nonchar_verified"] = truth is not None
+    return info
+
+
+@app.post("/api/page/{page_id}/nonchar-truth")
+def submit_nonchar_truth(page_id: str, req: NoncharTruthRequest) -> dict:
+    """Persist the human non-character verdicts for an auto page + return a scorecard.
+
+    Recomputes the detector snapshot at submit time (so the saved truth records both
+    the human verdict and the detector's verdict + features), writes
+    nonchar_truth.json, and returns TP/FP/FN/TN for an instant in-UI summary.
+    Positive class = non-character. FP (detector flags a real line) must be 0.
+    """
+    for line_id, verdict in req.verdicts.items():
+        if verdict not in ("empty", "character"):
+            raise HTTPException(
+                status_code=400, detail=f"Bad verdict {verdict!r} for {line_id}"
+            )
+
+    verdicts = pipeline.line_nonchar_verdicts(page_id)
+    if not verdicts:
+        raise HTTPException(status_code=404, detail=f"No line crops for {page_id}")
+
+    storage.save_nonchar_truth(
+        page_id, req.verdicts, pipeline.detector_meta(), verdicts
+    )
+
+    tp = fp = fn = tn = 0
+    for line_id, verdict in req.verdicts.items():
+        det = bool(verdicts.get(line_id, {}).get("non_character", False))
+        human_nonchar = verdict == "empty"
+        if det and human_nonchar:
+            tp += 1
+        elif det and not human_nonchar:
+            fp += 1
+        elif not det and human_nonchar:
+            fn += 1
+        else:
+            tn += 1
+    precision = tp / (tp + fp) if (tp + fp) else None
+    recall = tp / (tp + fn) if (tp + fn) else None
+    return {
+        "page_id": page_id,
+        "counts": {"tp": tp, "fp": fp, "fn": fn, "tn": tn, "total": len(req.verdicts)},
+        "precision": precision,
+        "recall": recall,
+    }
 
 
 @app.get("/api/page/{page_id}/column/{col}/line/{line}/image")

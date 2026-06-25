@@ -105,6 +105,8 @@ def gather_page(model_tag: str, page_id: str) -> tuple[list[dict], dict]:
     page_dir = LINES_DIR / page_id
     rows: list[dict] = []
     for line_id, pred in preds.items():  # id = "column_Y/line_NNN"
+        if pred.get("non_character"):
+            continue  # ornamental divider / speck detected pre-OCR — not scorable text
         col = int(line_id.split("/")[0].split("_")[1])
         ref = (page_dir / f"{line_id}.txt").read_text(encoding="utf-8").strip() if (
             page_dir / f"{line_id}.txt"
