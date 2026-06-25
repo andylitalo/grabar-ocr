@@ -43,6 +43,7 @@ sys.path.insert(0, str(REPO))
 from data_prep.column_detector import _binarize, detect_columns  # noqa: E402
 from data_prep.deskew import _sharpness, deskew_page, estimate_skew_angle  # noqa: E402
 from data_prep.line_cropper import crop_lines  # noqa: E402
+from data_prep.line_filter import is_glyph as _is_glyph  # noqa: E402  (shared glyph discriminator)
 from data_prep.pdf_slicer import pdf_to_images  # noqa: E402
 from labeling_ui import pipeline, storage  # noqa: E402
 
@@ -91,17 +92,6 @@ def check_deskew(pages: list[int]) -> bool:
     print(f"\nDeskew gate: {'PASS' if all_ok else 'FAIL'} "
           f"(residual ≤ {MAX_RESIDUAL_DEG}°, sharpness ≥ {MIN_SHARPNESS_RATIO}×, ink ≥ {MIN_INK_RATIO})")
     return all_ok
-
-
-def _is_glyph(cw: int, ch: int, area: int, col_w: int, col_h: int) -> bool:
-    """True if a component is plausibly a single glyph (not a rule/ornament/frame)."""
-    if area < 20:
-        return False
-    if cw > 0.5 * col_w or ch > 0.5 * col_h:
-        return False  # spans much of the column — rule / ornament / frame
-    if cw > 8 * ch or ch > 8 * cw:
-        return False  # extreme aspect — a horizontal rule or vertical frame line
-    return True
 
 
 def _clip_count(stats: np.ndarray, box: dict, *, min_outside: int, min_inside_frac: float = 0.5) -> int:

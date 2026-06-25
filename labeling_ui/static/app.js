@@ -12,7 +12,14 @@ const state = {
   scale: 1,             // full-res px per display px
   lines: [],            // [{index,column,line,status,text,image_url}]
   currentIndex: 0,
+  // Phase A: "label" = normal transcription; "verify" = non-character verification
+  // of an auto-sliced page (binary verdict per line, written to nonchar_truth.json).
+  mode: "label",
+  verdicts: {},         // line index -> "empty" | "character" (verify mode only)
+  autoPageId: null,     // page_XXXX_auto, set when entering verify mode
 };
+
+const lineKey = (l) => `column_${l.column}/line_${String(l.line).padStart(3, "0")}`;
 
 const $ = (id) => document.getElementById(id);
 
@@ -38,11 +45,24 @@ function showView(name) {
   for (const v of ["pages", "crop", "label", "review"]) {
     $("view-" + v).classList.toggle("hidden", v !== name);
   }
-  const crumb = {
-    pages: "Select a page", crop: "Crop columns",
-    label: "Label lines", review: "Review predictions",
-  }[name];
+  const crumb = name === "label" && state.mode === "verify"
+    ? "Verify non-character"
+    : {
+        pages: "Select a page", crop: "Crop columns",
+        label: "Label lines", review: "Review predictions",
+      }[name];
   $("crumbs").textContent = state.pageId ? `${state.pageId} — ${crumb}` : crumb;
+}
+
+// Toggle the label view between transcription mode and non-character verify mode.
+function applyModeChrome() {
+  const verify = state.mode === "verify";
+  $("transcribe-panel").classList.toggle("hidden", verify);
+  $("verify-panel").classList.toggle("hidden", !verify);
+  $("btn-back-crop").classList.toggle("hidden", verify);
+  $("btn-review").classList.toggle("hidden", verify);
+  $("label-counts").classList.toggle("hidden", verify);
+  $("btn-verify-back").classList.toggle("hidden", !verify);
 }
 
 // ---- prediction diff (read-only) -------------------------------------------
@@ -116,6 +136,15 @@ async function loadPage(n) {
   // Already-segmented pages (done / in_progress) can be opened straight into the
   // label+review view without re-cropping (which would discard existing labels).
   $("btn-open-labels").classList.toggle("hidden", data.status === "unlabeled");
+  // Phase A: offer non-character verification on auto-sliced pages.
+  state.autoPageId = data.auto_page_id || null;
+  const hasAuto = !!data.has_auto;
+  const vbtn = $("btn-verify-auto");
+  vbtn.classList.toggle("hidden", !hasAuto);
+  if (hasAuto) {
+    vbtn.textContent = data.auto_status === "verified"
+      ? "Re-verify auto slice →" : "Verify auto slice →";
+  }
 }
 
 function adjacentPage(dir) {
@@ -275,6 +304,8 @@ async function segment(force) {
 
 // ---- labeling --------------------------------------------------------------
 async function startLabeling() {
+  state.mode = "label";
+  applyModeChrome();
   const data = await api("GET", `/api/page/${state.pageId}/lines`);
   state.lines = data.lines;
   state.modelTag = data.model_tag || null;
@@ -282,6 +313,127 @@ async function startLabeling() {
   $("done-summary").classList.add("hidden");
   showView("label");
   renderLine();
+}
+
+// ---- verify non-character (Phase A) ----------------------------------------
+async function startVerify() {
+  if (!state.autoPageId) return;
+  state.mode = "verify";
+  state.pageId = state.autoPageId;
+  applyModeChrome();
+  const data = await api("GET", `/api/page/${state.pageId}/lines`);
+  state.lines = data.lines;
+  // Seed each verdict: a saved human truth wins; else the detector's guess
+  // (non_character -> "empty", otherwise "character").
+  state.verdicts = {};
+  state.lines.forEach((l, i) => {
+    state.verdicts[i] = l.truth ? l.truth : (l.non_character ? "empty" : "character");
+  });
+  state.currentIndex = 0;
+  $("verify-summary").classList.add("hidden");
+  showView("label");
+  renderLine();
+}
+
+function setVerdict(verdict) {
+  if (state.mode !== "verify") return;
+  state.verdicts[state.currentIndex] = verdict;
+  if (state.currentIndex < state.lines.length - 1) state.currentIndex++;
+  renderLine();
+}
+
+function renderVerify() {
+  const l = state.lines[state.currentIndex];
+  $("label-progress").textContent =
+    `Line ${state.currentIndex + 1} / ${state.lines.length}  (col ${l.column}, line ${l.line})`;
+  const verdict = state.verdicts[state.currentIndex];
+  const badge = $("line-badge");
+  badge.textContent = verdict === "empty" ? "non-character" : "character";
+  badge.className = "badge " + (verdict === "empty" ? "empty" : "labeled");
+  $("line-image").src = l.image_url + "?t=" + Date.now();
+
+  const vc = $("verdict-current");
+  vc.textContent = verdict === "empty" ? "Marked: empty / non-char" : "Marked: character";
+  vc.className = "badge " + (verdict === "empty" ? "empty" : "labeled");
+  const det = l.non_character ? "detector: non-character" : "detector: character";
+  const feats = (l.glyph_count != null)
+    ? ` · glyph ${l.glyph_count}${l.ink_ratio != null ? ` · ink ${(+l.ink_ratio).toFixed(2)}×` : ""}`
+    : "";
+  $("verdict-detector").textContent = det + feats;
+  $("btn-verdict-empty").classList.toggle("primary", verdict === "empty");
+  $("btn-verdict-char").classList.toggle("primary", verdict === "character");
+
+  renderVerifyPills();
+  updateVerifyCounts();
+}
+
+// Pills colored by the human verdict; lines still at the detector's seeded guess
+// get the faded "suggested" treatment so confirmed verdicts stand out.
+function renderVerifyPills() {
+  const strip = $("pill-strip");
+  strip.innerHTML = "";
+  state.lines.forEach((l, i) => {
+    const verdict = state.verdicts[i];
+    const seeded = (l.truth == null) &&
+      ((verdict === "empty") === !!l.non_character);  // unchanged from detector guess
+    let cls;
+    if (verdict === "empty") cls = seeded ? "suggest-empty" : "truth-empty";
+    else cls = "truth-char";
+    const pill = document.createElement("div");
+    pill.className = "pill " + cls + (i === state.currentIndex ? " current" : "");
+    pill.textContent = i + 1;
+    pill.title = `#${i + 1} · col ${l.column} line ${l.line} · ${verdict}` +
+      (l.non_character ? " · detector: non-char" : " · detector: char");
+    pill.onclick = () => { state.currentIndex = i; renderLine(); };
+    strip.appendChild(pill);
+  });
+}
+
+function updateVerifyCounts() {
+  let empty = 0, character = 0, flips = 0;
+  state.lines.forEach((l, i) => {
+    const v = state.verdicts[i];
+    if (v === "empty") empty++; else character++;
+    if ((v === "empty") !== !!l.non_character) flips++;
+  });
+  $("verify-counts").textContent =
+    `${empty} non-character · ${character} character · ${flips} disagreement(s) with detector`;
+}
+
+async function submitTruth() {
+  const verdicts = {};
+  state.lines.forEach((l, i) => { verdicts[lineKey(l)] = state.verdicts[i]; });
+  $("btn-submit-truth").disabled = true;
+  try {
+    const res = await api("POST", `/api/page/${state.pageId}/nonchar-truth`, { verdicts });
+    showVerifySummary(res);
+    state.lines.forEach((l, i) => { l.truth = state.verdicts[i]; });
+    renderVerifyPills();
+  } catch (e) {
+    alert("Submit failed: " + e.message);
+  } finally {
+    $("btn-submit-truth").disabled = false;
+  }
+}
+
+function showVerifySummary(res) {
+  const c = res.counts;
+  const box = $("verify-summary");
+  box.classList.remove("hidden");
+  const fpBad = c.fp > 0;
+  box.classList.toggle("warn", fpBad);
+  box.classList.toggle("done", !fpBad);
+  const pct = (x) => (x == null ? "—" : `${(x * 100).toFixed(1)}%`);
+  box.innerHTML =
+    `<div><b>${res.page_id} verified.</b> ` +
+    `TP ${c.tp} · <span style="color:${fpBad ? "var(--danger)" : "var(--ok)"}">FP ${c.fp}</span> · ` +
+    `FN ${c.fn} · TN ${c.tn} &nbsp;(of ${c.total} lines)<br>` +
+    `precision ${pct(res.precision)} · recall ${pct(res.recall)}` +
+    (fpBad
+      ? ` — <span style="color:var(--danger)">a real line was flagged (regression)</span>.`
+      : `.`) +
+    `</div><div class="meta">Saved to data/lines/${res.page_id}/nonchar_truth.json · ` +
+    `run <code>data_prep/score_nonchar_detector.py</code> for the overall gate.</div>`;
 }
 
 function firstPendingIndex() {
@@ -311,6 +463,7 @@ function updateCounts() {
 
 function renderLine() {
   if (!state.lines.length) return;
+  if (state.mode === "verify") { renderVerify(); return; }
   const l = state.lines[state.currentIndex];
   $("label-progress").textContent =
     `Line ${state.currentIndex + 1} / ${state.lines.length}  (col ${l.column}, line ${l.line})`;
@@ -468,6 +621,7 @@ $("btn-next-unlabeled").onclick = () => {
 };
 $("btn-select").onclick = () => enterCrop();
 $("btn-open-labels").onclick = () => startLabeling();  // skip re-crop for labeled pages
+$("btn-verify-auto").onclick = () => startVerify();    // verify auto-slice non-char flags
 
 $("btn-back-pages").onclick = () => goToPages();
 $("btn-reset-boxes").onclick = () => {
@@ -489,12 +643,28 @@ $("btn-next-line").onclick = () => navLine(1);
 $("btn-review").onclick = () => enterReview();
 $("btn-back-label").onclick = () => { showView("label"); renderLine(); };
 
+// verify-mode controls
+$("btn-verdict-empty").onclick = () => setVerdict("empty");
+$("btn-verdict-char").onclick = () => setVerdict("character");
+$("btn-back-line-v").onclick = () => navLine(-1);
+$("btn-next-line-v").onclick = () => navLine(1);
+$("btn-submit-truth").onclick = () => submitTruth();
+$("btn-verify-back").onclick = () => goToPages();
+
 $("line-text").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); labelAndAdvance("submit"); }
 });
 
 document.addEventListener("keydown", (e) => {
   if (state.view !== "label") return;
+  if (state.mode === "verify") {
+    if (e.altKey && e.code === "KeyE") { e.preventDefault(); setVerdict("empty"); }
+    else if (e.altKey && e.code === "KeyC") { e.preventDefault(); setVerdict("character"); }
+    else if (e.code === "Space") { e.preventDefault(); setVerdict("character"); }
+    else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); navLine(-1); }
+    else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); navLine(1); }
+    return;
+  }
   if (e.altKey) {
     if (e.code === "KeyE") { e.preventDefault(); labelAndAdvance("empty"); }
     else if (e.code === "KeyR") { e.preventDefault(); labelAndAdvance("reject"); }

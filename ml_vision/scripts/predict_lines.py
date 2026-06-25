@@ -36,6 +36,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import cv2
 import torch
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
@@ -44,6 +45,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from grabar_generation import NUM_BEAMS, configure_generation
 
 REPO = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO))
+from data_prep.line_filter import (  # noqa: E402
+    classify_page,
+    line_features,
+    page_median_ink,
+)
 BASE_ID = "microsoft/trocr-base-printed"
 DEFAULT_CKPT_DIR = REPO / "ml_vision/checkpoints/finetune_phase4_scale_500"
 FROZEN_DIR = REPO / "data/frozen_test_set"
@@ -107,6 +114,28 @@ def collect_page(page_id: str) -> list[dict]:
     return targets
 
 
+def detect_nonchar(targets: list[dict]) -> dict[str, dict]:
+    """Image-level non-character classification for a page's line crops.
+
+    Ornamental dividers (rules, ornament bands) and over-segmentation specks are
+    detected BEFORE OCR (see data_prep.line_filter) so the model can skip them and
+    the nonsense never reaches the LLM-correction prompt or the digitized text.
+    Returns id -> {non_character, glyph_count, ink_ratio}. Gated corpus-wide by
+    data_prep/detect_nonchar_lines.py (0 real-text false positives on labeled pages).
+    """
+    features = {t["id"]: line_features(cv2.imread(str(t["png"]), cv2.IMREAD_GRAYSCALE)) for t in targets}
+    median = page_median_ink(features)
+    flags = classify_page(features)
+    return {
+        tid: {
+            "non_character": flags[tid],
+            "glyph_count": f["glyph_count"],
+            "ink_ratio": (f["ink_density"] / median) if median else 0.0,
+        }
+        for tid, f in features.items()
+    }
+
+
 def generate(model, processor, image: Image.Image, device: str, beam: bool) -> str:
     pixel_values = processor(images=image, return_tensors="pt").pixel_values.to(device)
     kwargs = {"max_length": 64}
@@ -151,15 +180,39 @@ def main() -> None:
     out_dir = PRED_BASE / args.model_tag / page_key
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Predicting {len(targets)} lines -> {out_dir.relative_to(REPO)}/\n")
+    # Non-character lines (ornamental dividers / over-segmentation specks) are
+    # detected pre-OCR for real pages and skipped: the model never reads them and
+    # the marker keeps their position auditable. Frozen eval set left untouched.
+    nonchar = detect_nonchar(targets) if args.page else {}
+    n_skip = sum(1 for v in nonchar.values() if v["non_character"])
+
+    print(f"Predicting {len(targets) - n_skip} lines "
+          f"({n_skip} non-character skipped) -> {out_dir.relative_to(REPO)}/\n")
     lines_payload: dict[str, dict] = {}
     for i, t in enumerate(targets, start=1):
+        nc = nonchar.get(t["id"])
+        txt_out = out_dir / f"{t['rel']}.txt"
+        txt_out.parent.mkdir(parents=True, exist_ok=True)
+
+        if nc and nc["non_character"]:
+            # Skip model.generate(): empty preds, keep an auditable marker.
+            txt_out.write_text("\n", encoding="utf-8")
+            lines_payload[t["id"]] = {
+                "column": t["column"],
+                "pred_greedy": "",
+                "pred_beam": "",
+                "non_character": True,
+                "glyph_count": nc["glyph_count"],
+                "ink_ratio": round(nc["ink_ratio"], 3),
+            }
+            if i % 20 == 0 or i == len(targets):
+                print(f"  {i}/{len(targets)}")
+            continue
+
         image = Image.open(t["png"]).convert("RGB")
         pred_greedy = generate(model, processor, image, device, beam=False)
         pred_beam = generate(model, processor, image, device, beam=True)
 
-        txt_out = out_dir / f"{t['rel']}.txt"
-        txt_out.parent.mkdir(parents=True, exist_ok=True)
         txt_out.write_text(pred_beam + "\n", encoding="utf-8")  # beam is the headline prediction
 
         lines_payload[t["id"]] = {

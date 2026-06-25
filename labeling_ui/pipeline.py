@@ -28,6 +28,12 @@ from . import storage
 sys.path.insert(0, str(storage.REPO))
 from data_prep.deskew import deskew_page  # noqa: E402
 from data_prep.line_cropper import crop_lines  # noqa: E402
+from data_prep.line_filter import (  # noqa: E402
+    DEFAULT_INK_FACTOR,
+    classify_page,
+    line_features,
+    page_median_ink,
+)
 from data_prep.pdf_slicer import pdf_to_images  # noqa: E402
 
 RENDER_DPI = 300
@@ -122,6 +128,82 @@ def suggested_columns(n: int) -> list[dict]:
         return boxes
     h, w = page.shape[:2]
     return default_columns(w, h)
+
+
+def detector_meta() -> dict:
+    """Snapshot of the detector rule, recorded in every truth file for reproducibility."""
+    return {
+        "ink_factor": DEFAULT_INK_FACTOR,
+        "rule": f"glyph_count==0 OR ink>{DEFAULT_INK_FACTOR}x page-median",
+    }
+
+
+def line_nonchar_verdicts(page_id: str) -> dict[str, dict]:
+    """Per-line detector verdict for a page's placed line crops.
+
+    Returns ``{"column_Y/line_NNN": {non_character, glyph_count, ink_ratio}}``,
+    computed with the SAME data_prep.line_filter functions the production detector
+    (predict_lines.detect_nonchar) uses, so the UI and the detector can never
+    disagree. When an offline ``predictions.json`` already carries a
+    ``non_character`` field for the page, those values are reused verbatim for exact
+    parity with that run; otherwise features are computed live (~ms/line, no OCR).
+    """
+    page_dir = storage.DATA_LINES / page_id
+    if not page_dir.is_dir():
+        return {}
+
+    # Exact parity path: reuse a prior predict_lines run if it recorded non_character.
+    pred = _predictions_nonchar(page_id)
+    if pred:
+        return pred
+
+    feats: dict[str, dict] = {}
+    for col_dir in sorted(page_dir.glob("column_*")):
+        col = int(col_dir.name.split("_")[1])
+        for png in sorted(col_dir.glob("line_*.png")):
+            gray = cv2.imread(str(png), cv2.IMREAD_GRAYSCALE)
+            if gray is None:
+                continue
+            feats[f"column_{col}/{png.stem}"] = line_features(gray)
+
+    median = page_median_ink(feats)
+    flags = classify_page(feats)
+    return {
+        line_id: {
+            "non_character": flags[line_id],
+            "glyph_count": f["glyph_count"],
+            "ink_ratio": (f["ink_density"] / median) if median else 0.0,
+        }
+        for line_id, f in feats.items()
+    }
+
+
+def _predictions_nonchar(page_id: str) -> dict[str, dict]:
+    """Reuse a predictions.json ``non_character`` snapshot if one exists, else {}.
+
+    Only returns data when at least one line carries a non_character field (a run
+    from a detector-aware predict_lines pass); a plain prediction set yields {} so
+    the caller recomputes live.
+    """
+    pred_root = storage.DATA_PREDICTIONS
+    if not pred_root.is_dir():
+        return {}
+    for tag_dir in sorted(pred_root.iterdir()):
+        pred_json = tag_dir / page_id / "predictions.json"
+        if not pred_json.exists():
+            continue
+        data = json.loads(pred_json.read_text(encoding="utf-8"))
+        lines = data.get("lines", {})
+        if any("non_character" in v for v in lines.values()):
+            return {
+                lid: {
+                    "non_character": bool(v.get("non_character", False)),
+                    "glyph_count": v.get("glyph_count"),
+                    "ink_ratio": v.get("ink_ratio"),
+                }
+                for lid, v in lines.items()
+            }
+    return {}
 
 
 def _clamp(value: int, lo: int, hi: int) -> int:
