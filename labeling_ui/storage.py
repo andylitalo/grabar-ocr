@@ -3,10 +3,12 @@ storage.py
 Filesystem layer for the labeling tool.
 
 Single source of truth for on-disk paths and label state. Knows the
-`data/lines/page_XXXX_<method>/column_Y/line_NNN.{png,txt}` convention (method in
-{human, auto} — see page_artifact_id and data/README.md), the `rejected/` subdir,
-and the rules that map files to a line's status. No FastAPI imports — pure
-functions, independently testable.
+`data/lines/page_XXXX_<method>/region_NN_<type>/line_NNN.{png,txt}` convention
+(method in {human, auto}; type in {header, single, left, right} — see
+page_artifact_id, region_dirname and data/README.md), the `rejected/` subdir, and
+the rules that map files to a line's status. Legacy `column_N` line dirs are still
+read (back-compat); data_prep.migrate_region_names renames them. No FastAPI
+imports — pure functions, independently testable.
 
 Status model (computed purely from the filesystem):
   - PNG under column_Y/rejected/          -> "rejected"
@@ -77,7 +79,74 @@ def page_pdf_path(n: int) -> Path:
     return DATA_PAGES / f"{n}.pdf"
 
 
+# --- region identity (Phase 6) -----------------------------------------------
+#
+# A page is an ordered list of typed regions, each a line-crop directory named
+# ``region_NN_<type>`` (NN = 2-digit reading order; type in REGION_TYPES). The
+# directory name *is* the region key; every line-id is ``<region_key>/line_NNN``,
+# derived from the actual on-disk dir, so keys stay correct whether a page has
+# migrated region dirs or legacy ``column_N`` dirs. Reading order = NN ascending;
+# within a two-column band, ``left`` (smaller NN) before ``right``.
+#
+# Back-compat: ``column_1`` reads as ``(1, "left")``, ``column_2`` as
+# ``(2, "right")``; the one-shot data_prep.migrate_region_names renames the dirs
+# and repoints stored prediction/truth keys so both halves stay in sync.
+
+REGION_TYPES = ("header", "single", "left", "right")
+
+_REGION_DIR_RE = re.compile(r"^region_(\d{2})_(header|single|left|right)$")
+_LEGACY_COL_RE = re.compile(r"^column_(\d+)$")
+
+
+def region_dirname(order: int, rtype: str) -> str:
+    """Directory/region key for a region, e.g. (1, 'left') -> 'region_01_left'."""
+    if rtype not in REGION_TYPES:
+        raise ValueError(f"Unknown region type: {rtype!r}")
+    return f"region_{order:02d}_{rtype}"
+
+
+def parse_region(dirname: str) -> tuple[int, str] | None:
+    """(order, type) for a region or legacy column dir name, or None if neither."""
+    m = _REGION_DIR_RE.match(dirname)
+    if m:
+        return int(m.group(1)), m.group(2)
+    m = _LEGACY_COL_RE.match(dirname)
+    if m:
+        col = int(m.group(1))
+        return col, ("left" if col == 1 else "right" if col == 2 else "single")
+    return None
+
+
+def region_dir(page_id: str, region: str) -> Path:
+    """Line-crop directory for a region key (``region_NN_<type>`` or ``column_N``)."""
+    return DATA_LINES / page_id / region
+
+
+def region_dirs_in(page_dir: Path) -> list[Path]:
+    """Region/column line-crop dirs under a page dir, in reading order (NN ascending).
+
+    Path-based sibling of ``list_region_dirs`` so data_prep scripts that work on an
+    arbitrary lines dir share the one ordering/back-compat rule (region_* then any
+    legacy column_*). The single source for global line reading order.
+    """
+    if not page_dir.is_dir():
+        return []
+    dirs = [d for d in page_dir.iterdir() if d.is_dir() and parse_region(d.name)]
+    return sorted(dirs, key=lambda d: (parse_region(d.name)[0], d.name))
+
+
+def list_region_dirs(page_id: str) -> list[Path]:
+    """Region/column line-crop dirs for a page id, in reading order (NN ascending)."""
+    return region_dirs_in(DATA_LINES / page_id)
+
+
+def line_id_for(region: str, line: int) -> str:
+    """Canonical line-id: ``<region_key>/line_NNN`` (e.g. 'region_01_left/line_007')."""
+    return f"{region}/line_{line:03d}"
+
+
 def column_dir(page_id: str, col: int) -> Path:
+    """Back-compat shim: legacy ``column_N`` line dir (pre-region naming)."""
     return DATA_LINES / page_id / f"column_{col}"
 
 
@@ -169,7 +238,7 @@ def _line_numbers(col_dir: Path) -> list[int]:
 
 
 def page_predictions(page_id: str, model_tag: str = DEFAULT_MODEL_TAG) -> tuple[str | None, dict]:
-    """(model_tag, {'column_Y/line_NNN': pred_text}) read from data/predictions/.
+    """(model_tag, {'<region_key>/line_NNN': pred_text}) read from data/predictions/.
 
     Prefers the configured tag; falls back to any tag dir that has predictions
     for this page. Returns (None, {}) when no prediction set exists — the app
@@ -188,21 +257,22 @@ def page_predictions(page_id: str, model_tag: str = DEFAULT_MODEL_TAG) -> tuple[
     return None, {}
 
 
-def line_prediction(page_id: str, col: int, line: int, model_tag: str = DEFAULT_MODEL_TAG) -> str | None:
+def line_prediction(page_id: str, region: str, line: int, model_tag: str = DEFAULT_MODEL_TAG) -> str | None:
     """Stored prediction for one line, or None if no prediction set covers it."""
     _, preds = page_predictions(page_id, model_tag)
-    return preds.get(f"column_{col}/line_{line:03d}")
+    return preds.get(line_id_for(region, line))
 
 
 def list_lines(page_id: str) -> dict:
-    """Flat, ordered list of all lines across columns, with status + text.
+    """Flat, ordered list of all lines across regions, with status + text.
 
-    The flat order (column_1 lines, then column_2, ...) matches the order
-    `build_phase4_dataset.flatten_columns` will later use.
+    The flat order (region_01 lines, then region_02, ...) is the global reading
+    order and matches what `build_phase4_dataset.flatten_columns` uses.
 
-    When an offline prediction set exists for the page (data/predictions/<tag>/),
-    each line also carries `pred` (the model's read-only prediction) and, for
-    labeled lines, its `cer` against the stored text. The app never runs the model.
+    Each line carries its canonical `line_id` (``<region_key>/line_NNN``), the
+    `region` dir name and `region_type`. When an offline prediction set exists
+    (data/predictions/<tag>/), each line also carries `pred` and, for labeled
+    lines, its `cer` against the stored text. The app never runs the model.
     """
     page_dir = DATA_LINES / page_id
     lines: list[dict] = []
@@ -210,13 +280,15 @@ def list_lines(page_id: str) -> dict:
     model_tag, preds = page_predictions(page_id)
 
     if page_dir.is_dir():
-        for col_dir in sorted(page_dir.glob("column_*")):
-            col = int(col_dir.name.split("_")[1])
-            for line in _line_numbers(col_dir):
-                status = line_status(col_dir, line)
+        for region_path in list_region_dirs(page_id):
+            region = region_path.name
+            order, rtype = parse_region(region)
+            for line in _line_numbers(region_path):
+                status = line_status(region_path, line)
                 counts[status] += 1
-                text = line_text(col_dir, line)
-                pred = preds.get(f"column_{col}/line_{line:03d}")
+                text = line_text(region_path, line)
+                lid = line_id_for(region, line)
+                pred = preds.get(lid)
                 line_cer = (
                     cer(text.strip(), pred)
                     if pred is not None and status == "labeled" and text.strip()
@@ -225,14 +297,17 @@ def list_lines(page_id: str) -> dict:
                 lines.append(
                     {
                         "index": len(lines),
-                        "column": col,
+                        "region": region,
+                        "region_type": rtype,
+                        "column": order,
                         "line": line,
+                        "line_id": lid,
                         "status": status,
                         "text": text,
                         "pred": pred,
                         "cer": line_cer,
                         "image_url": (
-                            f"/api/page/{page_id}/column/{col}/line/{line}/image"
+                            f"/api/page/{page_id}/region/{region}/line/{line}/image"
                         ),
                     }
                 )
@@ -302,9 +377,9 @@ def save_nonchar_truth(
 
 
 def has_auto_lines(n: int) -> bool:
-    """True if page n has any auto-sliced line crops (page_XXXX_auto/column_*/)."""
-    auto_dir = DATA_LINES / page_artifact_id(n, METHOD_AUTO)
-    return auto_dir.is_dir() and any(auto_dir.glob("column_*/line_*.png"))
+    """True if page n has any auto-sliced line crops (page_XXXX_auto/<region>/)."""
+    auto_id = page_artifact_id(n, METHOD_AUTO)
+    return any(any(d.glob("line_*.png")) for d in list_region_dirs(auto_id))
 
 
 def nonchar_verified(page_id: str) -> bool:
@@ -330,22 +405,27 @@ def page_status(page_id: str) -> str:
     return "done"
 
 
+def page_has_labels(page_id: str) -> bool:
+    """True if any region of the page already holds a labeled/empty .txt (re-crop guard)."""
+    return any(any(d.glob("line_*.txt")) for d in list_region_dirs(page_id))
+
+
 def column_has_labels(page_id: str, col: int) -> bool:
-    """True if the column already holds any labeled/empty .txt (re-crop guard)."""
+    """Back-compat: True if legacy column ``col`` holds any labeled/empty .txt."""
     col_dir = column_dir(page_id, col)
     if not col_dir.is_dir():
         return False
     return any(col_dir.glob("line_*.txt"))
 
 
-def line_image_path(page_id: str, col: int, line: int) -> Path | None:
+def line_image_path(page_id: str, region: str, line: int) -> Path | None:
     """Path to a line's PNG, whether placed or rejected; None if absent."""
-    col_dir = column_dir(page_id, col)
+    rdir = region_dir(page_id, region)
     stem = f"line_{line:03d}.png"
-    placed = col_dir / stem
+    placed = rdir / stem
     if placed.exists():
         return placed
-    rejected = col_dir / "rejected" / stem
+    rejected = rdir / "rejected" / stem
     if rejected.exists():
         return rejected
     return None
@@ -362,30 +442,30 @@ def _unreject(col_dir: Path, line: int) -> None:
         shutil.move(str(rejected_png), str(col_dir / stem))
 
 
-def apply_label(page_id: str, col: int, line: int, action: str, text: str = "") -> dict:
+def apply_label(page_id: str, region: str, line: int, action: str, text: str = "") -> dict:
     """Mutate the filesystem to reflect a label action; return new status + text.
 
     action ∈ {"submit", "empty", "reject"}. Every action first un-rejects so
     state transitions out of "rejected" are automatic and self-cleaning.
     """
-    col_dir = column_dir(page_id, col)
+    rdir = region_dir(page_id, region)
     stem = f"line_{line:03d}"
-    txt = col_dir / f"{stem}.txt"
+    txt = rdir / f"{stem}.txt"
 
     if action == "reject":
-        rejected_dir = col_dir / "rejected"
+        rejected_dir = rdir / "rejected"
         rejected_dir.mkdir(parents=True, exist_ok=True)
-        png = col_dir / f"{stem}.png"
+        png = rdir / f"{stem}.png"
         if png.exists():
             shutil.move(str(png), str(rejected_dir / f"{stem}.png"))
         txt.unlink(missing_ok=True)
         return {"status": "rejected", "text": ""}
 
-    _unreject(col_dir, line)
+    _unreject(rdir, line)
 
     if action == "submit":
         txt.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
-        return {"status": line_status(col_dir, line), "text": line_text(col_dir, line)}
+        return {"status": line_status(rdir, line), "text": line_text(rdir, line)}
 
     if action == "empty":
         txt.write_text("", encoding="utf-8")

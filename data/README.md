@@ -14,11 +14,32 @@ A page is **human** iff it has hand transcriptions under `data/lines`; otherwise
 it is **auto**. The tag propagates through the whole derived tree:
 
 ```
-data/columns/page_0487_auto_column_1.png            column crop
-data/columns/boxes/page_0487_auto.json              committed column boxes (+ deskew angle)
-data/lines/page_0487_auto/column_1/line_001.png     line crop (+ sibling .txt when transcribed)
-data/predictions/<model_tag>/page_0487_auto/...      OCR / LLM-corrected text for those lines
+data/columns/page_0487_auto_region_01_left.png         column crop
+data/columns/boxes/page_0487_auto.json                 committed region boxes (+ deskew angle)
+data/lines/page_0487_auto/region_01_left/line_001.png  line crop (+ sibling .txt when transcribed)
+data/predictions/<model_tag>/page_0487_auto/...        OCR / LLM-corrected text for those lines
 ```
+
+### Region convention (Phase 6)
+
+Each per-page line tree is an **ordered list of typed regions** rather than a fixed
+two columns. A region is a line-crop dir named `region_NN_<type>`:
+
+```
+region_NN     two-digit reading order (01, 02, ...) — sorts into global reading order
+<type>        header | single | left | right
+```
+
+Reading order = `NN` ascending; within a two-column band, `left` (smaller `NN`)
+before `right`. A plain two-column page is `region_01_left` / `region_02_right`; a
+page with a heading over two columns is `region_01_header` / `region_02_left` /
+`region_03_right`. Every **line-id** is `<region_key>/line_NNN` (e.g.
+`region_02_left/line_007`), derived from the on-disk dir name, and is the key used
+in `predictions.json` and `nonchar_truth.json`. `storage.region_dirname(order,
+type)` constructs the name; `storage.region_dirs_in(page_dir)` / `parse_region` are
+the single source for reading order and the legacy back-compat rule. Legacy
+`column_N` dirs are still read (`column_1`→`(1, left)`, `column_2`→`(2, right)`)
+until `data_prep/migrate_region_names.py` renames them.
 
 A prediction path therefore reads end-to-end: *"`scale_500` model, run on the
 `auto`-sliced lines of page 487."* `storage.page_artifact_id(n, method)` is the one
@@ -58,3 +79,10 @@ their paths, so tagging them would add churn with no separation benefit:
 (dry-run by default; `--execute` to apply). Each run logs every move to
 `data/backups/method_tag_migration_<ts>.json` for reversal. It is idempotent —
 artifacts already ending in `_human`/`_auto` are skipped.
+
+`data_prep/migrate_region_names.py` performs the one-time `column_N` →
+`region_NN_<type>` rename (Phase 6): line dirs, column PNGs, prediction per-line
+dirs, and the `lines` keys inside `predictions.json` / `nonchar_truth.json`.
+Dry-run by default; `--execute` applies and logs to
+`data/backups/region_rename_<ts>.json`. Idempotent — only `column_N` names/keys
+are matched, so `region_*` artifacts are skipped.

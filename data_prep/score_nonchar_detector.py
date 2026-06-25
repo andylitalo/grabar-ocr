@@ -102,11 +102,14 @@ def _f1(tp: int, fp: int, fn: int) -> float | None:
 
 
 def _line_png(page_id: str, line_id: str) -> Path | None:
-    """Resolve column_Y/line_NNN -> the placed crop path, if present."""
-    col_dir, stem = line_id.split("/", 1)
-    col = int(col_dir.split("_")[1])
+    """Resolve ``<region_key>/line_NNN`` -> the placed crop path, if present.
+
+    The region key is the line-id's first segment (region_NN_<type> or legacy
+    column_N), passed straight to line_image_path.
+    """
+    region, stem = line_id.split("/", 1)
     line = int(stem.split("_")[1])
-    return storage.line_image_path(page_id, col, line)
+    return storage.line_image_path(page_id, region, line)
 
 
 def write_csv(pages: list[dict], path: Path) -> None:

@@ -158,13 +158,13 @@ def line_nonchar_verdicts(page_id: str) -> dict[str, dict]:
         return pred
 
     feats: dict[str, dict] = {}
-    for col_dir in sorted(page_dir.glob("column_*")):
-        col = int(col_dir.name.split("_")[1])
-        for png in sorted(col_dir.glob("line_*.png")):
+    for region_dir in storage.list_region_dirs(page_id):
+        region = region_dir.name
+        for png in sorted(region_dir.glob("line_*.png")):
             gray = cv2.imread(str(png), cv2.IMREAD_GRAYSCALE)
             if gray is None:
                 continue
-            feats[f"column_{col}/{png.stem}"] = line_features(gray)
+            feats[f"{region}/{png.stem}"] = line_features(gray)
 
     median = page_median_ink(feats)
     flags = classify_page(feats)
@@ -210,22 +210,41 @@ def _clamp(value: int, lo: int, hi: int) -> int:
     return max(lo, min(value, hi))
 
 
+def _default_region_types(count: int) -> list[str]:
+    """Region types for the legacy box flow when none are given explicitly.
+
+    Two boxes are a left/right column pair; one box is a single-column band.
+    The region annotator (Phase 6 UI) supplies explicit types for other shapes.
+    """
+    if count == 2:
+        return ["left", "right"]
+    if count == 1:
+        return ["single"]
+    return ["single"] * count
+
+
 def crop_columns_and_lines(
     n: int,
     columns: list[dict],
     do_deskew: bool = True,
     padding: int = 4,
     method: str = storage.METHOD_HUMAN,
+    region_types: list[str] | None = None,
 ) -> list[dict]:
-    """Crop each column from the page render and segment it into line PNGs.
+    """Crop each region from the page render and segment it into line PNGs.
 
-    Each rectangle is in full-resolution page pixels. Column i (1-based) is
-    written to data/columns/{artifact_id}_column_{i}.png, then crop_lines() fills
-    data/lines/{artifact_id}/column_{i}/, where artifact_id = page_XXXX_{method}
-    ("human" via the UI, "auto" via auto_slice). Returns per-column line counts.
-    The render the page is cropped from is method-independent (one deskewed cache).
+    Each rectangle is in full-resolution page pixels, in reading order. Region i
+    (1-based) of type ``region_types[i-1]`` is written to
+    data/columns/{artifact_id}_region_NN_<type>.png, then crop_lines() fills
+    data/lines/{artifact_id}/region_NN_<type>/, where artifact_id = page_XXXX_{method}
+    ("human" via the UI, "auto" via auto_slice). ``region_types`` defaults to
+    left/right for two boxes (a plain two-column page) or single for one. Returns
+    per-region line counts. The render is method-independent (one deskewed cache).
     """
     page_id = storage.page_artifact_id(n, method)
+    types = region_types if region_types is not None else _default_region_types(len(columns))
+    if len(types) != len(columns):
+        raise ValueError(f"region_types ({len(types)}) must match columns ({len(columns)})")
     render_path = render_page(n)
     page = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
     if page is None:
@@ -235,7 +254,7 @@ def crop_columns_and_lines(
     storage.DATA_COLUMNS.mkdir(parents=True, exist_ok=True)
     results: list[dict] = []
 
-    for i, box in enumerate(columns, start=1):
+    for i, (box, rtype) in enumerate(zip(columns, types), start=1):
         x1 = _clamp(int(box["x1"]), 0, w)
         y1 = _clamp(int(box["y1"]), 0, h)
         x2 = _clamp(int(box["x2"]), 0, w)
@@ -249,14 +268,17 @@ def crop_columns_and_lines(
             # residual per-column skew (bounded), never a large rotation.
             crop, _ = deskew_page(crop, max_abs_angle=_RESIDUAL_MAX_ANGLE)
 
-        column_png = storage.DATA_COLUMNS / f"{page_id}_column_{i}.png"
+        region = storage.region_dirname(i, rtype)
+        column_png = storage.DATA_COLUMNS / f"{page_id}_{region}.png"
         cv2.imwrite(str(column_png), crop)
 
-        col_dir = storage.column_dir(page_id, i)
+        region_dir = storage.region_dir(page_id, region)
         # Re-crop: clear stale line PNGs (and rejected/) before re-segmenting.
-        if col_dir.exists():
-            shutil.rmtree(col_dir)
-        saved = crop_lines(column_png, col_dir, padding=padding)
-        results.append({"column": i, "line_count": len(saved)})
+        if region_dir.exists():
+            shutil.rmtree(region_dir)
+        saved = crop_lines(column_png, region_dir, padding=padding)
+        results.append(
+            {"region": region, "region_type": rtype, "column": i, "line_count": len(saved)}
+        )
 
     return results

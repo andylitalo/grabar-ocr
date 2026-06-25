@@ -51,6 +51,7 @@ from data_prep.line_filter import (  # noqa: E402
     line_features,
     page_median_ink,
 )
+from labeling_ui.storage import parse_region, region_dirs_in  # noqa: E402
 BASE_ID = "microsoft/trocr-base-printed"
 DEFAULT_CKPT_DIR = REPO / "ml_vision/checkpoints/finetune_phase4_scale_500"
 FROZEN_DIR = REPO / "data/frozen_test_set"
@@ -93,24 +94,28 @@ def collect_frozen() -> list[dict]:
 
 
 def collect_page(page_id: str) -> list[dict]:
-    """Page lines across column_* subdirs (placed crops only, mirrors training)."""
+    """Page lines across region_* subdirs in reading order (placed crops only).
+
+    Line ids are ``<region_key>/line_NNN`` (legacy column_* dirs still read).
+    """
     page_dir = LINES_DIR / page_id
     if not page_dir.is_dir():
         raise SystemExit(f"No such page dir: {page_dir.relative_to(REPO)}")
     targets: list[dict] = []
-    for col_dir in sorted(page_dir.glob("column_*")):
-        col = int(col_dir.name.split("_")[1])
-        for png in sorted(col_dir.glob("line_*.png")):
+    for region_dir in region_dirs_in(page_dir):
+        region = region_dir.name
+        order, _rtype = parse_region(region)
+        for png in sorted(region_dir.glob("line_*.png")):
             targets.append(
                 {
-                    "id": f"column_{col}/{png.stem}",
-                    "column": col,
-                    "rel": f"column_{col}/{png.stem}",
+                    "id": f"{region}/{png.stem}",
+                    "column": order,
+                    "rel": f"{region}/{png.stem}",
                     "png": png,
                 }
             )
     if not targets:
-        raise SystemExit(f"No line_*.png under {page_dir.relative_to(REPO)}/column_*")
+        raise SystemExit(f"No line_*.png under {page_dir.relative_to(REPO)}/<region>")
     return targets
 
 

@@ -133,10 +133,10 @@ def _iou(a: dict, b: dict) -> float:
 
 
 def _gold_line_counts(page_id: str) -> list[int]:
+    """Placed+rejected line counts per region, in reading order (region_* / column_*)."""
     out = []
-    for i in (1, 2):
-        d = storage.column_dir(page_id, i)
-        n = len(list(d.glob("line_*.png"))) if d.is_dir() else 0
+    for d in storage.region_dirs_in(storage.DATA_LINES / page_id):
+        n = len(list(d.glob("line_*.png")))
         rej = d / "rejected"
         n += len(list(rej.glob("line_*.png"))) if rej.is_dir() else 0
         out.append(n)

@@ -3,12 +3,13 @@ Assembles data/phase4_dataset/ from every labeled page, with no hand-editing.
 
 Sources (auto-discovered):
   - data/golden/page_XXXX/   flat (line_NNN.{png,txt} directly in the page dir)
-  - data/lines/page_XXXX/    column subdirs (column_1/, column_2/, ...)
+  - data/lines/page_XXXX/    region subdirs (region_01_left/, region_02_right/, ...;
+                             legacy column_1/, column_2/ still read)
 
 Each page is flattened into a single dir data/phase4_dataset/page_XXXX/ with
-sequential line numbering. Empty .txt files (section markers) are preserved —
-they are excluded from CER at train time. Lines with no .txt (still pending) and
-the labeling tool's column_*/rejected/ crops are skipped.
+sequential line numbering in reading order. Empty .txt files (section markers)
+are preserved — they are excluded from CER at train time. Lines with no .txt
+(still pending) and the labeling tool's <region>/rejected/ crops are skipped.
 
 It then writes an even train/test split across ALL pages (spread by page number,
 so the held-out set covers the whole book rather than a contiguous block) to
@@ -20,9 +21,12 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO))
+from labeling_ui.storage import region_dirs_in  # noqa: E402
 
 GOLDEN_DIR = REPO / "data/golden"
 LINES_DIR = REPO / "data/lines"
@@ -43,7 +47,8 @@ TEST_RATIO = 0.2
 def discover_pages() -> list[tuple[str, Path, str]]:
     """Find every labeled page. Returns (page_name, src_dir, kind) tuples.
 
-    kind is "flat" (lines directly in the dir) or "columns" (column_* subdirs).
+    kind is "flat" (lines directly in the dir) or "columns" (region_* / column_*
+    subdirs, flattened in reading order).
     """
     # Keyed by base page id (page_XXXX, suffix stripped) so a page present in both
     # data/golden and data/lines dedups to one source, and so only the human-labeled
@@ -61,7 +66,7 @@ def discover_pages() -> list[tuple[str, Path, str]]:
             found[base_id(src.name)] = (base_id(src.name), src, "flat")
     for src in sorted(LINES_DIR.glob("page_*_human")):
         if src.is_dir():
-            kind = "columns" if any(src.glob("column_*")) else "flat"
+            kind = "columns" if region_dirs_in(src) else "flat"
             found[base_id(src.name)] = (base_id(src.name), src, kind)
     return [found[name] for name in sorted(found)]
 
@@ -88,15 +93,16 @@ def copy_flat(src_dir: Path, dst_dir: Path) -> int:
 
 
 def flatten_columns(src_page_dir: Path, dst_dir: Path) -> int:
-    """Merge column_1, column_2, ... into one flat dir with sequential numbering.
+    """Merge region_01, region_02, ... into one flat dir with sequential numbering.
 
-    The column_*/rejected/ subdirs are not globbed (top-level only), so rejected
-    crops are excluded automatically.
+    Regions are visited in reading order (region_dirs_in); legacy column_* dirs
+    are still read. The <region>/rejected/ subdirs are not globbed (top-level
+    only), so rejected crops are excluded automatically.
     """
     dst_dir.mkdir(parents=True, exist_ok=True)
     counter = 1
-    for col_dir in sorted(src_page_dir.glob("column_*")):
-        for png in sorted(col_dir.glob("line_*.png")):
+    for region_dir in region_dirs_in(src_page_dir):
+        for png in sorted(region_dir.glob("line_*.png")):
             if _copy_pair(png, dst_dir, f"line_{counter:03d}"):
                 counter += 1
     return counter - 1

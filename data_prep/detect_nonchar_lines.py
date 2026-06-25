@@ -47,28 +47,30 @@ BORDERLINE_PER_PAGE = 5  # highest-ink unflagged lines shown to expose the margi
 
 
 def discover_pages() -> list[str]:
-    """All page ids under data/lines/ that have a column_*/ subdir."""
+    """All page ids under data/lines/ that have a region_*/ (or legacy column_*) subdir."""
     if not storage.DATA_LINES.is_dir():
         return []
     pages = []
     for d in sorted(storage.DATA_LINES.iterdir()):
-        if d.is_dir() and any(d.glob("column_*")):
+        if d.is_dir() and storage.region_dirs_in(d):
             pages.append(d.name)
     return pages
 
 
 def page_line_crops(page_id: str) -> list[tuple[str, int, Path]]:
-    """(line_id, column, png) for placed line crops, in reading order.
+    """(line_id, order, png) for placed line crops, in reading order.
 
-    Mirrors predict_lines.collect_page: placed crops only (not rejected/), sorted
-    column_1 then column_2, so the gate sees exactly what OCR would.
+    Mirrors predict_lines.collect_page: placed crops only (not rejected/), visited
+    in region reading order, so the gate sees exactly what OCR would. line_id is
+    ``<region_key>/line_NNN``; legacy column_* dirs still read.
     """
     out: list[tuple[str, int, Path]] = []
     page_dir = storage.DATA_LINES / page_id
-    for col_dir in sorted(page_dir.glob("column_*")):
-        col = int(col_dir.name.split("_")[1])
-        for png in sorted(col_dir.glob("line_*.png")):
-            out.append((f"column_{col}/{png.stem}", col, png))
+    for region_dir in storage.region_dirs_in(page_dir):
+        region = region_dir.name
+        order, _rtype = storage.parse_region(region)
+        for png in sorted(region_dir.glob("line_*.png")):
+            out.append((f"{region}/{png.stem}", order, png))
     return out
 
 

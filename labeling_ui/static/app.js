@@ -19,7 +19,10 @@ const state = {
   autoPageId: null,     // page_XXXX_auto, set when entering verify mode
 };
 
-const lineKey = (l) => `column_${l.column}/line_${String(l.line).padStart(3, "0")}`;
+// Canonical line-id is supplied by the backend (`<region_key>/line_NNN`); fall
+// back to legacy column form only if an older payload lacks it.
+const lineKey = (l) =>
+  l.line_id || `column_${l.column}/line_${String(l.line).padStart(3, "0")}`;
 
 const $ = (id) => document.getElementById(id);
 
@@ -500,7 +503,7 @@ async function doLabel(action) {
   const text = $("line-text").value;
   const res = await api(
     "POST",
-    `/api/page/${state.pageId}/column/${l.column}/line/${l.line}/label`,
+    `/api/page/${state.pageId}/region/${l.region}/line/${l.line}/label`,
     { action, text }
   );
   l.status = res.status;

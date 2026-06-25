@@ -47,7 +47,7 @@ class LabelRequest(BaseModel):
 
 
 class NoncharTruthRequest(BaseModel):
-    # "column_Y/line_NNN" -> "empty" (non-character) | "character" (real Grabar)
+    # "<region_key>/line_NNN" -> "empty" (non-character) | "character" (real Grabar)
     verdicts: dict[str, str]
 
 
@@ -121,16 +121,14 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
 
     page_id = storage.page_artifact_id(n)
-    if not req.force:
-        labeled = [i for i in (1, 2) if storage.column_has_labels(page_id, i)]
-        if labeled:
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    f"{page_id} already has labels in column(s) {labeled}. "
-                    "Re-cropping will discard them. Resend with force=true to proceed."
-                ),
-            )
+    if not req.force and storage.page_has_labels(page_id):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"{page_id} already has labeled lines. "
+                "Re-cropping will discard them. Resend with force=true to proceed."
+            ),
+        )
 
     columns = [b.model_dump() for b in req.columns]
     results = pipeline.crop_columns_and_lines(
@@ -158,7 +156,7 @@ def get_lines(page_id: str) -> dict:
     truth = storage.load_nonchar_truth(page_id)
     truth_lines = (truth or {}).get("lines", {})
     for line in info["lines"]:
-        line_id = f"column_{line['column']}/line_{line['line']:03d}"
+        line_id = line["line_id"]
         v = verdicts.get(line_id)
         if v is not None:
             line["non_character"] = v["non_character"]
@@ -216,20 +214,20 @@ def submit_nonchar_truth(page_id: str, req: NoncharTruthRequest) -> dict:
     }
 
 
-@app.get("/api/page/{page_id}/column/{col}/line/{line}/image")
-def get_line_image(page_id: str, col: int, line: int) -> FileResponse:
-    path = storage.line_image_path(page_id, col, line)
+@app.get("/api/page/{page_id}/region/{region}/line/{line}/image")
+def get_line_image(page_id: str, region: str, line: int) -> FileResponse:
+    path = storage.line_image_path(page_id, region, line)
     if path is None:
         raise HTTPException(status_code=404, detail="Line image not found")
     return FileResponse(path, media_type="image/png")
 
 
-@app.post("/api/page/{page_id}/column/{col}/line/{line}/label")
-def label_line(page_id: str, col: int, line: int, req: LabelRequest) -> dict:
+@app.post("/api/page/{page_id}/region/{region}/line/{line}/label")
+def label_line(page_id: str, region: str, line: int, req: LabelRequest) -> dict:
     if req.action not in ("submit", "empty", "reject"):
         raise HTTPException(status_code=400, detail=f"Unknown action: {req.action}")
-    result = storage.apply_label(page_id, col, line, req.action, req.text)
-    return {"page_id": page_id, "column": col, "line": line, **result}
+    result = storage.apply_label(page_id, region, line, req.action, req.text)
+    return {"page_id": page_id, "region": region, "line": line, **result}
 
 
 # --- static frontend ---------------------------------------------------------
