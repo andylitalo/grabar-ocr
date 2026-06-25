@@ -20,7 +20,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from data_prep.column_detector import detect_columns  # noqa: E402
+from data_prep.column_detector import detect_columns, detect_regions  # noqa: E402
 from data_prep.deskew import deskew_page, estimate_skew_angle  # noqa: E402
 
 
@@ -79,8 +79,113 @@ def test_blank_page_is_deferred() -> None:
     print("blank page deferred + zero skew  OK")
 
 
+# --- Phase 6 region cases ----------------------------------------------------
+
+
+def _fill_text(page, x0, x1, y0, y1, *, pitch=46, bar_h=30, bar_w=24, val=40) -> None:
+    """Draw staggered text-like bars (word units) filling a rectangle."""
+    for row, y in enumerate(range(y0, y1, pitch)):
+        offset = (row * 13) % 40
+        for x in range(x0 + offset, x1 - bar_w, 40):
+            cv2.rectangle(page, (x, y), (x + bar_w, y + bar_h), val, -1)
+
+
+def _two_columns(page, *, lx=(128, 736), rx=(864, 1472), y0=210, y1=1990) -> None:
+    _fill_text(page, lx[0], lx[1], y0, y1)
+    _fill_text(page, rx[0], rx[1], y0, y1)
+
+
+def _edge_ink(binary, box) -> int:
+    """Foreground pixels lying on a box's four border lines (the no-clip signal)."""
+    x1, y1, x2, y2 = box["x1"], box["y1"], box["x2"], box["y2"]
+    x2c, y2c = min(x2, binary.shape[1] - 1), min(y2, binary.shape[0] - 1)
+    top = binary[y1, x1:x2c]
+    bot = binary[y2c, x1:x2c]
+    left = binary[y1:y2c, x1]
+    right = binary[y1:y2c, x2c]
+    return int((top > 0).sum() + (bot > 0).sum() + (left > 0).sum() + (right > 0).sum())
+
+
+def test_frame_is_stripped_from_boxes() -> None:
+    page = np.full((2200, 1600), 255, np.uint8)
+    # full rectangular frame in the outer margin
+    cv2.rectangle(page, (40, 40), (1560, 2160), 0, 6)
+    _two_columns(page)
+    regions, diag = detect_regions(page)
+    assert diag["confident"], diag.get("reason")
+    assert [r["type"] for r in regions] == ["left", "right"]
+    # every box strictly inside the frame, with no frame ink on its edges
+    binary = page < 128
+    for r in regions:
+        assert r["x1"] > 46 and r["x2"] < 1554, r
+        assert r["y1"] > 46 and r["y2"] < 2154, r
+        assert _edge_ink(binary.astype(np.uint8) * 255, r) == 0, ("frame ink on edge", r)
+    print(f"frame stripped: {[ (r['x1'],r['x2']) for r in regions ]}  OK")
+
+
+def test_central_divider_excluded() -> None:
+    page = np.full((2200, 1600), 255, np.uint8)
+    _two_columns(page)
+    # vertical divider rule in the gutter centre
+    cv2.rectangle(page, (797, 210), (803, 1990), 0, -1)
+    regions, diag = detect_regions(page)
+    assert diag["confident"], diag.get("reason")
+    assert [r["type"] for r in regions] == ["left", "right"]
+    left, right = regions
+    # the divider column (x≈800) is inside NEITHER box
+    assert not (left["x1"] <= 800 <= left["x2"]), left
+    assert not (right["x1"] <= 800 <= right["x2"]), right
+    assert left["x2"] <= right["x1"], "columns overlap"
+    print(f"divider excluded: left.x2={left['x2']} right.x1={right['x1']}  OK")
+
+
+def test_marginal_number_excluded() -> None:
+    page = np.full((2200, 1600), 255, np.uint8)
+    # body columns shifted in; a footnote number sits in the far-left margin with a
+    # clear gap from the body so it is a separate (short) projection run.
+    _two_columns(page, lx=(180, 740), rx=(870, 1430))
+    _fill_text(page, 40, 95, 980, 1080)  # marginal note digits
+    regions, diag = detect_regions(page)
+    assert diag["confident"], diag.get("reason")
+    assert [r["type"] for r in regions] == ["left", "right"]
+    left = regions[0]
+    assert left["x1"] > 110, ("marginal number pulled into left column", left)
+    print(f"marginalia excluded: left.x1={left['x1']}  OK")
+
+
+def test_header_band_detected_before_columns() -> None:
+    page = np.full((2200, 1600), 255, np.uint8)
+    # a large-type single-column heading at the top, set off by a gap
+    _fill_text(page, 300, 1300, 110, 230, pitch=70, bar_h=56, bar_w=44)
+    _two_columns(page, y0=420, y1=2040)
+    regions, diag = detect_regions(page)
+    assert diag["confident"], diag.get("reason")
+    assert [r["type"] for r in regions] == ["header", "left", "right"], [r["type"] for r in regions]
+    assert [r["order"] for r in regions] == [1, 2, 3]
+    # header sits above the columns
+    assert regions[0]["y2"] <= regions[1]["y1"], "header overlaps body band"
+    print(f"header detected: body_lh={diag.get('body_line_height')}  OK")
+
+
+def test_single_column_page_is_confident() -> None:
+    page = np.full((2200, 1600), 255, np.uint8)
+    _fill_text(page, 220, 1380, 210, 1990)
+    regions, diag = detect_regions(page)
+    assert diag["confident"], diag.get("reason")
+    assert [r["type"] for r in regions] == ["single"], [r["type"] for r in regions]
+    # a single-column page no longer force-splits or defers
+    boxes, cdiag = detect_columns(page)
+    assert not cdiag["confident"] and boxes == [], "single page must not pose as two columns"
+    print(f"single column confident: x=({regions[0]['x1']},{regions[0]['x2']})  OK")
+
+
 if __name__ == "__main__":
     test_deskew_recovers_applied_skew()
     test_detect_two_columns_splits_at_gutter()
     test_blank_page_is_deferred()
+    test_frame_is_stripped_from_boxes()
+    test_central_divider_excluded()
+    test_marginal_number_excluded()
+    test_header_band_detected_before_columns()
+    test_single_column_page_is_confident()
     print("\nAll synthetic column-slicing tests passed.")

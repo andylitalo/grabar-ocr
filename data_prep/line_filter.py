@@ -46,18 +46,49 @@ def _binarize(gray: np.ndarray) -> np.ndarray:
     return b
 
 
+# A tall component is admitted as a display capital only if it is a *large* glyph
+# with a letter-like bbox fill (extent = area / (cw*ch) — strokes leave most of the
+# bbox empty; a solid bar fills it). _MIN_DISPLAY_CAP_PX separates true display
+# type (page_0560 heading caps ≈ 48–54 px tall) from the small flecks / accent
+# fragments / degraded marks that fill a SHORT crop's height (≤ ~20 px) and must
+# stay rejected. Calibrated on the Phase A labeled crops at the 300-DPI render
+# scale (data/_labeling_work renders); revisit alongside the header line-height
+# multiplier in the Phase 6 gate calibration (validate_columns --check regions).
+_GLYPH_EXTENT_MIN = 0.20
+_GLYPH_EXTENT_MAX = 0.70
+_MIN_DISPLAY_CAP_PX = 30
+
+
 def is_glyph(cw: int, ch: int, area: int, col_w: int, col_h: int) -> bool:
     """True if a connected component is plausibly a single glyph (not a rule/ornament/frame).
 
     This is the single source of truth shared with data_prep.validate_columns,
     which aliases this function so the two never diverge.
+
+    Display-capital fix (Phase 6): a tall component (ch > 0.5·col_h) is no longer
+    blanket-rejected — in a tightly-cropped heading a large display capital
+    naturally spans most of the crop height. It is accepted when it is a *large*,
+    letter-like component: not spanning the region *width* (a rule / ornament band /
+    frame), not an extreme aspect (a rule or frame line), at least
+    ``_MIN_DISPLAY_CAP_PX`` tall (true display type, not a short-crop fleck), and
+    with a stroke-like bbox fill. This rescues large headings (e.g. page_0560
+    "ԵՕԹՆԵՐԵԱԿ", glyph 0 -> 13) without re-admitting ornament/divider bands. The
+    rule is strictly a *superset* of the old one (it only ever accepts more), so no
+    previously-counted real glyph is lost. (Thin/chopped real text — page_0080,
+    page_0440 — is a line-slicing artifact, not separable here, and is left to the
+    slicing phase.)
     """
     if area < 20:
         return False
-    if cw > 0.5 * col_w or ch > 0.5 * col_h:
-        return False  # spans much of the region — rule / ornament / frame
     if cw > 8 * ch or ch > 8 * cw:
         return False  # extreme aspect — a horizontal rule or vertical frame line
+    if cw > 0.5 * col_w:
+        return False  # spans the region width — rule / ornament band / frame
+    if ch > 0.5 * col_h:
+        # Tall: a display capital (keep) or a short-crop fleck / vertical mark (drop).
+        extent = area / float(cw * ch) if cw and ch else 1.0
+        if ch < _MIN_DISPLAY_CAP_PX or not (_GLYPH_EXTENT_MIN <= extent <= _GLYPH_EXTENT_MAX):
+            return False
     return True
 
 
