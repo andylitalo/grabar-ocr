@@ -1,0 +1,163 @@
+"""
+Pipeline orchestrator — chains the four stages for a set of page numbers and writes
+the run artifacts.
+
+Three of the four stages run in-process in the base venv (crop/slice/correct). OCR
+is the only stage that crosses an interpreter boundary: it needs torch, which lives
+only in ``.venv_ml``, so it is launched as a per-page subprocess against that
+interpreter directly (NOT ``uv run`` — see predict_lines.py's docstring on why uv
+re-syncs the wrong venv). The base-venv process never imports torch.
+
+Stages that already wrote their output (baseline predictions.json, corrected
+predictions.json) are reused unless ``force`` — re-runs are fast and never re-spend
+LLM tokens or re-load the OCR model needlessly.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+
+from pipeline import artifacts, scoring
+from pipeline.config import PipelineConfig
+from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS
+
+REPO = Path(__file__).resolve().parents[1]
+PRED_BASE = REPO / "data" / "predictions"
+ML_PYTHON = REPO / ".venv_ml" / "bin" / "python"
+
+
+@dataclass
+class RunResult:
+    config: PipelineConfig
+    run_dir: Path
+    pages: list[int]
+    page_ids: list[str] = field(default_factory=list)
+    deferred: list[dict] = field(default_factory=list)
+    merged_doc: Path | None = None
+    scorecard: Path | None = None
+    needs_labeling: list[str] = field(default_factory=list)
+    per_page: dict[str, Path] = field(default_factory=dict)
+    scores: list[dict] = field(default_factory=list)
+
+
+def _run_ocr(page_id: str, ocr_impl, *, force: bool) -> tuple[str, bool]:
+    """Run stage-3 OCR in .venv_ml via subprocess. Returns (baseline_tag, reused)."""
+    tag = ocr_impl.meta["tag"]
+    script = ocr_impl.meta["script"]
+    out_json = PRED_BASE / tag / page_id / "predictions.json"
+    if out_json.exists() and not force:
+        return tag, True
+    cmd = [str(ML_PYTHON), script, "--page", page_id, "--model-tag", tag]
+    subprocess.run(cmd, cwd=REPO, check=True)
+    return tag, False
+
+
+def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
+    """Per-line rows joining baseline OCR (ocr_beam, non_character) with corrected text.
+
+    Baseline predictions.json keys are line-ids in reading order (insertion order),
+    so the rows come out in global reading order. When correct_tag == ocr_tag (the
+    "none" corrector) the corrected text is the baseline beam itself.
+    """
+    base = json.loads((PRED_BASE / ocr_tag / page_id / "predictions.json").read_text(encoding="utf-8"))["lines"]
+    corr_path = PRED_BASE / correct_tag / page_id / "predictions.json"
+    corr = (
+        json.loads(corr_path.read_text(encoding="utf-8"))["lines"]
+        if correct_tag != ocr_tag and corr_path.exists()
+        else base
+    )
+
+    rows: list[dict] = []
+    for idx, (line_id, b) in enumerate(base.items()):
+        corrected = corr.get(line_id, {}).get("pred_beam", b.get("pred_beam", ""))
+        rows.append(
+            {
+                "index": idx,
+                "line_id": line_id,
+                "region": line_id.split("/")[0] if "/" in line_id else "",
+                "column": b.get("column"),
+                "non_character": bool(b.get("non_character")),
+                "ocr_beam": b.get("pred_beam", ""),
+                "corrected": corrected,
+                "ref": None,
+                "cer": None,
+            }
+        )
+    return rows
+
+
+def run(pages: list[int], config: PipelineConfig, *, force: bool = False) -> RunResult:
+    crop_impl = CROPPERS[config.crop.impl]
+    slice_impl = SLICERS[config.slice.impl]
+    ocr_impl = OCR_ENGINES[config.ocr.impl]
+    correct_impl = CORRECTORS[config.correct.impl]
+    correct_params = {**correct_impl.meta.get("params", {}), **config.correct.params}
+
+    slug = config.slug()
+    run_dir = artifacts.RUNS_DIR / slug
+    result = RunResult(config=config, run_dir=run_dir, pages=list(pages))
+
+    pages_rows: list[tuple[str, list[dict]]] = []
+    ocr_tag = ocr_impl.meta["tag"]
+    correct_tag = ocr_tag
+
+    for n in pages:
+        crop = crop_impl.run(n, force=force, **config.crop.params)
+        page_id = crop["page_id"]
+        if crop["deferred"]:
+            result.deferred.append({"page_id": page_id, "reason": crop["reason"]})
+            print(f"  DEFER {page_id}: {crop['reason']}")
+            continue
+
+        ocr_tag, ocr_reused = _run_ocr(page_id, ocr_impl, force=force)
+        corr = correct_impl.run(page_id, baseline_tag=ocr_tag, force=force, **correct_params)
+        correct_tag = corr["correct_tag"]
+
+        rows = collect_rows(page_id, ocr_tag, correct_tag)
+        score = scoring.score_page(page_id, rows)
+        if score:
+            result.scores.append(score)
+        label_msg = scoring.detect_needs_labeling(page_id)
+        if label_msg:
+            result.needs_labeling.append(label_msg)
+
+        page_path = artifacts.write_lines_json(
+            run_dir, page_id, rows,
+            config_slug=slug, ocr_tag=ocr_tag, correct_tag=correct_tag, score=score,
+        )
+        result.per_page[page_id] = page_path
+        result.page_ids.append(page_id)
+        pages_rows.append((page_id, rows))
+
+    result.merged_doc = artifacts.write_merged_doc(run_dir, pages_rows)
+    if result.scores:
+        json_path, _ = artifacts.write_scorecard(run_dir, result.scores)
+        result.scorecard = json_path
+
+    manifest = {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "config_slug": slug,
+        "config": {
+            "crop": {"impl": config.crop.impl, "slug": crop_impl.slug, "doc": crop_impl.doc, "params": config.crop.params},
+            "slice": {"impl": config.slice.impl, "slug": slice_impl.slug, "doc": slice_impl.doc},
+            "ocr": {"impl": config.ocr.impl, "slug": ocr_impl.slug, "doc": ocr_impl.doc, "tag": ocr_tag},
+            "correct": {"impl": config.correct.impl, "slug": correct_impl.slug, "doc": correct_impl.doc,
+                        "tag": correct_tag, "params": correct_params},
+        },
+        "pages": list(pages),
+        "page_ids": result.page_ids,
+        "deferred": result.deferred,
+        "needs_labeling": result.needs_labeling,
+        "scored": bool(result.scores),
+        "overall_cer": (
+            round(sum(s["cer"] * s["n_scored"] for s in result.scores)
+                  / sum(s["n_scored"] for s in result.scores), 4)
+            if result.scores else None
+        ),
+    }
+    artifacts.write_run_json(run_dir, manifest)
+    return result

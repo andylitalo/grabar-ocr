@@ -62,6 +62,9 @@ logs/
 # Experiment tracking (W&B offline runs)
 wandb/
 
+# Pipeline run outputs (derived artifacts; per-line JSON + merged docs + scorecards)
+runs/
+
 # Data (large files go to GCS)
 data/
 *.pdf
