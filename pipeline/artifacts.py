@@ -136,26 +136,58 @@ def write_translated_doc(
     return out
 
 
+_GUIDE_REL = "docs/human_completion_guide.md"
+
+
 def write_worklist(
-    run_dir: Path, deferred: list[dict], needs_labeling: list[str]
+    run_dir: Path,
+    deferred: list[dict],
+    needs_labeling: list[str],
+    failed: list[dict] | None = None,
 ) -> Path:
     """Human worklist → needs_human.md: pages that need manual attention.
 
-    Deferred pages (detector not confident) need region annotation before they can
-    be digitized; needs-labeling pages are digitized but lack ground truth for CER.
-    Both route to the labeling UI.
+    Three sections, any of which may be empty:
+      - **Deferred crops** — the detector wasn't confident on the layout (header /
+        single-column / odd page); annotate regions in the labeling UI before OCR.
+      - **Failed pages** — an isolated crop/OCR/API error during the batch (the run
+        continued past them); inspect the reason, fix, and re-run.
+      - **Needs labeling** — digitized, but no ground truth, so CER wasn't scored.
+
+    Every row points at ``docs/human_completion_guide.md`` for the step-by-step fix.
     """
+    failed = failed or []
     run_dir.mkdir(parents=True, exist_ok=True)
     lines = ["# Pages needing human attention", ""]
-    if not deferred and not needs_labeling:
+    lines.append(f"Step-by-step instructions: [`{_GUIDE_REL}`](../../{_GUIDE_REL})")
+    lines.append("")
+    if not deferred and not needs_labeling and not failed:
         lines.append("None — every requested page was digitized and has ground truth.")
+        out = run_dir / "needs_human.md"
+        out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return out
+
     if deferred:
-        lines.append("## Deferred — annotate regions in the labeling UI before digitizing")
+        lines.append("## Deferred crops — annotate regions in the labeling UI before digitizing")
         lines.append("")
         lines.append("| page | reason | action |")
         lines.append("| --- | --- | --- |")
         for d in deferred:
-            lines.append(f"| {d['page_id']} | {d['reason']} | annotate regions in the labeling UI, then re-run |")
+            lines.append(
+                f"| {d['page_id']} | {d['reason']} | draw region min/max boxes + pick a type "
+                f"in the labeling UI, then re-run — see the guide |"
+            )
+        lines.append("")
+    if failed:
+        lines.append("## Failed pages — isolated error during the batch (run continued)")
+        lines.append("")
+        lines.append("| page | stage | reason | action |")
+        lines.append("| --- | --- | --- | --- |")
+        for f in failed:
+            lines.append(
+                f"| {f.get('page_id', f.get('n'))} | {f.get('stage', '')} | {f.get('reason', '')} "
+                f"| inspect, fix, re-run `pipeline.cli --pages {f.get('n')}` — see the guide |"
+            )
         lines.append("")
     if needs_labeling:
         lines.append("## Needs labeling — digitized, but no ground truth (CER not scored)")

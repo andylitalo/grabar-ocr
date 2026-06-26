@@ -26,9 +26,12 @@ def run_pages(
     ``runs/<slug>/translations/<model>/``.
 
     Returns ``{run_dir, config_slug, merged_doc, merged_text, scorecard,
-    overall_cer, needs_labeling, deferred, per_page, translations, translated_doc,
-    translation_cost, worklist}``. ``merged_text`` is the combined Grabar document
-    (all text lines, all pages).
+    overall_cer, needs_labeling, deferred, failed, credit_exhausted, stopped_at,
+    per_page, translations, translated_doc, translation_cost, worklist}``.
+    ``merged_text`` is the combined Grabar document (all text lines, all pages).
+    ``failed``/``credit_exhausted``/``stopped_at`` report per-page fault isolation:
+    pages skipped on an isolated error, whether the batch stopped on credit
+    exhaustion, and the page number it stopped at.
     """
     cfg = config or DEFAULT_CONFIG
     result = run(pages, cfg, translate=translate, force=force)
@@ -47,6 +50,9 @@ def run_pages(
         "overall_cer": overall_cer,
         "needs_labeling": result.needs_labeling,
         "deferred": result.deferred,
+        "failed": result.failed,
+        "credit_exhausted": result.credit_exhausted,
+        "stopped_at": result.stopped_at,
         "per_page": {k: str(v) for k, v in result.per_page.items()},
         "translations": {n: str(p) for n, p in result.translations.items()},
         "translated_doc": str(result.translated_doc) if result.translated_doc else None,

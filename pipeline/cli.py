@@ -69,6 +69,10 @@ def main() -> None:
         print("\nDeferred (need manual annotation):")
         for d in res["deferred"]:
             print(f"  {d['page_id']}: {d['reason']}")
+    if res["failed"]:
+        print("\nFailed (isolated errors — batch continued):")
+        for f in res["failed"]:
+            print(f"  {f.get('page_id', f.get('n'))} ({f.get('stage', '')}): {f.get('reason', '')}")
     if res["scorecard"]:
         print(f"\nScorecard: {res['scorecard']}  (overall CER {res['overall_cer']})")
     if res["needs_labeling"]:
@@ -76,7 +80,25 @@ def main() -> None:
         for msg in res["needs_labeling"]:
             print(f"  • {msg}")
     if res["worklist"]:
-        print(f"\nWorklist: {res['worklist']}")
+        print(f"\nWorklist: {res['worklist']}  (see docs/human_completion_guide.md)")
+
+    # ── Summary ──────────────────────────────────────────────────────────────
+    digitized = len(res["per_page"])
+    translated = len(res["translations"])
+    deferred = len(res["deferred"])
+    failed = len(res["failed"])
+    cost = res["translation_cost"] or 0.0
+    print(
+        f"\nSummary: digitized {digitized}/{len(pages)} · translated {translated} · "
+        f"deferred {deferred} · failed {failed} · cost ${cost:.4f}"
+    )
+
+    if res["credit_exhausted"]:
+        stop = res["stopped_at"]
+        print(
+            f"\n{'⛔' * 1} Gemini credits exhausted at page {stop} — refill, then re-run "
+            f"the SAME command (idempotent, resumes where it stopped)."
+        )
 
 
 if __name__ == "__main__":
