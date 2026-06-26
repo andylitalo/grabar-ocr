@@ -84,3 +84,29 @@ CORRECTORS: dict[str, StageImpl] = {
         stages.correct_none,
     ),
 }
+
+# ── Stage 5: Grabar → English translation ────────────────────────────────────
+# Orthogonal to the 4-stage slug: the same corrected page can be translated by any
+# of these into runs/<slug>/translations/<translator-slug>/ without re-running OCR
+# or correction. The model is baked into meta["params"]; "none" skips translation
+# entirely (default — current pipeline behaviour is unchanged).
+TRANSLATORS: dict[str, StageImpl] = {
+    "gemini": StageImpl(
+        "gemini", "base", "gemini-3.1-pro Grabar→English (validated console default)",
+        stages.translate_llm,
+        meta={"params": {"cli_model": "gemini-3.1-pro"}},
+    ),
+    "opus": StageImpl(
+        "opus", "base", "claude-opus-4-8 Grabar→English",
+        stages.translate_llm,
+        meta={"params": {"cli_model": "claude-opus-4-8"}},
+    ),
+    "sonnet": StageImpl(
+        "sonnet", "base", "claude-sonnet-4-6 Grabar→English",
+        stages.translate_llm,
+        meta={"params": {"cli_model": "claude-sonnet-4-6"}},
+    ),
+    "none": StageImpl(
+        "none", "base", "no translation — Grabar text is the final output", None,
+    ),
+}

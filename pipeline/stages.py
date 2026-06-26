@@ -106,3 +106,71 @@ def correct_llm(
 def correct_none(page_id: str, *, baseline_tag: str, **params) -> dict:
     """No LLM pass — the corrected text is the baseline OCR beam itself."""
     return {"correct_tag": baseline_tag, "skipped": True}
+
+
+# ── Stage 5: Grabar → English translation (base venv) ────────────────────────
+def translate_llm(
+    page_id: str,
+    *,
+    correct_tag: str,
+    page_text: str,
+    cli_model: str = "gemini-3.1-pro",
+    force: bool = False,
+    **params,
+) -> dict:
+    """Translate one corrected Grabar page into English via pipeline.translate.
+
+    Orthogonal post-stage: the same corrected text can be translated by several
+    models without re-running OCR/correction. The cache is **co-located with the
+    digitized text it came from** — ``data/predictions/<correct_tag>/<page_id>/
+    translation_<short>.{txt,json}`` — so each translation sits next to the exact
+    Grabar it translates and is reused (no API spend) unless ``force``. The JSON
+    sidecar records source correct_tag, model, token usage, cost, and timestamp.
+
+    Returns ``{translation_slug, text, cost, reused}``.
+    """
+    import json
+    from datetime import datetime, timezone
+
+    from pipeline import translate
+    from pipeline.orchestrator import PRED_BASE
+
+    short = translate.lc.MODELS[cli_model][2]
+    out_dir = PRED_BASE / correct_tag / page_id
+    txt_path = out_dir / f"translation_{short}.txt"
+    json_path = out_dir / f"translation_{short}.json"
+
+    if txt_path.exists() and json_path.exists() and not force:
+        return {
+            "translation_slug": short,
+            "text": txt_path.read_text(encoding="utf-8"),
+            "cost": json.loads(json_path.read_text(encoding="utf-8")).get("cost", 0.0),
+            "reused": True,
+        }
+
+    res = translate.translate_page(page_text, cli_model)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    txt_path.write_text(res["text"] + "\n", encoding="utf-8")
+    json_path.write_text(
+        json.dumps(
+            {
+                "page_id": page_id,
+                "correct_tag": correct_tag,
+                "cli_model": cli_model,
+                "api_model": res["api_model"],
+                "modelshort": short,
+                "usage": {"input_tokens": res["in_tokens"], "output_tokens": res["out_tokens"]},
+                "cost": res["cost"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return {
+        "translation_slug": short,
+        "text": res["text"],
+        "cost": res["cost"],
+        "reused": False,
+    }

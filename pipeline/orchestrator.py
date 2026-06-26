@@ -23,7 +23,7 @@ from pathlib import Path
 
 from pipeline import artifacts, scoring
 from pipeline.config import PipelineConfig
-from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS
+from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS, TRANSLATORS
 
 REPO = Path(__file__).resolve().parents[1]
 PRED_BASE = REPO / "data" / "predictions"
@@ -42,6 +42,10 @@ class RunResult:
     needs_labeling: list[str] = field(default_factory=list)
     per_page: dict[str, Path] = field(default_factory=dict)
     scores: list[dict] = field(default_factory=list)
+    translations: dict[int, Path] = field(default_factory=dict)
+    translated_doc: Path | None = None
+    translation_cost: float = 0.0
+    worklist: Path | None = None
 
 
 def _run_ocr(page_id: str, ocr_impl, *, force: bool) -> tuple[str, bool]:
@@ -90,18 +94,29 @@ def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
     return rows
 
 
-def run(pages: list[int], config: PipelineConfig, *, force: bool = False) -> RunResult:
+def run(
+    pages: list[int],
+    config: PipelineConfig,
+    *,
+    translate: str = "none",
+    force: bool = False,
+) -> RunResult:
     crop_impl = CROPPERS[config.crop.impl]
     slice_impl = SLICERS[config.slice.impl]
     ocr_impl = OCR_ENGINES[config.ocr.impl]
     correct_impl = CORRECTORS[config.correct.impl]
     correct_params = {**correct_impl.meta.get("params", {}), **config.correct.params}
 
+    translate_impl = TRANSLATORS[translate]
+    translate_params = translate_impl.meta.get("params", {})
+    do_translate = translate != "none"
+
     slug = config.slug()
     run_dir = artifacts.RUNS_DIR / slug
     result = RunResult(config=config, run_dir=run_dir, pages=list(pages))
 
     pages_rows: list[tuple[str, list[dict]]] = []
+    pages_translated: list[tuple[int, str]] = []
     ocr_tag = ocr_impl.meta["tag"]
     correct_tag = ocr_tag
 
@@ -133,7 +148,26 @@ def run(pages: list[int], config: PipelineConfig, *, force: bool = False) -> Run
         result.page_ids.append(page_id)
         pages_rows.append((page_id, rows))
 
+        if do_translate:
+            # Same per-page block fed to merged.md: text lines only, reading order.
+            page_text = "\n".join(r["corrected"] for r in rows if not r["non_character"])
+            tr = translate_impl.run(
+                page_id, correct_tag=correct_tag, page_text=page_text,
+                force=force, **translate_params,
+            )
+            result.translation_cost += tr["cost"]
+            tr_path = artifacts.write_translation(run_dir, translate_impl.slug, n, tr["text"])
+            result.translations[n] = tr_path
+            pages_translated.append((n, tr["text"]))
+            note = " (reused)" if tr["reused"] else f" (${tr['cost']:.4f})"
+            print(f"  TRANSLATE {page_id} -> {tr_path.name}{note}")
+
     result.merged_doc = artifacts.write_merged_doc(run_dir, pages_rows)
+    if do_translate and pages_translated:
+        result.translated_doc = artifacts.write_translated_doc(
+            run_dir, translate_impl.slug, pages_translated
+        )
+    result.worklist = artifacts.write_worklist(run_dir, result.deferred, result.needs_labeling)
     if result.scores:
         json_path, _ = artifacts.write_scorecard(run_dir, result.scores)
         result.scorecard = json_path
@@ -147,7 +181,10 @@ def run(pages: list[int], config: PipelineConfig, *, force: bool = False) -> Run
             "ocr": {"impl": config.ocr.impl, "slug": ocr_impl.slug, "doc": ocr_impl.doc, "tag": ocr_tag},
             "correct": {"impl": config.correct.impl, "slug": correct_impl.slug, "doc": correct_impl.doc,
                         "tag": correct_tag, "params": correct_params},
+            "translate": {"impl": translate, "slug": translate_impl.slug, "doc": translate_impl.doc,
+                          "params": translate_params},
         },
+        "translation_cost": round(result.translation_cost, 6) if do_translate else None,
         "pages": list(pages),
         "page_ids": result.page_ids,
         "deferred": result.deferred,

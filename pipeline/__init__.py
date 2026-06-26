@@ -22,7 +22,7 @@ for _p in (_REPO, _REPO / "ml_vision" / "scripts"):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from pipeline.api import run_pages  # noqa: E402
+from pipeline.api import digitize_and_translate, run_pages  # noqa: E402
 from pipeline.config import DEFAULT_CONFIG, PipelineConfig, StageSpec  # noqa: E402
 
-__all__ = ["run_pages", "PipelineConfig", "StageSpec", "DEFAULT_CONFIG"]
+__all__ = ["run_pages", "digitize_and_translate", "PipelineConfig", "StageSpec", "DEFAULT_CONFIG"]

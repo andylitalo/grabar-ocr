@@ -16,7 +16,7 @@ import argparse
 
 from pipeline.api import run_pages
 from pipeline.config import PipelineConfig, StageSpec
-from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS
+from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS, TRANSLATORS
 
 
 def _parse_pages(args: argparse.Namespace) -> list[int]:
@@ -37,6 +37,8 @@ def main() -> None:
     ap.add_argument("--slice", default="projection", choices=list(SLICERS))
     ap.add_argument("--ocr", default="trocr-scale500", choices=list(OCR_ENGINES))
     ap.add_argument("--correct", default="gemini-minimal-edit", choices=list(CORRECTORS))
+    ap.add_argument("--translate", default="none", choices=list(TRANSLATORS),
+                    help="Translate each page to English (default: none)")
     ap.add_argument("--force", action="store_true", help="Re-run stages even if outputs exist")
     args = ap.parse_args()
 
@@ -47,8 +49,9 @@ def main() -> None:
         ocr=StageSpec(args.ocr),
         correct=StageSpec(args.correct),
     )
-    print(f"Pipeline [{config.slug()}] over pages {pages}\n")
-    res = run_pages(pages, config, force=args.force)
+    print(f"Pipeline [{config.slug()}] over pages {pages}"
+          f"{f' + translate:{args.translate}' if args.translate != 'none' else ''}\n")
+    res = run_pages(pages, config, translate=args.translate, force=args.force)
 
     print(f"\nRun dir : {res['run_dir']}")
     print(f"Merged  : {res['merged_doc']}")
@@ -56,6 +59,12 @@ def main() -> None:
         print("Pages   :")
         for page_id, path in res["per_page"].items():
             print(f"  {page_id} -> {path}")
+    if res["translations"]:
+        print(f"\nTranslations [{args.translate}]:")
+        for n, path in res["translations"].items():
+            print(f"  page_{n} -> {path}")
+        print(f"  combined : {res['translated_doc']}")
+        print(f"  cost     : ${res['translation_cost']:.4f} total")
     if res["deferred"]:
         print("\nDeferred (need manual annotation):")
         for d in res["deferred"]:
@@ -66,6 +75,8 @@ def main() -> None:
         print("\n⚠ No ground truth — CER not scored. To enable scoring:")
         for msg in res["needs_labeling"]:
             print(f"  • {msg}")
+    if res["worklist"]:
+        print(f"\nWorklist: {res['worklist']}")
 
 
 if __name__ == "__main__":

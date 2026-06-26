@@ -106,6 +106,68 @@ def write_scorecard(run_dir: Path, scores: list[dict]) -> tuple[Path, Path]:
     return json_path, md_path
 
 
+def write_translation(run_dir: Path, translator_slug: str, n: int, text: str) -> Path:
+    """One page's English translation → translations/<translator_slug>/page_<n>.txt.
+
+    Filename uses the user-facing page NUMBER (n), matching the existing console
+    files. A subdir per translator keeps models from clobbering one another, so the
+    same run can hold gemini/opus/sonnet translations side by side.
+    """
+    out_dir = run_dir / "translations" / translator_slug
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"page_{n}.txt"
+    out.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
+    return out
+
+
+def write_translated_doc(
+    run_dir: Path, translator_slug: str, pages_text: list[tuple[int, str]]
+) -> Path:
+    """Combined English document → translations/<translator_slug>/translated.md.
+
+    ``## page_<n>`` headers, page-number order — the translation counterpart to
+    merged.md.
+    """
+    out_dir = run_dir / "translations" / translator_slug
+    out_dir.mkdir(parents=True, exist_ok=True)
+    blocks = [f"## page_{n}\n\n{text.rstrip(chr(10))}" for n, text in pages_text]
+    out = out_dir / "translated.md"
+    out.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
+    return out
+
+
+def write_worklist(
+    run_dir: Path, deferred: list[dict], needs_labeling: list[str]
+) -> Path:
+    """Human worklist → needs_human.md: pages that need manual attention.
+
+    Deferred pages (detector not confident) need region annotation before they can
+    be digitized; needs-labeling pages are digitized but lack ground truth for CER.
+    Both route to the labeling UI.
+    """
+    run_dir.mkdir(parents=True, exist_ok=True)
+    lines = ["# Pages needing human attention", ""]
+    if not deferred and not needs_labeling:
+        lines.append("None — every requested page was digitized and has ground truth.")
+    if deferred:
+        lines.append("## Deferred — annotate regions in the labeling UI before digitizing")
+        lines.append("")
+        lines.append("| page | reason | action |")
+        lines.append("| --- | --- | --- |")
+        for d in deferred:
+            lines.append(f"| {d['page_id']} | {d['reason']} | annotate regions in the labeling UI, then re-run |")
+        lines.append("")
+    if needs_labeling:
+        lines.append("## Needs labeling — digitized, but no ground truth (CER not scored)")
+        lines.append("")
+        for msg in needs_labeling:
+            lines.append(f"- {msg}")
+        lines.append("")
+    out = run_dir / "needs_human.md"
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out
+
+
 def write_run_json(run_dir: Path, manifest: dict) -> Path:
     """The run manifest: resolved config, stage docs, tags, pages, deferred, needs_labeling."""
     run_dir.mkdir(parents=True, exist_ok=True)
