@@ -412,8 +412,40 @@ edge-rule-trim).
 prints the deferred worklist (`Needs manual region annotation: …`); the human opens
 those in the labeling UI and annotates regions. Clean pages are sliced headlessly.
 
+## Stock-taking at merge (2026-06-26)
+
+Data migrated to the region convention: `migrate_region_names.py --execute` moved
+126 dirs/PNGs (`column_N → region_NN_<type>`) and repointed 49 prediction/nonchar
+JSON files; reversal log in `data/backups/`. Idempotent; 26 unit tests + all three
+gates PASS on the migrated data.
+
+**Problems RESOLVED:**
+- *False-confident mis-slice (page_0640)* — a header fused atop the columns was
+  sliced as plain two-column, swallowing the header. The purity guard now defers it.
+  This was the only page in the annotated set that the detector got silently wrong.
+- *Rule on the crop edge (page_0160)* — a degraded/dashed bottom rule sat on the
+  left column's bottom edge (would feed a junk "line" to OCR). The edge-rule trim
+  removes it (measured edge run 0.69 → 0.00).
+- *Gate semantics* — the region gate counted safe deferral as failure (7/13). Reframed
+  as the auto-slice gate; now PASS 14/14 (9 auto-sliced OK, 5 deferred, 0 mis-slices).
+- *Divergent layouts in general* (single-column 0522, stacked singles 0523, sandwiched
+  header 0560, bottom-chapter-title 0520) — all safely deferred to manual annotation
+  rather than mis-cropped.
+- *Non-character heading glyph trigger (page_0560)* — the `is_glyph` display-capital
+  fix (glyph 0 → 13) and the header ink-rule exemption are both in place.
+- *Id convention* — legacy `column_N` migrated to ordered/typed `region_NN_<type>`.
+
+**Problems UNRESOLVED / deferred (and why it's acceptable):**
+- *Header auto-cropping (0520/0560/0640)* — not solved; documented negative result.
+  Not required by the chosen workflow (these pages are hand-annotated). Only needed if
+  we later want headers sliced headlessly → CC-redesign go/no-go.
+- *Gate #7 FP→0 as a measured number* — the page_0560 heading FP persists because the
+  page DEFERS (its heading stays in `region_01_left`, so the header ink-exemption can't
+  fire). Closing it needs either header-peel, or a human to annotate 0560's header
+  region in the UI and re-verify. Mechanisms are in place; the number is not claimed.
+- *Push to origin* — branch is unpushed; awaits authorization.
+
 ### Open / next
-- **Header-peel** stays deferred (CC redesign, go/no-go) — only needed if we later
-  want headers auto-cropped rather than hand-annotated. Gate #7 FP→0 still waits on it.
-- Real-`data/` migration to `region_*` (`migrate_region_names.py --execute`) and
-  pushing the branch — both await user authorization.
+- Optionally annotate the 5 deferred pages in the UI to grow the region ground-truth.
+- Header-peel CC redesign — go/no-go, only if headless header cropping is wanted.
+- `git push` the branch when ready.
