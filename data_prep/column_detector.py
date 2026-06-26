@@ -59,10 +59,15 @@ _MIN_HEIGHT_FRAC = 0.50
 # height) are bridged so the comb of per-line runs becomes one body block. Larger
 # gaps (running header / footer set off by extra space) stay separate and trim.
 _BRIDGE_FRAC = 0.025
-# A near-full-width dark row (this fraction of the column width is ink) is a
+# A near-full-width dark row (this fraction of the region/page width is ink) is a
 # decorative horizontal rule. These books bracket the text body with a top and a
 # bottom rule; the body sits between them and the folio number above the top one.
-_RULE_FRAC = 0.80
+# 0.70 catches a rule spanning the text block (~0.78 of full page width) while
+# staying well above any text row (~0.4); calibrated on the real gold pages.
+_RULE_FRAC = 0.70
+# After a frame side is found, push the interior this far past the rule so its
+# anti-aliased edge pixels never leak into a column projection / box border.
+_FRAME_INSET_FRAC = 0.004
 # Rules are looked for only within this fraction of page height from each edge,
 # so a dense text row mid-column can never be mistaken for a rule.
 _RULE_MARGIN_FRAC = 0.40
@@ -208,10 +213,11 @@ def _detect_frame(binary: np.ndarray) -> tuple[int, int, int, int]:
     top = [y for y in range(0, my) if row_frac[y] > _RULE_FRAC]
     bottom = [y for y in range(max(0, h - my), h) if row_frac[y] > _RULE_FRAC]
 
-    ix1 = max(left) + 1 if left else 0
-    ix2 = min(right) if right else w
-    iy1 = max(top) + 1 if top else 0
-    iy2 = min(bottom) if bottom else h
+    inset_x, inset_y = round(_FRAME_INSET_FRAC * w), round(_FRAME_INSET_FRAC * h)
+    ix1 = max(left) + 1 + inset_x if left else 0
+    ix2 = min(right) - inset_x if right else w
+    iy1 = max(top) + 1 + inset_y if top else 0
+    iy2 = min(bottom) - inset_y if bottom else h
     if ix2 - ix1 < 0.3 * w or iy2 - iy1 < 0.3 * h:
         return 0, 0, w, h  # implausible (rule mis-fire) — keep the whole page
     return ix1, iy1, ix2, iy2
@@ -281,6 +287,39 @@ def _band_split(
     return "single", [body], info
 
 
+def _trim_region_y(
+    interior: np.ndarray, top: int, bottom: int, rx1: int, rx2: int
+) -> tuple[int, int]:
+    """Refine a region's [top, bottom) to the body, excluding folio / running header.
+
+    Runs the body-bracketing rule detector and the isolated-folio trim (the old
+    per-column logic) on the region's x-slice within the band, so a folio number or
+    running header sitting above the text — but inside the frame — is dropped from
+    the box. Coordinates are interior-local.
+    """
+    band = interior[top:bottom, rx1:rx2]
+    bh = bottom - top
+    if bh <= 0 or band.shape[1] <= 0:
+        return top, bottom
+    hp = band.sum(axis=1).astype(np.float64) / 255.0
+    hmax = float(hp.max())
+    if hmax <= 0:
+        return top, bottom
+    rows = np.where(hp > 0.05 * hmax)[0]
+    t, b = int(rows[0]), int(rows[-1]) + 1
+    rule_top, rule_bottom = _detect_rules(band, bh)
+    bridge = round(_BRIDGE_FRAC * bh)
+    if rule_top is not None:
+        t = rule_top
+    else:
+        t, _ = _trim_margins(hp, t, b, 0.05 * hmax, bridge)
+    if rule_bottom is not None:
+        b = rule_bottom
+    else:
+        _, b = _trim_margins(hp, t, b, 0.05 * hmax, bridge)
+    return top + t, top + b
+
+
 def detect_regions(
     gray: np.ndarray, *, smooth_frac: float = 0.01, pad_frac: float = _PAD_FRAC
 ) -> tuple[list[dict], dict]:
@@ -339,42 +378,59 @@ def detect_regions(
     ref_lh = float(np.median([p["line_height"] for p in ref_pool if p["line_height"] > 0]) or 0.0)
     diag["body_line_height"] = ref_lh
 
-    # Second pass: emit ordered, typed regions in interior->full coords.
+    # Second pass: emit ordered, typed regions in interior->full coords. Each
+    # region's y-extent is bracketed to the body (folio / running header trimmed)
+    # over its own x-slice, then padded gently within the band + interior.
     regions: list[dict] = []
     n_two = 0
+
+    def _y_bounds(top_i: int, bot_i: int) -> tuple[int, int]:
+        # Pad outward to catch ascender/descender tips that sit above/below the
+        # first/last dense row, bounded by the interior. Bands are separated by
+        # gaps >> y_pad, so this never bleeds into an adjacent band.
+        y1 = max(iy1, iy1 + top_i - y_pad)
+        y2 = min(iy2, iy1 + bot_i + y_pad)
+        return y1, y2
+
     for p in parsed:
-        y1 = max(0, iy1 + p["top"] - y_pad)
-        y2 = min(h, iy1 + p["bottom"] + y_pad)
         if p["kind"] == "two":
             n_two += 1
-            diag.setdefault("gutter_x", ix1 + p["info"]["gutter_x"])
+            if "gutter_x" not in diag:  # expose the first two-column band's gutter
+                diag["gutter_x"] = ix1 + p["info"]["gutter_x"]
+                diag["gutter_val"] = p["info"]["gutter_val"]
+                diag["col_median"] = p["info"]["col_median"]
             (ls, le), (rs, re) = p["extents"]
-            # Inner edges at the body extents (le, rs) exclude the gutter AND any
-            # central divider rule in it; pad each edge but bound it inward — outer
-            # edges never cross the frame (interior), inner edges never cross the
-            # gutter midline (so neither box re-admits the divider).
-            mid = ix1 + (le + rs) // 2
-            left_box = {
-                "type": "left",
-                "x1": max(ix1, ix1 + ls - x_pad),
-                "x2": min(mid, ix1 + le + x_pad),
-                "y1": y1, "y2": y2,
-            }
-            right_box = {
-                "type": "right",
-                "x1": max(mid, ix1 + rs - x_pad),
-                "x2": min(ix2, ix1 + re + x_pad),
-                "y1": y1, "y2": y2,
-            }
-            regions.append(left_box)
-            regions.append(right_box)
+            lt, lb = _trim_region_y(interior, p["top"], p["bottom"], ls, le)
+            rt, rb = _trim_region_y(interior, p["top"], p["bottom"], rs, re)
+            ly1, ly2 = _y_bounds(lt, lb)
+            ry1, ry2 = _y_bounds(rt, rb)
+            # Inner edges: split at the gutter valley (the minimum-ink column → the
+            # cut that crosses the least ink, so no glyph is clipped), UNLESS a
+            # central divider rule sits in the gutter, in which case pull each inner
+            # edge clear of it. A divider is a near-full-height ink column.
+            left_inner = right_inner = ix1 + int(p["info"]["gutter_x"])
+            if rs > le:
+                strip = interior[p["top"]:p["bottom"], le:rs]
+                bh = p["bottom"] - p["top"]
+                gcol = strip.sum(axis=0).astype(np.float64) / 255.0 / max(1, bh)
+                div = np.where(gcol > _RULE_FRAC)[0]
+                if div.size:
+                    left_inner = ix1 + le + int(div.min())
+                    right_inner = ix1 + le + int(div.max()) + 1
+            regions.append({"type": "left",
+                            "x1": max(ix1, ix1 + ls - x_pad), "x2": left_inner,
+                            "y1": ly1, "y2": ly2})
+            regions.append({"type": "right",
+                            "x1": right_inner, "x2": min(ix2, ix1 + re + x_pad),
+                            "y1": ry1, "y2": ry2})
         else:  # single
             (s, e) = p["extents"][0]
-            bx1 = max(ix1, ix1 + s - x_pad)
-            bx2 = min(ix2, ix1 + e + x_pad)
+            st, sb = _trim_region_y(interior, p["top"], p["bottom"], s, e)
+            sy1, sy2 = _y_bounds(st, sb)
             is_header = ref_lh > 0 and p["line_height"] >= _HEADER_HEIGHT_MULT * ref_lh
             regions.append({"type": "header" if is_header else "single",
-                            "x1": bx1, "y1": y1, "x2": bx2, "y2": y2})
+                            "x1": max(ix1, ix1 + s - x_pad), "x2": min(ix2, ix1 + e + x_pad),
+                            "y1": sy1, "y2": sy2})
 
     for i, r in enumerate(regions, start=1):
         r["order"] = i

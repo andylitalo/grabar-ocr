@@ -29,7 +29,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -40,7 +42,7 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from data_prep.column_detector import _binarize, detect_columns  # noqa: E402
+from data_prep.column_detector import _binarize, detect_columns, detect_regions  # noqa: E402
 from data_prep.deskew import _sharpness, deskew_page, estimate_skew_angle  # noqa: E402
 from data_prep.line_cropper import crop_lines  # noqa: E402
 from data_prep.line_filter import is_glyph as _is_glyph  # noqa: E402  (shared glyph discriminator)
@@ -60,6 +62,26 @@ CLIP_PX = 12  # poke beyond this many px = a glyph substantially cut
 GRAZE_PX = 3  # poke beyond this = a minor stroke graze (informational only)
 MAX_GUTTER_FRAC = 0.40  # gutter density / in-column density
 MIN_IOU = 0.92
+
+# --- region gate thresholds (Phase 6; calibrated against the human annotations) --
+# Asymmetric tolerance for min ⊆ detected ⊆ max (gate #4), fit to the first
+# human-annotation batch (see phase_6 doc):
+#   MIN side — a detected edge may fall at most this far SHORT of the tight `min`
+#   box (clipping real text is the real risk, so this is strict; the no-clip glyph
+#   gate is a second guard). Observed worst underrun on clean pages: 12 px.
+REGION_TOL_MIN_PX = 15
+#   MAX side — a detected edge may run this far PAST the loose `max` box. The
+#   detector includes a little more clean margin than the annotator's tight max;
+#   that whitespace carries no frame ink (the 0-frame-edge gate is the real frame
+#   guard), so this side is generous. Observed worst overrun on clean pages: 45 px.
+REGION_TOL_MAX_PX = 55
+# Deskew accuracy (gate #6): |auto angle − human reference-line angle| must be ≤
+# this. Observed worst auto-vs-human residual: 0.32° (page_0080).
+DESKEW_TOL_DEG = 0.35
+# A box border is "on a rule" (frame/divider, gate #1/#2) when its longest
+# contiguous foreground run covers at least this fraction of the border length.
+# Short runs are ordinary text grazing the cut, not a rule.
+EDGE_RULE_FRAC = 0.50
 
 
 def _raw_render(n: int) -> np.ndarray:
@@ -203,24 +225,179 @@ def check_columns(pages: list[int], scratch: Path | None) -> bool:
     return all_ok
 
 
+# --- region gate (Phase 6) ---------------------------------------------------
+
+
+def _reading_order(boxes: list[dict]) -> list[dict]:
+    """Canonical reading order from geometry: bands top-to-bottom, left→right within.
+
+    Boxes that overlap vertically by more than half the shorter box's height share a
+    band (two columns); a full-width header forms its own band. This makes the order
+    independent of how regions were stored (the annotator's saved `order` is unused).
+    """
+    items = sorted(boxes, key=lambda b: b["y1"])
+    bands: list[list[dict]] = []
+    for b in items:
+        bh = b["y2"] - b["y1"]
+        for band in bands:
+            top = min(x["y1"] for x in band)
+            bot = max(x["y2"] for x in band)
+            overlap = min(b["y2"], bot) - max(b["y1"], top)
+            if overlap > 0.5 * min(bh, bot - top):
+                band.append(b)
+                break
+        else:
+            bands.append([b])
+    bands.sort(key=lambda band: min(x["y1"] for x in band))
+    out: list[dict] = []
+    for band in bands:
+        out.extend(sorted(band, key=lambda b: b["x1"]))
+    return out
+
+
+def _longest_edge_run(binary: np.ndarray, box: dict, side: str) -> float:
+    """Longest contiguous foreground fraction along one box border (rule detector)."""
+    x1, y1 = box["x1"], box["y1"]
+    x2 = min(box["x2"], binary.shape[1] - 1)
+    y2 = min(box["y2"], binary.shape[0] - 1)
+    if x2 <= x1 or y2 <= y1:
+        return 0.0
+    line = {
+        "top": binary[y1, x1:x2], "bottom": binary[y2, x1:x2],
+        "left": binary[y1:y2, x1], "right": binary[y1:y2, x2],
+    }[side]
+    mask = line > 0
+    best = run = 0
+    for v in mask:
+        run = run + 1 if v else 0
+        best = max(best, run)
+    return best / max(1, len(mask))
+
+
+def _contains(
+    detected: dict, inner: dict, outer: dict,
+    tol_min: int = REGION_TOL_MIN_PX, tol_max: int = REGION_TOL_MAX_PX,
+) -> tuple[bool, bool]:
+    """(detected ⊇ inner within tol_min, detected ⊆ outer within tol_max), per side."""
+    covers_min = (
+        detected["x1"] <= inner["x1"] + tol_min and detected["y1"] <= inner["y1"] + tol_min
+        and detected["x2"] >= inner["x2"] - tol_min and detected["y2"] >= inner["y2"] - tol_min
+    )
+    within_max = (
+        detected["x1"] >= outer["x1"] - tol_max and detected["y1"] >= outer["y1"] - tol_max
+        and detected["x2"] <= outer["x2"] + tol_max and detected["y2"] <= outer["y2"] + tol_max
+    )
+    return covers_min, within_max
+
+
+def _annotated_pages() -> list[int]:
+    """Page numbers with a human region-schema annotation (data/columns/boxes)."""
+    out: list[int] = []
+    if not storage.DATA_COLUMN_BOXES.is_dir():
+        return out
+    for f in sorted(storage.DATA_COLUMN_BOXES.glob("page_*_human.json")):
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        m = re.match(r"page_(\d+)_human", f.stem)
+        if m and isinstance(d, dict) and "regions" in d and d.get("source") == "human":
+            out.append(int(m.group(1)))
+    return sorted(out)
+
+
+def check_regions(pages: list[int]) -> bool:
+    """Region gate (#1–#6): structure + min/max containment vs human truth, no
+    frame/divider ink on edges, no-clip preserved, deskew within tolerance."""
+    print(f"\n{'page':12} {'det types':22} {'human types':22} "
+          f"{'struct':6} {'min⊆det⊆max':12} {'clip':4} {'edge':5} {'Δdeskew':8} result")
+    all_ok = True
+    checked = 0
+    deltas: list[float] = []
+    for n in pages:
+        page_id = storage.page_artifact_id(n, storage.METHOD_HUMAN)
+        truth = storage.load_regions(page_id)
+        if not truth or not storage.page_pdf_path(n).exists():
+            continue
+        checked += 1
+
+        # Run the detector in the SAME frame the human annotated: the cached
+        # auto-deskew render rotated by the human's manual residual.
+        auto_angle = pipeline.deskew_angle(n)
+        human_angle = float(truth.get("deskew_angle", auto_angle))
+        manual = human_angle - auto_angle
+        gray = cv2.imread(str(pipeline.preview_render(n, manual)), cv2.IMREAD_GRAYSCALE)
+        regions, diag = detect_regions(gray)
+
+        human_boxes = [{**r["max"], "type": r["type"], "min": r["min"], "max": r["max"]}
+                       for r in truth["regions"]]
+        h_order = _reading_order(human_boxes)
+        d_order = _reading_order([dict(r) for r in regions]) if regions else []
+        h_types = [b["type"] for b in h_order]
+        d_types = [b["type"] for b in d_order]
+        struct = d_types == h_types
+
+        # Gate #4: min ⊆ detected ⊆ max (only meaningful when structure matches).
+        contain_ok = struct
+        if struct:
+            for det, hum in zip(d_order, h_order):
+                cmin, cmax = _contains(det, hum["min"], hum["max"])
+                contain_ok &= cmin and cmax
+
+        # Gate #5: no-clip — glyphs a detected edge cuts by > CLIP_PX.
+        binary = _binarize(gray)
+        _, _, stats, _ = cv2.connectedComponentsWithStats((binary > 0).astype(np.uint8), 8)
+        clipped = sum(_clip_count(stats, r, min_outside=CLIP_PX) for r in regions)
+
+        # Gate #1/#2: no frame ink on any edge; no divider ink on a two-column
+        # band's inner edge (a long contiguous run on a border = a rule).
+        edge_rule = 0
+        for r in d_order:
+            for side in ("top", "bottom", "left", "right"):
+                if _longest_edge_run(binary, r, side) >= EDGE_RULE_FRAC:
+                    edge_rule += 1
+
+        # Gate #6: deskew accuracy vs the human reference-line angle.
+        delta = abs(manual)
+        deltas.append(delta)
+
+        ok = struct and contain_ok and clipped <= MAX_CLIPPED and edge_rule == 0 \
+            and delta <= DESKEW_TOL_DEG
+        all_ok &= ok
+        print(f"{page_id:12} {','.join(d_types)[:22]:22} {','.join(h_types)[:22]:22} "
+              f"{'OK' if struct else 'DIFF':6} {'OK' if contain_ok else 'FAIL':12} "
+              f"{clipped:4d} {edge_rule:5d} {delta:7.2f}° {'PASS' if ok else 'FAIL'}")
+
+    worst = max(deltas) if deltas else 0.0
+    print(f"\nRegion gate: {'PASS' if all_ok else 'FAIL'} over {checked} annotated page(s) "
+          f"(struct match, det⊇min −{REGION_TOL_MIN_PX}px & det⊆max +{REGION_TOL_MAX_PX}px, "
+          f"glyphs cut >{CLIP_PX}px ≤ {MAX_CLIPPED}, 0 frame/divider edges, "
+          f"|Δdeskew| ≤ {DESKEW_TOL_DEG}°)")
+    print(f"Deskew: worst auto-vs-human delta = {worst:.2f}° (gate ≤ {DESKEW_TOL_DEG}°).")
+    return all_ok
+
+
 def main() -> None:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
-    parser = argparse.ArgumentParser(description="Validate deskew + column slicing")
-    parser.add_argument("--check", choices=["deskew", "columns", "all"], default="all")
-    parser.add_argument("--pages", help="Comma-separated pages (default: the 12 gold pages)")
+    parser = argparse.ArgumentParser(description="Validate deskew + column / region slicing")
+    parser.add_argument("--check", choices=["deskew", "columns", "regions", "all"], default="all")
+    parser.add_argument("--pages", help="Comma-separated pages (default: gold pages, or "
+                        "the annotated pages for --check regions)")
     parser.add_argument("--scratch", help="Dir for end-to-end line crops (enables line-count column)")
     args = parser.parse_args()
 
-    pages = [int(x) for x in args.pages.split(",")] if args.pages else GOLD_PAGES
     scratch = Path(args.scratch) if args.scratch else None
     if scratch:
         scratch.mkdir(parents=True, exist_ok=True)
 
     ok = True
     if args.check in ("deskew", "all"):
-        ok &= check_deskew(pages)
+        ok &= check_deskew([int(x) for x in args.pages.split(",")] if args.pages else GOLD_PAGES)
     if args.check in ("columns", "all"):
-        ok &= check_columns(pages, scratch)
+        ok &= check_columns([int(x) for x in args.pages.split(",")] if args.pages else GOLD_PAGES, scratch)
+    if args.check in ("regions", "all"):
+        region_pages = [int(x) for x in args.pages.split(",")] if args.pages else _annotated_pages()
+        ok &= check_regions(region_pages)
     raise SystemExit(0 if ok else 1)
 
 

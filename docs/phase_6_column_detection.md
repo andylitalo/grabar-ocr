@@ -247,3 +247,68 @@ small threshold so manual deskew is rarely needed.
 ## Still open
 - **Header line-height threshold** (Q2 ≈1.5×) and the **min↔max tolerance margins** are
   to be calibrated against the first batch of human region annotations, not guessed now.
+
+---
+
+## Implementation findings (2026-06-25)
+
+Commits 1–4 landed on `phase6-column-detection`. Region model + migrator (C1),
+UI annotator (C2), `detect_regions` + `is_glyph` fix (C3), and the
+`validate_columns --check regions` gate + calibration (C4) are built and tested.
+13 pages were human-annotated (min/max + deskew) across the stratified set.
+
+### Calibrated thresholds (fit to the 13-page batch, not guessed)
+- **Frame rule**: `_RULE_FRAC = 0.70` (a rule spanning the text block is ~0.78 of
+  full page width; text rows are ~0.4). `_FRAME_INSET_FRAC = 0.004` clears the
+  rule's anti-aliased edge from the interior.
+- **`is_glyph` display capital**: `_MIN_DISPLAY_CAP_PX = 30`, extent ∈ [0.20, 0.70]
+  — cleanly separates page_0560's 48–54px heading caps from the ≤20px ornament
+  flecks (validated: heading glyph 0→13, 0 ornament re-admits, 0 real-text loss).
+- **Header**: `_HEADER_HEIGHT_MULT = 1.5×` page-body median line height.
+- **Gate #4 containment (asymmetric)**: `det ⊇ min` within **15px** (clipping is the
+  real risk; worst clean underrun 12px), `det ⊆ max` within **55px** (the detector
+  keeps a little more clean margin than the annotator's tight max; worst overrun
+  45px; the 0-frame-edge gate is the real frame guard).
+- **Gate #6 deskew**: `|auto − human| ≤ 0.35°` (worst residual 0.32°, page_0080).
+
+### Gate results
+- **No regression**: old `--check columns` PASSES on all 10 gold pages;
+  `--check deskew` PASSES; 21 unit tests pass.
+- **`--check regions`: 7/13 PASS** — every clean two-column page with intact rules
+  (0040, 0080, 0120, 0201, 0241, 0281, 0321). The y-trim (folio/running-header
+  bracketing) + gutter-valley split + frame strip carry these.
+- **6 fail, all genuine harder layouts** (not threshold issues):
+  - `0160` — **broken/dashed bottom rule** (the same degraded rule Phase A flagged)
+    slips under `_RULE_FRAC` and leaks onto the box edge.
+  - `0520 / 0560 / 0640` — **header fused to the columns with no whitespace gap**;
+    band segmentation can't peel it, so the structure differs (and 0560/0520 defer
+    as "unbalanced"). Needs a **gutter-extent / header-peel** step: within a band,
+    find where the gutter begins vertically and split the full-width top as a
+    header/single sub-band.
+  - `0522` — a small centred text block; the projection grabs the whole interior.
+  - `0523` — three stacked single bands; detector finds one.
+
+### Gate #7 (the FP→0 payoff) — NOT yet achieved; honest status
+The `is_glyph` fix is **necessary but not sufficient** for page_0560:
+- On the existing auto slice the heading now reads **glyph=13** (was 0) — the glyph
+  trigger is gone — **but `ink_ratio = 1.63 > 1.6`, so the independent high-ink
+  rule still flags it non-character.** (The findings doc predicted exactly this.)
+- `detect_regions` currently **defers** page_0560 (sandwiched/overlapping header →
+  "two-column band unbalanced"), so it isn't cleanly re-sliced either.
+Eliminating the page_0560 FP therefore needs **both**: (a) the header-peel so the
+heading is sliced as its own region, and (b) handling the bold-heading high-ink
+case (e.g. exclude detected `header`/`single` text regions from the ornament
+ink-rule, or compute the ink median per region). The full 17-page re-measurement
+additionally needs a **human re-verify pass on the re-sliced pages** (re-slicing
+changes line ids, so the old `nonchar_truth.json` can't be reused).
+
+### Recommended next steps
+1. **Header-peel** (gutter-extent split) — unlocks 0520/0560/0640 structure and is
+   the prerequisite for the page_0560 payoff.
+2. **Ink-rule × region type** — don't apply the ornament high-ink rule to `header`
+   regions (or use a per-region median), to clear the page_0560 heading FP.
+3. Re-slice the 17 Phase A pages, **human re-verify**, re-run
+   `score_nonchar_detector.py` for the real FP→0 number.
+4. Optional: degraded/broken-rule handling (0160), small-block single (0522).
+5. Run `data_prep/migrate_region_names.py --execute` as the real-data cutover once
+   Phase 6 is the active reader (deferred; back-compat covers the interim).
