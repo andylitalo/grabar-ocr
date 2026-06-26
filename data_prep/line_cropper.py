@@ -31,6 +31,36 @@ MERGE_FACTOR = 1.6
 # the smaller flanking peak. Merged Bolorgir lines trough at ~5-40% of the peak;
 # a tall single line (big ascenders/diacritics) has no such deep interior dip.
 TROUGH_DEPTH_FRACTION = 0.6
+# A column inked for more than this fraction of the page height is a vertical frame
+# rule / decorative border, not text — text columns are dark only where glyphs cross
+# them (well under 50% even in a dense column). Such a rule puts an ink floor under
+# EVERY row, so no inter-line gap ever drops below threshold and the whole column
+# fuses into one "line". We blank these columns before projecting (see
+# strip_vertical_rules). 0.7 cleanly separates rules (~100% inked) from text.
+RULE_DARK_FRACTION = 0.7
+_DARK_VALUE = 128
+
+
+def strip_vertical_rules(
+    gray: np.ndarray, dark_fraction: float = RULE_DARK_FRACTION
+) -> np.ndarray:
+    """Blank full-height vertical rules (frame / gutter borders) to background.
+
+    Returns a copy with every column that is dark (< ``_DARK_VALUE``) for more than
+    ``dark_fraction`` of the page height set to white, so the horizontal projection
+    sees true inter-line whitespace instead of the rule's constant ink floor.
+    Returns the input unchanged when no such column exists (the common case — clean
+    columns are untouched, so this never alters line detection on rule-free pages).
+    """
+    h = gray.shape[0]
+    if h == 0:
+        return gray
+    rule_cols = (gray < _DARK_VALUE).sum(axis=0) / h > dark_fraction
+    if not rule_cols.any():
+        return gray
+    out = gray.copy()
+    out[:, rule_cols] = 255
+    return out
 
 
 def horizontal_projection(gray: np.ndarray) -> np.ndarray:
@@ -188,7 +218,10 @@ def crop_lines(
     if image is None:
         raise FileNotFoundError(f"Cannot read: {column_image_path}")
 
-    projection = horizontal_projection(image)
+    # Detect line boundaries on a copy with vertical frame rules removed (else a
+    # full-height border fuses the whole column into one line); crop from the
+    # original image so the saved line keeps its real pixels.
+    projection = horizontal_projection(strip_vertical_rules(image))
     boundaries = find_line_boundaries(projection)
 
     output_dir.mkdir(parents=True, exist_ok=True)
