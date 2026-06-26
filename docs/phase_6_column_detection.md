@@ -312,3 +312,64 @@ changes line ids, so the old `nonchar_truth.json` can't be reused).
 4. Optional: degraded/broken-rule handling (0160), small-block single (0522).
 5. Run `data_prep/migrate_region_names.py --execute` as the real-data cutover once
    Phase 6 is the active reader (deferred; back-compat covers the interim).
+
+## Follow-up findings (2026-06-25, part 2)
+
+### Step 2 (ink-rule × region type) — DONE
+`line_filter.classify_page` no longer applies the ornament high-ink half of the
+rule to `header` regions. The region type is parsed from the line-id's leading
+segment (`region_NN_<type>/line_NNN`) by a local regex (`region_type_of`), so the
+filter stays dependency-free and the exemption is automatic wherever region-tagged
+ids flow. `glyph_count == 0` still applies to every region (a blank/rule line in a
+header is still caught); legacy `column_N` ids carry no type and are never exempt,
+so existing slices are unchanged. New unit tests in `tests/test_nonchar_verify.py`
+cover the parser, `is_high_ink` exemption, and `classify_page` (header dense line
+kept, blank header line flagged, body ornament flagged); the page_0487 parity test
+is unchanged. This is gate #7 mechanism **(b)** — but it only bites once page_0560
+is re-sliced so its heading lives in a `region_NN_header/` dir (the existing
+`nonchar_truth.json` keys are legacy `column_N`, which are not exempt by design).
+
+### Step 1 (header-peel) — attempted, NOT shipped; projection/CC heuristics are insufficient
+Looked directly at the three pages (renders in the worktree): the "headers" are
+**heterogeneous and hard**, not clean full-width bands:
+- **0640** — a *centered* multi-line heading atop clean two columns; the title line
+  is narrow, the subtitle wider, separated from the body by only a small gap (so
+  `_segment_bands` fuses it into the two-column band).
+- **0560** — a centered title **plus a large display letter**, *sandwiched* between
+  two two-column bands and bounded by mid-page horizontal rules; the heading's own
+  inter-line gaps shatter it into several `_segment_bands` pieces.
+- **0520** — a *chapter-ending* centered title embedded in the **lower-left column**
+  with an ornament flourish; not a page-spanning band at all (the human boxed it
+  generously to full width).
+
+Six distinct discriminators were prototyped against all 13 annotated pages (kept in
+the session scratchpad, not committed): (1) wide central gutter strip; (2) windowed
+"two-column test failed ⇒ full"; (3) positive single run spanning >0.7·w across
+center; (4) central-gutter-point occupied (`gval`); (5) central-band channel-min
+occupied; (6) narrow gutter-x strip occupancy; (7) connected-component per-line
+gutter-gap classification. **Every one either missed the centered headers or
+false-positived on the 7 clean two-column gold pages** — because in real Bolorgir
+two-column text the gutter is not clean (punctuation/ascenders poke in, the gutter
+wanders), and the headers are centered/narrow rather than edge-to-edge, so no 1-D
+projection or per-line gutter test separates the two without unacceptable regression
+risk. Shipping such a heuristic would violate the gated rule ("building ahead of
+validation obscures where the real problem is"), so **nothing was changed in
+`column_detector.py`** and the region gate stays 7/13 (no regression; old `--check
+columns` still PASS on all 10 gold pages).
+
+**Conclusion:** header-peel needs a different primitive than projections — most
+likely connected-component **text-line grouping with an explicit column model**
+(fit the two-column gutter from the confidently-two-column rows, then mark lines
+whose glyph clusters straddle that fitted gutter as header/single), and probably a
+few more annotated header pages to calibrate. That is a detector redesign with its
+own regression surface, beyond follow-up polish — flagged for an explicit go/no-go
+rather than started silently.
+
+### Gate #7 (FP→0) status after this round
+Mechanism (b) is in place; mechanism (a) is **blocked** on the header-peel above.
+So page_0560's heading FP is not yet measurably zero: with the page still sliced
+under legacy `column_N` ids (no `header` type), the exemption can't fire, and the
+detector can't re-slice 0560 into a header region. The honest path to the real FP→0
+number is unchanged from step 3 — but it now depends on either (i) the CC-based
+header-peel landing, or (ii) a deliberate decision to re-slice only the pages whose
+headers the detector already separates and re-verify those. No number is claimed.
