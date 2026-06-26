@@ -28,9 +28,11 @@ from data_prep.line_filter import (  # noqa: E402
 from labeling_ui import pipeline, storage  # noqa: E402
 
 # Flag set fixed by data_prep.line_filter on page_0487_auto (see detect_nonchar gate).
+# Region ids since the Phase 6 column_N -> region_NN_<type> migration (the same lines:
+# column_1 -> region_01_left, column_2 -> region_02_right).
 EXPECTED_FLAGGED = {
-    "column_1/line_001", "column_1/line_010", "column_1/line_011",
-    "column_1/line_045", "column_1/line_046", "column_2/line_001",
+    "region_01_left/line_001", "region_01_left/line_010", "region_01_left/line_011",
+    "region_01_left/line_045", "region_01_left/line_046", "region_02_right/line_001",
 }
 
 
@@ -84,7 +86,7 @@ def test_detector_parity_page_0487() -> None:
     v = pipeline.line_nonchar_verdicts("page_0487_auto")
     flagged = {k for k, d in v.items() if d["non_character"]}
     assert flagged == EXPECTED_FLAGGED, f"flag set drifted: {sorted(flagged)}"
-    assert v["column_1/line_009"]["non_character"] is False, "real wrapped word wrongly flagged"
+    assert v["region_01_left/line_009"]["non_character"] is False, "real wrapped word wrongly flagged"
     print("test_detector_parity_page_0487: OK")
 
 
