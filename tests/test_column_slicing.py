@@ -20,7 +20,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from data_prep.column_detector import detect_columns, detect_regions  # noqa: E402
+from data_prep.column_detector import (  # noqa: E402
+    _longest_run_frac,
+    _strip_edge_rule,
+    detect_columns,
+    detect_regions,
+)
 from data_prep.deskew import deskew_page, estimate_skew_angle  # noqa: E402
 
 
@@ -178,6 +183,41 @@ def test_header_band_detected_before_columns() -> None:
     print(f"header detected: body_lh={diag.get('body_line_height')}  OK")
 
 
+def test_fused_header_defers_not_misslices() -> None:
+    """A full-width band fused atop the columns (no separating gap) is NOT a clean
+    two-column page: the gutter-purity guard must DEFER it, never mis-slice as 2-col."""
+    page = np.full((2200, 1600), 255, np.uint8)
+    # a solid full-width heading block crossing the gutter, directly above the body
+    # with no whitespace gap, so band segmentation fuses it into the two-column band
+    cv2.rectangle(page, (200, 210), (1400, 360), 60, -1)
+    _two_columns(page, y0=380, y1=2000)
+    regions, diag = detect_regions(page)
+    assert not diag["confident"], ("should defer", diag.get("reason"))
+    assert "gutter" in diag.get("reason", ""), diag.get("reason")
+    assert regions == []
+    # back-compat path defers too (so auto_slice skips it -> manual annotation)
+    boxes, cdiag = detect_columns(page)
+    assert not cdiag["confident"] and boxes == []
+    print(f"fused header defers: run={diag.get('gutter_run_lh')}× lh  OK")
+
+
+def test_strip_edge_rule_trims_dashed_rule_only() -> None:
+    """The contiguous-run edge trim removes a (degraded) rule on an edge but leaves
+    clean edges and ordinary text untouched."""
+    binary = np.zeros((100, 200), np.uint8)
+    binary[10:14, 20:60] = 255    # a 'word' on the top edge: run 40/200 = 0.2 (kept)
+    binary[97:100, 8:188] = 255    # a rule ON the bottom edge: run 180/200 = 0.9 (trim)
+    y1, y2 = _strip_edge_rule(binary, 0, 0, 200, 100)
+    assert y2 <= 96, f"bottom rule not trimmed (y2={y2})"
+    assert y1 == 0, f"top edge has no rule but was trimmed (y1={y1})"
+    assert _longest_run_frac(binary[min(y2, 99), 0:200] > 0) < 0.5, "edge still a rule"
+    # a box with no edge rule is a no-op
+    clean = np.zeros((100, 200), np.uint8)
+    clean[40:60, 20:60] = 255
+    assert _strip_edge_rule(clean, 0, 0, 200, 100) == (0, 100)
+    print("edge-rule trim: dashed rule removed, clean edges untouched  OK")
+
+
 def test_single_column_page_is_confident() -> None:
     page = np.full((2200, 1600), 255, np.uint8)
     _fill_text(page, 220, 1380, 210, 1990)
@@ -198,5 +238,7 @@ if __name__ == "__main__":
     test_central_divider_excluded()
     test_marginal_number_excluded()
     test_header_band_detected_before_columns()
+    test_fused_header_defers_not_misslices()
+    test_strip_edge_rule_trims_dashed_rule_only()
     test_single_column_page_is_confident()
     print("\nAll synthetic column-slicing tests passed.")

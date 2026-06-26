@@ -86,6 +86,28 @@ _HEADER_HEIGHT_MULT = 1.5
 # A band must cover at least this fraction of interior height to anchor the page
 # body line-height reference (so a one-line heading never sets the reference).
 _BODY_BAND_MIN_FRAC = 0.20
+# Two-column purity guard. A clean two-column gutter is whitespace broken only by
+# short pokes (punctuation, ascenders): the longest contiguous ink run in it stays
+# <= ~0.25x the body line height across the gold pages. A full-width band fused
+# into the two-column region (a heading/footer with no separating whitespace gap,
+# e.g. page_0640 ~9.8x) instead crosses the gutter with a long contiguous run.
+# When the run exceeds this many line heights the page is NOT a clean two-column
+# page and is DEFERRED for manual region annotation rather than mis-sliced — the
+# error asymmetry favours deferral (a wrongly-deferred clean page costs one human
+# annotation; a wrongly-sliced header page silently corrupts data). 0.6 sits well
+# above the clean max (0.25) and far below the divergent case (9.8).
+_GUTTER_PURITY_MAX_LH = 0.6
+# A contiguous horizontal ink run covering at least this fraction of a box's width,
+# sitting on its top/bottom edge, is a (possibly degraded/dashed) decorative rule
+# left on the crop edge — trim the box inward past it. This catches rules that the
+# AVERAGE-ink detector (_RULE_FRAC) misses because a dashed rule's mean ink is below
+# 0.70 even though its longest contiguous run is high (page_0160 bottom rule: run
+# 0.82). Real text never fills half a column width as one unbroken horizontal run,
+# so clean edges are untouched. Mirrors validate_columns.EDGE_RULE_FRAC.
+_EDGE_RULE_FRAC = 0.50
+# A rule is thin: never pull an edge in by more than this fraction of box height
+# (protects real text if the contiguous-run test ever fired on a dense line).
+_EDGE_RULE_MAX_TRIM_FRAC = 0.04
 
 
 def _binarize(gray: np.ndarray) -> np.ndarray:
@@ -287,6 +309,84 @@ def _band_split(
     return "single", [body], info
 
 
+def _gutter_run_frac(
+    band_bin: np.ndarray, le: int, rs: int, gutter_x: int, line_height: float
+) -> float:
+    """Longest contiguous vertical ink run in a two-column band's gutter, in line heights.
+
+    Used by the two-column purity guard. The gutter between two clean columns is
+    whitespace broken only by short pokes (punctuation, ascenders). A full-width
+    band fused into the region (a heading/footer with no separating whitespace gap)
+    crosses the gutter, leaving a long contiguous run. A genuine central divider
+    RULE is excluded first (full-height ink columns) — it is already pulled out of
+    the boxes and is not a sign of divergence. Coordinates are interior-local x;
+    returns 0 when there is no measurable gutter or line height.
+    """
+    bh, w = band_bin.shape
+    if line_height <= 0 or bh <= 0:
+        return 0.0
+    if rs > le + 4:                       # a real gutter gap between the column bodies
+        a, b = le, rs
+    else:                                 # columns abut (gutter filled) — sample a strip
+        hw = max(3, round(0.006 * w))
+        a, b = max(0, gutter_x - hw), min(w, gutter_x + hw + 1)
+    chan = band_bin[:, a:b].astype(np.float64) / 255.0
+    if chan.shape[1] == 0:
+        return 0.0
+    keep = (chan.sum(axis=0) / bh) <= _RULE_FRAC   # drop full-height divider columns
+    if not keep.any():
+        return 0.0
+    occ = (chan[:, keep].sum(axis=1) / int(keep.sum())) > 0.04
+    longest = max((e - s for s, e in _runs(occ)), default=0)
+    return longest / line_height
+
+
+def _longest_run_frac(mask: np.ndarray) -> float:
+    """Longest contiguous True fraction of a 1-D boolean mask."""
+    best = run = 0
+    for v in mask:
+        run = run + 1 if v else 0
+        best = max(best, run)
+    return best / max(1, len(mask))
+
+
+def _strip_edge_rule(
+    binary: np.ndarray, x1: int, y1: int, x2: int, y2: int
+) -> tuple[int, int]:
+    """Pull a box's top/bottom edge inward past a contiguous-run rule sitting on it.
+
+    A decorative rule left on a crop edge lights up most of the edge row as one
+    contiguous run (``>= _EDGE_RULE_FRAC`` of the box width). Real text never does,
+    so a clean edge is a no-op. Trimming is capped at ``_EDGE_RULE_MAX_TRIM_FRAC`` of
+    the box height (a rule is thin) so dense text can never be eaten. Full-page
+    coordinates; only ``y1``/``y2`` change.
+    """
+    h, w = binary.shape
+    bw, bh = x2 - x1, y2 - y1
+    if bw <= 0 or bh <= 0:
+        return y1, y2
+    cap = max(2, int(_EDGE_RULE_MAX_TRIM_FRAC * bh))
+    yb = min(y2, h - 1)                      # clamp into the image before scanning rows
+    trimmed_b = False
+    for _ in range(cap):
+        if yb > y1 and _longest_run_frac(binary[yb, x1:x2] > 0) >= _EDGE_RULE_FRAC:
+            yb -= 1
+            trimmed_b = True
+        else:
+            break
+    new_y2 = yb if trimmed_b else y2         # keep original when no edge rule was found
+    yt = max(y1, 0)
+    trimmed_t = False
+    for _ in range(cap):
+        if yt < new_y2 and _longest_run_frac(binary[yt, x1:x2] > 0) >= _EDGE_RULE_FRAC:
+            yt += 1
+            trimmed_t = True
+        else:
+            break
+    new_y1 = yt if trimmed_t else y1
+    return (new_y1, new_y2) if new_y2 > new_y1 else (y1, y2)
+
+
 def _trim_region_y(
     interior: np.ndarray, top: int, bottom: int, rx1: int, rx2: int
 ) -> tuple[int, int]:
@@ -383,6 +483,7 @@ def detect_regions(
     # over its own x-slice, then padded gently within the band + interior.
     regions: list[dict] = []
     n_two = 0
+    gutter_runs: list[float] = []  # purity guard: longest gutter ink run per two-band
 
     def _y_bounds(top_i: int, bot_i: int) -> tuple[int, int]:
         # Pad outward to catch ascender/descender tips that sit above/below the
@@ -400,6 +501,8 @@ def detect_regions(
                 diag["gutter_val"] = p["info"]["gutter_val"]
                 diag["col_median"] = p["info"]["col_median"]
             (ls, le), (rs, re) = p["extents"]
+            gutter_runs.append(_gutter_run_frac(
+                interior[p["top"]:p["bottom"], :], le, rs, p["info"]["gutter_x"], ref_lh))
             lt, lb = _trim_region_y(interior, p["top"], p["bottom"], ls, le)
             rt, rb = _trim_region_y(interior, p["top"], p["bottom"], rs, re)
             ly1, ly2 = _y_bounds(lt, lb)
@@ -432,6 +535,11 @@ def detect_regions(
                             "x1": max(ix1, ix1 + s - x_pad), "x2": min(ix2, ix1 + e + x_pad),
                             "y1": sy1, "y2": sy2})
 
+    # Final cleanup: trim any degraded/dashed rule left sitting on a box's top or
+    # bottom edge (the average-ink rule detector misses these). No-op on clean edges.
+    for r in regions:
+        r["y1"], r["y2"] = _strip_edge_rule(binary, r["x1"], r["y1"], r["x2"], r["y2"])
+
     for i, r in enumerate(regions, start=1):
         r["order"] = i
     diag["n_two_column_bands"] = n_two
@@ -445,6 +553,15 @@ def detect_regions(
             diag["reason"] = "single band too narrow (image / table?)"
             return [], diag
     elif n_two >= 1:
+        # Purity guard: a full-width band fused into a two-column region (a heading /
+        # footer with no whitespace gap) crosses the gutter, so the page is not a
+        # clean two-column page — defer it for manual annotation rather than mis-slice.
+        worst_run = max(gutter_runs, default=0.0)
+        diag["gutter_run_lh"] = round(worst_run, 2)
+        if worst_run > _GUTTER_PURITY_MAX_LH:
+            diag["reason"] = (f"full-width content crosses the column gutter "
+                              f"(run {worst_run:.1f}× line height — fused header/footer?)")
+            return [], diag
         # require the two-column band(s) to have comparable column widths
         for p in parsed:
             if p["kind"] != "two":

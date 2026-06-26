@@ -307,12 +307,27 @@ def _annotated_pages() -> list[int]:
 
 
 def check_regions(pages: list[int]) -> bool:
-    """Region gate (#1–#6): structure + min/max containment vs human truth, no
-    frame/divider ink on edges, no-clip preserved, deskew within tolerance."""
-    print(f"\n{'page':12} {'det types':22} {'human types':22} "
-          f"{'struct':6} {'min⊆det⊆max':12} {'clip':4} {'edge':5} {'Δdeskew':8} result")
+    """Auto-slice gate: crop clean two-column pages correctly; safely defer the rest.
+
+    Mirrors production (``auto_slice`` keys on ``detect_columns``): a page is
+    auto-sliced only when ``detect_columns`` is confident. The gate PASSES when
+
+      (safety)  no page whose human layout is NOT a clean two-column page is
+                auto-sliced — i.e. the detector never confidently mis-slices a
+                header/single/fused page; and
+      (quality) every auto-sliced page reproduces the human two-column boxes
+                (``min ⊆ det ⊆ max``, no clipped glyphs, no frame/divider ink on an
+                edge, deskew within tolerance).
+
+    Deferral is a *valid* outcome — divergent pages route to manual region
+    annotation — so it never fails the gate. A clean two-column page that defers is
+    a missed-automation opportunity (reported, informational only). The
+    ``detect_regions`` structure is shown as a hint for the manual annotator.
+    """
+    print(f"\n{'page':12} {'action':7} {'det_regions(hint)':20} {'human':14} "
+          f"{'contain':8} {'clip':4} {'edge':5} {'Δdesk':7} outcome")
     all_ok = True
-    checked = 0
+    checked = auto_ok = deferred = missed = 0
     deltas: list[float] = []
     for n in pages:
         page_id = storage.page_artifact_id(n, storage.METHOD_HUMAN)
@@ -321,59 +336,67 @@ def check_regions(pages: list[int]) -> bool:
             continue
         checked += 1
 
-        # Run the detector in the SAME frame the human annotated: the cached
-        # auto-deskew render rotated by the human's manual residual.
+        # Run in the SAME frame the human annotated: cached auto-deskew render
+        # rotated by the human's manual residual.
         auto_angle = pipeline.deskew_angle(n)
         human_angle = float(truth.get("deskew_angle", auto_angle))
         manual = human_angle - auto_angle
+        delta = abs(manual)
         gray = cv2.imread(str(pipeline.preview_render(n, manual)), cv2.IMREAD_GRAYSCALE)
-        regions, diag = detect_regions(gray)
 
         human_boxes = [{**r["max"], "type": r["type"], "min": r["min"], "max": r["max"]}
                        for r in truth["regions"]]
         h_order = _reading_order(human_boxes)
-        d_order = _reading_order([dict(r) for r in regions]) if regions else []
         h_types = [b["type"] for b in h_order]
-        d_types = [b["type"] for b in d_order]
-        struct = d_types == h_types
+        human_two = h_types == ["left", "right"]
 
-        # Gate #4: min ⊆ detected ⊆ max (only meaningful when structure matches).
-        contain_ok = struct
-        if struct:
-            for det, hum in zip(d_order, h_order):
-                cmin, cmax = _contains(det, hum["min"], hum["max"])
-                contain_ok &= cmin and cmax
+        regions, _ = detect_regions(gray)  # informational hint for the annotator
+        d_hint = ",".join(r["type"] for r in _reading_order([dict(r) for r in regions])) or "-"
+        boxes, cdiag = detect_columns(gray)  # the production auto-slice decision
 
-        # Gate #5: no-clip — glyphs a detected edge cuts by > CLIP_PX.
+        if not cdiag.get("confident"):
+            # Safely deferred to manual annotation — never a gate failure.
+            if human_two:
+                missed += 1; tag = "DEFER*"   # a clean page we *could* have sliced
+            else:
+                deferred += 1; tag = "DEFER"
+            print(f"{page_id:12} {'defer':7} {d_hint[:20]:20} {','.join(h_types)[:14]:14} "
+                  f"{'-':8} {'-':4} {'-':5} {delta:6.2f}° {tag} ({cdiag.get('reason','')[:22]})")
+            continue
+
+        # Confident -> the page WILL be auto-sliced as two columns; it must be right.
         binary = _binarize(gray)
         _, _, stats, _ = cv2.connectedComponentsWithStats((binary > 0).astype(np.uint8), 8)
-        clipped = sum(_clip_count(stats, r, min_outside=CLIP_PX) for r in regions)
-
-        # Gate #1/#2: no frame ink on any edge; no divider ink on a two-column
-        # band's inner edge (a long contiguous run on a border = a rule).
-        edge_rule = 0
-        for r in d_order:
-            for side in ("top", "bottom", "left", "right"):
-                if _longest_edge_run(binary, r, side) >= EDGE_RULE_FRAC:
-                    edge_rule += 1
-
-        # Gate #6: deskew accuracy vs the human reference-line angle.
-        delta = abs(manual)
+        clipped = sum(_clip_count(stats, b, min_outside=CLIP_PX) for b in boxes)
+        edge_rule = sum(1 for b in boxes for side in ("top", "bottom", "left", "right")
+                        if _longest_edge_run(binary, b, side) >= EDGE_RULE_FRAC)
+        contain_ok = human_two and len(boxes) == len(h_order)
+        if contain_ok:
+            for det, hum in zip(_reading_order([dict(b) for b in boxes]), h_order):
+                cmin, cmax = _contains(det, hum["min"], hum["max"])
+                contain_ok &= cmin and cmax
         deltas.append(delta)
 
-        ok = struct and contain_ok and clipped <= MAX_CLIPPED and edge_rule == 0 \
+        ok = human_two and contain_ok and clipped <= MAX_CLIPPED and edge_rule == 0 \
             and delta <= DESKEW_TOL_DEG
         all_ok &= ok
-        print(f"{page_id:12} {','.join(d_types)[:22]:22} {','.join(h_types)[:22]:22} "
-              f"{'OK' if struct else 'DIFF':6} {'OK' if contain_ok else 'FAIL':12} "
-              f"{clipped:4d} {edge_rule:5d} {delta:7.2f}° {'PASS' if ok else 'FAIL'}")
+        if ok:
+            auto_ok += 1; outcome = "AUTO-OK"
+        else:
+            outcome = "MIS-SLICE" if not human_two else "AUTO-FAIL"
+        print(f"{page_id:12} {'slice':7} {d_hint[:20]:20} {','.join(h_types)[:14]:14} "
+              f"{'OK' if contain_ok else 'FAIL':8} {clipped:4d} {edge_rule:5d} "
+              f"{delta:6.2f}° {outcome}")
 
     worst = max(deltas) if deltas else 0.0
-    print(f"\nRegion gate: {'PASS' if all_ok else 'FAIL'} over {checked} annotated page(s) "
-          f"(struct match, det⊇min −{REGION_TOL_MIN_PX}px & det⊆max +{REGION_TOL_MAX_PX}px, "
+    print(f"\nAuto-slice gate: {'PASS' if all_ok else 'FAIL'} over {checked} annotated page(s)")
+    print(f"  auto-sliced OK: {auto_ok}  |  divergent → deferred to manual: {deferred}  |  "
+          f"clean page deferred (missed automation): {missed}")
+    print(f"  PASS = no divergent page auto-sliced (MIS-SLICE) AND every sliced page reproduces "
+          f"the human boxes\n        (det⊇min −{REGION_TOL_MIN_PX}px ⊆max +{REGION_TOL_MAX_PX}px, "
           f"glyphs cut >{CLIP_PX}px ≤ {MAX_CLIPPED}, 0 frame/divider edges, "
-          f"|Δdeskew| ≤ {DESKEW_TOL_DEG}°)")
-    print(f"Deskew: worst auto-vs-human delta = {worst:.2f}° (gate ≤ {DESKEW_TOL_DEG}°).")
+          f"|Δdeskew| ≤ {DESKEW_TOL_DEG}°).")
+    print(f"  Deskew: worst auto-vs-human delta on sliced pages = {worst:.2f}° (≤ {DESKEW_TOL_DEG}°).")
     return all_ok
 
 
