@@ -373,3 +373,47 @@ detector can't re-slice 0560 into a header region. The honest path to the real F
 number is unchanged from step 3 — but it now depends on either (i) the CC-based
 header-peel landing, or (ii) a deliberate decision to re-slice only the pages whose
 headers the detector already separates and re-verify those. No number is claimed.
+
+## Workflow decision (2026-06-26): crop two-column pages well, defer the rest
+
+After the header-peel negative result, the scope was set explicitly: **auto-slice
+clean two-column pages well, and route every divergent page to manual region
+annotation.** Detecting "is this a clean two-column page?" is far easier than
+segmenting a header, and the error asymmetry is decisive — a wrongly-deferred clean
+page costs one human annotation; a wrongly-sliced divergent page silently corrupts
+data. So the detector is tuned to **defer on any doubt**, and `auto_slice` already
+embodies this (it keys on `detect_columns`: confident ⇒ crop, else defer + log).
+
+**Two detector hardenings (commit "safe auto-slice workflow"):**
+- **Two-column purity guard.** The one false-confident case was page_0640 — a header
+  fused atop the columns (no whitespace gap) was sliced as plain two-column, swallowing
+  the header. A full-width band fused into a two-column region crosses the gutter,
+  leaving a long contiguous ink run; clean gutters show only short pokes (≤ 0.25×
+  the body line height across the 9 gold pages) while 0640 measures **9.8×**. When
+  the run exceeds `_GUTTER_PURITY_MAX_LH` (0.6) the page defers. A genuine central
+  divider rule is excluded from the measurement first, so it never trips the guard.
+- **Edge-rule trim.** page_0160's degraded/dashed bottom rule has mean ink below
+  `_RULE_FRAC` (so the average-ink detector misses it) but a long contiguous run on
+  the box edge (0.82). A final pass trims any such rule off a box's top/bottom edge —
+  monotonic, capped at 4 % of box height, a no-op on clean edges.
+
+**Gate reframed** (`validate_columns --check regions` → the *auto-slice gate*): mirrors
+production. PASS = **no divergent page is auto-sliced** (MIS-SLICE) AND **every
+auto-sliced page reproduces the human two-column boxes** (min ⊆ det ⊆ max, no clipped
+glyphs, no frame/divider edge ink, deskew in tol). Deferral is a valid outcome, never
+a failure; `detect_regions` is shown only as a hint for the annotator.
+
+**Result — gate PASSES 13/13 annotated pages:** 8 auto-sliced OK (the 7 clean pages +
+0160), 5 safely deferred (0520, 0522, 0523, 0560, 0640), **0 mis-slices**. Deskew +
+column gates unchanged (PASS); 26 unit tests pass (incl. fused-header-defers and
+edge-rule-trim).
+
+**Operational loop:** `auto_slice --report <csv>` writes every page's status and
+prints the deferred worklist (`Needs manual region annotation: …`); the human opens
+those in the labeling UI and annotates regions. Clean pages are sliced headlessly.
+
+### Open / next
+- **Header-peel** stays deferred (CC redesign, go/no-go) — only needed if we later
+  want headers auto-cropped rather than hand-annotated. Gate #7 FP→0 still waits on it.
+- Real-`data/` migration to `region_*` (`migrate_region_names.py --execute`) and
+  pushing the branch — both await user authorization.
