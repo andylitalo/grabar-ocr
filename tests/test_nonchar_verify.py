@@ -20,6 +20,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
+from data_prep.line_filter import (  # noqa: E402
+    classify_page,
+    is_high_ink,
+    region_type_of,
+)
 from labeling_ui import pipeline, storage  # noqa: E402
 
 # Flag set fixed by data_prep.line_filter on page_0487_auto (see detect_nonchar gate).
@@ -83,7 +88,56 @@ def test_detector_parity_page_0487() -> None:
     print("test_detector_parity_page_0487: OK")
 
 
+def test_region_type_of_parses_only_region_ids() -> None:
+    assert region_type_of("region_05_header/line_014") == "header"
+    assert region_type_of("region_01_left/line_001") == "left"
+    assert region_type_of("region_10_single/line_003") == "single"
+    # legacy + bare ids carry no region type
+    assert region_type_of("column_1/line_001") is None
+    assert region_type_of("line_001") is None
+    print("test_region_type_of_parses_only_region_ids: OK")
+
+
+def test_high_ink_rule_exempts_header_regions() -> None:
+    """A header's dense display type is exempt; the same ink in a body region is not."""
+    median = 0.10
+    dense = 0.163  # page_0560 heading: 1.63× median, just over the 1.6× cutoff
+    # Exempt: header line over the cutoff is NOT high-ink.
+    assert is_high_ink("region_05_header/line_014", dense, median) is False
+    # Not exempt: identical ink in a left/right/single body region IS high-ink.
+    assert is_high_ink("region_01_left/line_007", dense, median) is True
+    assert is_high_ink("region_03_single/line_002", dense, median) is True
+    # Not exempt: legacy column id (no type) IS high-ink — old slices unaffected.
+    assert is_high_ink("column_1/line_045", dense, median) is True
+    # Below the cutoff: never high-ink regardless of region.
+    assert is_high_ink("region_01_left/line_008", 0.11, median) is False
+    print("test_high_ink_rule_exempts_header_regions: OK")
+
+
+def test_classify_page_header_high_ink_vs_glyph_rule() -> None:
+    """classify_page exempts a dense header line, but glyph_count==0 still flags."""
+    features = {
+        # dense real heading: 1.63× the 0.10 median, but it has glyphs -> kept
+        "region_05_header/line_014": {"glyph_count": 13, "ink_density": 0.163},
+        # a blank/rule line inside a header still has no glyphs -> flagged
+        "region_05_header/line_001": {"glyph_count": 0, "ink_density": 0.02},
+        # an ornament band sliced into a body region -> flagged on high ink
+        "region_02_right/line_030": {"glyph_count": 4, "ink_density": 0.24},
+        # ordinary body text -> kept (sets the median at 0.10)
+        "region_01_left/line_005": {"glyph_count": 22, "ink_density": 0.10},
+    }
+    flagged = classify_page(features)
+    assert flagged["region_05_header/line_014"] is False, "dense heading wrongly flagged"
+    assert flagged["region_05_header/line_001"] is True, "blank header line not flagged"
+    assert flagged["region_02_right/line_030"] is True, "ornament band not flagged"
+    assert flagged["region_01_left/line_005"] is False
+    print("test_classify_page_header_high_ink_vs_glyph_rule: OK")
+
+
 if __name__ == "__main__":
     test_truth_roundtrips()
     test_detector_parity_page_0487()
+    test_region_type_of_parses_only_region_ids()
+    test_high_ink_rule_exempts_header_regions()
+    test_classify_page_header_high_ink_vs_glyph_rule()
     print("\nAll Phase A unit checks passed.")

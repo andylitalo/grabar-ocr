@@ -36,6 +36,7 @@ sys.path.insert(0, str(REPO))
 from data_prep.line_filter import (  # noqa: E402
     DEFAULT_INK_FACTOR,
     classify_page,
+    is_high_ink,
     line_features,
     ocr_is_repetitive,
     page_median_ink,
@@ -105,8 +106,10 @@ def analyze_page(page_id: str, ink_factor: float, use_repetition: bool) -> dict:
         reasons = []
         if f["glyph_count"] == 0:
             reasons.append("no_glyphs")
-        if median and f["ink_density"] > ink_factor * median:
+        if is_high_ink(line_id, f["ink_density"], median, ink_factor):
             reasons.append("high_ink")
+        elif median and f["ink_density"] > ink_factor * median:
+            reasons.append("high_ink_exempt_header")
         if rep:
             reasons.append("ocr_repetitive")
         rows.append(

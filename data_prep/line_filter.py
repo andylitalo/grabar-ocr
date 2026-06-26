@@ -30,6 +30,8 @@ storage / torch imports — so ml_vision/scripts/predict_lines.py can import it.
 
 from __future__ import annotations
 
+import re
+
 import cv2
 import numpy as np
 
@@ -38,6 +40,38 @@ import numpy as np
 # (dense ornament bands). 1.6× sits well clear of the real-text max (≈1.15×) and
 # below the junk min (≈2.2×); tune via the detect_nonchar_lines dry run.
 DEFAULT_INK_FACTOR = 1.6
+
+# Region types whose lines are EXEMPT from the high-ink ornament rule. A header's
+# large display type is legitimately ink-dense — page_0560's heading measures
+# ink ≈ 1.63× the page median, just over the 1.6× ornament cutoff, yet is real
+# text (and now reads glyph 13 after the is_glyph display-capital fix). The
+# ornament rule exists to catch decorative *bands* (heart motifs, dense dividers),
+# which the slicer never emits as a `header` region. glyph_count == 0 still applies
+# to every region, so a blank/rule line in a header is still caught. The line-id's
+# leading segment carries the region type (``region_NN_<type>/line_NNN``); legacy
+# ``column_N`` ids and bare ids have no type and are never exempt. Parsed with a
+# local regex to keep this module dependency-free (no labeling_ui.storage import,
+# per the module docstring) — the pattern mirrors storage.parse_region.
+_HIGH_INK_EXEMPT_TYPES = frozenset({"header"})
+_REGION_TYPE_RE = re.compile(r"^region_\d+_([a-z]+)/")
+
+
+def region_type_of(line_id: str) -> str | None:
+    """The region type embedded in a ``region_NN_<type>/line_NNN`` id, else None."""
+    m = _REGION_TYPE_RE.match(line_id)
+    return m.group(1) if m else None
+
+
+def is_high_ink(line_id: str, ink_density: float, median: float,
+                ink_factor: float = DEFAULT_INK_FACTOR) -> bool:
+    """True if a line trips the ornament high-ink rule and is NOT an exempt region.
+
+    Shared by ``classify_page`` and the report's reason string so the two can
+    never disagree about whether a line is flagged for high ink.
+    """
+    if median <= 0 or ink_density <= ink_factor * median:
+        return False
+    return region_type_of(line_id) not in _HIGH_INK_EXEMPT_TYPES
 
 
 def _binarize(gray: np.ndarray) -> np.ndarray:
@@ -132,14 +166,17 @@ def classify_page(
 
         glyph_count == 0                          # rules + blank/speck fragments
         OR ink_density > ink_factor * page_median # dense ornament bands
+                                                  # (header regions exempt — see
+                                                  #  _HIGH_INK_EXEMPT_TYPES)
 
     Using the page median (not an absolute darkness) keeps the rule scan- and
-    page-invariant.
+    page-invariant. The high-ink half is suppressed for header regions, whose
+    display type is legitimately dense (the line-id carries the region type).
     """
     median = page_median_ink(features)
     out: dict[str, bool] = {}
     for line_id, f in features.items():
-        high_ink = median > 0 and f["ink_density"] > ink_factor * median
+        high_ink = is_high_ink(line_id, f["ink_density"], median, ink_factor)
         out[line_id] = f["glyph_count"] == 0 or high_ink
     return out
 
