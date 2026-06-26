@@ -80,6 +80,36 @@ def render_page(n: int, dpi: int = RENDER_DPI) -> Path:
     return out_png
 
 
+def _rotate(img, angle_deg: float):
+    """Rotate ``img`` about its centre by ``angle_deg`` (same size, white border)."""
+    if abs(angle_deg) < 1e-3:
+        return img
+    h, w = img.shape[:2]
+    m = cv2.getRotationMatrix2D((w / 2.0, h / 2.0), angle_deg, 1.0)
+    return cv2.warpAffine(img, m, (w, h), flags=cv2.INTER_LINEAR, borderValue=255)
+
+
+def preview_render(n: int, manual_angle: float = 0.0) -> Path:
+    """Path to the cached deskewed render, further un-skewed by ``manual_angle``.
+
+    ``manual_angle`` is the human reference-line residual (deg): the page is
+    rotated by ``-manual_angle`` so the user sees (and draws boxes on) the same
+    frame that ``crop_columns_and_lines`` will crop from. angle 0 returns the
+    cached render unchanged; otherwise a per-angle preview PNG is cached alongside.
+    """
+    base = render_page(n)
+    if abs(manual_angle) < 1e-3:
+        return base
+    out = base.parent / f"page_deskew_m{manual_angle:+06.2f}.png"
+    if out.exists():
+        return out
+    img = cv2.imread(str(base), cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise RuntimeError(f"Cannot read render: {base}")
+    cv2.imwrite(str(out), _rotate(img, -manual_angle))
+    return out
+
+
 def deskew_angle(n: int) -> float:
     """Skew correction (degrees) applied to page n's cached render, 0 if unknown."""
     sidecar = storage.WORK_DIR / storage.page_id_for(n) / _RENDER_NAME
@@ -128,6 +158,31 @@ def suggested_columns(n: int) -> list[dict]:
         return boxes
     h, w = page.shape[:2]
     return default_columns(w, h)
+
+
+def suggested_regions(n: int) -> list[dict]:
+    """Auto-detected typed regions to seed the annotator: ``[{type, box}]``.
+
+    Runs ``detect_regions`` on the deskewed render. When confident, returns its
+    ordered, typed regions; otherwise falls back to the two ``default_columns``
+    halves as ``left``/``right`` so the UI always has sensible starting boxes. Each
+    box seeds both the region's min and max in the annotator (the human then nudges).
+    """
+    from data_prep.column_detector import detect_regions  # noqa: E402
+
+    render_path = render_page(n)
+    page = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
+    if page is None:
+        raise FileNotFoundError(f"Cannot read render: {render_path}")
+    regions, diag = detect_regions(page)
+    if diag.get("confident") and regions:
+        return [
+            {"type": r["type"], "box": {k: int(r[k]) for k in ("x1", "y1", "x2", "y2")}}
+            for r in regions
+        ]
+    h, w = page.shape[:2]
+    cols = default_columns(w, h)
+    return [{"type": "left", "box": cols[0]}, {"type": "right", "box": cols[1]}]
 
 
 def detector_meta() -> dict:
@@ -230,6 +285,7 @@ def crop_columns_and_lines(
     padding: int = 4,
     method: str = storage.METHOD_HUMAN,
     region_types: list[str] | None = None,
+    manual_angle: float = 0.0,
 ) -> list[dict]:
     """Crop each region from the page render and segment it into line PNGs.
 
@@ -238,8 +294,10 @@ def crop_columns_and_lines(
     data/columns/{artifact_id}_region_NN_<type>.png, then crop_lines() fills
     data/lines/{artifact_id}/region_NN_<type>/, where artifact_id = page_XXXX_{method}
     ("human" via the UI, "auto" via auto_slice). ``region_types`` defaults to
-    left/right for two boxes (a plain two-column page) or single for one. Returns
-    per-region line counts. The render is method-independent (one deskewed cache).
+    left/right for two boxes (a plain two-column page) or single for one.
+    ``manual_angle`` un-skews the render by the human reference-line residual before
+    cropping, so boxes drawn on the previewed (rotated) frame line up exactly.
+    Returns per-region line counts. The render is method-independent (one cache).
     """
     page_id = storage.page_artifact_id(n, method)
     types = region_types if region_types is not None else _default_region_types(len(columns))
@@ -249,6 +307,7 @@ def crop_columns_and_lines(
     page = cv2.imread(str(render_path), cv2.IMREAD_GRAYSCALE)
     if page is None:
         raise FileNotFoundError(f"Cannot read render: {render_path}")
+    page = _rotate(page, -manual_angle)  # match the previewed frame boxes were drawn on
     h, w = page.shape[:2]
 
     storage.DATA_COLUMNS.mkdir(parents=True, exist_ok=True)

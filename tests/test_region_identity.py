@@ -163,6 +163,53 @@ def test_migrator_renames_and_repoints(tmp_path, monkeypatch):
     assert set(truth["lines"]) == {"region_01_left/line_001", "region_02_right/line_001"}
 
 
+# --- region ground-truth schema (save_regions / load_regions) ----------------
+
+
+def _box(x1, y1, x2, y2):
+    return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+
+def test_save_load_regions_roundtrip(tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "DATA_COLUMN_BOXES", tmp_path)
+    regions = [
+        {"type": "header", "min": _box(310, 120, 1290, 220), "max": _box(300, 110, 1300, 230)},
+        {"type": "left", "min": _box(140, 430, 720, 2010), "max": _box(128, 420, 740, 2030)},
+        {"type": "right", "min": _box(880, 430, 1450, 2010), "max": _box(870, 420, 1470, 2030)},
+    ]
+    storage.save_regions("page_0560_human", 1.25, regions, source="human")
+    loaded = storage.load_regions("page_0560_human")
+    assert loaded["source"] == "human"
+    assert loaded["deskew_angle"] == 1.25
+    assert [r["type"] for r in loaded["regions"]] == ["header", "left", "right"]
+    assert [r["order"] for r in loaded["regions"]] == [1, 2, 3]
+    assert loaded["regions"][1]["max"] == _box(128, 420, 740, 2030)
+    assert loaded["regions"][1]["min"] == _box(140, 430, 720, 2010)
+
+
+def test_load_regions_adapts_legacy_two_box(tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "DATA_COLUMN_BOXES", tmp_path)
+    # a legacy human file written by the old save_boxes schema
+    storage.save_boxes("page_0051_human", 0.5,
+                       [_box(120, 200, 740, 2000), _box(860, 200, 1480, 2000)])
+    loaded = storage.load_regions("page_0051_human")
+    assert [r["type"] for r in loaded["regions"]] == ["left", "right"]
+    # min == max == the original box (no tolerance band recorded in the old schema)
+    r0 = loaded["regions"][0]
+    assert r0["min"] == r0["max"] == _box(120, 200, 740, 2000)
+
+
+def test_save_regions_does_not_clobber_human(tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "DATA_COLUMN_BOXES", tmp_path)
+    human = [{"type": "left", "min": _box(1, 1, 2, 2), "max": _box(0, 0, 3, 3)}]
+    storage.save_regions("page_0001_auto", 0.0, human, source="human")
+    auto = [{"type": "single", "min": _box(9, 9, 9, 9), "max": _box(8, 8, 9, 9)}]
+    storage.save_regions("page_0001_auto", 0.0, auto, source="auto")  # must be ignored
+    loaded = storage.load_regions("page_0001_auto")
+    assert loaded["source"] == "human"
+    assert [r["type"] for r in loaded["regions"]] == ["left"]
+
+
 def test_migrator_is_idempotent(tmp_path, monkeypatch):
     _build_legacy_tree(tmp_path)
     _point_migrator_at(tmp_path, monkeypatch)

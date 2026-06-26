@@ -102,6 +102,22 @@ label { font-size: 0.9rem; }
 #page-preview { max-width: 100%; display: inline-block; }
 #crop-canvas { display: block; cursor: crosshair; }
 
+/* region annotator controls */
+.region-bar, .deskew-bar { flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.region-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.region-row {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.2rem 0.45rem; border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 0.85rem;
+}
+.region-row.active { border-color: var(--accent); background: #1d2330; }
+.region-row select { padding: 0.1rem 0.2rem; font-size: 0.8rem; }
+.region-del { padding: 0 0.3rem; }
+.region-swatch {
+  display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px;
+}
+.deskew-bar #deskew-angle { font-variant-numeric: tabular-nums; }
+
 .line-image-wrap {
   background: #f4f4f4;
   border: 1px solid var(--border);

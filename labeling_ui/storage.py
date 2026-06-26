@@ -185,12 +185,73 @@ def save_boxes(
     return path
 
 
+def save_regions(
+    page_id: str, deskew_angle: float, regions: list[dict], source: str = "human"
+) -> Path:
+    """Persist the typed region ground truth (min + max boxes) and deskew angle.
+
+    ``regions`` is an ordered list of ``{"type", "min", "max"}`` where ``min`` is
+    the tight inner box (must contain all real text) and ``max`` is the loose outer
+    box (just inside the frame / central divider / margin). The detector passes
+    gate #4 when ``min ⊆ detected ⊆ max`` for each region. ``deskew_angle`` is the
+    human reference-line angle (gate #6 ground truth). Order rides on list order.
+    Never lets an auto write clobber a human-verified file (same rule as save_boxes).
+    """
+    DATA_COLUMN_BOXES.mkdir(parents=True, exist_ok=True)
+    path = boxes_path(page_id)
+    if source == "auto":
+        existing = load_boxes(page_id)
+        if existing and existing.get("source") == "human":
+            return path
+
+    def _rect(b: dict) -> dict:
+        return {k: int(b[k]) for k in ("x1", "y1", "x2", "y2")}
+
+    payload = {
+        "page_id": page_id,
+        "source": source,
+        "deskew_angle": float(deskew_angle),
+        "regions": [
+            {"order": i, "type": r["type"], "min": _rect(r["min"]), "max": _rect(r["max"])}
+            for i, r in enumerate(regions, start=1)
+        ],
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
 def load_boxes(page_id: str) -> dict | None:
-    """Load persisted column boxes for a page, or None if not recorded."""
+    """Load the persisted geometry for a page (region or legacy box schema), or None."""
     path = boxes_path(page_id)
     if not path.exists():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_regions(page_id: str) -> dict | None:
+    """Persisted geometry normalised to the region schema, or None if not recorded.
+
+    Region-schema files pass through. A legacy two-box file is adapted into
+    ``left``/``right`` regions with ``min == max == box`` so old annotations stay
+    readable (back-compat shim).
+    """
+    data = load_boxes(page_id)
+    if data is None:
+        return None
+    if "regions" in data:
+        return data
+    boxes = data.get("boxes", [])
+    types = ["left", "right"] if len(boxes) == 2 else ["single"] * len(boxes)
+    regions = [
+        {"order": i, "type": t, "min": dict(b), "max": dict(b)}
+        for i, (t, b) in enumerate(zip(types, boxes), start=1)
+    ]
+    return {
+        "page_id": data.get("page_id", page_id),
+        "source": data.get("source", "human"),
+        "deskew_angle": data.get("deskew_angle", 0.0),
+        "regions": regions,
+    }
 
 
 def list_page_numbers() -> list[int]:

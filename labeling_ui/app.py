@@ -35,10 +35,21 @@ class Box(BaseModel):
     y2: int
 
 
+class RegionIn(BaseModel):
+    type: str  # header | single | left | right
+    min: Box   # tight inner bound (all real text ink)
+    max: Box   # loose outer bound (just inside frame / divider / margin)
+
+
 class ColumnsRequest(BaseModel):
-    columns: list[Box]
+    # Ordered, typed regions (top-to-bottom; left before right within a band). The
+    # crop uses each region's `max` box; both min/max are persisted as gate truth.
+    regions: list[RegionIn]
     deskew: bool = True
     force: bool = False
+    # Human reference-line residual (deg): un-skews the render before cropping and
+    # is recorded (added to the auto angle) as deskew ground truth (gate #6).
+    manual_angle: float = 0.0
 
 
 class LabelRequest(BaseModel):
@@ -94,8 +105,10 @@ def get_page(n: int) -> dict:
         "page_image_url": f"/api/pages/{n}/image.png",
         "image_width": width,
         "image_height": height,
-        # Auto-detected boxes (falls back to hardcoded halves when not confident).
-        # The frontend seeds its draggable boxes from this same `default_columns` key.
+        # Auto-detected typed regions to seed the annotator ([{type, box}]); each
+        # box seeds the region's min and max. Falls back to two halves when the
+        # detector is not confident. `default_columns` kept for back-compat.
+        "default_regions": pipeline.suggested_regions(n),
         "default_columns": pipeline.suggested_columns(n),
         # Phase A: auto-sliced tree status, so the browser can offer "Verify auto slice".
         "has_auto": storage.has_auto_lines(n),
@@ -105,18 +118,29 @@ def get_page(n: int) -> dict:
 
 
 @app.get("/api/pages/{n}/image.png")
-def get_page_image(n: int) -> FileResponse:
+def get_page_image(n: int, angle: float = 0.0) -> FileResponse:
+    """The deskewed render, optionally further un-skewed by the human ``angle`` (deg).
+
+    The region annotator re-fetches with ``angle`` set when the user aligns the
+    deskew reference line, so boxes are drawn on the same frame the crop uses.
+    """
     try:
-        render_path = pipeline.render_page(n)
+        render_path = pipeline.preview_render(n, angle)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
     return FileResponse(render_path, media_type="image/png")
 
 
+_REGION_TYPES = ("header", "single", "left", "right")
+
+
 @app.post("/api/pages/{n}/columns")
 def crop_columns(n: int, req: ColumnsRequest) -> dict:
-    if len(req.columns) != 2:
-        raise HTTPException(status_code=400, detail="Exactly two columns are required")
+    if not req.regions:
+        raise HTTPException(status_code=400, detail="At least one region is required")
+    bad = [r.type for r in req.regions if r.type not in _REGION_TYPES]
+    if bad:
+        raise HTTPException(status_code=400, detail=f"Unknown region type(s): {bad}")
     if not storage.page_pdf_path(n).exists():
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
 
@@ -130,15 +154,21 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
             ),
         )
 
-    columns = [b.model_dump() for b in req.columns]
+    # Crop each region from its loose `max` box (so no text is clipped); persist
+    # both min/max + the human deskew angle as gate ground truth.
+    crop_boxes = [r.max.model_dump() for r in req.regions]
+    types = [r.type for r in req.regions]
     results = pipeline.crop_columns_and_lines(
-        n, columns, do_deskew=req.deskew, method=storage.METHOD_HUMAN
+        n, crop_boxes, do_deskew=req.deskew, method=storage.METHOD_HUMAN,
+        region_types=types, manual_angle=req.manual_angle,
     )
-    # Persist the committed boxes as geometric ground truth for this page.
-    storage.save_boxes(page_id, pipeline.deskew_angle(n), columns)
+    total_angle = pipeline.deskew_angle(n) + req.manual_angle
+    storage.save_regions(
+        page_id, total_angle, [r.model_dump() for r in req.regions], source="human"
+    )
     return {
         "page_id": page_id,
-        "columns": results,
+        "regions": results,
         "total_lines": sum(r["line_count"] for r in results),
     }
 

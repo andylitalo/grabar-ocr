@@ -39,7 +39,7 @@
       </div>
     </section>
 
-    <!-- ===== CROP ===== -->
+    <!-- ===== CROP / REGION ANNOTATOR ===== -->
     <section id="view-crop" class="view hidden">
       <div class="panel">
         <div class="row">
@@ -47,10 +47,25 @@
           <span id="crop-title" class="strong"></span>
           <span class="spacer"></span>
           <label class="checkbox"><input type="checkbox" id="chk-deskew" checked /> Deskew columns</label>
-          <button id="btn-reset-boxes" class="ghost">Reset boxes</button>
+          <button id="btn-reset-boxes" class="ghost">Reset regions</button>
           <button id="btn-segment" class="primary">Segment lines →</button>
         </div>
-        <p class="meta">Drag the two boxes over the left and right columns. Drag a corner to resize, the inside to move.</p>
+        <p class="meta">Each region has a solid <b>max</b> box (loose, just inside the
+          frame/divider/margin — the crop) and a dashed <b>min</b> box (tight, all real
+          text). Pick a region's type; add single-column / header bands as needed.
+          Drag a corner to resize, the inside to move.</p>
+        <div class="row region-bar">
+          <div id="region-list" class="region-list"></div>
+          <span class="spacer"></span>
+          <button id="btn-add-single" class="ghost">+ Add single column</button>
+          <button id="btn-add-header" class="ghost">+ Add header</button>
+        </div>
+        <div class="row deskew-bar">
+          <button id="btn-deskew" class="ghost">Deskew (align reference line)</button>
+          <button id="btn-deskew-apply" class="primary hidden">Apply deskew</button>
+          <button id="btn-deskew-reset" class="ghost">Reset deskew</button>
+          <span id="deskew-angle" class="meta"></span>
+        </div>
       </div>
       <div class="canvas-wrap">
         <canvas id="crop-canvas"></canvas>
