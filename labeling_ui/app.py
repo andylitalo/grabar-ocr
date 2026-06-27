@@ -21,11 +21,21 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import pipeline, storage
+from . import jobs, pipeline, storage
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 app = FastAPI(title="Grabar Line Labeler")
+
+
+@app.on_event("startup")
+def _start_worker() -> None:
+    jobs.start_worker()
+
+
+@app.on_event("shutdown")
+def _stop_worker() -> None:
+    jobs.stop_worker()
 
 
 class Box(BaseModel):
@@ -37,18 +47,18 @@ class Box(BaseModel):
 
 class RegionIn(BaseModel):
     type: str  # header | single | left | right
-    min: Box   # tight inner bound (all real text ink)
-    max: Box   # loose outer bound (just inside frame / divider / margin)
+    box: Box   # the single crop box (drawn tight to the text)
 
 
 class ColumnsRequest(BaseModel):
-    # Ordered, typed regions (top-to-bottom; left before right within a band). The
-    # crop uses each region's `max` box; both min/max are persisted as gate truth.
+    # Ordered, typed regions (top-to-bottom; left before right within a band). Each
+    # region carries one box — the crop region. No box is persisted: it is read only
+    # by line-slicing here, never downstream (reading order/type live in the
+    # region_NN_<type> dir names).
     regions: list[RegionIn]
     deskew: bool = True
     force: bool = False
-    # Human reference-line residual (deg): un-skews the render before cropping and
-    # is recorded (added to the auto angle) as deskew ground truth (gate #6).
+    # Human reference-line residual (deg): un-skews the render before cropping.
     manual_angle: float = 0.0
 
 
@@ -134,8 +144,9 @@ def get_page_image(n: int, angle: float = 0.0) -> FileResponse:
 _REGION_TYPES = ("header", "single", "left", "right")
 
 
-@app.post("/api/pages/{n}/columns")
-def crop_columns(n: int, req: ColumnsRequest) -> dict:
+def _crop_page(n: int, req: ColumnsRequest) -> dict:
+    """Crop+slice a page from its drawn region boxes; shared by /columns and
+    /label-and-translate. Raises the same HTTPExceptions for both callers."""
     if not req.regions:
         raise HTTPException(status_code=400, detail="At least one region is required")
     bad = [r.type for r in req.regions if r.type not in _REGION_TYPES]
@@ -154,23 +165,49 @@ def crop_columns(n: int, req: ColumnsRequest) -> dict:
             ),
         )
 
-    # Crop each region from its loose `max` box (so no text is clipped); persist
-    # both min/max + the human deskew angle as gate ground truth.
-    crop_boxes = [r.max.model_dump() for r in req.regions]
+    # Crop each region from its single box; no box is persisted (line-slicing is the
+    # only reader — downstream uses the region_NN_<type> dir names + line crops).
+    crop_boxes = [r.box.model_dump() for r in req.regions]
     types = [r.type for r in req.regions]
     results = pipeline.crop_columns_and_lines(
         n, crop_boxes, do_deskew=req.deskew, method=storage.METHOD_HUMAN,
         region_types=types, manual_angle=req.manual_angle,
-    )
-    total_angle = pipeline.deskew_angle(n) + req.manual_angle
-    storage.save_regions(
-        page_id, total_angle, [r.model_dump() for r in req.regions], source="human"
     )
     return {
         "page_id": page_id,
         "regions": results,
         "total_lines": sum(r["line_count"] for r in results),
     }
+
+
+@app.post("/api/pages/{n}/columns")
+def crop_columns(n: int, req: ColumnsRequest) -> dict:
+    return _crop_page(n, req)
+
+
+@app.post("/api/pages/{n}/label-and-translate", status_code=202)
+def label_and_translate(n: int, req: ColumnsRequest) -> dict:
+    """Crop+slice the page now, then enqueue OCR→correct→translate as a background job.
+
+    Returns immediately (202) with the crop result plus the queued job, so the human
+    can move straight to the next page while the worker digitizes + translates this one.
+    """
+    result = _crop_page(n, req)
+    job = jobs.enqueue(n, force=req.force)
+    return {**result, "job": job}
+
+
+@app.get("/api/jobs")
+def list_jobs() -> dict:
+    return {"jobs": jobs.list_jobs()}
+
+
+@app.get("/api/jobs/{job_id}")
+def get_job(job_id: str) -> dict:
+    job = jobs.get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Unknown job {job_id}")
+    return job
 
 
 # --- lines + labeling --------------------------------------------------------

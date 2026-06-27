@@ -13,6 +13,12 @@
   </header>
 
   <main>
+    <!-- ===== BACKGROUND JOBS (Label and Translate queue) ===== -->
+    <div id="jobs-panel" class="panel jobs-panel hidden">
+      <span class="strong">Background jobs</span>
+      <div id="jobs-list" class="jobs-list"></div>
+    </div>
+
     <!-- ===== PAGE SELECT ===== -->
     <section id="view-pages" class="view">
       <div class="panel">
@@ -49,11 +55,12 @@
           <label class="checkbox"><input type="checkbox" id="chk-deskew" checked /> Deskew columns</label>
           <button id="btn-reset-boxes" class="ghost">Reset regions</button>
           <button id="btn-segment" class="primary">Segment lines →</button>
+          <button id="btn-label-translate" class="primary">Label and Translate ▶</button>
         </div>
-        <p class="meta">Each region has a solid <b>max</b> box (loose, just inside the
-          frame/divider/margin — the crop) and a dashed <b>min</b> box (tight, all real
-          text). Pick a region's type; add single-column / header bands as needed.
-          Drag a corner to resize, the inside to move.</p>
+        <p class="meta">Draw one <b>box</b> per region, tight to the text. Pick a region's
+          type; add single-column / header bands as needed. Drag a corner to resize, the
+          inside to move. <b>Segment lines</b> slices the page for manual transcription;
+          <b>Label and Translate</b> also queues OCR + translation in the background.</p>
         <div class="row region-bar">
           <div id="region-list" class="region-list"></div>
           <span class="spacer"></span>

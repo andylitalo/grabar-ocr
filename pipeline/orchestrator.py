@@ -213,7 +213,6 @@ def run(
 
     # Aggregated in the main thread only (workers return data, never touch `result`).
     ok_rows: dict[int, tuple[str, list[dict]]] = {}      # n -> (page_id, rows)
-    ok_translated: dict[int, str] = {}                   # n -> english
     total = len(pages)
     completed = 0
     successes = 0
@@ -264,7 +263,6 @@ def run(
         if do_translate:
             result.translation_cost += res["cost"]
             result.translations[n] = res["tr_path"]
-            ok_translated[n] = res["translation"]
             note = " (reused)" if res["tr_reused"] else f" (${res['cost']:.4f})"
             print(f"  {tag} OK {res['page_id']} -> {res['page_path'].name}{note}")
         else:
@@ -304,17 +302,19 @@ def run(
 
     # Rebuild every outward collection in PAGE order from the page-keyed aggregation
     # (workers complete out of order under concurrency; the docs + metadata must not).
-    pages_rows = [ok_rows[n] for n in pages if n in ok_rows]
-    pages_translated = [(n, ok_translated[n]) for n in pages if n in ok_translated]
     result.page_ids = [ok_rows[n][0] for n in pages if n in ok_rows]
     result.per_page = {pid: result.per_page[pid] for pid, _ in
                        ((ok_rows[n][0], n) for n in pages if n in ok_rows)}
     result.translations = {n: result.translations[n] for n in pages if n in result.translations}
 
-    result.merged_doc = artifacts.write_merged_doc(run_dir, pages_rows)
-    if do_translate and pages_translated:
-        result.translated_doc = artifacts.write_translated_doc(
-            run_dir, translate_impl.slug, pages_translated
+    # Rebuild the combined docs from ALL per-page artifacts on disk (not just this
+    # call's pages), so incremental one-page runs (labeling UI) and batch resumes
+    # accumulate instead of overwriting. pages_rows/pages_translated above already
+    # wrote this call's per-page lines.json / page_<n>.txt via _process_page.
+    result.merged_doc = artifacts.rebuild_merged_doc_from_disk(run_dir)
+    if do_translate:
+        result.translated_doc = artifacts.rebuild_translated_doc_from_disk(
+            run_dir, translate_impl.slug
         )
     result.worklist = artifacts.write_worklist(
         run_dir, result.deferred, result.needs_labeling, result.failed

@@ -8,8 +8,8 @@ const state = {
   pageId: null,
   imageW: 0,
   imageH: 0,
-  // Ordered typed regions in FULL-RES px: {type, min:{x1,y1,x2,y2}, max:{...}}.
-  // `max` is the loose crop bound; `min` the tight all-text bound (gate #4 truth).
+  // Ordered typed regions in FULL-RES px: {type, box:{x1,y1,x2,y2}}.
+  // `box` is the single crop bound, drawn tight to the text.
   regions: [],
   activeRegion: 0,
   // Manual deskew reference line + applied residual angle (deg). The line is a
@@ -25,6 +25,7 @@ const state = {
   mode: "label",
   verdicts: {},         // line index -> "empty" | "character" (verify mode only)
   autoPageId: null,     // page_XXXX_auto, set when entering verify mode
+  jobs: {},             // job_id -> {id,page,status,cost,error,enqueued_at,...}
 };
 
 // Canonical line-id is supplied by the backend (`<region_key>/line_NNN`); fall
@@ -186,23 +187,13 @@ const REGION_TYPES = ["header", "single", "left", "right"];
 const REGION_COLORS = { left: "#4c8bf5", right: "#3fb37f", single: "#f5a623", header: "#b76cf5" };
 
 function seedRegions(defaultRegions) {
-  // Seed each region's max from the detected box and inset min ~6% so the two
-  // nested bounds are visible; the human then tightens min / loosens max.
-  return defaultRegions.map((r) => {
-    const b = r.box;
-    const iw = Math.round((b.x2 - b.x1) * 0.06);
-    const ih = Math.round((b.y2 - b.y1) * 0.06);
-    return {
-      type: r.type,
-      max: { ...b },
-      min: { x1: b.x1 + iw, y1: b.y1 + ih, x2: b.x2 - iw, y2: b.y2 - ih },
-    };
-  });
+  // Seed each region from the detector's suggested box; the human tightens it.
+  return defaultRegions.map((r) => ({ type: r.type, box: { ...r.box } }));
 }
 
 function orderRegions() {
-  // Reading order: top-to-bottom by max box, left before right within a band.
-  state.regions.sort((a, b) => (a.max.y1 - b.max.y1) || (a.max.x1 - b.max.x1));
+  // Reading order: top-to-bottom by box, left before right within a band.
+  state.regions.sort((a, b) => (a.box.y1 - b.box.y1) || (a.box.x1 - b.box.x1));
 }
 
 function initDeskewLine() {
@@ -268,13 +259,12 @@ function drawCrop() {
     const color = REGION_COLORS[r.type] || "#888";
     const active = i === state.activeRegion;
     ctx.fillStyle = color + (active ? "22" : "11");
-    ctx.fillRect(toDisp(r.max.x1), toDisp(r.max.y1),
-                 toDisp(r.max.x2 - r.max.x1), toDisp(r.max.y2 - r.max.y1));
-    strokeRectFull(r.max, color, false);      // outer = max (solid)
-    strokeRectFull(r.min, color, true);       // inner = min (dashed)
+    ctx.fillRect(toDisp(r.box.x1), toDisp(r.box.y1),
+                 toDisp(r.box.x2 - r.box.x1), toDisp(r.box.y2 - r.box.y1));
+    strokeRectFull(r.box, color, false);      // the single crop box
     ctx.fillStyle = color;
     ctx.font = active ? "bold 14px sans-serif" : "14px sans-serif";
-    ctx.fillText(`${i + 1} ${r.type}`, toDisp(r.max.x1) + 4, toDisp(r.max.y1) + 16);
+    ctx.fillText(`${i + 1} ${r.type}`, toDisp(r.box.x1) + 4, toDisp(r.box.y1) + 16);
   });
   // Deskew reference line
   const l = state.deskewLine;
@@ -309,25 +299,22 @@ function hitTest(dx, dy) {
       }
     }
   }
-  // Region box corners (min then max so the inner box is grabbable), active first.
+  // Region box corners, active region first.
   const order = [state.activeRegion, ...state.regions.keys()].filter(
     (v, i, a) => v != null && a.indexOf(v) === i);
   for (const i of order) {
-    const r = state.regions[i];
-    for (const which of ["min", "max"]) {
-      const cs = corners(r[which]);
-      for (let c = 0; c < 4; c++) {
-        if (Math.abs(fx - cs[c][0]) < tol && Math.abs(fy - cs[c][1]) < tol) {
-          return { kind: "rect", region: i, which, handle: c };
-        }
+    const cs = corners(state.regions[i].box);
+    for (let c = 0; c < 4; c++) {
+      if (Math.abs(fx - cs[c][0]) < tol && Math.abs(fy - cs[c][1]) < tol) {
+        return { kind: "rect", region: i, handle: c };
       }
     }
   }
-  // Move: whichever region's max contains the point.
+  // Move: whichever region's box contains the point.
   for (let i = state.regions.length - 1; i >= 0; i--) {
-    const b = state.regions[i].max;
+    const b = state.regions[i].box;
     if (fx >= b.x1 && fx <= b.x2 && fy >= b.y1 && fy <= b.y2) {
-      return { kind: "rect", region: i, which: "max", handle: "move" };
+      return { kind: "rect", region: i, handle: "move" };
     }
   }
   return null;
@@ -346,7 +333,7 @@ canvas.addEventListener("pointerdown", (ev) => {
     state.activeRegion = hit.region;
     renderRegionControls();
     drag = { ...hit, startX: toFull(p.x), startY: toFull(p.y),
-             orig: { ...state.regions[hit.region][hit.which] } };
+             orig: { ...state.regions[hit.region].box } };
   } else {
     drag = { ...hit, orig: { ...state.deskewLine } };
   }
@@ -362,7 +349,7 @@ canvas.addEventListener("pointermove", (ev) => {
     if (drag.end === 0) { l.x1 = cx; l.y1 = cy; } else { l.x2 = cx; l.y2 = cy; }
     renderDeskewControls();
   } else {
-    const b = state.regions[drag.region][drag.which];
+    const b = state.regions[drag.region].box;
     const o = drag.orig;
     if (drag.handle === "move") {
       const dx = cx - drag.startX, dy = cy - drag.startY;
@@ -421,9 +408,7 @@ function addRegion(type) {
   const W = state.imageW, H = state.imageH;
   const box = { x1: Math.round(0.15 * W), y1: Math.round(0.08 * H),
                 x2: Math.round(0.85 * W), y2: Math.round(0.22 * H) };
-  const iw = Math.round((box.x2 - box.x1) * 0.06), ih = Math.round((box.y2 - box.y1) * 0.06);
-  state.regions.push({ type, max: { ...box },
-    min: { x1: box.x1 + iw, y1: box.y1 + ih, x2: box.x2 - iw, y2: box.y2 - ih } });
+  state.regions.push({ type, box: { ...box } });
   state.activeRegion = state.regions.length - 1;
   drawCrop(); renderRegionControls();
 }
@@ -462,18 +447,21 @@ function resetDeskew() {
   renderDeskewControls();
 }
 
+function cropBody(force) {
+  return {
+    regions: state.regions.map((r) => ({ type: r.type, box: normRect(r.box) })),
+    deskew: $("chk-deskew").checked,
+    force: !!force,
+    manual_angle: state.deskewAngle,
+  };
+}
+
 async function segment(force) {
   if (!state.regions.length) { alert("Add at least one region."); return; }
   orderRegions();
   $("btn-segment").disabled = true;
   try {
-    const body = {
-      regions: state.regions.map((r) => ({ type: r.type, min: normRect(r.min), max: normRect(r.max) })),
-      deskew: $("chk-deskew").checked,
-      force: !!force,
-      manual_angle: state.deskewAngle,
-    };
-    await api("POST", `/api/pages/${state.pageNum}/columns`, body);
+    await api("POST", `/api/pages/${state.pageNum}/columns`, cropBody(force));
     await startLabeling();
   } catch (e) {
     if (e.status === 409) {
@@ -485,6 +473,70 @@ async function segment(force) {
     }
   } finally {
     $("btn-segment").disabled = false;
+  }
+}
+
+async function labelAndTranslate(force) {
+  // Crop the page now, then queue OCR→correct→translate in the background so the
+  // human can move straight to the next page. Does NOT enter the label view.
+  if (!state.regions.length) { alert("Add at least one region."); return; }
+  orderRegions();
+  $("btn-label-translate").disabled = true;
+  try {
+    const res = await api("POST", `/api/pages/${state.pageNum}/label-and-translate`, cropBody(force));
+    if (res.job) state.jobs[res.job.id] = res.job;
+    renderJobs();
+    startJobPolling();
+    goToPages();   // back to the page browser, ready for the next page
+  } catch (e) {
+    if (e.status === 409) {
+      if (confirm(e.message + "\n\nRe-crop and discard existing labels?")) {
+        await labelAndTranslate(true);
+      }
+    } else {
+      alert("Label and Translate failed: " + e.message);
+    }
+  } finally {
+    $("btn-label-translate").disabled = false;
+  }
+}
+
+// ---- background jobs panel --------------------------------------------------
+let jobPollTimer = null;
+
+function startJobPolling() {
+  if (jobPollTimer) return;
+  jobPollTimer = setInterval(pollJobsOnce, 1500);
+}
+
+async function pollJobsOnce() {
+  let data;
+  try {
+    data = await api("GET", "/api/jobs");
+  } catch (e) {
+    return;  // transient; try again next tick
+  }
+  for (const j of data.jobs) state.jobs[j.id] = j;
+  renderJobs();
+  const busy = data.jobs.some((j) => j.status === "queued" || j.status === "running");
+  if (!busy) { clearInterval(jobPollTimer); jobPollTimer = null; }
+}
+
+function renderJobs() {
+  const panel = $("jobs-panel"), list = $("jobs-list");
+  if (!panel || !list) return;
+  const jobs = Object.values(state.jobs).sort((a, b) => b.enqueued_at - a.enqueued_at);
+  panel.classList.toggle("hidden", jobs.length === 0);
+  list.innerHTML = "";
+  for (const j of jobs) {
+    const row = document.createElement("div");
+    row.className = "job-row";
+    const extra = j.status === "done" && j.cost != null ? ` ($${j.cost.toFixed(4)})`
+                : j.status === "failed" && j.error ? ` — ${j.error}` : "";
+    row.innerHTML =
+      `<span class="job-badge job-${j.status}">${j.status}</span>` +
+      `<span>page ${j.page}</span><span class="job-extra">${extra}</span>`;
+    list.appendChild(row);
   }
 }
 
@@ -824,6 +876,7 @@ $("btn-deskew").onclick = () => toggleDeskew();
 $("btn-deskew-apply").onclick = () => applyDeskew();
 $("btn-deskew-reset").onclick = () => resetDeskew();
 $("btn-segment").onclick = () => segment(false);
+$("btn-label-translate").onclick = () => labelAndTranslate(false);
 
 $("btn-to-pages").onclick = () => goToPages();
 $("btn-back-crop").onclick = () => enterCrop();
@@ -869,3 +922,4 @@ document.addEventListener("keydown", (e) => {
 
 // ---- boot ------------------------------------------------------------------
 loadPagesIndex().then(() => showView("pages"));
+pollJobsOnce();  // surface any jobs still running from a previous session
