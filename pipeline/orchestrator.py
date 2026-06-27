@@ -122,12 +122,71 @@ def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
     return rows
 
 
+def _process_page(n: int, ctx: dict) -> dict:
+    """Run crop→OCR→correct→(translate) for one page. Pure worker: writes this page's
+    own artifacts (which double as the idempotency cache) and returns a result dict;
+    it never mutates shared RunResult state, so it is safe to run in a thread pool.
+
+    Returns ``{"n", "status": deferred|ok|failed|credit, ...}``.
+    """
+    page_id = f"page_{n:04d}"  # best-effort id for error rows before crop resolves it
+    stage = "crop"
+    try:
+        crop = ctx["crop_impl"].run(n, force=ctx["force"], **ctx["config"].crop.params)
+        page_id = crop["page_id"]
+        if crop["deferred"]:
+            return {"n": n, "status": "deferred", "page_id": page_id, "reason": crop["reason"]}
+
+        stage = "ocr"
+        ocr_tag, _ = _run_ocr(page_id, ctx["ocr_impl"], force=ctx["force"])
+        stage = "correct"
+        corr = ctx["correct_impl"].run(
+            page_id, baseline_tag=ocr_tag, force=ctx["force"], **ctx["correct_params"]
+        )
+        correct_tag = corr["correct_tag"]
+
+        stage = "collect"
+        rows = collect_rows(page_id, ocr_tag, correct_tag)
+        score = scoring.score_page(page_id, rows)
+        label_msg = scoring.detect_needs_labeling(page_id)
+        page_path = artifacts.write_lines_json(
+            ctx["run_dir"], page_id, rows,
+            config_slug=ctx["slug"], ocr_tag=ocr_tag, correct_tag=correct_tag, score=score,
+        )
+
+        out = {"n": n, "status": "ok", "page_id": page_id, "ocr_tag": ocr_tag,
+               "correct_tag": correct_tag, "rows": rows, "score": score,
+               "label_msg": label_msg, "page_path": page_path,
+               "translation": None, "tr_path": None, "cost": 0.0, "tr_reused": False}
+
+        if ctx["do_translate"]:
+            stage = "translate"
+            page_text = "\n".join(r["corrected"] for r in rows if not r["non_character"])
+            tr = ctx["translate_impl"].run(
+                page_id, correct_tag=correct_tag, page_text=page_text,
+                force=ctx["force"], **ctx["translate_params"],
+            )
+            out["translation"] = tr["text"]
+            out["cost"] = tr["cost"]
+            out["tr_reused"] = tr["reused"]
+            out["tr_path"] = artifacts.write_translation(
+                ctx["run_dir"], ctx["translate_impl"].slug, n, tr["text"]
+            )
+        return out
+
+    except Exception as exc:  # noqa: BLE001 — isolate any per-page failure
+        status = "credit" if _is_credit_error(exc) else "failed"
+        return {"n": n, "status": status, "page_id": page_id, "stage": stage,
+                "exc": str(exc)}
+
+
 def run(
     pages: list[int],
     config: PipelineConfig,
     *,
     translate: str = "none",
     force: bool = False,
+    concurrency: int = 1,
 ) -> RunResult:
     crop_impl = CROPPERS[config.crop.impl]
     slice_impl = SLICERS[config.slice.impl]
@@ -143,90 +202,114 @@ def run(
     run_dir = artifacts.RUNS_DIR / slug
     result = RunResult(config=config, run_dir=run_dir, pages=list(pages))
 
-    pages_rows: list[tuple[str, list[dict]]] = []
-    pages_translated: list[tuple[int, str]] = []
     ocr_tag = ocr_impl.meta["tag"]
     correct_tag = ocr_tag
+    ctx = {
+        "config": config, "crop_impl": crop_impl, "ocr_impl": ocr_impl,
+        "correct_impl": correct_impl, "correct_params": correct_params,
+        "translate_impl": translate_impl, "translate_params": translate_params,
+        "do_translate": do_translate, "run_dir": run_dir, "slug": slug, "force": force,
+    }
 
+    # Aggregated in the main thread only (workers return data, never touch `result`).
+    ok_rows: dict[int, tuple[str, list[dict]]] = {}      # n -> (page_id, rows)
+    ok_translated: dict[int, str] = {}                   # n -> english
     total = len(pages)
-    consecutive_failures = 0  # circuit breaker — halt if too many in a row
-    for i, n in enumerate(pages, 1):
-        page_id = f"page_{n:04d}"  # best-effort id for error rows before crop resolves it
-        stage = "crop"
-        try:
-            crop = crop_impl.run(n, force=force, **config.crop.params)
-            page_id = crop["page_id"]
-            if crop["deferred"]:
-                result.deferred.append({"page_id": page_id, "reason": crop["reason"]})
-                print(f"  [{i}/{total}] DEFER {page_id}: {crop['reason']}")
-                consecutive_failures = 0
-                continue
+    completed = 0
+    successes = 0
+    failures = 0
+    stop = False  # set by credit exhaustion or the systemic circuit breaker
 
-            stage = "ocr"
-            ocr_tag, ocr_reused = _run_ocr(page_id, ocr_impl, force=force)
-            stage = "correct"
-            corr = correct_impl.run(page_id, baseline_tag=ocr_tag, force=force, **correct_params)
-            correct_tag = corr["correct_tag"]
-
-            stage = "collect"
-            rows = collect_rows(page_id, ocr_tag, correct_tag)
-            score = scoring.score_page(page_id, rows)
-            if score:
-                result.scores.append(score)
-            label_msg = scoring.detect_needs_labeling(page_id)
-            if label_msg:
-                result.needs_labeling.append(label_msg)
-
-            page_path = artifacts.write_lines_json(
-                run_dir, page_id, rows,
-                config_slug=slug, ocr_tag=ocr_tag, correct_tag=correct_tag, score=score,
-            )
-            result.per_page[page_id] = page_path
-            result.page_ids.append(page_id)
-            pages_rows.append((page_id, rows))
-
-            if do_translate:
-                stage = "translate"
-                # Same per-page block fed to merged.md: text lines only, reading order.
-                page_text = "\n".join(r["corrected"] for r in rows if not r["non_character"])
-                tr = translate_impl.run(
-                    page_id, correct_tag=correct_tag, page_text=page_text,
-                    force=force, **translate_params,
-                )
-                result.translation_cost += tr["cost"]
-                tr_path = artifacts.write_translation(run_dir, translate_impl.slug, n, tr["text"])
-                result.translations[n] = tr_path
-                pages_translated.append((n, tr["text"]))
-                note = " (reused)" if tr["reused"] else f" (${tr['cost']:.4f})"
-                print(f"  [{i}/{total}] OK {page_id} -> {page_path.name}{note}")
-            else:
-                print(f"  [{i}/{total}] OK {page_id} -> {page_path.name}")
-            consecutive_failures = 0
-
-        except Exception as exc:  # noqa: BLE001 — isolate any per-page failure
-            # Credit/quota/billing exhaustion is permanent: stop here and leave every
-            # remaining page untouched so a post-refill re-run of the SAME command
-            # resumes exactly where we stopped (every stage is idempotent).
-            if _is_credit_error(exc):
-                result.credit_exhausted = True
+    def absorb(res: dict) -> None:
+        """Fold one worker result into RunResult + print a progress line. Returns
+        nothing; sets the outer `stop` flag via nonlocal on a halt condition."""
+        nonlocal completed, successes, failures, stop, ocr_tag, correct_tag
+        completed += 1
+        n = res["n"]
+        tag = f"[{completed}/{total}]"
+        if res["status"] == "deferred":
+            result.deferred.append({"page_id": res["page_id"], "reason": res["reason"]})
+            print(f"  {tag} DEFER {res['page_id']}: {res['reason']}")
+            return
+        if res["status"] == "credit":
+            result.credit_exhausted = True
+            result.stopped_at = n
+            result.failed.append({"n": n, "page_id": res["page_id"], "stage": res["stage"],
+                                  "reason": f"credit/quota exhausted: {res['exc'][:160]}"})
+            print(f"  {tag} ⛔ CREDIT EXHAUSTED at {res['page_id']} ({res['stage']}): {res['exc'][:120]}")
+            stop = True
+            return
+        if res["status"] == "failed":
+            failures += 1
+            result.failed.append({"n": n, "page_id": res["page_id"], "stage": res["stage"],
+                                  "reason": res["exc"][:200]})
+            print(f"  {tag} FAIL {res['page_id']} ({res['stage']}): {res['exc'][:120]}")
+            # Systemic guard: 3 failures with no success yet => broken setup (bad OCR
+            # checkpoint, un-classified quota error). Halt before burning the book.
+            if failures >= 3 and successes == 0:
                 result.stopped_at = n
-                result.failed.append({"n": n, "page_id": page_id, "stage": stage,
-                                       "reason": f"credit/quota exhausted: {str(exc)[:160]}"})
-                print(f"  [{i}/{total}] ⛔ CREDIT EXHAUSTED at {page_id} ({stage}): {str(exc)[:120]}")
-                break
+                print(f"  ⚠ {failures} failures and no successes — systemic problem, stopping.")
+                stop = True
+            return
+        # ok
+        successes += 1
+        ocr_tag, correct_tag = res["ocr_tag"], res["correct_tag"]
+        if res["score"]:
+            result.scores.append(res["score"])
+        if res["label_msg"]:
+            result.needs_labeling.append(res["label_msg"])
+        result.per_page[res["page_id"]] = res["page_path"]
+        result.page_ids.append(res["page_id"])
+        ok_rows[n] = (res["page_id"], res["rows"])
+        if do_translate:
+            result.translation_cost += res["cost"]
+            result.translations[n] = res["tr_path"]
+            ok_translated[n] = res["translation"]
+            note = " (reused)" if res["tr_reused"] else f" (${res['cost']:.4f})"
+            print(f"  {tag} OK {res['page_id']} -> {res['page_path'].name}{note}")
+        else:
+            print(f"  {tag} OK {res['page_id']} -> {res['page_path'].name}")
 
-            consecutive_failures += 1
-            result.failed.append({"n": n, "page_id": page_id, "stage": stage,
-                                   "reason": str(exc)[:200]})
-            print(f"  [{i}/{total}] FAIL {page_id} ({stage}): {str(exc)[:120]}")
-
-            # Circuit breaker: ≥3 failures in a row signals a systemic problem (a
-            # broken OCR checkpoint, a subtle un-classified quota error) — halt
-            # rather than burn the rest of the book on the same fault.
-            if consecutive_failures >= 3:
-                result.stopped_at = n
-                print(f"  ⚠ {consecutive_failures} consecutive failures — systemic problem, stopping.")
+    if concurrency <= 1:
+        for n in pages:
+            absorb(_process_page(n, ctx))
+            if stop:
                 break
+    else:
+        # Bounded sliding window: at most `concurrency` pages in flight, submitted in
+        # page order. On a halt we stop submitting; in-flight pages finish (their
+        # on-disk caches persist, so a resume reuses them) but are not absorbed.
+        from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+        it = iter(pages)
+        with ThreadPoolExecutor(max_workers=concurrency) as ex:
+            inflight = {}
+            for _ in range(concurrency):
+                n = next(it, None)
+                if n is None:
+                    break
+                inflight[ex.submit(_process_page, n, ctx)] = n
+            while inflight:
+                done, _pending = wait(inflight, return_when=FIRST_COMPLETED)
+                for fut in done:
+                    inflight.pop(fut)
+                    absorb(fut.result())
+                if stop:
+                    break
+                while len(inflight) < concurrency:
+                    n = next(it, None)
+                    if n is None:
+                        break
+                    inflight[ex.submit(_process_page, n, ctx)] = n
+
+    # Rebuild every outward collection in PAGE order from the page-keyed aggregation
+    # (workers complete out of order under concurrency; the docs + metadata must not).
+    pages_rows = [ok_rows[n] for n in pages if n in ok_rows]
+    pages_translated = [(n, ok_translated[n]) for n in pages if n in ok_translated]
+    result.page_ids = [ok_rows[n][0] for n in pages if n in ok_rows]
+    result.per_page = {pid: result.per_page[pid] for pid, _ in
+                       ((ok_rows[n][0], n) for n in pages if n in ok_rows)}
+    result.translations = {n: result.translations[n] for n in pages if n in result.translations}
 
     result.merged_doc = artifacts.write_merged_doc(run_dir, pages_rows)
     if do_translate and pages_translated:

@@ -96,6 +96,12 @@ TRANSLATORS: dict[str, StageImpl] = {
         stages.translate_llm,
         meta={"params": {"cli_model": "gemini-3.1-pro"}},
     ),
+    "gemini-flash": StageImpl(
+        "gemini-flash", "base",
+        "gemini-3.5-flash Grabar→English, thinking_budget=512 (Phase 5b: ~7x faster, complete+faithful)",
+        stages.translate_llm,
+        meta={"params": {"cli_model": "gemini-3.5-flash"}},
+    ),
     "opus": StageImpl(
         "opus", "base", "claude-opus-4-8 Grabar→English",
         stages.translate_llm,

@@ -79,6 +79,7 @@ MODELS: dict[str, tuple[str, str, str]] = {
     "claude-sonnet-4-6": ("anthropic", "claude-sonnet-4-6",      "sonnet"),
     "gpt-5.5":           ("openai",    "gpt-5.5",                "gpt55"),
     "gemini-3.1-pro":    ("gemini",    "gemini-3.1-pro-preview", "gemini"),
+    "gemini-3.5-flash":  ("gemini",    "gemini-3.5-flash",       "g35flash"),
 }
 
 # Per-model token pricing, ($ per 1M input, $ per 1M output).
@@ -88,8 +89,23 @@ PRICE_PER_MTOK: dict[str, tuple[float, float]] = {
     "claude-opus-4-8":   (5.00, 25.00),
     "claude-sonnet-4-6": (3.00, 15.00),
     "gpt-5.5":           (1.25, 10.00),   # ESTIMATE — update at build time
-    "gemini-3.1-pro":    (2.00, 12.00),   # ESTIMATE — update at build time
+    "gemini-3.1-pro":    (2.00, 12.00),   # confirmed 2026-06 (ai.google.dev/gemini-api/docs/pricing)
+    "gemini-3.5-flash":  (1.50,  9.00),   # confirmed 2026-06 (launched 2026-05-19)
 }
+
+# Per-(api) model thinking budget for Gemini reasoning models (tokens). Absent =>
+# no cap (dynamic/high thinking ~ the model's default). Set from the Phase 5b sweep
+# (docs/phase_5b_gemini_thinking_budget.md): budget=512 matches dynamic correction
+# quality at ~5-8x speed, and gives complete+faithful translation at ~7x speed.
+GEMINI_THINKING_BUDGET: dict[str, int] = {
+    "gemini-3.1-pro-preview": 512,
+    "gemini-3.5-flash": 512,
+}
+
+# Bound a stuck connection so a multi-hundred-page run can't hang forever on one
+# call (a no-timeout call_gemini hung indefinitely during the Phase 5b sweep). Still
+# well above a legitimate ~90s dynamic-thinking response.
+GEMINI_HTTP_TIMEOUT_MS = 180_000
 
 REWRITE_SYSTEM = (
     "You correct OCR of Classical Armenian (Grabar) printed in Bolorgir script. "
@@ -217,16 +233,23 @@ def call_gemini(model: str, system: str, user: str) -> tuple[str, int, int]:
     from google import genai
     from google.genai import types as genai_types
 
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=genai_types.HttpOptions(timeout=GEMINI_HTTP_TIMEOUT_MS),
+    )
+
+    cfg_kw = dict(system_instruction=system, max_output_tokens=MAX_TOKENS)
+    budget = GEMINI_THINKING_BUDGET.get(model)
+    if budget is not None:
+        # Cap reasoning tokens — uncapped, 3.1-pro spends ~15k thinking tokens/call
+        # (~90s); a small budget gives the same answer in ~10s (Phase 5b).
+        cfg_kw["thinking_config"] = genai_types.ThinkingConfig(thinking_budget=budget)
 
     def _go():
         return client.models.generate_content(
             model=model,
             contents=user,
-            config=genai_types.GenerateContentConfig(
-                system_instruction=system,
-                max_output_tokens=MAX_TOKENS,
-            ),
+            config=genai_types.GenerateContentConfig(**cfg_kw),
         )
 
     resp = _retry(_go, label=model)

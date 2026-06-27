@@ -40,6 +40,8 @@ def main() -> None:
     ap.add_argument("--translate", default="none", choices=list(TRANSLATORS),
                     help="Translate each page to English (default: none)")
     ap.add_argument("--force", action="store_true", help="Re-run stages even if outputs exist")
+    ap.add_argument("--concurrency", type=int, default=1,
+                    help="Pages processed in parallel (API-bound stages overlap; default 1)")
     args = ap.parse_args()
 
     pages = _parse_pages(args)
@@ -50,8 +52,10 @@ def main() -> None:
         correct=StageSpec(args.correct),
     )
     print(f"Pipeline [{config.slug()}] over pages {pages}"
-          f"{f' + translate:{args.translate}' if args.translate != 'none' else ''}\n")
-    res = run_pages(pages, config, translate=args.translate, force=args.force)
+          f"{f' + translate:{args.translate}' if args.translate != 'none' else ''}"
+          f"{f' (concurrency={args.concurrency})' if args.concurrency > 1 else ''}\n")
+    res = run_pages(pages, config, translate=args.translate, force=args.force,
+                    concurrency=args.concurrency)
 
     print(f"\nRun dir : {res['run_dir']}")
     print(f"Merged  : {res['merged_doc']}")

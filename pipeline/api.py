@@ -18,6 +18,7 @@ def run_pages(
     *,
     translate: str = "none",
     force: bool = False,
+    concurrency: int = 1,
 ) -> dict:
     """Run the full crop → slice → OCR → correct (→ translate) pipeline over ``pages``.
 
@@ -34,7 +35,7 @@ def run_pages(
     exhaustion, and the page number it stopped at.
     """
     cfg = config or DEFAULT_CONFIG
-    result = run(pages, cfg, translate=translate, force=force)
+    result = run(pages, cfg, translate=translate, force=force, concurrency=concurrency)
     merged_text = result.merged_doc.read_text(encoding="utf-8") if result.merged_doc else ""
     overall_cer = (
         round(sum(s["cer"] * s["n_scored"] for s in result.scores)
