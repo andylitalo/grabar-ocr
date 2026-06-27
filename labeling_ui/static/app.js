@@ -26,6 +26,7 @@ const state = {
   verdicts: {},         // line index -> "empty" | "character" (verify mode only)
   autoPageId: null,     // page_XXXX_auto, set when entering verify mode
   jobs: {},             // job_id -> {id,page,status,cost,error,enqueued_at,...}
+  pageBlank: false,     // is the currently-loaded page marked blank?
 };
 
 // Canonical line-id is supplied by the backend (`<region_key>/line_NNN`); fall
@@ -143,9 +144,12 @@ async function loadPage(n) {
   state.deskewUnlocked = false;
   state.deskewLine = null;
   $("page-num").value = data.n;
+  state.pageBlank = !!data.blank;
+  const status = data.blank ? "blank" : data.status;
   const badge = $("page-badge");
-  badge.textContent = `${data.page_id} · ${data.status}`;
-  badge.className = "badge " + data.status;
+  badge.textContent = `${data.page_id} · ${status}`;
+  badge.className = "badge " + status;
+  $("btn-blank").textContent = data.blank ? "Unmark blank" : "Mark blank";
   const img = $("page-preview");
   img.src = `${data.page_image_url}?t=${Date.now()}`;
   $("btn-select").disabled = false;
@@ -852,9 +856,25 @@ $("page-num").addEventListener("keydown", (e) => {
 });
 $("btn-prev").onclick = () => { const n = adjacentPage(-1); if (n != null) loadPage(n); };
 $("btn-next").onclick = () => { const n = adjacentPage(1); if (n != null) loadPage(n); };
+$("btn-blank").onclick = async () => {
+  if (state.pageNum == null) return;
+  const next = !state.pageBlank;
+  try {
+    await api("POST", `/api/pages/${state.pageNum}/blank`, { blank: next });
+  } catch (e) {
+    alert("Could not update blank status: " + e.message);
+    return;
+  }
+  const p = state.pages.find((x) => x.n === state.pageNum);
+  if (p) p.blank = next;            // keep the cached list in sync (next-unlabeled skip)
+  await loadPage(state.pageNum);     // refresh badge + button label
+};
+
 $("btn-next-unlabeled").onclick = () => {
-  const p = state.pages.find((x) => x.status === "unlabeled" && (state.pageNum == null || x.n > state.pageNum))
-        || state.pages.find((x) => x.status === "unlabeled");
+  // Skip blank pages — they're handled, not pending work.
+  const pending = (x) => x.status === "unlabeled" && !x.blank;
+  const p = state.pages.find((x) => pending(x) && (state.pageNum == null || x.n > state.pageNum))
+        || state.pages.find(pending);
   if (p) loadPage(p.n); else alert("No unlabeled pages remaining.");
 };
 $("btn-select").onclick = () => enterCrop();

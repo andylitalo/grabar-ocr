@@ -72,6 +72,10 @@ class NoncharTruthRequest(BaseModel):
     verdicts: dict[str, str]
 
 
+class BlankRequest(BaseModel):
+    blank: bool = True  # True = mark page blank; False = unmark
+
+
 # --- page browser ------------------------------------------------------------
 
 
@@ -86,6 +90,7 @@ def list_pages() -> dict:
             "n": n,
             "page_id": storage.page_artifact_id(n),
             "status": storage.page_status(storage.page_artifact_id(n)),
+            "blank": storage.is_blank(n),
             # Auto tree (page_XXXX_auto) status for the Phase A detector-validation
             # entry point: none / sliced / verified. Human fields are unchanged.
             "has_auto": storage.has_auto_lines(n),
@@ -112,6 +117,7 @@ def get_page(n: int) -> dict:
         "n": n,
         "page_id": page_id,
         "status": storage.page_status(page_id),
+        "blank": storage.is_blank(n),
         "page_image_url": f"/api/pages/{n}/image.png",
         "image_width": width,
         "image_height": height,
@@ -139,6 +145,17 @@ def get_page_image(n: int, angle: float = 0.0) -> FileResponse:
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
     return FileResponse(render_path, media_type="image/png")
+
+
+@app.post("/api/pages/{n}/blank")
+def mark_blank(n: int, req: BlankRequest) -> dict:
+    """Mark (or unmark) a source page as blank — no Grabar to digitize. Records a
+    marker JSON under data/pages/blank/ so the page is tracked as handled and
+    skipped by the crop worklist."""
+    if not storage.page_pdf_path(n).exists():
+        raise HTTPException(status_code=404, detail=f"No page PDF for page {n}")
+    blank = storage.set_blank(n, req.blank)
+    return {"n": n, "blank": blank}
 
 
 _REGION_TYPES = ("header", "single", "left", "right")
