@@ -90,7 +90,7 @@ label { font-size: 0.9rem; }
 .badge.done, .badge.labeled { color: var(--ok); border-color: var(--ok); }
 .badge.empty { color: var(--accent); border-color: var(--accent); }
 .badge.rejected { color: var(--danger); border-color: var(--danger); }
-.badge.blank { color: var(--ink); border-color: var(--ink); background: #353841; }
+.badge.blank { color: #15161a; background: var(--warn); border-color: var(--warn); font-weight: 600; }
 
 .preview-wrap, .canvas-wrap {
   max-height: 72vh;

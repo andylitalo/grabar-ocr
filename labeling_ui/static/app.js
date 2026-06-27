@@ -125,6 +125,16 @@ async function loadPagesIndex() {
   $("pages-meta").textContent = meta;
 }
 
+function renderBlankButton(blank) {
+  // Reflect blank state on the button itself: filled + checkmark when marked, so
+  // a click produces an unmistakable visual change (not just the status badge).
+  const b = $("btn-blank");
+  b.textContent = blank ? "✓ Marked as blank" : "Mark blank";
+  b.classList.toggle("primary", blank);
+  b.classList.toggle("ghost", !blank);
+  b.setAttribute("aria-pressed", blank ? "true" : "false");
+}
+
 async function loadPage(n) {
   let data;
   try {
@@ -149,7 +159,7 @@ async function loadPage(n) {
   const badge = $("page-badge");
   badge.textContent = `${data.page_id} · ${status}`;
   badge.className = "badge " + status;
-  $("btn-blank").textContent = data.blank ? "Unmark blank" : "Mark blank";
+  renderBlankButton(!!data.blank);
   const img = $("page-preview");
   img.src = `${data.page_image_url}?t=${Date.now()}`;
   $("btn-select").disabled = false;
@@ -857,17 +867,23 @@ $("page-num").addEventListener("keydown", (e) => {
 $("btn-prev").onclick = () => { const n = adjacentPage(-1); if (n != null) loadPage(n); };
 $("btn-next").onclick = () => { const n = adjacentPage(1); if (n != null) loadPage(n); };
 $("btn-blank").onclick = async () => {
-  if (state.pageNum == null) return;
+  if (state.pageNum == null) { alert("Load a page first."); return; }
   const next = !state.pageBlank;
+  const b = $("btn-blank");
+  b.disabled = true;
+  b.textContent = next ? "Marking…" : "Removing…";   // instant feedback
   try {
     await api("POST", `/api/pages/${state.pageNum}/blank`, { blank: next });
   } catch (e) {
     alert("Could not update blank status: " + e.message);
+    b.disabled = false;
+    renderBlankButton(state.pageBlank);
     return;
   }
+  b.disabled = false;
   const p = state.pages.find((x) => x.n === state.pageNum);
   if (p) p.blank = next;            // keep the cached list in sync (next-unlabeled skip)
-  await loadPage(state.pageNum);     // refresh badge + button label
+  await loadPage(state.pageNum);     // refresh badge + button (renderBlankButton)
 };
 
 $("btn-next-unlabeled").onclick = () => {
