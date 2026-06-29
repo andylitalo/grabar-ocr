@@ -207,7 +207,12 @@ function seedRegions(defaultRegions) {
 
 function orderRegions() {
   // Reading order: top-to-bottom by box, left before right within a band.
+  // Keep activeRegion pointing at the SAME region object across the re-sort —
+  // it's a bare index, so a geometry change that reorders the array would
+  // otherwise leave it (and any in-flight drag) referring to a neighbor.
+  const active = state.regions[state.activeRegion];
   state.regions.sort((a, b) => (a.box.y1 - b.box.y1) || (a.box.x1 - b.box.x1));
+  if (active) state.activeRegion = state.regions.indexOf(active);
 }
 
 function initDeskewLine() {
@@ -324,10 +329,16 @@ function hitTest(dx, dy) {
       }
     }
   }
-  // Move: whichever region's box contains the point.
+  // Move: prefer the active region when the point falls inside it, so clicking
+  // within an overlap keeps the box you're working on instead of grabbing a
+  // neighbor. Otherwise fall back to the topmost region containing the point.
+  const inside = (b) => fx >= b.x1 && fx <= b.x2 && fy >= b.y1 && fy <= b.y2;
+  const active = state.regions[state.activeRegion];
+  if (active && inside(active.box)) {
+    return { kind: "rect", region: state.activeRegion, handle: "move" };
+  }
   for (let i = state.regions.length - 1; i >= 0; i--) {
-    const b = state.regions[i].box;
-    if (fx >= b.x1 && fx <= b.x2 && fy >= b.y1 && fy <= b.y2) {
+    if (inside(state.regions[i].box)) {
       return { kind: "rect", region: i, handle: "move" };
     }
   }
@@ -345,9 +356,11 @@ canvas.addEventListener("pointerdown", (ev) => {
   if (!hit) return;
   if (hit.kind === "rect") {
     state.activeRegion = hit.region;
-    renderRegionControls();
-    drag = { ...hit, startX: toFull(p.x), startY: toFull(p.y),
-             orig: { ...state.regions[hit.region].box } };
+    renderRegionControls();           // may re-sort; orderRegions() keeps activeRegion on the clicked box
+    const region = state.activeRegion; // post-sort index of the clicked box
+    drag = { kind: "rect", handle: hit.handle, region,
+             startX: toFull(p.x), startY: toFull(p.y),
+             orig: { ...state.regions[region].box } };
   } else {
     drag = { ...hit, orig: { ...state.deskewLine } };
   }
