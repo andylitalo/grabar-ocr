@@ -29,6 +29,7 @@ from jiwer import cer
 
 REPO = Path(__file__).resolve().parents[1]
 DATA_PAGES = REPO / "data" / "pages"
+DATA_BLANK = DATA_PAGES / "blank"
 DATA_COLUMNS = REPO / "data" / "columns"
 DATA_COLUMN_BOXES = DATA_COLUMNS / "boxes"
 DATA_LINES = REPO / "data" / "lines"
@@ -453,6 +454,50 @@ def auto_status(n: int) -> str:
     if not has_auto_lines(n):
         return "none"
     return "verified" if nonchar_verified(page_artifact_id(n, METHOD_AUTO)) else "sliced"
+
+
+# --- blank-page marker -------------------------------------------------------
+#
+# Some source pages are blank (no Grabar to digitize). A human marks them in the
+# labeling UI so they are not cropped/OCR'd/translated and are tracked as handled
+# rather than left dangling on the crop worklist. The marker is a small JSON under
+# data/pages/blank/, keyed by the BASE page id (page_XXXX) — blankness is a property
+# of the scan itself, independent of the human/auto method tag.
+
+
+def blank_marker_path(n: int) -> Path:
+    """Marker file recording that source page n is blank."""
+    return DATA_BLANK / f"{page_id_for(n)}.json"
+
+
+def is_blank(n: int) -> bool:
+    """True if page n has been marked blank in the labeling UI."""
+    return blank_marker_path(n).exists()
+
+
+def set_blank(n: int, blank: bool) -> bool:
+    """Mark (blank=True) or unmark (blank=False) source page n as blank; returns
+    the resulting state. Writing/removing the marker JSON is the data record."""
+    from datetime import datetime, timezone
+
+    path = blank_marker_path(n)
+    if blank:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "page_id": page_id_for(n),
+                    "blank": True,
+                    "marked_by": "human",
+                    "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    else:
+        path.unlink(missing_ok=True)
+    return blank
 
 
 def page_status(page_id: str) -> str:

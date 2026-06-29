@@ -90,6 +90,7 @@ label { font-size: 0.9rem; }
 .badge.done, .badge.labeled { color: var(--ok); border-color: var(--ok); }
 .badge.empty { color: var(--accent); border-color: var(--accent); }
 .badge.rejected { color: var(--danger); border-color: var(--danger); }
+.badge.blank { color: #15161a; background: var(--warn); border-color: var(--warn); font-weight: 600; }
 
 .preview-wrap, .canvas-wrap {
   max-height: 72vh;
@@ -246,3 +247,22 @@ code { background: #15161a; padding: 0.1rem 0.3rem; border-radius: 4px; font-siz
 .summary.warn { border-color: var(--warn); border-width: 2px; }
 #done-summary-text { font-size: 0.95rem; }
 #btn-to-pages { font-size: 1.05rem; padding: 0.6rem 1rem; }
+
+/* ---- background jobs (Label and Translate queue) ---- */
+.jobs-panel { display: flex; flex-direction: column; gap: 0.4rem; }
+.jobs-list { display: flex; flex-direction: column; gap: 0.25rem; }
+.job-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.88rem; color: var(--ink);
+}
+.job-extra { color: var(--muted); }
+.job-badge {
+  display: inline-block; min-width: 4.2rem; text-align: center;
+  padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+.job-queued  { color: var(--muted); }
+.job-running { color: #fff; background: var(--accent); border-color: var(--accent); }
+.job-done    { color: #fff; background: var(--ok); border-color: var(--ok); }
+.job-failed  { color: #fff; background: var(--danger); border-color: var(--danger); }

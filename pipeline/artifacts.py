@@ -16,11 +16,14 @@ orchestrator.collect_rows) and never run a stage.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 RUNS_DIR = REPO / "runs"
+
+_PAGE_NUM_RE = re.compile(r"page_(\d+)")
 
 
 def _counts(rows: list[dict]) -> dict:
@@ -134,6 +137,52 @@ def write_translated_doc(
     out = out_dir / "translated.md"
     out.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
     return out
+
+
+def rebuild_merged_doc_from_disk(run_dir: Path) -> Path:
+    """Rebuild merged.md from EVERY per-page lines.json on disk, in page-number order.
+
+    The orchestrator's per-call ``write_merged_doc`` only sees the pages of the
+    current ``run_pages`` call, so calling it would clobber merged.md down to those
+    pages. This reads all ``pages/*.lines.json`` already persisted by
+    ``write_lines_json`` and rebuilds the full document — so incremental, one-page-
+    at-a-time runs (the labeling UI) and batch resumes accumulate instead of
+    overwriting. Falls back to an empty doc when no page artifacts exist yet.
+    """
+    pages_dir = run_dir / "pages"
+    items: list[tuple[int, str, list[dict]]] = []
+    if pages_dir.is_dir():
+        for p in pages_dir.glob("*.lines.json"):
+            data = json.loads(p.read_text(encoding="utf-8"))
+            m = _PAGE_NUM_RE.search(data["page_id"])
+            if m is None:
+                continue
+            items.append((int(m.group(1)), data["page_id"], data["lines"]))
+    items.sort(key=lambda t: t[0])
+    return write_merged_doc(run_dir, [(page_id, rows) for _, page_id, rows in items])
+
+
+def rebuild_translated_doc_from_disk(run_dir: Path, translator_slug: str) -> Path | None:
+    """Rebuild translations/<slug>/translated.md from EVERY page_*.txt, page-number order.
+
+    Counterpart to ``rebuild_merged_doc_from_disk`` for the English document: globs
+    the per-page translations already written by ``write_translation`` and rebuilds
+    the combined doc so prior pages are never clobbered. Returns None when no page
+    translations exist yet.
+    """
+    tdir = run_dir / "translations" / translator_slug
+    if not tdir.is_dir():
+        return None
+    files = []
+    for p in tdir.glob("page_*.txt"):
+        m = _PAGE_NUM_RE.search(p.name)
+        if m is not None:
+            files.append((int(m.group(1)), p))
+    if not files:
+        return None
+    files.sort(key=lambda t: t[0])
+    pages_text = [(n, p.read_text(encoding="utf-8")) for n, p in files]
+    return write_translated_doc(run_dir, translator_slug, pages_text)
 
 
 _GUIDE_REL = "docs/human_completion_guide.md"

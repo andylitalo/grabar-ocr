@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -54,11 +55,39 @@ TESSDATA = REPO / "ml_vision/tessdata"
 LANG = "hye-calfa-n"
 PRED_BASE = REPO / "data/predictions"
 
+# --- character whitelist (Armenian script only) ------------------------------
+# The hye model occasionally emits stray Latin letters / garbage on decorative or
+# low-contrast lines (e.g. a title page yielding "...ՀԱՏՈՐԸek"). Restricting
+# recognition to the Armenian script + the punctuation that actually occurs in
+# these texts removes that contamination at no quality cost. Built from ranges so
+# it's auditable:
+#   uppercase Ա(U+0531)–Ֆ(U+0556), lowercase ա(U+0561)–ֆ(U+0586),
+#   ligature և(U+0587), Arabic digits 0–9, and the punctuation below.
+# Punctuation — requested: ՝ - . ՜ ՚ ։ … ; recommended additions: , (the printed
+# text uses ASCII commas between clauses), ՛ ՞ ՟ (emphasis / question / abbreviation
+# [patiw] marks — the last is common in Grabar), ֊ (Armenian hyphen, used at
+# line-break), « » and ( ) for quotes / parentheses.
+# The trailing SPACE is required: in LSTM mode an explicit whitelist drops inter-word
+# spaces unless space is whitelisted. pytesseract uses shlex.split on the config
+# string, so the space-containing value is passed via shlex.quote (see recognize).
+_ARM_UPPER = "".join(chr(c) for c in range(0x0531, 0x0557))
+_ARM_LOWER = "".join(chr(c) for c in range(0x0561, 0x0587))
+_LIGATURE = "և"  # և
+_DIGITS = "0123456789"
+_PUNCT = "՝,-.՜՚։…՛՞՟֊«»()"
+CHAR_WHITELIST = _ARM_UPPER + _ARM_LOWER + _LIGATURE + _DIGITS + _PUNCT + " "
 
-def recognize(image: Image.Image, psm: int) -> str:
+
+def recognize(image: Image.Image, psm: int, whitelist: bool = True) -> str:
     """Single Tesseract pass over one line crop. --dpi 300 matches the scan DPI;
-    --tessdata-dir keeps the traineddata repo-local (out of system dirs)."""
+    --tessdata-dir keeps the traineddata repo-local (out of system dirs). When
+    ``whitelist`` is set, recognition is restricted to CHAR_WHITELIST (Armenian +
+    digits + in-use punctuation + space), which strips stray Latin/garbage while
+    keeping word spacing."""
     config = f"--psm {psm} --dpi 300 --tessdata-dir {TESSDATA}"
+    if whitelist:
+        config += " -c " + shlex.quote("tessedit_char_whitelist=" + CHAR_WHITELIST)
+        config += " -c preserve_interword_spaces=1"
     return pytesseract.image_to_string(image, lang=LANG, config=config).strip()
 
 
@@ -69,12 +98,16 @@ def main() -> None:
     g.add_argument("--page", type=str, help="predict a page, e.g. page_0400_human (reads data/lines/)")
     parser.add_argument("--model-tag", default="tesseract", help="output subdir tag (default: tesseract)")
     parser.add_argument("--psm", type=int, default=13, help="Tesseract page-seg mode (default: 13 raw-line)")
+    parser.add_argument("--no-whitelist", action="store_true",
+                        help="disable the Armenian-script char whitelist (A/B: allows Latin/garbage)")
     args = parser.parse_args()
+    use_whitelist = not args.no_whitelist
 
     if not (TESSDATA / f"{LANG}.traineddata").exists():
         raise SystemExit(f"Missing {LANG}.traineddata under {TESSDATA.relative_to(REPO)} (see plan §Setup).")
 
-    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={LANG} psm={args.psm}")
+    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={LANG} "
+          f"psm={args.psm} whitelist={'on' if use_whitelist else 'off'}")
 
     if args.frozen:
         targets = collect_frozen()
@@ -91,7 +124,7 @@ def main() -> None:
     n_empty = 0
     for i, t in enumerate(targets, start=1):
         image = Image.open(t["png"]).convert("RGB")
-        pred = recognize(image, args.psm)
+        pred = recognize(image, args.psm, whitelist=use_whitelist)
         if not pred:
             n_empty += 1
 
@@ -114,6 +147,7 @@ def main() -> None:
         "tesseract_version": str(pytesseract.get_tesseract_version()),
         "lang": LANG,
         "psm": args.psm,
+        "char_whitelist": CHAR_WHITELIST if use_whitelist else None,
         "target": page_key,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "lines": lines_payload,
