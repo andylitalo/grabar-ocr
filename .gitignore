@@ -65,8 +65,18 @@ wandb/
 # Pipeline run outputs (derived artifacts; per-line JSON + merged docs + scorecards)
 runs/
 
-# Data (large files go to GCS)
-data/
+# Data (large files go to GCS). The tiny column-box ground truth
+# (data/columns/boxes/*.json) is version-controlled as portable geometry;
+# everything else under data/ (line crops, renders, predictions, column PNGs)
+# stays ignored. Anchored per-level rules so the boxes negation can win over the
+# blanket data/ and the global *.json rules above (last match wins, and no
+# excluded parent dir).
+/data/*
+!/data/README.md
+!/data/columns/
+/data/columns/*
+!/data/columns/boxes/
+!/data/columns/boxes/*.json
 *.pdf
 *.tiff
 *.tif
