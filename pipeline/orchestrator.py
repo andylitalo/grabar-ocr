@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from labeling_ui import storage
 from pipeline import artifacts, scoring
 from pipeline.config import PipelineConfig
 from pipeline.registry import CORRECTORS, CROPPERS, OCR_ENGINES, SLICERS, TRANSLATORS
@@ -88,12 +89,28 @@ def _run_ocr(page_id: str, ocr_impl, *, force: bool) -> tuple[str, bool]:
     return tag, False
 
 
+def _line_no(line_id: str) -> int:
+    """Line number embedded in a ``<region>/line_NNN`` id (0 if unparseable)."""
+    tail = line_id.rsplit("line_", 1)[-1]
+    try:
+        return int(tail)
+    except ValueError:
+        return 0
+
+
 def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
     """Per-line rows joining baseline OCR (ocr_beam, non_character) with corrected text.
 
-    Baseline predictions.json keys are line-ids in reading order (insertion order),
-    so the rows come out in global reading order. When correct_tag == ocr_tag (the
-    "none" corrector) the corrected text is the baseline beam itself.
+    Baseline predictions.json keys are line-ids in the order the regions were
+    combined. When correct_tag == ocr_tag (the "none" corrector) the corrected text
+    is the baseline beam itself.
+
+    Rows are then re-sorted into *geometric* reading order via
+    ``storage.reading_order_ranks`` (region rank, then line number) and re-indexed,
+    so an already-cached predictions.json whose regions were combined in the wrong
+    order (e.g. a page annotated right-column-first) still produces a correctly
+    ordered lines.json / merged.md / translation input — no re-slice, no re-OCR. When
+    no boxes file exists, the ranks are None and the insertion order is preserved.
     """
     base = json.loads((PRED_BASE / ocr_tag / page_id / "predictions.json").read_text(encoding="utf-8"))["lines"]
     corr_path = PRED_BASE / correct_tag / page_id / "predictions.json"
@@ -104,11 +121,11 @@ def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
     )
 
     rows: list[dict] = []
-    for idx, (line_id, b) in enumerate(base.items()):
+    for line_id, b in base.items():
         corrected = corr.get(line_id, {}).get("pred_beam", b.get("pred_beam", ""))
         rows.append(
             {
-                "index": idx,
+                "index": 0,  # assigned after the reading-order sort below
                 "line_id": line_id,
                 "region": line_id.split("/")[0] if "/" in line_id else "",
                 "column": b.get("column"),
@@ -119,6 +136,13 @@ def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
                 "cer": None,
             }
         )
+
+    ranks = storage.reading_order_ranks(page_id)
+    if ranks is not None:
+        unranked = len(ranks)
+        rows.sort(key=lambda r: (ranks.get(r["region"], unranked), _line_no(r["line_id"])))
+    for idx, row in enumerate(rows):
+        row["index"] = idx
     return rows
 
 

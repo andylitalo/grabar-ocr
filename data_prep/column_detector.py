@@ -540,6 +540,11 @@ def detect_regions(
     for r in regions:
         r["y1"], r["y2"] = _strip_edge_rule(binary, r["x1"], r["y1"], r["x2"], r["y2"])
 
+    # Assign order via the shared geometric reading-order rule so all three region
+    # producers (this detector, the labeling UI crop path, save_regions) agree.
+    from labeling_ui.storage import region_reading_order  # noqa: E402
+
+    regions = region_reading_order(regions)
     for i, r in enumerate(regions, start=1):
         r["order"] = i
     diag["n_two_column_bands"] = n_two

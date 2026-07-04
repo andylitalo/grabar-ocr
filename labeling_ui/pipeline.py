@@ -310,6 +310,14 @@ def crop_columns_and_lines(
     page = _rotate(page, -manual_angle)  # match the previewed frame boxes were drawn on
     h, w = page.shape[:2]
 
+    # Bake visual reading order into the region_NN_<type> dir names at creation, so a
+    # page annotated out of order (e.g. right column first) still combines correctly
+    # downstream. Auto pages already arrive left→right, so this is a no-op for them.
+    tagged = [{**box, "_type": t} for box, t in zip(columns, types)]
+    ordered = storage.region_reading_order(tagged)
+    columns = [{k: v for k, v in t.items() if k != "_type"} for t in ordered]
+    types = [t["_type"] for t in ordered]
+
     storage.DATA_COLUMNS.mkdir(parents=True, exist_ok=True)
     results: list[dict] = []
 

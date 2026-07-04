@@ -123,16 +123,62 @@ def region_dir(page_id: str, region: str) -> Path:
     return DATA_LINES / page_id / region
 
 
+def region_reading_order(regions: list[dict]) -> list[dict]:
+    """Return typed regions in visual reading order, derived from their geometry.
+
+    Reading order comes from the persisted bounding boxes, NOT from any stored
+    ``order`` / dir-name prefix — so a page whose regions were created out of order
+    (e.g. a two-column page annotated right-column-first) still reads
+    left-to-right, top-to-bottom. Each region dict must carry pixel
+    ``x1,y1,x2,y2`` (use the loose ``max`` box for region-schema files).
+
+    Row-banding rule: repeatedly pick the topmost-then-leftmost remaining region as
+    a seed, gather every remaining region whose *top edge* starts above the seed's
+    vertical midpoint into one row band, and emit that band left-to-right by ``x1``.
+    The top-edge test (not full vertical-span overlap) stops a tall column from
+    swallowing a lower full-width band that its span happens to cover — this is what
+    keeps header/multi-band pages (0520/0560) in the right order. Pure list ops (no
+    numpy) so this can live in the lightweight storage layer.
+    """
+    remaining = list(regions)
+    ordered: list[dict] = []
+    while remaining:
+        seed = min(remaining, key=lambda r: (r["y1"], r["x1"]))
+        mid = (seed["y1"] + seed["y2"]) / 2
+        band = sorted((r for r in remaining if r["y1"] < mid), key=lambda r: r["x1"])
+        ordered.extend(band)
+        band_ids = {id(r) for r in band}
+        remaining = [r for r in remaining if id(r) not in band_ids]
+    return ordered
+
+
 def region_dirs_in(page_dir: Path) -> list[Path]:
-    """Region/column line-crop dirs under a page dir, in reading order (NN ascending).
+    """Region/column line-crop dirs under a page dir, in reading order.
 
     Path-based sibling of ``list_region_dirs`` so data_prep scripts that work on an
-    arbitrary lines dir share the one ordering/back-compat rule (region_* then any
-    legacy column_*). The single source for global line reading order.
+    arbitrary lines dir share the one ordering/back-compat rule. The single source
+    for global line reading order.
+
+    When a persisted boxes file exists, order is *geometric* — driven by
+    ``reading_order_ranks`` over the stored boxes — so pages whose region dirs were
+    named out of reading order (right-column-first annotations) still combine
+    correctly without re-slicing. Any dir the ranks don't cover (a legacy
+    ``column_N`` on a boxes-less-schema page) sorts after the ranked ones by its NN
+    prefix. With no boxes file, falls back to the plain NN sort (region_* then any
+    legacy column_*).
     """
     if not page_dir.is_dir():
         return []
     dirs = [d for d in page_dir.iterdir() if d.is_dir() and parse_region(d.name)]
+    ranks = reading_order_ranks(page_dir.name)
+    if ranks is not None:
+        return sorted(
+            dirs,
+            key=lambda d: (
+                (0, ranks[d.name]) if d.name in ranks
+                else (1, parse_region(d.name)[0])
+            ),
+        )
     return sorted(dirs, key=lambda d: (parse_region(d.name)[0], d.name))
 
 
@@ -208,6 +254,12 @@ def save_regions(
     def _rect(b: dict) -> dict:
         return {k: int(b[k]) for k in ("x1", "y1", "x2", "y2")}
 
+    # Persist ``order`` in geometric reading order (over the loose max boxes) so the
+    # stored order matches visual reading order and stays consistent with the
+    # region_NN_<type> dir names the creation path bakes.
+    proxies = [{**r["max"], "_i": i} for i, r in enumerate(regions)]
+    regions = [regions[p["_i"]] for p in region_reading_order(proxies)]
+
     payload = {
         "page_id": page_id,
         "source": source,
@@ -253,6 +305,26 @@ def load_regions(page_id: str) -> dict | None:
         "deskew_angle": data.get("deskew_angle", 0.0),
         "regions": regions,
     }
+
+
+def reading_order_ranks(page_id: str) -> dict[str, int] | None:
+    """Map each region key (``region_NN_<type>``) to its 0-based visual reading rank.
+
+    Loads the persisted region geometry via ``load_regions`` (legacy two-box files
+    normalise to left/right), runs ``region_reading_order`` over the loose ``max``
+    boxes, and keys the result by each region's on-disk dir name — rebuilt from its
+    stored ``order`` + ``type`` via ``region_dirname``, which matches the dir the
+    creation path stamped. Returns None when no boxes file exists, so callers fall
+    back to the NN-prefix sort.
+    """
+    data = load_regions(page_id)
+    if data is None:
+        return None
+    proxies = [
+        {**r["max"], "_key": region_dirname(r["order"], r["type"])}
+        for r in data["regions"]
+    ]
+    return {p["_key"]: rank for rank, p in enumerate(region_reading_order(proxies))}
 
 
 def list_page_numbers() -> list[int]:
