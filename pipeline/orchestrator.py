@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from data_prep.line_filter import is_glyph_run_divider
 from labeling_ui import storage
 from pipeline import artifacts, scoring
 from pipeline.config import PipelineConfig
@@ -122,15 +123,21 @@ def collect_rows(page_id: str, ocr_tag: str, correct_tag: str) -> list[dict]:
 
     rows: list[dict] = []
     for line_id, b in base.items():
-        corrected = corr.get(line_id, {}).get("pred_beam", b.get("pred_beam", ""))
+        beam = b.get("pred_beam", "")
+        corrected = corr.get(line_id, {}).get("pred_beam", beam)
+        # Match digitize_page: non-character if the image filter flagged it OR the
+        # beam is an ornamental-divider glyph run. Keeps lines.json / merged.md /
+        # scoring / the translation input consistent with the corrected doc, and
+        # covers Tesseract + cached predictions without re-OCR.
+        non_char = bool(b.get("non_character")) or is_glyph_run_divider(beam)
         rows.append(
             {
                 "index": 0,  # assigned after the reading-order sort below
                 "line_id": line_id,
                 "region": line_id.split("/")[0] if "/" in line_id else "",
                 "column": b.get("column"),
-                "non_character": bool(b.get("non_character")),
-                "ocr_beam": b.get("pred_beam", ""),
+                "non_character": non_char,
+                "ocr_beam": beam,
                 "corrected": corrected,
                 "ref": None,
                 "cer": None,

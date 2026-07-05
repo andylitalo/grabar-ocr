@@ -36,6 +36,7 @@ sys.path.insert(0, str(REPO))
 from data_prep.line_filter import (  # noqa: E402
     DEFAULT_INK_FACTOR,
     classify_page,
+    is_glyph_run_divider,
     is_high_ink,
     line_features,
     ocr_is_repetitive,
@@ -96,13 +97,17 @@ def analyze_page(page_id: str, ink_factor: float, use_repetition: bool) -> dict:
     median = page_median_ink(features)
     flagged = classify_page(features, ink_factor=ink_factor)
 
-    ocr = load_ocr_text(page_id) if use_repetition else {}
+    # The glyph-run divider rule is part of the PRODUCTION filter (applied
+    # unconditionally in digitize_page / collect_rows), so the gate always reflects
+    # it when OCR text is available; ocr_is_repetitive stays an opt-in extra.
+    ocr = load_ocr_text(page_id)
     rows: list[dict] = []
     for line_id, f in features.items():
         ink_ratio = f["ink_density"] / median if median else 0.0
         text = ocr.get(line_id, "")
+        divider = bool(text) and is_glyph_run_divider(text)
         rep = use_repetition and bool(text) and ocr_is_repetitive(text)
-        is_nc = flagged[line_id] or rep
+        is_nc = flagged[line_id] or divider or rep
         reasons = []
         if f["glyph_count"] == 0:
             reasons.append("no_glyphs")
@@ -110,6 +115,8 @@ def analyze_page(page_id: str, ink_factor: float, use_repetition: bool) -> dict:
             reasons.append("high_ink")
         elif median and f["ink_density"] > ink_factor * median:
             reasons.append("high_ink_exempt_header")
+        if divider:
+            reasons.append("glyph_run_divider")
         if rep:
             reasons.append("ocr_repetitive")
         rows.append(
