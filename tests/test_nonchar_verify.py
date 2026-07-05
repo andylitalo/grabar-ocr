@@ -22,7 +22,9 @@ sys.path.insert(0, str(REPO))
 
 from data_prep.line_filter import (  # noqa: E402
     classify_page,
+    is_glyph_run_divider,
     is_high_ink,
+    max_glyph_run,
     region_type_of,
 )
 from labeling_ui import pipeline, storage  # noqa: E402
@@ -136,10 +138,30 @@ def test_classify_page_header_high_ink_vs_glyph_rule() -> None:
     print("test_classify_page_header_high_ink_vs_glyph_rule: OK")
 
 
+def test_glyph_run_divider_flags_dividers_only() -> None:
+    """The text glyph-run rule catches ornamental dividers, not stuttered real text."""
+    # max_glyph_run counts consecutive identical glyphs; whitespace breaks a run.
+    assert max_glyph_run("աաաաաաաաաաշշշշշշշշշշշ") == 11
+    assert max_glyph_run("և և և") == 1  # spaces break runs
+    assert max_glyph_run("Յունուար") == 1
+
+    # Ornamental dividers / specks: a long run AND <=3 distinct glyphs -> flagged.
+    for junk in ("աաաաաաաաաաշշշշշշշշշշշ", "####################", "----- ն", "շշշշ"):
+        assert is_glyph_run_divider(junk), f"divider not flagged: {junk!r}"
+
+    # OCR stutter on REAL lines (leading glyph repeated) keeps many distinct glyphs
+    # -> spared, so real month headings / words are not dropped.
+    for real in ("ՅՅՅՅունուար։", "ՕՕՕՕՕՕՕՕգԳոստոս", "ԴԴԴԴեկտեմբեր։",
+                 "խխխխաղաղութեան։", "ԲԲԲԲարեկենդան Եղիական պահոց։", "Հմբ. -3. Ընդ կանայսն"):
+        assert not is_glyph_run_divider(real), f"real line wrongly flagged: {real!r}"
+    print("test_glyph_run_divider_flags_dividers_only: OK")
+
+
 if __name__ == "__main__":
     test_truth_roundtrips()
     test_detector_parity_page_0487()
     test_region_type_of_parses_only_region_ids()
     test_high_ink_rule_exempts_header_regions()
     test_classify_page_header_high_ink_vs_glyph_rule()
+    test_glyph_run_divider_flags_dividers_only()
     print("\nAll Phase A unit checks passed.")

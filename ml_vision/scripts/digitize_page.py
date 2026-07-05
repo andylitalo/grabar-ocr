@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,6 +31,12 @@ import llm_correct as lc  # tested primitives: prompts, clients, parse/apply
 
 REPO = Path(__file__).resolve().parent.parent.parent
 PRED_BASE = REPO / "data/predictions"
+
+# Repo root on path so data_prep is importable when this script is run standalone
+# (the pipeline already inserts it; a bare `.venv/bin/python …digitize_page.py` does not).
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+from data_prep.line_filter import is_glyph_run_divider  # noqa: E402
 
 
 def load_baseline_rows(baseline_tag: str, page: str) -> list[dict]:
@@ -48,15 +55,20 @@ def load_baseline_rows(baseline_tag: str, page: str) -> list[dict]:
     data = json.loads(pred_path.read_text(encoding="utf-8"))["lines"]
     rows = []
     for line_id, p in data.items():  # id = "column_Y/line_NNN"
+        beam = p.get("pred_beam", "")
+        # Non-character if the pre-OCR image filter flagged it OR the beam text is an
+        # ornamental-divider glyph run (a few glyphs repeated, e.g. `աաաաշշշշ`) that
+        # the image filter missed. Applied here (backend-agnostic, at the read point)
+        # so it also covers Tesseract — which writes no non_character field — and
+        # already-cached predictions, with no re-OCR. Excluded from the LLM prompt +
+        # digitized.txt, kept in the manifest for auditability.
+        non_char = bool(p.get("non_character")) or is_glyph_run_divider(beam)
         rows.append(
             {
                 "id": line_id,
                 "column": p.get("column"),
-                "pred_beam": p.get("pred_beam", ""),
-                # Carry the pre-OCR non-character marker (+ its features) through so
-                # such lines are excluded from the LLM prompt and digitized.txt yet
-                # retained in the written manifest for auditability.
-                "non_character": bool(p.get("non_character")),
+                "pred_beam": beam,
+                "non_character": non_char,
                 "glyph_count": p.get("glyph_count"),
                 "ink_ratio": p.get("ink_ratio"),
             }
