@@ -1,0 +1,1475 @@
+{
+  "generated": "2026-07-08T15:28:07.263788+00:00",
+  "page_range": [
+    458,
+    458
+  ],
+  "source_runs": [
+    {
+      "slug": "auto__proj__tess__gemini-min",
+      "config": {
+        "run_slug": "auto__proj__tess__gemini-min",
+        "crop": "auto",
+        "slice": "proj",
+        "ocr": {
+          "impl": "tesseract",
+          "tag": "tesseract"
+        },
+        "correct": {
+          "model": "gemini-3.1-pro",
+          "mode": "minimal-edit"
+        },
+        "translate": {
+          "model": "gemini-3.5-flash"
+        }
+      }
+    },
+    {
+      "slug": "human__proj__tess__gemini-min",
+      "config": {
+        "run_slug": "human__proj__tess__gemini-min",
+        "crop": "human",
+        "slice": "proj",
+        "ocr": {
+          "impl": "tesseract",
+          "tag": "tesseract"
+        },
+        "correct": {
+          "model": "gemini-3.1-pro",
+          "mode": "minimal-edit"
+        },
+        "translate": {
+          "model": "gemini-3.5-flash"
+        }
+      }
+    }
+  ],
+  "n_pages": 178,
+  "pages": [
+    {
+      "page": 458,
+      "page_id": "page_0458_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 459,
+      "page_id": "page_0459_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 460,
+      "page_id": "page_0460_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 461,
+      "page_id": "page_0461_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 462,
+      "page_id": "page_0462_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 463,
+      "page_id": "page_0463_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 48,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 464,
+      "page_id": "page_0464_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 83,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 465,
+      "page_id": "page_0465_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 466,
+      "page_id": "page_0466_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 92,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 467,
+      "page_id": "page_0467_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 468,
+      "page_id": "page_0468_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 469,
+      "page_id": "page_0469_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 470,
+      "page_id": "page_0470_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 471,
+      "page_id": "page_0471_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 472,
+      "page_id": "page_0472_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 473,
+      "page_id": "page_0473_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 474,
+      "page_id": "page_0474_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 92,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 475,
+      "page_id": "page_0475_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 476,
+      "page_id": "page_0476_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 477,
+      "page_id": "page_0477_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 478,
+      "page_id": "page_0478_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 98,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 479,
+      "page_id": "page_0479_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 49,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 480,
+      "page_id": "page_0480_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 98,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 482,
+      "page_id": "page_0482_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 2,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 483,
+      "page_id": "page_0483_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 67,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 484,
+      "page_id": "page_0484_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 485,
+      "page_id": "page_0485_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 486,
+      "page_id": "page_0486_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 487,
+      "page_id": "page_0487_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 488,
+      "page_id": "page_0488_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 489,
+      "page_id": "page_0489_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 92,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 490,
+      "page_id": "page_0490_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 491,
+      "page_id": "page_0491_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 492,
+      "page_id": "page_0492_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 493,
+      "page_id": "page_0493_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 99,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 494,
+      "page_id": "page_0494_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 88,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 496,
+      "page_id": "page_0496_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 2,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 497,
+      "page_id": "page_0497_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 65,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 498,
+      "page_id": "page_0498_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 87,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 499,
+      "page_id": "page_0499_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 500,
+      "page_id": "page_0500_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 43,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 502,
+      "page_id": "page_0502_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 2,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 503,
+      "page_id": "page_0503_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 65,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 504,
+      "page_id": "page_0504_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 505,
+      "page_id": "page_0505_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 506,
+      "page_id": "page_0506_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 507,
+      "page_id": "page_0507_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 53,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 508,
+      "page_id": "page_0508_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 509,
+      "page_id": "page_0509_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 510,
+      "page_id": "page_0510_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 511,
+      "page_id": "page_0511_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 512,
+      "page_id": "page_0512_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 513,
+      "page_id": "page_0513_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 63,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 514,
+      "page_id": "page_0514_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 2,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 515,
+      "page_id": "page_0515_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 63,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 516,
+      "page_id": "page_0516_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 517,
+      "page_id": "page_0517_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 518,
+      "page_id": "page_0518_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 519,
+      "page_id": "page_0519_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 98,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 520,
+      "page_id": "page_0520_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 64,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 522,
+      "page_id": "page_0522_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 3,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 523,
+      "page_id": "page_0523_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 61,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 524,
+      "page_id": "page_0524_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 525,
+      "page_id": "page_0525_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 526,
+      "page_id": "page_0526_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 527,
+      "page_id": "page_0527_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 88,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 528,
+      "page_id": "page_0528_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 69,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 530,
+      "page_id": "page_0530_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 2,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 531,
+      "page_id": "page_0531_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 62,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 532,
+      "page_id": "page_0532_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 533,
+      "page_id": "page_0533_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 534,
+      "page_id": "page_0534_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 535,
+      "page_id": "page_0535_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 50,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 536,
+      "page_id": "page_0536_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 537,
+      "page_id": "page_0537_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 538,
+      "page_id": "page_0538_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 539,
+      "page_id": "page_0539_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 540,
+      "page_id": "page_0540_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 541,
+      "page_id": "page_0541_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 94,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 542,
+      "page_id": "page_0542_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 63,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 543,
+      "page_id": "page_0543_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 85,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 544,
+      "page_id": "page_0544_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 545,
+      "page_id": "page_0545_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 546,
+      "page_id": "page_0546_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 547,
+      "page_id": "page_0547_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 548,
+      "page_id": "page_0548_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 97,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 549,
+      "page_id": "page_0549_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 550,
+      "page_id": "page_0550_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 16,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 551,
+      "page_id": "page_0551_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 31,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 553,
+      "page_id": "page_0553_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 15,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 554,
+      "page_id": "page_0554_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 11,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 555,
+      "page_id": "page_0555_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 81,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 556,
+      "page_id": "page_0556_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 44,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 557,
+      "page_id": "page_0557_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 53,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 558,
+      "page_id": "page_0558_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 559,
+      "page_id": "page_0559_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 560,
+      "page_id": "page_0560_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 64,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 561,
+      "page_id": "page_0561_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 562,
+      "page_id": "page_0562_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 69,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 563,
+      "page_id": "page_0563_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 564,
+      "page_id": "page_0564_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 68,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 565,
+      "page_id": "page_0565_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 566,
+      "page_id": "page_0566_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 567,
+      "page_id": "page_0567_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 568,
+      "page_id": "page_0568_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 82,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 569,
+      "page_id": "page_0569_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 84,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 570,
+      "page_id": "page_0570_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 571,
+      "page_id": "page_0571_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 74,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 572,
+      "page_id": "page_0572_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 573,
+      "page_id": "page_0573_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 574,
+      "page_id": "page_0574_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 575,
+      "page_id": "page_0575_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 77,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 576,
+      "page_id": "page_0576_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 49,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 577,
+      "page_id": "page_0577_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 578,
+      "page_id": "page_0578_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 87,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 579,
+      "page_id": "page_0579_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 74,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 580,
+      "page_id": "page_0580_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 77,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 581,
+      "page_id": "page_0581_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 582,
+      "page_id": "page_0582_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 69,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 583,
+      "page_id": "page_0583_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 95,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 584,
+      "page_id": "page_0584_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 585,
+      "page_id": "page_0585_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 93,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 586,
+      "page_id": "page_0586_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 587,
+      "page_id": "page_0587_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 588,
+      "page_id": "page_0588_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 67,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 589,
+      "page_id": "page_0589_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 590,
+      "page_id": "page_0590_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 75,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 591,
+      "page_id": "page_0591_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 82,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 592,
+      "page_id": "page_0592_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 593,
+      "page_id": "page_0593_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 86,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 594,
+      "page_id": "page_0594_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 82,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 595,
+      "page_id": "page_0595_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 596,
+      "page_id": "page_0596_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 48,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 597,
+      "page_id": "page_0597_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 70,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 598,
+      "page_id": "page_0598_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 599,
+      "page_id": "page_0599_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 70,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 600,
+      "page_id": "page_0600_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 96,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 601,
+      "page_id": "page_0601_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 602,
+      "page_id": "page_0602_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 46,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 603,
+      "page_id": "page_0603_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 604,
+      "page_id": "page_0604_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 86,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 605,
+      "page_id": "page_0605_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 606,
+      "page_id": "page_0606_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 87,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 607,
+      "page_id": "page_0607_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 608,
+      "page_id": "page_0608_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 85,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 609,
+      "page_id": "page_0609_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 610,
+      "page_id": "page_0610_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 75,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 611,
+      "page_id": "page_0611_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 91,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 612,
+      "page_id": "page_0612_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 613,
+      "page_id": "page_0613_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 88,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 614,
+      "page_id": "page_0614_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 615,
+      "page_id": "page_0615_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 88,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 616,
+      "page_id": "page_0616_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 617,
+      "page_id": "page_0617_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 67,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 618,
+      "page_id": "page_0618_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 92,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 619,
+      "page_id": "page_0619_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 71,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 620,
+      "page_id": "page_0620_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 54,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 621,
+      "page_id": "page_0621_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 63,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 622,
+      "page_id": "page_0622_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 623,
+      "page_id": "page_0623_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 87,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 624,
+      "page_id": "page_0624_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 69,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 625,
+      "page_id": "page_0625_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 85,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 626,
+      "page_id": "page_0626_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 70,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 627,
+      "page_id": "page_0627_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 76,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 628,
+      "page_id": "page_0628_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 629,
+      "page_id": "page_0629_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 85,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 630,
+      "page_id": "page_0630_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 76,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 631,
+      "page_id": "page_0631_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 632,
+      "page_id": "page_0632_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 73,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 633,
+      "page_id": "page_0633_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 89,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 634,
+      "page_id": "page_0634_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 47,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 635,
+      "page_id": "page_0635_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 70,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 636,
+      "page_id": "page_0636_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 87,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 637,
+      "page_id": "page_0637_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 72,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 638,
+      "page_id": "page_0638_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 75,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 639,
+      "page_id": "page_0639_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "n_lines": 52,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 640,
+      "page_id": "page_0640_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 90,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 641,
+      "page_id": "page_0641_auto",
+      "source_run": "auto__proj__tess__gemini-min",
+      "n_lines": 4,
+      "has_translation": true,
+      "cer": null
+    }
+  ],
+  "gaps": []
+}

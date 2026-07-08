@@ -2,6 +2,15 @@
 
 An end-to-end pipeline for digitizing Classical Armenian (Grabar) texts from scanned books into a searchable, translated PostgreSQL database.
 
+> **⚠️ This README is the original blueprint, not what shipped.** The cloud stack below
+> (GCS, Airflow on k3s, BentoML-served TrOCR, Postgres) was never built — `services/`,
+> `orchestration/`, and `infrastructure/` are stubs. What actually runs is the local
+> **`pipeline/`** package (Tesseract OCR → Gemini correction → Gemini translation); see
+> [`pipeline/README.md`](pipeline/README.md). The finished, committed book (pages 458–641,
+> per-page md + per-line json) lives in **`corpus/`**; see
+> [`corpus/README.md`](corpus/README.md). Regenerate it with
+> `python -m pipeline.promote --range 458-641`.
+
 ## Pipeline Overview
 
 ```

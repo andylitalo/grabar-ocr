@@ -1,0 +1,1565 @@
+{
+  "page": 640,
+  "page_id": "page_0640_auto",
+  "source": {
+    "run_slug": "auto__proj__tess__gemini-min",
+    "crop": "auto",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/640.pdf",
+    "deskew_render": "data/_labeling_work/page_0640/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0640_auto.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 90,
+    "text": 90,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "CONCERNING THE FORTHCOMING TABLE-FORM CYCLE\n\nThe table-form cycle, which is arranged on the following page, is the perpetual cycle of the Great Paschal Cycle [Great Era / 500-year cycle] containing 532 years, which by means of the year of Christ unerringly indicates the Dominical Letter [Letter of the Year / Taregir] and the Epact [Veradir] perpetually. For upon the completion of the 532 years, it begins again from the start, only changing the date. At the beginning of the lines, the placed index numbers are the years of Christ; the topmost line contains the Epacts, and those placed in the boxes are the Dominical Letters. \n\nSee, therefore, how it begins: it starts at the year 1909, which is placed at the beginning of the first line. Going from that year to the first box, you will find the Dominical Letter of that same year, Ը [8], and proceeding directly upward from that Dominical Letter Ը, you will find the Epact of the same year, ԺԹ [19]. And on arriving at the year 1910, going forward one box from the Dominical Letter Ը, in the same line you will find there the Dominical Letter of the year 1910, Ռ [R]. And proceeding directly upward from that Dominical Letter, you will find placed there the Epact of the same year, Լ [30]. And by this order, as much as the year increases, you go forward one box in the same line, where you will find the Dominical Letter of the year, and directly upward from the Dominical Letter, the Epact. And as you proceed in this orderly way until you reach the last box of the same line, in which your year will be 1927, you will find in the same box the Dominical Letter of that same year, Յ [Y], and directly at the head of it, the Epact Ը [8]. Then, at the end of that same year, the first line also ends, which has 19 years.\n\nThen you must return to the beginning of the second line, in which you will find the year 1928, and opposite to it in the first box, the Dominical Letter ԽԼ [XL], and directly at the head of it, the Epact ԺԹ [19]. Keep this same instruction, which was spoken concerning the first line, in this line, and in the third, and in the fourth, and in all other lines until the end.\n\nCONCERNING THE TABLE-FORM CYCLE\n\nBy this order, on reaching the last line, in which is the year 2422, and in its last box, in which is the Dominical Letter ՈՉ [OCh], and the year is 2440, the Great Paschal Cycle is completed, which is 532 years. For one page of your Table has 28 lines according to the cycle of the Solar Cycle [Seven-literals / Eotneryak], and each line lasts 19 years, according to the number of the 19 Epacts; and 19 times 28, or 28 times 19, is 532, which is one cycle.\n\nFor that reason, you must of necessity return here to the same first beginning line according to the rule of the cycle, and begin anew; in which your year will be 2441, and opposite to it in the first box is placed the Dominical Letter Ը [8], and at the head, the Epact ԺԹ [19], according to the first order; for you must only change the year, and proceed in an orderly way similar to the first.\n\nBut if you should wish to find the Dominical Letter of past years, you must add to the year you have, once or twice, 532 years, which is one or two cycles, and find in the forthcoming table your summed year, and the Dominical Letter of that same year is the Dominical Letter of the past year which you are seeking.\n\nFor this reason we placed the index of the cycle with this Directory [Tonatsuyts], so that having the year of whatever year at hand, by means of it you may find the Letter of the Year; and then, having found the Canon [Khoran] of the same Dominical Letter in the Second Volume, you may conduct it therewith without labor and perpetually.\n\nAlthough the Epacts were not as necessary as the Dominical Letters, yet we placed them for the sake of bringing the cycle into harmony. As for the Seven-literals [Dominical Letters / Eotneryak], they are placed in the Canon of each Dominical Letter.",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_left/line_001",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "րրրԽՈ",
+      "grabar": "րրրԽՈ",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_left/line_002",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ՎԱՍՆ ԱՌԱՋԶՋԻԿԱՅ Ա\"",
+      "grabar": "ՎԱՍՆ ԱՌԱՋԶՋԻԿԱՅ Ա\"",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_002.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_01_left/line_003",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Աղիւսակաձեւ շրջանն, որ կարգեալ է",
+      "grabar": "Աղիւսակաձեւ շրջանն, որ կարգեալ է",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_003.png"
+    },
+    {
+      "index": 3,
+      "line_id": "region_01_left/line_004",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ի յաջորդ երեսն, է մշանջենաւոր չրջան",
+      "grabar": "ի յաջորդ երեսն, է մշանջենաւոր շրջան",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_004.png"
+    },
+    {
+      "index": 4,
+      "line_id": "region_01_left/line_005",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Հինգհարիւրեկին՝ պարունակող 532 ամաց,",
+      "grabar": "Հինգհարիւրեկին՝ պարունակող 532 ամաց,",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_005.png"
+    },
+    {
+      "index": 5,
+      "line_id": "region_01_left/line_006",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "որ ի ձեռն թուին Քրիստոսի անսխալ",
+      "grabar": "որ ի ձեռն թուին Քրիստոսի անսխալ",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_006.png"
+    },
+    {
+      "index": 6,
+      "line_id": "region_01_left/line_007",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ցուցանէ զՏարեգիրն եւ զՎերադիրն մըշ-",
+      "grabar": "ցուցանէ զՏարեգիրն եւ զՎերադիրն մըշ-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_007.png"
+    },
+    {
+      "index": 7,
+      "line_id": "region_01_left/line_008",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "տընջենապէս։ Զի ի լրանալ 532 ամացն,",
+      "grabar": "տընջենապէս։ Զի ի լրանալ 532 ամացն,",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_008.png"
+    },
+    {
+      "index": 8,
+      "line_id": "region_01_left/line_009",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "դարձեալ սկսանի 'ի սկիզբէն՝ միայն փո-",
+      "grabar": "դարձեալ սկսանի 'ի սկիզբէն՝ միայն փո-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_009.png"
+    },
+    {
+      "index": 9,
+      "line_id": "region_01_left/line_010",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "խելով զթուականն։ Ի սկզբան տողից",
+      "grabar": "խելով զթուականն։ Ի սկզբան տողից",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_010.png"
+    },
+    {
+      "index": 10,
+      "line_id": "region_01_left/line_011",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "եդեալ համարագիրքն են թուականք Քը-",
+      "grabar": "եդեալ համարագիրքն են թուականք Քը-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_011.png"
+    },
+    {
+      "index": 11,
+      "line_id": "region_01_left/line_012",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "րիստոսի. վերին մի տող՝ Վերադիրքն են,",
+      "grabar": "րիստոսի. վերին մի տող՝ Վերադիրքն են,",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_012.png"
+    },
+    {
+      "index": 12,
+      "line_id": "region_01_left/line_013",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "եւ ի տուփս եդեալքն են Տարեգիրք։",
+      "grabar": "եւ ի տուփս եդեալքն են Տարեգիրք։",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_013.png"
+    },
+    {
+      "index": 13,
+      "line_id": "region_01_left/line_014",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Տես ուրեմն, զի սկսանի. դա 'ի 1909",
+      "grabar": "Տես ուրեմն, զի սկսանի. դա 'ի 1909",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_014.png"
+    },
+    {
+      "index": 14,
+      "line_id": "region_01_left/line_015",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "թուոյն, որ եդեալ կայ 'ի սկզբան առաջ-",
+      "grabar": "թուոյն, որ եդեալ կայ 'ի սկզբան առաջ-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_015.png"
+    },
+    {
+      "index": 15,
+      "line_id": "region_01_left/line_016",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "նոյ տողին. ի թուոյդ յայդմանէ դնա-",
+      "grabar": "նոյ տողին. ի թուոյդ յայդմանէ դնա-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_016.png"
+    },
+    {
+      "index": 16,
+      "line_id": "region_01_left/line_017",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ցեալ յառաջին տուփն՝ գտցես զՏարեգիրն",
+      "grabar": "ցեալ յառաջին տուփն՝ գտցես զՏարեգիրն",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_017.png"
+    },
+    {
+      "index": 17,
+      "line_id": "region_01_left/line_018",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "նոյն տարւոյն Ը, եւ ի Ը տարեգրոյդ ի",
+      "grabar": "նոյն տարւոյն Ը, եւ ի Ը տարեգրոյդ ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_018.png"
+    },
+    {
+      "index": 18,
+      "line_id": "region_01_left/line_019",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "վեր ընթացեալ ուղղակի, գտցես զՎերա-",
+      "grabar": "վեր ընթացեալ ուղղակի, գտցես զՎերա-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_019.png"
+    },
+    {
+      "index": 19,
+      "line_id": "region_01_left/line_020",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "դիրն նոյն տարւոյն ԺԹ։ Եւ ի հասանիլն",
+      "grabar": "դիրն նոյն տարւոյն ԺԹ։ Եւ ի հասանիլն",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_020.png"
+    },
+    {
+      "index": 20,
+      "line_id": "region_01_left/line_021",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ի 1910 թիւն, տուփ մի յառաջ գնալով",
+      "grabar": "ի 1910 թիւն, տուփ մի յառաջ գնալով",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_021.png"
+    },
+    {
+      "index": 21,
+      "line_id": "region_01_left/line_022",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ի Ը տարեգրոյն, ի նոյն տողի գտանես",
+      "grabar": "ի Ը տարեգրոյն, ի նոյն տողի գտանես",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_022.png"
+    },
+    {
+      "index": 22,
+      "line_id": "region_01_left/line_023",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "անդ զՏարեդիրն 1910 թուոյն Ռ. եւ ի",
+      "grabar": "անդ զՏարեգիրն 1910 թուոյն Ռ. եւ ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_023.png"
+    },
+    {
+      "index": 23,
+      "line_id": "region_01_left/line_024",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "տարեգրոյդ յայդմանէ ուղղակի ի վեր",
+      "grabar": "տարեգրոյդ յայդմանէ ուղղակի ի վեր",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_024.png"
+    },
+    {
+      "index": 24,
+      "line_id": "region_01_left/line_025",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ընթացեալ՝ գտանես անդ եդեալ զՎերա-",
+      "grabar": "ընթացեալ՝ գտանես անդ եդեալ զՎերա-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_025.png"
+    },
+    {
+      "index": 25,
+      "line_id": "region_01_left/line_026",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "դիրն նոյն տարւոյն՝ Լ։ Եւ այսու կարգաւ",
+      "grabar": "դիրն նոյն տարւոյն՝ Լ։ Եւ այսու կարգաւ",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_026.png"
+    },
+    {
+      "index": 26,
+      "line_id": "region_01_left/line_027",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "թուականն որքան աճէ, դու տուփ մի յա-",
+      "grabar": "թուականն որքան աճէ, դու տուփ մի յա-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_027.png"
+    },
+    {
+      "index": 27,
+      "line_id": "region_01_left/line_028",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ռաջ գնա ի նոյն տողին, ուր գտանես",
+      "grabar": "ռաջ գնա ի նոյն տողին, ուր գտանես",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_028.png"
+    },
+    {
+      "index": 28,
+      "line_id": "region_01_left/line_029",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զՏարեդիր տարւոյն, եւ 'ի Տարեգրոյն 'ի",
+      "grabar": "զՏարեգիր տարւոյն, եւ 'ի Տարեգրոյն 'ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_029.png"
+    },
+    {
+      "index": 29,
+      "line_id": "region_01_left/line_030",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "վեր ուղղակի՝ զՎերադիրն։ Եւ մինչ այս-",
+      "grabar": "վեր ուղղակի՝ զՎերադիրն։ Եւ մինչ այս-",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_030.png"
+    },
+    {
+      "index": 30,
+      "line_id": "region_01_left/line_031",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "պէս կարգաւ հասանես 'ի վերջին տուփ",
+      "grabar": "պէս կարգաւ հասանես 'ի վերջին տուփ",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_031.png"
+    },
+    {
+      "index": 31,
+      "line_id": "region_01_left/line_032",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "նոյն տողին, յորում թուականդ լինի 1927,",
+      "grabar": "նոյն տողին, յորում թուականդ լինի 1927,",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_032.png"
+    },
+    {
+      "index": 32,
+      "line_id": "region_01_left/line_033",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "գտցես ի նոյն տուփն զՏարեգիրն նոյն",
+      "grabar": "գտցես ի նոյն տուփն զՏարեգիրն նոյն",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_033.png"
+    },
+    {
+      "index": 33,
+      "line_id": "region_01_left/line_034",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ամին Յ. եւ ի զլուխ նորին ուղղակի՝",
+      "grabar": "ամին Յ. եւ ի գլուխ նորին ուղղակի՝",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_034.png"
+    },
+    {
+      "index": 34,
+      "line_id": "region_01_left/line_035",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զՎերագիրն Ը։ Ապա ի վերջանալ նոյն",
+      "grabar": "զՎերադիրն Ը։ Ապա ի վերջանալ նոյն",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_035.png"
+    },
+    {
+      "index": 35,
+      "line_id": "region_01_left/line_036",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ամին, վերջանայ եւ առաջին տողն որ",
+      "grabar": "ամին, վերջանայ եւ առաջին տողն որ",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_036.png"
+    },
+    {
+      "index": 36,
+      "line_id": "region_01_left/line_037",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ունի 19 տարիս։",
+      "grabar": "ունի 19 տարիս։",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_037.png"
+    },
+    {
+      "index": 37,
+      "line_id": "region_01_left/line_038",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Յայնժամ պարտիս վերադառնալ ի",
+      "grabar": "Յայնժամ պարտիս վերադառնալ ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_038.png"
+    },
+    {
+      "index": 38,
+      "line_id": "region_01_left/line_039",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "սկիզբն երկրորդ տողին, յորում գտանես",
+      "grabar": "սկիզբն երկրորդ տողին, յորում գտանես",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_039.png"
+    },
+    {
+      "index": 39,
+      "line_id": "region_01_left/line_040",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զթուականդ 1928, եւ հանդէպ նորին",
+      "grabar": "զթուականդ 1928, եւ հանդէպ նորին",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_040.png"
+    },
+    {
+      "index": 40,
+      "line_id": "region_01_left/line_041",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "յառաջին տփի զՏարեդիրն ԽԼ. եւ 'ի",
+      "grabar": "յառաջին տփի զՏարեգիրն ԽԼ. եւ 'ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_041.png"
+    },
+    {
+      "index": 41,
+      "line_id": "region_01_left/line_042",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զլուխ նորա ուղղակի՝ զվերադիրն ժթԹ։",
+      "grabar": "գլուխ նորա ուղղակի՝ զվերադիրն ժթԹ։",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_042.png"
+    },
+    {
+      "index": 42,
+      "line_id": "region_01_left/line_043",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Զնոյն խրատ, որ վասն առաջնոյ տողի",
+      "grabar": "Զնոյն խրատ, որ վասն առաջնոյ տողի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_043.png"
+    },
+    {
+      "index": 43,
+      "line_id": "region_01_left/line_044",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ասացաւ, պահետ յայսմ տողի, եւ ի",
+      "grabar": "ասացաւ, պահես յայսմ տողի, եւ ի",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_044.png"
+    },
+    {
+      "index": 44,
+      "line_id": "region_01_left/line_045",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "առռաատաաաաաաաաատաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաա--ա--------",
+      "grabar": "առռաատաաաաաաաաատաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաաա--ա--------",
+      "region_bbox": {
+        "x1": 290,
+        "y1": 307,
+        "x2": 1115,
+        "y2": 2996
+      },
+      "crop_image": "data/columns/page_0640_auto_region_01_left.png",
+      "line_image": "data/lines/page_0640_auto/region_01_left/line_045.png"
+    },
+    {
+      "index": 45,
+      "line_id": "region_02_right/line_001",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ԱеK",
+      "grabar": "ԱеK",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_001.png"
+    },
+    {
+      "index": 46,
+      "line_id": "region_02_right/line_002",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ԼԻՒՍԱԿԱԶԵՒ ՇՐԶԱՆԻԴ",
+      "grabar": "ԼԻՒՍԱԿԱԶԵՒ ՇՐԶԱՆԻԴ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_002.png"
+    },
+    {
+      "index": 47,
+      "line_id": "region_02_right/line_003",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "յերրորդ, եւ 'ի չորրորդ, եւ յայլ ամե-",
+      "grabar": "յերրորդ, եւ 'ի չորրորդ, եւ յայլ ամե-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_003.png"
+    },
+    {
+      "index": 48,
+      "line_id": "region_02_right/line_004",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "նայն տողսն՝ մինչեւ 'ի վերջն։",
+      "grabar": "նայն տողսն՝ մինչեւ 'ի վերջն։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_004.png"
+    },
+    {
+      "index": 49,
+      "line_id": "region_02_right/line_005",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Այսու կարգաւ ի հասանիլն ի վերջին",
+      "grabar": "Այսու կարգաւ ի հասանիլն ի վերջին",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_005.png"
+    },
+    {
+      "index": 50,
+      "line_id": "region_02_right/line_006",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տողն, յորում է թուականն 2422, եւ 'ի",
+      "grabar": "տողն, յորում է թուականն 2422, եւ 'ի",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_006.png"
+    },
+    {
+      "index": 51,
+      "line_id": "region_02_right/line_007",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "նորին վերջին տուփն՝ յորում է Տարև-",
+      "grabar": "նորին վերջին տուփն՝ յորում է Տարև-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_007.png"
+    },
+    {
+      "index": 52,
+      "line_id": "region_02_right/line_008",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "գիրն ՈՉ, եւ թուականն լինի 2440,",
+      "grabar": "գիրն ՈՉ, եւ թուականն լինի 2440,",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_008.png"
+    },
+    {
+      "index": 53,
+      "line_id": "region_02_right/line_009",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "լրանայ շրջանն Հինգհարիւրեկին, որ է",
+      "grabar": "լրանայ շրջանն Հինգհարիւրեկին, որ է",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_009.png"
+    },
+    {
+      "index": 54,
+      "line_id": "region_02_right/line_010",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "532 ամ։ Զի մի երես Աղիւսակդ ունի",
+      "grabar": "532 ամ։ Զի մի երես Աղիւսակդ ունի",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_010.png"
+    },
+    {
+      "index": 55,
+      "line_id": "region_02_right/line_011",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Օ28 տողս ըստ շրջանի եօթներեկաց, եւ",
+      "grabar": "Օ28 տողս ըստ շրջանի եօթներեկաց, եւ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_011.png"
+    },
+    {
+      "index": 56,
+      "line_id": "region_02_right/line_012",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "իւրաքանչիւր տող տեւէ 19 տարի, ըստ",
+      "grabar": "իւրաքանչիւր տող տեւէ 19 տարի, ըստ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_012.png"
+    },
+    {
+      "index": 57,
+      "line_id": "region_02_right/line_013",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "թուոյ 19 վերադրացն. եւ 19 անդամ",
+      "grabar": "թուոյ 19 վերադրացն. եւ 19 անդամ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_013.png"
+    },
+    {
+      "index": 58,
+      "line_id": "region_02_right/line_014",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "28ն, կամ 235 անգամ 19ն՝ է 532, որ է",
+      "grabar": "28ն, կամ 235 անգամ 19ն՝ է 532, որ է",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_014.png"
+    },
+    {
+      "index": 59,
+      "line_id": "region_02_right/line_015",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "շրջան մի։",
+      "grabar": "շրջան մի։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_015.png"
+    },
+    {
+      "index": 60,
+      "line_id": "region_02_right/line_016",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Վասն այնորիկ հարկաւորիս աստէն վե-",
+      "grabar": "Վասն այնորիկ հարկաւորիս աստէն վե-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_016.png"
+    },
+    {
+      "index": 61,
+      "line_id": "region_02_right/line_017",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "րադառնալ ի նոյն առաջին սկզբան տողն",
+      "grabar": "րադառնալ ի նոյն առաջին սկզբան տողն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_017.png"
+    },
+    {
+      "index": 62,
+      "line_id": "region_02_right/line_018",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ըստ կանոնի շրջանին, եւ սկսանիլ վե-",
+      "grabar": "ըստ կանոնի շրջանին, եւ սկսանիլ վե-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_018.png"
+    },
+    {
+      "index": 63,
+      "line_id": "region_02_right/line_019",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ըսսին. յորում լինի թուականդ 2411, եւ",
+      "grabar": "րստին. յորում լինի թուականդ 2411, եւ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_019.png"
+    },
+    {
+      "index": 64,
+      "line_id": "region_02_right/line_020",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Խանդէպ նորին յառաջին տուփն եղեալ",
+      "grabar": "Հանդէպ նորին յառաջին տուփն եղեալ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_020.png"
+    },
+    {
+      "index": 65,
+      "line_id": "region_02_right/line_021",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Տարեգիրն Ը. եւ ի գլուխն Վերադիրն",
+      "grabar": "Տարեգիրն Ը. եւ ի գլուխն Վերադիրն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_021.png"
+    },
+    {
+      "index": 66,
+      "line_id": "region_02_right/line_022",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ՄՕԹ., ըստ առաջին կարդին. զի միայն",
+      "grabar": "ՄՕԹ., ըստ առաջին կարդին. զի միայն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_022.png"
+    },
+    {
+      "index": 67,
+      "line_id": "region_02_right/line_023",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "զթուականն փոխել պարտիս, եւ նման",
+      "grabar": "զթուականն փոխել պարտիս, եւ նման",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_023.png"
+    },
+    {
+      "index": 68,
+      "line_id": "region_02_right/line_024",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "առաջնոյն կարդաւ ընթանալ։",
+      "grabar": "առաջնոյն կարդաւ ընթանալ։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_024.png"
+    },
+    {
+      "index": 69,
+      "line_id": "region_02_right/line_025",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ՍԱյլ եթէ կամիցիս գտանել զՏարեգիրն",
+      "grabar": "ՍԱյլ եթէ կամիցիս գտանել զՏարեգիրն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_025.png"
+    },
+    {
+      "index": 70,
+      "line_id": "region_02_right/line_026",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Աժանցելոց ամաց, պարտիս յաւելուլ 'ի",
+      "grabar": "Աժանցելոց ամաց, պարտիս յաւելուլ 'ի",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_026.png"
+    },
+    {
+      "index": 71,
+      "line_id": "region_02_right/line_027",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "թուականն զոր ունիս՝ միանգամ կամ",
+      "grabar": "թուականն զոր ունիս՝ միանգամ կամ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_027.png"
+    },
+    {
+      "index": 72,
+      "line_id": "region_02_right/line_028",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "երկիցս 532 ամս. որ է չրջան մի կամ",
+      "grabar": "երկիցս 532 ամս. որ է շրջան մի կամ",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_028.png"
+    },
+    {
+      "index": 73,
+      "line_id": "region_02_right/line_029",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "երկու, եւ գտանել յառաջիկայ աղիւսա-",
+      "grabar": "երկու, եւ գտանել յառաջիկայ աղիւսա-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_029.png"
+    },
+    {
+      "index": 74,
+      "line_id": "region_02_right/line_030",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "կիս զգումարեալ թուականդ, եւ նոյն",
+      "grabar": "կիս զգումարեալ թուականդ, եւ նոյն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_030.png"
+    },
+    {
+      "index": 75,
+      "line_id": "region_02_right/line_031",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տարւոյ Տարեգիրն է Տարեդիր ամին ան-",
+      "grabar": "տարւոյ Տարեգիրն է Տարեգիր ամին ան-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_031.png"
+    },
+    {
+      "index": 76,
+      "line_id": "region_02_right/line_032",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Ոցելոյ ղոր որոնես։",
+      "grabar": "Ոցելոյ ղոր որոնես։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_032.png"
+    },
+    {
+      "index": 77,
+      "line_id": "region_02_right/line_033",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Վասն այնորիկ եդաք զցուցակ շրջանին",
+      "grabar": "Վասն այնորիկ եդաք զցուցակ շրջանին",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_033.png"
+    },
+    {
+      "index": 78,
+      "line_id": "region_02_right/line_034",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ընդ Տօնացուցիս, զի առձեռն ունելով",
+      "grabar": "ընդ Տօնացուցիս, զի առձեռն ունելով",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_034.png"
+    },
+    {
+      "index": 79,
+      "line_id": "region_02_right/line_035",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ղթուական որ եւ է տարւոյ, ի ձեռն",
+      "grabar": "ղթուական որ եւ է տարւոյ, ի ձեռն",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_035.png"
+    },
+    {
+      "index": 80,
+      "line_id": "region_02_right/line_036",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "նորին դտցես զզիր տարւոյն. եւ ապա",
+      "grabar": "նորին գտցես զգիր տարւոյն. եւ ապա",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_036.png"
+    },
+    {
+      "index": 81,
+      "line_id": "region_02_right/line_037",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ի յԵրկրորդ հատորին գտևալ զխորան",
+      "grabar": "ի յԵրկրորդ հատորին գտեալ զխորան",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_037.png"
+    },
+    {
+      "index": 82,
+      "line_id": "region_02_right/line_038",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "նոյն տարեգրոյն՝ վարեսցիս այնու անաշ-",
+      "grabar": "նոյն տարեգրոյն՝ վարեսցիս այնու անաշ-",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_038.png"
+    },
+    {
+      "index": 83,
+      "line_id": "region_02_right/line_039",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "խաոտ եւ մշտնջենապէս։",
+      "grabar": "խաոտ եւ մշտնջենապէս։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_039.png"
+    },
+    {
+      "index": 84,
+      "line_id": "region_02_right/line_040",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "թԹէպէտ Ղերադիրքն ոչ էին այնքան",
+      "grabar": "թԹէպէտ Վերադիրքն ոչ էին այնքան",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_040.png"
+    },
+    {
+      "index": 85,
+      "line_id": "region_02_right/line_041",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "հարկաւոր՝ որքան Տարեգիրքն, բայց",
+      "grabar": "հարկաւոր՝ որքան Տարեգիրքն, բայց",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_041.png"
+    },
+    {
+      "index": 86,
+      "line_id": "region_02_right/line_042",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եդտաք, վասն յարմար բերելոյն զշրջանն։",
+      "grabar": "եդտաք, վասն յարմար բերելոյն զշրջանն։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_042.png"
+    },
+    {
+      "index": 87,
+      "line_id": "region_02_right/line_043",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Իսկ Եոթներեակքն եդեալ են 'ի խորան",
+      "grabar": "Իսկ Եոթներեակքն եդեալ են 'ի խորան",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_043.png"
+    },
+    {
+      "index": 88,
+      "line_id": "region_02_right/line_044",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "իւրաքանչիւր Տարեգրոյն։",
+      "grabar": "իւրաքանչիւր Տարեգրոյն։",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_044.png"
+    },
+    {
+      "index": 89,
+      "line_id": "region_02_right/line_045",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "-︎︎պ︎պպպ︎✷պ︎պ✷պ︎զլ︎պպ︎պպ︎щպ︎պ︎щպ︎︎չտ առա աա- - - - - - --Ջջ. . -",
+      "grabar": "-︎︎պ︎պպպ︎✷պ︎պ✷պ︎զլ︎պպ︎պպ︎щպ︎պ︎щպ︎︎չտ առա աա- - - - - - --Ջջ. . -",
+      "region_bbox": {
+        "x1": 1115,
+        "y1": 309,
+        "x2": 1978,
+        "y2": 2993
+      },
+      "crop_image": "data/columns/page_0640_auto_region_02_right.png",
+      "line_image": "data/lines/page_0640_auto/region_02_right/line_045.png"
+    }
+  ]
+}

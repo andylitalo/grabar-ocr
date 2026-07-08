@@ -86,3 +86,9 @@ ml_vision/tessdata/
 
 # BentoML local store
 ~/bentoml/
+
+# Productionized corpus: the committed book deliverable (per-page md + per-line json
+# + manifest). Text only — no images/PDFs land here. Negate the global *.json rule so
+# the corpus JSON is tracked (runs/ and data/ images stay ignored above).
+!/corpus/*.json
+!/corpus/**/*.json

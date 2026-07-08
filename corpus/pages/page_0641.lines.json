@@ -1,0 +1,103 @@
+{
+  "page": 641,
+  "page_id": "page_0641_auto",
+  "source": {
+    "run_slug": "auto__proj__tess__gemini-min",
+    "crop": "auto",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/641.pdf",
+    "deskew_render": "data/_labeling_work/page_0641/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0641_auto.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 4,
+    "text": 4,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "[Unclear text / Rubric] ✷✷✷✷✷✷✷✷✷✷✷✷✷✷",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_left/line_001",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "",
+      "grabar": "",
+      "region_bbox": {
+        "x1": 158,
+        "y1": 567,
+        "x2": 920,
+        "y2": 2973
+      },
+      "crop_image": "data/columns/page_0641_auto_region_01_left.png",
+      "line_image": "data/lines/page_0641_auto/region_01_left/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_02_right/line_001",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "-саզշզշզсщյ ︎︎✷✷✷✷✷✷✷✷✷✷✷✷✷✷",
+      "grabar": "-саզշզշզсщյ ︎︎✷✷✷✷✷✷✷✷✷✷✷✷✷✷",
+      "region_bbox": {
+        "x1": 920,
+        "y1": 568,
+        "x2": 1953,
+        "y2": 2973
+      },
+      "crop_image": "data/columns/page_0641_auto_region_02_right.png",
+      "line_image": "data/lines/page_0641_auto/region_02_right/line_001.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_02_right/line_002",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "-",
+      "grabar": "-",
+      "region_bbox": {
+        "x1": 920,
+        "y1": 568,
+        "x2": 1953,
+        "y2": 2973
+      },
+      "crop_image": "data/columns/page_0641_auto_region_02_right.png",
+      "line_image": "data/lines/page_0641_auto/region_02_right/line_002.png"
+    },
+    {
+      "index": 3,
+      "line_id": "region_02_right/line_003",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "",
+      "grabar": "",
+      "region_bbox": {
+        "x1": 920,
+        "y1": 568,
+        "x2": 1953,
+        "y2": 2973
+      },
+      "crop_image": "data/columns/page_0641_auto_region_02_right.png",
+      "line_image": "data/lines/page_0641_auto/region_02_right/line_003.png"
+    }
+  ]
+}

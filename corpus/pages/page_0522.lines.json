@@ -1,0 +1,86 @@
+{
+  "page": 522,
+  "page_id": "page_0522_human",
+  "source": {
+    "run_slug": "human__proj__tess__gemini-min",
+    "crop": "human",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/522.pdf",
+    "deskew_render": "data/_labeling_work/page_0522/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0522_human.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 3,
+    "text": 3,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "Today, seeing the holy Virgin flying through the air, and ascended on high into heaven in a chariot of clouds.",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_single/line_001",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Այսօր Տեսեալ զսուրբ Կոյսն թռուցեալ",
+      "grabar": "Այսօր Տեսեալ զսուրբ Կոյսն թռուցեալ",
+      "region_bbox": {
+        "x1": 672,
+        "y1": 1993,
+        "x2": 1687,
+        "y2": 2416
+      },
+      "crop_image": "data/columns/page_0522_human_region_01_single.png",
+      "line_image": "data/lines/page_0522_human/region_01_single/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_single/line_002",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "յօդս, եւ ամպեղէն կառօքն ի վեր",
+      "grabar": "յօդս, եւ ամպեղէն կառօքն ի վեր",
+      "region_bbox": {
+        "x1": 672,
+        "y1": 1993,
+        "x2": 1687,
+        "y2": 2416
+      },
+      "crop_image": "data/columns/page_0522_human_region_01_single.png",
+      "line_image": "data/lines/page_0522_human/region_01_single/line_002.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_01_single/line_003",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ճամբարձեալ յերկինս։",
+      "grabar": "համբարձեալ յերկինս։",
+      "region_bbox": {
+        "x1": 672,
+        "y1": 1993,
+        "x2": 1687,
+        "y2": 2416
+      },
+      "crop_image": "data/columns/page_0522_human_region_01_single.png",
+      "line_image": "data/lines/page_0522_human/region_01_single/line_003.png"
+    }
+  ]
+}
