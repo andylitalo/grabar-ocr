@@ -77,6 +77,13 @@ runs/
 /data/columns/*
 !/data/columns/boxes/
 !/data/columns/boxes/*.json
+# Blank-page markers (data/pages/blank/*.json) are human-verified ground truth, like
+# the column boxes: commit them so the "this source page is blank" signal is portable
+# and survives off-machine. The 646 page PDFs under data/pages/ stay ignored.
+!/data/pages/
+/data/pages/*
+!/data/pages/blank/
+!/data/pages/blank/*.json
 *.pdf
 *.tiff
 *.tif
@@ -86,3 +93,9 @@ ml_vision/tessdata/
 
 # BentoML local store
 ~/bentoml/
+
+# Productionized corpus: the committed book deliverable (per-page md + per-line json
+# + manifest). Text only — no images/PDFs land here. Negate the global *.json rule so
+# the corpus JSON is tracked (runs/ and data/ images stay ignored above).
+!/corpus/*.json
+!/corpus/**/*.json

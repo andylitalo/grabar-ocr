@@ -63,6 +63,33 @@ def write_lines_json(
     return out
 
 
+def write_blank_lines_json(run_dir: Path, page_id: str, *, config_slug: str) -> Path:
+    """Per-page JSON for a page marked blank in the labeling UI (no Grabar to digitize).
+
+    A blank page short-circuits before crop/OCR/translate, so it has no lines — but it
+    is still written as a first-class page artifact (``blank: true``, empty ``lines``)
+    so it flows into merged.md and the promoted corpus as an explicit blank page rather
+    than vanishing into a "deferred / needs labeling" gap. Keyed by the BASE page id
+    (``page_XXXX``, no ``_auto``/``_human`` suffix), since blankness is a property of
+    the source page, not of any crop.
+    """
+    pages_dir = run_dir / "pages"
+    pages_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "page_id": page_id,
+        "config_slug": config_slug,
+        "blank": True,
+        "ocr_tag": None,
+        "correct_tag": None,
+        "cer": None,
+        "counts": {"total": 0, "text": 0, "non_character": 0, "labeled": 0},
+        "lines": [],
+    }
+    out = pages_dir / f"{page_id}.lines.json"
+    out.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
 def write_merged_doc(run_dir: Path, pages_rows: list[tuple[str, list[dict]]]) -> Path:
     """Combined document: all text lines from all pages, reading order, per-page headers.
 

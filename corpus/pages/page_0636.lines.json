@@ -1,0 +1,1514 @@
+{
+  "page": 636,
+  "page_id": "page_0636_auto",
+  "source": {
+    "run_slug": "auto__proj__tess__gemini-min",
+    "crop": "auto",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/636.pdf",
+    "deskew_render": "data/_labeling_work/page_0636/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0636_auto.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 87,
+    "text": 87,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "6. Saturday. Tone 2 [BK - B-flat / Second Side]. Sons and Grandsons of Gregory the Illuminator.\n\n7. Sunday. Tone 5 [GD - G-major / Third Mode]. Fourth [Sunday]. Father [Hymn of the Fathers], Tone 8 [D]: Glorified (\"P'arraworeall\"). Evening Dismissal [Hambartsi], Tone 5 [GD]: With a Voice of Terror (\"I dzayns ahegh\"). 11.\n\n8. Monday. Tone 6 [GK - G-flat / Third Side]. The Maccabees: Eleazar, and the others. Father [Hymn of the Fathers], Tone 2 [BK]: Who in battle (\"Ork' i marti\"). 25.\n\n9. Tuesday. Tone 7 [DZ - D-major / Fourth Mode]. The Twelve Prophets: Hosea, and the others.\n\n10. Wednesday. Tone 8 [DK - D-flat / Fourth Side]. Father of Penitence [Hymn of the Fathers of the Fast], Tone 3 [BD]: Who saved (\"Or aprets'uts'er\").\n\n11. Thursday. Tone 1 [AD - A-major / First Mode]. Sophia and her three daughters. Father [Hymn of the Fathers], Tone 5 [GD]: Who the torments (\"Ork' ztanjans\"). 30.\n\n13. Saturday. Tone 4 [BD - B-major / Second Mode]. Thaddeus the Apostle and Sandukht the Virgin.\n\n14. Sunday. Tone 2 [BK - B-flat / Second Side]. Fifth [Sunday]. Presentation of the Lord [Tearndandaraj]. Carnival of the Fast of Catechumens [Arrajavorats'].\n\n15. Monday. Tone 7 [DZ - D-major / Fourth Mode]. Fast. Father of Penitence [Hymn of the Fathers of the Fast], Tone 4 [BK]: Who awesome (\"Or ahavor\"). 90.\n\n21. Sunday. Tone 4 [BD - B-major / Second Mode]. Evening Dismissal [Hambartsi], Tone 4 [BD]: The Wondrous Women (\"Sk'anch'eli kanayk'n\"). 5.\n\n28. Sunday. Tone 2 [AK - A-flat / First Side]. Mid-Lent [Mijink']. Evening Dismissal [Hambartsi], Tone 2 [AK]: We shall sing to You with the angels (\"Yergests'uk' k'ez ynd hreshtaks\").\nAnd so on, see in the First Volume. 25.\n\nMarch\n\n7. Sunday. Tone 8 [DK - D-flat / Fourth Side]. Great Lent [Bun Barekendan]. See in the First Volume until Vardavar [Transfiguration], keeping the order of the place.\n\nApril\n\n7. Wednesday. Tone 7 [DZ - D-major / Fourth Mode]. Feast of the Annunciation of the Holy Virgin.\n\n25. Sunday. Tone 1 [AD - A-major / First Mode]. Easter [Zatik], Day of the Resurrection of Christ. See also the others according to the order in the First Volume. 8.\n\nJune\n\n3. Thursday. Tone 8 [DK - D-flat / Fourth Side]. Ascension of Christ.\n\n13. Sunday. Tone 2 [AK - A-flat / First Side]. Coming of the Holy Spirit [Pentecost]. Carnival of the Elijah Fast.\n\n20. Sunday. Tone 1 [AD - A-major / First Mode]. First [Sunday]. Beginning of the Sundays of the Resurrection. Look here for the Fathers [Hymns of the Fathers] of Sundays.\n\nJuly\n\nSunday. Tone 7 [DZ - D-major / Fourth Mode]. Third [Sunday]. Father [Hymn of the Fathers], Tone 2 [AK]: Who came for salvation (\"Or ekir i p'rkut'iwn\").\n\nSunday. Tone 6 [GK - G-flat / Third Side]. Fourth [Sunday]. Father [Hymn of the Fathers], Tone 3 [BD]: Who descended from heaven (\"Or i yerknits' ijer\").\n\nSunday. Tone 2 [BK - B-flat / Second Side]. Sixth [Sunday]. Father [Hymn of the Fathers], Tone 2 [BK]: Who of the heavenly hosts (\"Or yerknayin zinaworut'eants'\"). Carnival of the Fast of Vardavar [Transfiguration].\n\nAugust\n\nSunday. Tone 4 [BD - B-major / Second Mode]. Vardavar [Transfiguration]. The period of eating meat [non-fasting period] is one week.\n\nSaturday. Tone 1 [AD - A-major / First Mode]. The Holy Ecumenical Council of Ephesus of the Two Hundred Patriarchs.\n\nSunday. Tone 2 [AK - A-flat / First Side]. Second [Sunday]. Father [Hymn of the Fathers], Tone 5 [GD]: We glorify (\"P'arraworek'\"). Carnival of the Fast of the Holy Mother of God [Astvatsatsin].\n\nMonday. Tone 4 [BD - B-major / Second Mode]. Fast. Father of Penitence [Hymn of the Fathers of the Fast], Tone 2 [AK]: Glorified forever (\"P'arraworeall yawitean\").\n\nSunday. Tone 1 [AD - A-major / First Mode]. Assumption of the Holy Mother of God [Verap'okhum]. The period of eating meat [non-fasting period] is three weeks. See according to the order in the First Volume.\n\nWednesday. Tone 4 [BD - B-major / Second Mode]. Father [Hymn of the Fathers], Tone 3 [BD]: Who awesome (\"Or ahavor\").\n\nMonday. Tone 8 [DK - D-flat / Fourth Side]. Stephen of Ulnia and his companions. Father [Hymn of the Fathers], Tone 2 [BK]: We bless you (\"Orhnemk' zk'ez\").\n\nSeptember\n\nSunday. Tone 6 [GK - G-flat / Third Side]. Fourth [Sunday]. Father [Hymn of the Fathers], Tone 6 [GK]: Ineffable (\"Ancharrveli\"). Evening Dismissal [Hambartsi], Tone 6 [GK]: Divine (\"Zastvatsayin\"). Carnival of the Fast of the Holy Cross.\n\nMonday. Tone 7 [DZ - D-major / Fourth Mode]. Fast of the Holy Cross. Father of Penitence [Hymn of the Fathers of the Fast], Tone 2 [BK]: Blessed are You, Lord, God of our fathers (\"Harts'n merots' orhneal es Ter\").\n\nWednesday. Tone 1 [AD - A-major / First Mode]. Fast. Feast of the Birth of the Holy Mother of God from Anna.\n\nSunday. Tone 5 [GD - G-major / Third Mode]. Exaltation of the Holy Cross [Khachverats]. See in the First Volume until the Eleventh Sunday; but look in the Year-book for the martyrs' and fast days' Fathers [Hymns of the Fathers], the Resurrection Evening Dismissals [Hambartsik'], the tone of the days, and the feasts of the last week, keeping the order.",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_left/line_001",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "6. Շբ. ԲԿ. Որդւոց եւ թոռանց Գրի-",
+      "grabar": "6. Շբ. ԲԿ. Որդւոց եւ թոռանց Գրի-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_left/line_002",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "գգգորի Լուսաւորչին։",
+      "grabar": "գգգորի Լուսաւորչին։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_002.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_01_left/line_003",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "7. Կիր. ԳՁ. Չորրորդ։ Հարց դ). Փա- 4.",
+      "grabar": "7. Կիր. ԳՁ. Չորրորդ։ Հարց դ). Փա- 4.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_003.png"
+    },
+    {
+      "index": 3,
+      "line_id": "region_01_left/line_004",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ռռռռաւորեալ։ Համբ. գ3. Ի ձայնս",
+      "grabar": "ռռռռաւորեալ։ Համբ. գ3. Ի ձայնս",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_004.png"
+    },
+    {
+      "index": 4,
+      "line_id": "region_01_left/line_005",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "տտատատահեղ։ 11.",
+      "grabar": "տտատատահեղ։ 11.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_005.png"
+    },
+    {
+      "index": 5,
+      "line_id": "region_01_left/line_006",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "8. Բչ. ԳԿ. Մակաբայեցւոցն՝ Եղիա-",
+      "grabar": "8. Բչ. ԳԿ. Մակաբայեցւոցն՝ Եղիա-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_006.png"
+    },
+    {
+      "index": 6,
+      "line_id": "region_01_left/line_007",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զզզարու, եւայլն։ Հարց բկ. Որք 25.",
+      "grabar": "զզզարու, եւայլն։ Հարց բկ. Որք 25.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_007.png"
+    },
+    {
+      "index": 7,
+      "line_id": "region_01_left/line_008",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "- իԻիմարտի։",
+      "grabar": "- իԻիմարտի։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_008.png"
+    },
+    {
+      "index": 8,
+      "line_id": "region_01_left/line_009",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "9. Գշ. ԴՁՉ. Երկոտասան մարգարէիցն՝",
+      "grabar": "9. Գշ. ԴՁՉ. Երկոտասան մարգարէիցն՝",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_009.png"
+    },
+    {
+      "index": 9,
+      "line_id": "region_01_left/line_010",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Ովսեայ, եւայլն։",
+      "grabar": "Ովսեայ, եւայլն։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_010.png"
+    },
+    {
+      "index": 10,
+      "line_id": "region_01_left/line_011",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "10. Դշ. ԴԿ. Հարց աղց. բ3. Որ ապրե-",
+      "grabar": "10. Դշ. ԴԿ. Հարց աղց. բ3. Որ ապրե-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_011.png"
+    },
+    {
+      "index": 11,
+      "line_id": "region_01_left/line_012",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ցցուցերրը։",
+      "grabar": "ցցուցերրը։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_012.png"
+    },
+    {
+      "index": 12,
+      "line_id": "region_01_left/line_013",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "11. Եշ. ԱԶ. Սոփիայ եւ երից դստի- լ.",
+      "grabar": "11. Եշ. ԱԶ. Սոփիայ եւ երից դստի- լ.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_013.png"
+    },
+    {
+      "index": 13,
+      "line_id": "region_01_left/line_014",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "րացն։ Հարց գ3. Որք զտանջանս։",
+      "grabar": "րացն։ Հարց գ3. Որք զտանջանս։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_014.png"
+    },
+    {
+      "index": 14,
+      "line_id": "region_01_left/line_015",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "13. Շբ. ԲՁԶ. Թադէոսի առաքելոյն եւզ",
+      "grabar": "13. Շբ. ԲՁԶ. Թադէոսի առաքելոյն եւզ",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_015.png"
+    },
+    {
+      "index": 15,
+      "line_id": "region_01_left/line_016",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ՄՍՄՍՍանդխտոյ կուսին։",
+      "grabar": "ՄՍՄՍՍանդխտոյ կուսին։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_016.png"
+    },
+    {
+      "index": 16,
+      "line_id": "region_01_left/line_017",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "14. Կիր. ԲԿ. Հինգերորդ։ Տեառնընդա-",
+      "grabar": "14. Կիր. ԲԿ. Հինգերորդ։ Տեառնընդա-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_017.png"
+    },
+    {
+      "index": 17,
+      "line_id": "region_01_left/line_018",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ռռաջ։ Բարեկենդան Առաջաւորաց",
+      "grabar": "ռռաջ։ Բարեկենդան Առաջաւորաց",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_018.png"
+    },
+    {
+      "index": 18,
+      "line_id": "region_01_left/line_019",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "պահոցն։",
+      "grabar": "պահոցն։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_019.png"
+    },
+    {
+      "index": 19,
+      "line_id": "region_01_left/line_020",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "15. Բշ. ԴՉ. Պահոց։ Հարց ազց. բ) Որ ց.",
+      "grabar": "15. Բշ. ԴՁ. Պահոց։ Հարց ազց. բ) Որ ց.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_020.png"
+    },
+    {
+      "index": 20,
+      "line_id": "region_01_left/line_021",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ահաւորը։",
+      "grabar": "ահաւորը։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_021.png"
+    },
+    {
+      "index": 21,
+      "line_id": "region_01_left/line_022",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "21. Կիր. ԲԶ. Համբ. բձ. Սքանչելի կա-5",
+      "grabar": "21. Կիր. ԲԶ. Համբ. բձ. Սքանչելի կա-5",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_022.png"
+    },
+    {
+      "index": 22,
+      "line_id": "region_01_left/line_023",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ննայքն։",
+      "grabar": "ննայքն։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_023.png"
+    },
+    {
+      "index": 23,
+      "line_id": "region_01_left/line_024",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "28. Կիր. ԱԿ. Միջին։ Համբ. ակ. Եր-",
+      "grabar": "28. Կիր. ԱԿ. Միջին։ Համբ. ակ. Եր-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_024.png"
+    },
+    {
+      "index": 24,
+      "line_id": "region_01_left/line_025",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "դգեսցուք քեզ ընդ հրեշտակս։",
+      "grabar": "դգեսցուք քեզ ընդ հրեշտակս։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_025.png"
+    },
+    {
+      "index": 25,
+      "line_id": "region_01_left/line_026",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Ե- լայլն յԱռաջին հատորն տիս։ 25",
+      "grabar": "Ե- լայլն յԱռաջին հատորն տես։ 25",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_026.png"
+    },
+    {
+      "index": 26,
+      "line_id": "region_01_left/line_027",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Մարտ )",
+      "grabar": "Մարտ )",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_027.png"
+    },
+    {
+      "index": 27,
+      "line_id": "region_01_left/line_028",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "7. Կիր. ԴԿ. Բուն բարեկենդան։ Տես",
+      "grabar": "7. Կիր. ԴԿ. Բուն բարեկենդան։ Տես",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_028.png"
+    },
+    {
+      "index": 28,
+      "line_id": "region_01_left/line_029",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "յԱ-աջին հատորն մինչէւ 'ի Վարդա-",
+      "grabar": "յԱ-աջին հատորն մինչէւ 'ի Վարդա-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_029.png"
+    },
+    {
+      "index": 29,
+      "line_id": "region_01_left/line_030",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "վվվառն, պահելով զկարգ տեղւոյս։",
+      "grabar": "վվվառն, պահելով զկարգ տեղւոյս։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_030.png"
+    },
+    {
+      "index": 30,
+      "line_id": "region_01_left/line_031",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Ա.ը..",
+      "grabar": "Ա.ը..",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_031.png"
+    },
+    {
+      "index": 31,
+      "line_id": "region_01_left/line_032",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Չաամամամամամամամամամամամամամամշմշմշմշմշմշմշմշմշմշմշմշաշաշաշշշշշշշշ",
+      "grabar": "Չաամամամամամամամամամամամամամամշմշմշմշմշմշմշմշմշմշմշմշաշաշաշշշշշշշշ",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_032.png"
+    },
+    {
+      "index": 32,
+      "line_id": "region_01_left/line_033",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ԱԱԱԱսրիլակակմւ ծ",
+      "grabar": "ԱԱԱԱսրիլակակմւ ծ",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_033.png"
+    },
+    {
+      "index": 33,
+      "line_id": "region_01_left/line_034",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "7. Դչ. ԴՁ Տօն Աւետեաց սրբոյ Կու-",
+      "grabar": "7. Դչ. ԴՁ Տօն Աւետեաց սրբոյ Կու-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_034.png"
+    },
+    {
+      "index": 34,
+      "line_id": "region_01_left/line_035",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "սինւ։։։։",
+      "grabar": "սինւ։։։։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_035.png"
+    },
+    {
+      "index": 35,
+      "line_id": "region_01_left/line_036",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "25. Կիր. ԱԶ. Զատիկ. օր Յարութեանն",
+      "grabar": "25. Կիր. ԱԶ. Զատիկ. օր Յարութեանն",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_036.png"
+    },
+    {
+      "index": 36,
+      "line_id": "region_01_left/line_037",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Քրիստոսի։ Տես և զայլան ըստ կարգինի",
+      "grabar": "Քրիստոսի։ Տես և զայլան ըստ կարգինի",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_037.png"
+    },
+    {
+      "index": 37,
+      "line_id": "region_01_left/line_038",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ցյցյյԱռաջին հատորն։8",
+      "grabar": "ցյցյյԱռաջին հատորն։8",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_038.png"
+    },
+    {
+      "index": 38,
+      "line_id": "region_01_left/line_039",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Յունիսմ Ոշ.",
+      "grabar": "Յունիսմ Ոշ.",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_039.png"
+    },
+    {
+      "index": 39,
+      "line_id": "region_01_left/line_040",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "3. Եշ. ԴԿ. Համբարձումն Բրիստոսի։",
+      "grabar": "3. Եշ. ԴԿ. Համբարձումն Քրիստոսի։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_040.png"
+    },
+    {
+      "index": 40,
+      "line_id": "region_01_left/line_041",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "13. Կիր. ԱԿ. Գալուստ Հոգւոյն Սրբոյ։",
+      "grabar": "13. Կիր. ԱԿ. Գալուստ Հոգւոյն Սրբոյ։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_041.png"
+    },
+    {
+      "index": 41,
+      "line_id": "region_01_left/line_042",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ԲԲԲարեկենդան Եղիական պահոց։",
+      "grabar": "ԲԲԲարեկենդան Եղիական պահոց։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_042.png"
+    },
+    {
+      "index": 42,
+      "line_id": "region_01_left/line_043",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "20. Կիր. ԱԶ. Առաջին։ Սկիզբն Յարու-",
+      "grabar": "20. Կիր. ԱԶ. Առաջին։ Սկիզբն Յարու-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_043.png"
+    },
+    {
+      "index": 43,
+      "line_id": "region_01_left/line_044",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "թեան կիւրակէից։ Զհարց կիւրա-",
+      "grabar": "թեան կիւրակէից։ Զհարց կիւրա-",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_044.png"
+    },
+    {
+      "index": 44,
+      "line_id": "region_01_left/line_045",
+      "region": "region_01_left",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "կէից աստ տեսցես։",
+      "grabar": "կէից աստ տեսցես։",
+      "region_bbox": {
+        "x1": 288,
+        "y1": 318,
+        "x2": 1249,
+        "y2": 2970
+      },
+      "crop_image": "data/columns/page_0636_auto_region_01_left.png",
+      "line_image": "data/lines/page_0636_auto/region_01_left/line_045.png"
+    },
+    {
+      "index": 45,
+      "line_id": "region_02_right/line_001",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Յուլիս",
+      "grabar": "Յուլիս",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_001.png"
+    },
+    {
+      "index": 46,
+      "line_id": "region_02_right/line_002",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԴՁ. Երրորդ։ Հարց ակ. Որ",
+      "grabar": "Կիր. ԴՁ. Երրորդ։ Հարց ակ. Որ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_002.png"
+    },
+    {
+      "index": 47,
+      "line_id": "region_02_right/line_003",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եկիր ի փրկութիւն։",
+      "grabar": "եկիր ի փրկութիւն։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_003.png"
+    },
+    {
+      "index": 48,
+      "line_id": "region_02_right/line_004",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԳԿ. Չորրորդ։ Հարց բ) Որ",
+      "grabar": "Կիր. ԳԿ. Չորրորդ։ Հարց բ) Որ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_004.png"
+    },
+    {
+      "index": 49,
+      "line_id": "region_02_right/line_005",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ի յերկնից իջեր։",
+      "grabar": "ի յերկնից իջեր։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_005.png"
+    },
+    {
+      "index": 50,
+      "line_id": "region_02_right/line_006",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԲԿ. Վեցերորդ։ Հարց բկ. Որ",
+      "grabar": "Կիր. ԲԿ. Վեցերորդ։ Հարց բկ. Որ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_006.png"
+    },
+    {
+      "index": 51,
+      "line_id": "region_02_right/line_007",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "յերկնային զինուորութեանց։ Բա-",
+      "grabar": "յերկնային զինուորութեանց։ Բա-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_007.png"
+    },
+    {
+      "index": 52,
+      "line_id": "region_02_right/line_008",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "րեկենդան Վարդավառի պահոցն։",
+      "grabar": "րեկենդան Վարդավառի պահոցն։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_008.png"
+    },
+    {
+      "index": 53,
+      "line_id": "region_02_right/line_009",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ԱԱԱԶ",
+      "grabar": "ԱԱԱԶ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_009.png"
+    },
+    {
+      "index": 54,
+      "line_id": "region_02_right/line_010",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԲՉ. Վարդավառ։ Միջոց ուտիքն",
+      "grabar": "Կիր. ԲՁ. Վարդավառ։ Միջոց ուտիքն",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_010.png"
+    },
+    {
+      "index": 55,
+      "line_id": "region_02_right/line_011",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "մի զաբաթ է։",
+      "grabar": "մի շաբաթ է։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_011.png"
+    },
+    {
+      "index": 56,
+      "line_id": "region_02_right/line_012",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Շբ. ԱՁՉ. Եփեսոսի սուրբ Ժողովոյն",
+      "grabar": "Շբ. ԱՁՉ. Եփեսոսի սուրբ Ժողովոյն",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_012.png"
+    },
+    {
+      "index": 57,
+      "line_id": "region_02_right/line_013",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "երկերիւր հայրապետացն։",
+      "grabar": "երկերիւր հայրապետացն։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_013.png"
+    },
+    {
+      "index": 58,
+      "line_id": "region_02_right/line_014",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԱԿ. Երկրորդ։ Հարց գ3. Փա-",
+      "grabar": "Կիր. ԱԿ. Երկրորդ։ Հարց գ3. Փա-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_014.png"
+    },
+    {
+      "index": 59,
+      "line_id": "region_02_right/line_015",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ռաւորեմք։ Բարեկենդան սուրբ",
+      "grabar": "ռաւորեմք։ Բարեկենդան սուրբ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_015.png"
+    },
+    {
+      "index": 60,
+      "line_id": "region_02_right/line_016",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Աստուածածնի պահոց։",
+      "grabar": "Աստուածածնի պահոց։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_016.png"
+    },
+    {
+      "index": 61,
+      "line_id": "region_02_right/line_017",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Բչ. ԲՁ. Պահոց։ Հարց աղց. ակ.",
+      "grabar": "Բչ. ԲՁ. Պահոց։ Հարց աղց. ակ.",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_017.png"
+    },
+    {
+      "index": 62,
+      "line_id": "region_02_right/line_018",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ՉՔառաւորեալ յաւիտեան։",
+      "grabar": "ՉՔառաւորեալ յաւիտեան։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_018.png"
+    },
+    {
+      "index": 63,
+      "line_id": "region_02_right/line_019",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԱԶ. Վերափոխումն սուրբ Աս-",
+      "grabar": "Կիր. ԱԶ. Վերափոխումն սուրբ Աս-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_019.png"
+    },
+    {
+      "index": 64,
+      "line_id": "region_02_right/line_020",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տուածածնի։ Միջոց ուտիքն երե։",
+      "grabar": "տուածածնի։ Միջոց ուտիքն երե։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_020.png"
+    },
+    {
+      "index": 65,
+      "line_id": "region_02_right/line_021",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "շչաբաթ է։ Տես ըսր կարգին յԱռա-",
+      "grabar": "շչաբաթ է։ Տես ըստ կարգին յԱռա-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_021.png"
+    },
+    {
+      "index": 66,
+      "line_id": "region_02_right/line_022",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ջին հատորն։",
+      "grabar": "ջին հատորն։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_022.png"
+    },
+    {
+      "index": 67,
+      "line_id": "region_02_right/line_023",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Դչ. ԲՉ. Հարց բ3. Որ ահաւոր։",
+      "grabar": "Դչ. ԲՁ. Հարց բ3. Որ ահաւոր։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_023.png"
+    },
+    {
+      "index": 68,
+      "line_id": "region_02_right/line_024",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Բչ. ԴԿ. Ստեփանոսի Ուլնեցւոյն,",
+      "grabar": "Բչ. ԴԿ. Ստեփանոսի Ուլնեցւոյն,",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_024.png"
+    },
+    {
+      "index": 69,
+      "line_id": "region_02_right/line_025",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եեւայլն։ Հարց բկ. Օրհնեմք զքեզ։",
+      "grabar": "եեւայլն։ Հարց բկ. Օրհնեմք զքեզ։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_025.png"
+    },
+    {
+      "index": 70,
+      "line_id": "region_02_right/line_026",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Սեպտեմբե",
+      "grabar": "Սեպտեմբե",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_026.png"
+    },
+    {
+      "index": 71,
+      "line_id": "region_02_right/line_027",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԳԿ. Չորրորդ։ Հարց գկ. Ան-",
+      "grabar": "Կիր. ԳԿ. Չորրորդ։ Հարց գկ. Ան-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_027.png"
+    },
+    {
+      "index": 72,
+      "line_id": "region_02_right/line_028",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ճառելի։ Համբ. գկ. Զաստուա-",
+      "grabar": "ճառելի։ Համբ. գկ. Զաստուա-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_028.png"
+    },
+    {
+      "index": 73,
+      "line_id": "region_02_right/line_029",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ծային։ Բարեկենդան սուրբ Խաչի",
+      "grabar": "ծային։ Բարեկենդան սուրբ Խաչի",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_029.png"
+    },
+    {
+      "index": 74,
+      "line_id": "region_02_right/line_030",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տպահոցնմ։",
+      "grabar": "տպահոցնմ։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_030.png"
+    },
+    {
+      "index": 75,
+      "line_id": "region_02_right/line_031",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Բչ. ԴՉ. Պահք սուրբ Խաչին։ Հարց",
+      "grabar": "Բչ. ԴՁ. Պահք սուրբ Խաչին։ Հարց",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_031.png"
+    },
+    {
+      "index": 76,
+      "line_id": "region_02_right/line_032",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "աչց. բկ. Հարցն մերոց օրհնեալ",
+      "grabar": "աղց. բկ. Հարցն մերոց օրհնեալ",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_032.png"
+    },
+    {
+      "index": 77,
+      "line_id": "region_02_right/line_033",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եստէր։",
+      "grabar": "եստէր։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_033.png"
+    },
+    {
+      "index": 78,
+      "line_id": "region_02_right/line_034",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Դչ. ԱՉԶ. Պահոց. Տօն Ծննդեան",
+      "grabar": "Դչ. ԱՉԶ. Պահոց. Տօն Ծննդեան",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_034.png"
+    },
+    {
+      "index": 79,
+      "line_id": "region_02_right/line_035",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "սուրբ Աստուածածնի 'ի յԱննայէ։",
+      "grabar": "սուրբ Աստուածածնի 'ի յԱննայէ։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_035.png"
+    },
+    {
+      "index": 80,
+      "line_id": "region_02_right/line_036",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Կիր. ԳԶ. Խաչվերաց։ Տես յԱռաջին",
+      "grabar": "Կիր. ԳԶ. Խաչվերաց։ Տես յԱռաջին",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_036.png"
+    },
+    {
+      "index": 81,
+      "line_id": "region_02_right/line_037",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "հՀատորն մինչեւ ի մետասաներորդ կիւ-",
+      "grabar": "հՀատորն մինչեւ ի մետասաներորդ կիւ-",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_037.png"
+    },
+    {
+      "index": 82,
+      "line_id": "region_02_right/line_038",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "րակէն. թայց զէարց մարտիրոսացյ և",
+      "grabar": "րակէն. բայց զհարց մարտիրոսացյ և",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_038.png"
+    },
+    {
+      "index": 83,
+      "line_id": "region_02_right/line_039",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "պահոց, զյարութեան համբարձիսն և",
+      "grabar": "պահոց, զյարութեան համբարձիսն և",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_039.png"
+    },
+    {
+      "index": 84,
+      "line_id": "region_02_right/line_040",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "զաւուրց ձայնն և զչետին զաբաթու",
+      "grabar": "զաւուրց ձայնն և զհետին շաբաթու",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_040.png"
+    },
+    {
+      "index": 85,
+      "line_id": "region_02_right/line_041",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տենսն 'ի Ւ տարեգիրն տես, պահելով",
+      "grabar": "տօնսն 'ի Ւ տարեգիրն տես, պահելով",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_041.png"
+    },
+    {
+      "index": 86,
+      "line_id": "region_02_right/line_042",
+      "region": "region_02_right",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "զամբադ։",
+      "grabar": "զամբադ։",
+      "region_bbox": {
+        "x1": 1249,
+        "y1": 298,
+        "x2": 2009,
+        "y2": 2942
+      },
+      "crop_image": "data/columns/page_0636_auto_region_02_right.png",
+      "line_image": "data/lines/page_0636_auto/region_02_right/line_042.png"
+    }
+  ]
+}

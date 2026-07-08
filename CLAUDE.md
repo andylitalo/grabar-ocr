@@ -22,11 +22,24 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 ```
 data_prep/          Pre-processing: PDF → pages → column crops → line crops
 ml_vision/          TrOCR fine-tuning, evaluation, BentoML model save
+pipeline/           The pipeline that actually ships: modular crop→slice→ocr→correct→
+                    translate orchestrator (see pipeline/README.md). Runs local on the
+                    Mac; outputs to runs/<config-slug>/ (gitignored scratch).
+corpus/             Productionized deliverable: the digitized + translated book,
+                    per-page md + per-line json + manifest (committed). Built from the
+                    blessed runs by `python -m pipeline.promote` (see corpus/README.md).
+labeling_ui/        FastAPI app for human region-labeling / ground-truth (the crop=human path)
 services/           BentoML OCR API, LLM translation client, DB writer
 orchestration/      Airflow DAGs and custom GCS operators
 infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
 docs/               Phase planning docs + recorded findings (version-controlled)
 ```
+
+> **What actually shipped vs. the original blueprint.** `README.md`/CLAUDE describe an
+> aspirational cloud stack (Airflow on k3s, BentoML-served TrOCR, Postgres). That was never
+> built — `services/`, `orchestration/`, and `infrastructure/` are empty/template stubs.
+> The real, working pipeline is the local `pipeline/` package (Tesseract OCR + Gemini
+> correction + Gemini translation), and the finished book lives in `corpus/`.
 
 ## Key Conventions
 - Python 3.11+; type-annotate all function signatures; `pathlib.Path` over `os.path`

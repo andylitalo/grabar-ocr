@@ -1,0 +1,59 @@
+{
+  "page": 496,
+  "page_id": "page_0496_human",
+  "source": {
+    "run_slug": "human__proj__tess__gemini-min",
+    "crop": "human",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/496.pdf",
+    "deskew_render": "data/_labeling_work/page_0496/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0496_human.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 2,
+    "text": 2,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "Today the Apostles rejoice, adorned by the graces of the Holy Spirit.",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_single/line_001",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Այսօր ցնծան Առաքեալքն, զարդարեալք",
+      "grabar": "Այսօր ցնծան Առաքեալքն, զարդարեալք",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0496_human_region_01_single.png",
+      "line_image": "data/lines/page_0496_human/region_01_single/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_single/line_002",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Ի օնորհաց Հոգւոյն Սրբոյ։",
+      "grabar": "Ի շնորհաց Հոգւոյն Սրբոյ։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0496_human_region_01_single.png",
+      "line_image": "data/lines/page_0496_human/region_01_single/line_002.png"
+    }
+  ]
+}
