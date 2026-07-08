@@ -39,6 +39,7 @@ class RunResult:
     pages: list[int]
     page_ids: list[str] = field(default_factory=list)
     deferred: list[dict] = field(default_factory=list)
+    blank: list[str] = field(default_factory=list)
     merged_doc: Path | None = None
     scorecard: Path | None = None
     needs_labeling: list[str] = field(default_factory=list)
@@ -161,6 +162,19 @@ def _process_page(n: int, ctx: dict) -> dict:
     Returns ``{"n", "status": deferred|ok|failed|credit, ...}``.
     """
     page_id = f"page_{n:04d}"  # best-effort id for error rows before crop resolves it
+
+    # Blank source pages (a human marked them in the labeling UI) have no Grabar to
+    # digitize. Short-circuit BEFORE crop: the auto column-detector would otherwise
+    # read page noise / bleed-through as an "unbalanced two-column band" and defer the
+    # page, losing the blank signal. Keyed by the base page id; writes a first-class
+    # blank artifact so the page is handled, not deferred.
+    if storage.is_blank(n):
+        page_id = storage.page_id_for(n)
+        page_path = artifacts.write_blank_lines_json(
+            ctx["run_dir"], page_id, config_slug=ctx["slug"]
+        )
+        return {"n": n, "status": "blank", "page_id": page_id, "page_path": page_path}
+
     stage = "crop"
     try:
         crop = ctx["crop_impl"].run(n, force=ctx["force"], **ctx["config"].crop.params)
@@ -260,6 +274,12 @@ def run(
         if res["status"] == "deferred":
             result.deferred.append({"page_id": res["page_id"], "reason": res["reason"]})
             print(f"  {tag} DEFER {res['page_id']}: {res['reason']}")
+            return
+        if res["status"] == "blank":
+            # The blank artifact is on disk (its own idempotency cache) and is picked up
+            # by rebuild_merged_doc_from_disk; only the blank list needs tracking here.
+            result.blank.append(res["page_id"])
+            print(f"  {tag} BLANK {res['page_id']} (marked blank — no Grabar)")
             return
         if res["status"] == "credit":
             result.credit_exhausted = True
@@ -370,6 +390,7 @@ def run(
         "pages": list(pages),
         "page_ids": result.page_ids,
         "deferred": result.deferred,
+        "blank": result.blank,
         "needs_labeling": result.needs_labeling,
         "failed": result.failed,
         "credit_exhausted": result.credit_exhausted,

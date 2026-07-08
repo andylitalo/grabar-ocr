@@ -1,0 +1,21 @@
+{
+  "page": 552,
+  "page_id": "page_0552",
+  "blank": true,
+  "source": {
+    "blank_marked_by": "human"
+  },
+  "provenance": {
+    "source_pdf": "data/pages/552.pdf",
+    "blank_marker": "data/pages/blank/page_0552.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 0,
+    "text": 0,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": null,
+  "lines": []
+}

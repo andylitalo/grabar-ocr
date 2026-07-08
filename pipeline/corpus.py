@@ -144,6 +144,31 @@ def build_page_record(
     }
 
 
+def build_blank_record(page_num: int) -> dict:
+    """Explicit corpus record for a page marked blank in the labeling UI.
+
+    Blankness is the single source of truth (``data/pages/blank/page_XXXX.json`` via
+    ``storage.is_blank``); a blank page has no crop, no lines and no translation, so it
+    is promoted as a first-class ``blank: true`` page (not a gap). Keyed by the base
+    page id, since blankness is a property of the source page.
+    """
+    marker = json.loads(storage.blank_marker_path(page_num).read_text("utf-8"))
+    return {
+        "page": page_num,
+        "page_id": storage.page_id_for(page_num),
+        "blank": True,
+        "source": {"blank_marked_by": marker.get("marked_by", "human")},
+        "provenance": {
+            "source_pdf": _rel(storage.page_pdf_path(page_num)),
+            "blank_marker": _rel(storage.blank_marker_path(page_num)),
+        },
+        "cer": None,
+        "counts": {"total": 0, "text": 0, "non_character": 0, "labeled": 0},
+        "english": None,
+        "lines": [],
+    }
+
+
 def _text_line_count(record: dict) -> int:
     counts = record.get("counts") or {}
     if "text" in counts:
@@ -151,8 +176,23 @@ def _text_line_count(record: dict) -> int:
     return sum(1 for ln in record["lines"] if not ln["non_character"])
 
 
+_BLANK_MARKER = "_(blank page — no text in the source)_"
+
+
 def _page_md(record: dict) -> str:
     """Per-page markdown: frontmatter + Grabar (reading order) + English prose."""
+    if record.get("blank"):
+        front = [
+            "---",
+            f"page: {record['page']}",
+            f"page_id: {record['page_id']}",
+            "blank: true",
+            f"blank_marked_by: {record['source'].get('blank_marked_by', 'human')}",
+            "---",
+        ]
+        body = ["", f"# Page {record['page']}", "", _BLANK_MARKER]
+        return "\n".join(front + body) + "\n"
+
     s = record["source"]
     front = [
         "---",
@@ -220,6 +260,10 @@ def rebuild_book_docs(out_dir: Path, recs: list[dict]) -> tuple[Path, Path]:
     grabar_blocks, english_blocks = [], []
     for r in recs:
         pid = r["page_id"]
+        if r.get("blank"):
+            grabar_blocks.append(f"## {pid}\n\n{_BLANK_MARKER}")
+            english_blocks.append(f"## {pid}\n\n{_BLANK_MARKER}")
+            continue
         grabar = "\n".join(
             ln["grabar"] for ln in r["lines"] if not ln["non_character"]
         )
@@ -246,11 +290,13 @@ def write_manifest(
         "page_range": page_range,
         "source_runs": source_runs,
         "n_pages": len(recs),
+        "n_blank": sum(1 for r in recs if r.get("blank")),
         "pages": [
             {
                 "page": r["page"],
                 "page_id": r["page_id"],
-                "source_run": r["source"]["run_slug"],
+                "source_run": r["source"].get("run_slug") if not r.get("blank") else None,
+                "blank": bool(r.get("blank")),
                 "n_lines": _text_line_count(r),
                 "has_translation": r["english"] is not None,
                 "cer": r["cer"],
@@ -306,9 +352,20 @@ def promote(
             if lo <= n <= hi:
                 chosen[n] = (slug, run_dir, cfg, page_id)  # later run wins
 
+    # A page marked blank in the labeling UI is promoted as an explicit blank page and
+    # never as digitized content, even if a (mis-detected) run artifact exists for it —
+    # the blank marker is the single source of truth.
+    blanks = [n for n in range(lo, hi + 1) if storage.is_blank(n)]
+    blank_set = set(blanks)
+
     for n, (slug, run_dir, cfg, page_id) in sorted(chosen.items()):
+        if n in blank_set:
+            continue
         record = build_page_record(run_dir, slug, cfg, n, page_id, translator)
         write_page_artifacts(out_dir, record)
+
+    for n in blanks:
+        write_page_artifacts(out_dir, build_blank_record(n))
 
     recs = _load_corpus_pages(out_dir)
     on_disk = {r["page"] for r in recs}
@@ -322,8 +379,9 @@ def promote(
     write_manifest(out_dir, recs, source_runs, gaps, [lo, hi])
 
     return {
-        "promoted": len(chosen),
         "on_disk": len(recs),
+        "content": sum(1 for r in recs if not r.get("blank")),
+        "blank": len(blanks),
         "gaps": gaps,
         "with_translation": sum(1 for r in recs if r["english"] is not None),
     }
@@ -358,7 +416,7 @@ def main(argv: list[str] | None = None) -> None:
     summary = promote(args.runs, lo, hi, args.translator, Path(args.out))
     print(
         f"corpus: {summary['on_disk']} pages on disk "
-        f"({summary['promoted']} promoted this run, "
+        f"({summary['content']} content, {summary['blank']} blank, "
         f"{summary['with_translation']} with English), "
         f"{len(summary['gaps'])} gap(s) in {lo}-{hi}"
     )

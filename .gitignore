@@ -77,6 +77,13 @@ runs/
 /data/columns/*
 !/data/columns/boxes/
 !/data/columns/boxes/*.json
+# Blank-page markers (data/pages/blank/*.json) are human-verified ground truth, like
+# the column boxes: commit them so the "this source page is blank" signal is portable
+# and survives off-machine. The 646 page PDFs under data/pages/ stay ignored.
+!/data/pages/
+/data/pages/*
+!/data/pages/blank/
+!/data/pages/blank/*.json
 *.pdf
 *.tiff
 *.tif

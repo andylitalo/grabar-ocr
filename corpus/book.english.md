@@ -1018,6 +1018,10 @@ And after the dismissal of the Liturgy, they shall begin to perform the Pre-fest
 
 And then, proceeding to the table with the Cross and Gospel book, they shall begin the Hymn Tone 1 [ats]: "Today He arose." And at its completion: "Stand up" (Ort`iw). Gospel: Matthew 28:16: "Then the eleven disciples..." to verse 20: "...to the end of the world." Litany: "By the Holy Cross." Prayer: "Protect us" (Pahpanya). Our Father.
 
+## page_0481
+
+_(blank page — no text in the source)_
+
 ## page_0482_human
 
 God has arisen, and all His enemies were scattered.
@@ -1581,6 +1585,10 @@ Wednesday. Tone 7 [dz]. Resurrection Hymn: "We shall bless" (Օրհնեսցու�
 In the Evening
 First Gospel: Matthew 18:10 "Take heed..." to verse 35 "...their trespasses." Psalm: "Let Your hand be..." "You Who shepherd..." Evening Hymn [Hambartsi], Tone 7 [dz]: "Awesome" (Ահագին). Gospel of Dismissal: Mark 10:1 "And from there..." to verse 12 "...she commits adultery with another."
 
+## page_0495
+
+_(blank page — no text in the source)_
+
 ## page_0496_human
 
 Today the Apostles rejoice, adorned by the graces of the Holy Spirit.
@@ -1764,6 +1772,10 @@ Gospel of Mark 14:1. "It was now the Passover..." to verse 26. "...to the Mount 
 Litany: "Giving thanks..." [and] "Save [us, O Lord]."
 Prayer: "By your peace, O Holy Spirit of God."
 "Our Father who art in heaven."
+
+## page_0501
+
+_(blank page — no text in the source)_
 
 ## page_0502_human
 
@@ -2583,6 +2595,10 @@ Saturday. Feast of Shoghakat of Holy Etchmiadzin, according to the vision of our
 Tone 3 [Ah]: "Rejoice, O Holy Church," with its proper canons.
 Magnificat [Metsatsustse]: "Rejoice, O blessed Mother of God."
 
+## page_0521
+
+_(blank page — no text in the source)_
+
 ## page_0522_human
 
 Today, seeing the holy Virgin flying through the air, and ascended on high into heaven in a chariot of clouds.
@@ -2941,6 +2957,10 @@ Psalm 98 [99]: "Extol [the Lord]."
 Apostle: 2 Corinthians 9:10 "He who supplies..." to [Chapter 10] verse 6 "...is complete."
 Alleluia: "Extol [the Lord]."
 Gospel: Mark 9:13 [Armenian 9:14] "And when they came..." to verse 26 [Armenian 9:27] "...and he stood up."
+
+## page_0529
+
+_(blank page — no text in the source)_
 
 ## page_0530_human
 
@@ -3989,6 +4009,10 @@ Instruction concerning the keeping of Sunday-rest on certain days.
 Apart from the natural Sundays, the other days to be kept as Sunday-rest are these:
 The second and eighth days of the Nativity and Theophany.
 The days of the Presentation of the Lord to the Temple [Tyarnndaraj] and of Great [Holy] Thursday.
+
+## page_0552
+
+_(blank page — no text in the source)_
 
 ## page_0553_human
 

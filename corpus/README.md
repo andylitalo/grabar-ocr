@@ -37,6 +37,11 @@ The per-line record and the machine-readable interface. Top-level keys:
   `ocr_raw` (raw OCR beam), `grabar` (LLM-corrected final), `region_bbox` (pixel box on
   the deskewed page), `crop_image`, `line_image` (relative repo paths).
 
+**Blank pages** carry `blank: true`, an empty `lines[]`, `english: null`, and a
+`provenance.blank_marker` pointing at the committed `data/pages/blank/page_XXXX.json`.
+They are keyed by the base page id (`page_0481`, no `_auto`/`_human`) because blankness is
+a property of the source page, not of any crop.
+
 **English is per-page, not per-line.** The translator reads the whole page for context, so
 there is no line-by-line English; the page prose lives at the top level (`english`) and in
 the `## English` section of the markdown.
@@ -59,13 +64,25 @@ corpus/pages/page_0458.lines.json   line.grabar / line.ocr_raw / line.region_bbo
 The `source` block records the exact stage impls and model ids at each hop; the originating
 `runs/<run_slug>/run.json` holds the full resolved config.
 
-## Coverage & gaps
+## Coverage, blanks & gaps
 
-`manifest.json` records the promoted `pages[]` and a `gaps[]` list. As of the current
-promotion: **178 of 184 pages** (458–641). The 6 gaps (481, 495, 501, 521, 529, 552) are
-pages the auto detector deferred (odd/unbalanced columns) and that have no human labels yet
-— each carries its deferral reason. To close a gap: annotate its regions in the labeling UI,
-re-run the pipeline for that page, then re-promote.
+`manifest.json` records the promoted `pages[]` (each with a `blank` flag), an `n_blank`
+count, and a `gaps[]` list. As of the current promotion: **184 of 184 pages** (458–641),
+of which **178 are digitized content and 6 are blank** (481, 495, 501, 521, 529, 552), and
+**0 gaps**.
+
+**Blank pages** are source pages a human marked in the labeling UI; the marker lives at
+`data/pages/blank/page_XXXX.json` (committed) and is the single source of truth, read via
+`storage.is_blank(n)`. Both the pipeline (which skips crop/OCR/translate for a blank) and
+the promoter consult it, so a blank page is handled explicitly rather than being mistaken
+for an "unbalanced column" deferral. This is what previously turned the 6 blanks into
+gaps — the marker existed but nothing downstream read it.
+
+A real **gap** is a page with neither content nor a blank marker (e.g. a page the detector
+deferred that a human has not yet labeled *or* marked blank). To close a content gap:
+annotate its regions in the labeling UI, re-run the pipeline for that page, then re-promote.
+To close a blank gap: mark it blank in the labeling UI (or `storage.set_blank(n, True)`)
+and re-promote.
 
 ## Regenerate
 
