@@ -1,0 +1,116 @@
+:root {
+  --bg: #1e1f24;
+  --panel: #2a2c33;
+  --ink: #e8e8ec;
+  --muted: #9aa0ac;
+  --accent: #4c8bf5;
+  --danger: #e0564f;
+  --ok: #3fb37f;
+  --warn: #e0a64f;
+  --border: #3a3d46;
+  /* error-category colors (must match CATEGORY_COLORS in app.js) */
+  --cat1: #e0a64f; /* over-segmentation  */
+  --cat2: #4c8bf5; /* under-segmentation */
+  --cat3: #e0564f; /* non-text           */
+  --missed: #e05ac4; /* human drag-drawn missed line (must match MISSED_COLOR in app.js) */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 5;
+  flex-wrap: wrap;
+}
+
+header h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+
+.spacer { flex: 1; }
+
+button, select {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+button:hover, select:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: default; }
+
+#saved {
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-width: 8rem;
+}
+#saved.ok { color: var(--ok); }
+
+main { padding: 1rem; display: flex; gap: 1rem; align-items: flex-start; }
+
+#canvas-wrap { position: relative; line-height: 0; }
+#canvas { border: 1px solid var(--border); border-radius: 4px; cursor: crosshair; }
+
+aside {
+  width: 15rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+
+.legend-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0; }
+.swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; display: inline-block; }
+.swatch.cat1 { background: var(--cat1); }
+.swatch.cat2 { background: var(--cat2); }
+.swatch.cat3 { background: var(--cat3); }
+.swatch.missed { background: transparent; border: 2px dashed var(--missed); }
+.swatch.none { background: transparent; border: 2px solid var(--ok); }
+
+#flag-list { margin-top: 1rem; }
+#flag-list .flag {
+  display: flex; justify-content: space-between;
+  padding: 0.2rem 0; border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+/* modal */
+.backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: none; align-items: center; justify-content: center; z-index: 20;
+}
+.backdrop.show { display: flex; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.2rem; width: 22rem; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.modal h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+.modal p.hint { margin: 0 0 0.9rem; color: var(--muted); font-size: 0.85rem; }
+.opt {
+  display: flex; align-items: center; gap: 0.7rem; width: 100%;
+  text-align: left; margin: 0.4rem 0; padding: 0.6rem 0.7rem;
+}
+.opt .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.6rem; height: 1.6rem; border-radius: 5px; font-weight: 700; color: #1e1f24;
+}
+.opt[data-cat="1"] .num { background: var(--cat1); }
+.opt[data-cat="2"] .num { background: var(--cat2); }
+.opt[data-cat="3"] .num { background: var(--cat3); }
+.modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.modal-actions button { flex: 1; }
+#opt-clear, #missed-delete { border-color: var(--danger); color: var(--danger); }

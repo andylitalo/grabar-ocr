@@ -99,3 +99,8 @@ ml_vision/tessdata/
 # the corpus JSON is tracked (runs/ and data/ images stay ignored above).
 !/corpus/*.json
 !/corpus/**/*.json
+
+# kraken dev virtualenv & scratch line-crop outputs (dev/kraken_segment.py experiment)
+dev/venv-grabar/
+dev/extracted_lines/
+dev/segmented_lines/

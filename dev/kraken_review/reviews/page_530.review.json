@@ -1,0 +1,233 @@
+{
+  "page": 530,
+  "reviewed_by": "human",
+  "timestamp": "2026-07-24T01:45:32.716940+00:00",
+  "model": "blla.mlmodel",
+  "num_lines": 58,
+  "flags": {
+    "line_038": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_022": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_023": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_024": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_025": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_039": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_009": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_010": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_011": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_040": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_012": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_013": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_041": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_014": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_015": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_034": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_033": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_032": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_031": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_030": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_029": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_026": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_027": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_043": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_042": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_051": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_052": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_054": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_056": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_053": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_049": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_018": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_016": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_037": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_001": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_005": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_007": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_002": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_017": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_028": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_044": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_003": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_004": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_006": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_008": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_035": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_036": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_045": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_046": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_048": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_058": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_055": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_047": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_050": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_057": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_019": {
+      "category": 3,
+      "label": "non-text"
+    }
+  }
+}

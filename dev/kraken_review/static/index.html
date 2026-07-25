@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kraken Line-Segmentation Review</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Kraken Line-Segmentation Review</h1>
+    <button id="prev">&larr; Prev</button>
+    <select id="page-select"></select>
+    <button id="next">Next &rarr;</button>
+    <span id="count"></span>
+    <button id="blank" title="Mark page blank (flag every line non-text)">Mark blank</button>
+    <button id="undo" title="Undo last change (Cmd+Z)" disabled>&#8630; Undo</button>
+    <span class="spacer"></span>
+    <span id="saved"></span>
+  </header>
+
+  <main>
+    <div id="canvas-wrap">
+      <canvas id="canvas" width="900" height="1200"></canvas>
+    </div>
+    <aside>
+      <h2>Legend</h2>
+      <div class="legend-row"><span class="swatch none"></span> unflagged (looks correct)</div>
+      <div class="legend-row"><span class="swatch cat1"></span> 1 &middot; over-segmentation</div>
+      <div class="legend-row"><span class="swatch cat2"></span> 2 &middot; under-segmentation</div>
+      <div class="legend-row"><span class="swatch cat3"></span> 3 &middot; non-text</div>
+      <div class="legend-row"><span class="swatch missed"></span> missed line (drag-drawn)</div>
+      <p style="margin-top:1rem">Click a segmentation to flag it (click a flagged one to change or clear).
+      <strong>Drag</strong> a box on the page to mark a line kraken missed; click a drawn box to delete it.</p>
+      <div id="flag-list"></div>
+    </aside>
+  </main>
+
+  <div id="modal-backdrop" class="backdrop">
+    <div class="modal">
+      <h3 id="modal-title">Flag line</h3>
+      <p class="hint">Click an option or press its number. Esc to cancel.</p>
+      <button class="opt" data-cat="1"><span class="num">1</span> Over-segmentation</button>
+      <button class="opt" data-cat="2"><span class="num">2</span> Under-segmentation</button>
+      <button class="opt" data-cat="3"><span class="num">3</span> Non-text</button>
+      <div class="modal-actions">
+        <button id="opt-clear">Clear flag</button>
+        <button id="opt-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="missed-backdrop" class="backdrop">
+    <div class="modal">
+      <h3 id="missed-title">Missed-line box</h3>
+      <p class="hint">Marks a line kraken missed. Delete this box? (Esc to cancel)</p>
+      <div class="modal-actions">
+        <button id="missed-delete">Delete box</button>
+        <button id="missed-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
