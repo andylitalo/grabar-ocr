@@ -33,11 +33,41 @@ class MissedLine(BaseModel):
     box: list[float]  # [x1, y1, x2, y2] in full-resolution page pixels
 
 
+class Initial(BaseModel):
+    id: str
+    key: str = ""                      # the letter, typed by the human (optional)
+    box: list[float]                   # [x1, y1, x2, y2] around the drop-cap
+    target_line_id: str | None = None  # auto-assigned upper adjacent-right line
+
+
+class Merge(BaseModel):
+    id: str
+    line_ids: list[str]                # >= 2 kraken lines to rejoin
+
+
+class Split(BaseModel):
+    id: str
+    line_id: str                       # kraken line to cut
+    at_x: float                        # vertical cut, full-res page px
+
+
+class SectionTitle(BaseModel):
+    id: str
+    key: str                           # the section letter (required)
+    box: list[float]                   # [x1, y1, x2, y2] around the titular letter
+    source_line_id: str | None = None  # kraken line it came from, or null if drawn
+
+
 class ReviewRequest(BaseModel):
     # kraken line id ("line_003") -> category number (1/2/3)
     flags: dict[str, int] = {}
     # human-drawn boxes for lines kraken missed entirely
     missed: list[MissedLine] = []
+    # correction ops layered on kraken's immutable lines
+    initials: list[Initial] = []
+    merges: list[Merge] = []
+    splits: list[Split] = []
+    section_titles: list[SectionTitle] = []
 
 
 @app.get("/")
@@ -74,7 +104,15 @@ def get_review(page: int) -> dict:
 @app.post("/api/pages/{page}/review")
 def post_review(page: int, req: ReviewRequest) -> dict:
     try:
-        return storage.save_review(page, req.flags, [m.model_dump() for m in req.missed])
+        return storage.save_review(
+            page,
+            req.flags,
+            [m.model_dump() for m in req.missed],
+            initials=[i.model_dump() for i in req.initials],
+            merges=[m.model_dump() for m in req.merges],
+            splits=[s.model_dump() for s in req.splits],
+            section_titles=[t.model_dump() for t in req.section_titles],
+        )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:

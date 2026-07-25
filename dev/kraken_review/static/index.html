@@ -19,6 +19,18 @@
     <span id="saved"></span>
   </header>
 
+  <div id="toolbar">
+    <span class="tool-label">Tool:</span>
+    <button class="tool active" data-tool="flag" title="Flag lines 1/2/3; drag = missed box (F)">Flag</button>
+    <button class="tool" data-tool="initial" title="Box a drop-cap initial; auto-assigns to the upper line on its right (I)">Initial</button>
+    <button class="tool" data-tool="merge" title="Click lines to select, then Merge (M)">Merge</button>
+    <button class="tool" data-tool="split" title="Click a line, then click the x to cut it (S)">Split</button>
+    <button class="tool" data-tool="title" title="Box/click a section-title letter and type it (T)">Title</button>
+    <span class="spacer"></span>
+    <button id="merge-commit" title="Merge the selected lines (Enter)" disabled>Merge selected (0)</button>
+    <span id="tool-hint" class="tool-hint"></span>
+  </div>
+
   <main>
     <div id="canvas-wrap">
       <canvas id="canvas" width="900" height="1200"></canvas>
@@ -30,8 +42,12 @@
       <div class="legend-row"><span class="swatch cat2"></span> 2 &middot; under-segmentation</div>
       <div class="legend-row"><span class="swatch cat3"></span> 3 &middot; non-text</div>
       <div class="legend-row"><span class="swatch missed"></span> missed line (drag-drawn)</div>
-      <p style="margin-top:1rem">Click a segmentation to flag it (click a flagged one to change or clear).
-      <strong>Drag</strong> a box on the page to mark a line kraken missed; click a drawn box to delete it.</p>
+      <div class="legend-row"><span class="swatch initial"></span> initial &rarr; assigned line</div>
+      <div class="legend-row"><span class="swatch merge"></span> merge group</div>
+      <div class="legend-row"><span class="swatch split"></span> split cut</div>
+      <div class="legend-row"><span class="swatch title"></span> section-title letter</div>
+      <p style="margin-top:1rem"><strong>Flag</strong> tool: click a line to flag it (1/2/3);
+      drag to mark a missed line. Switch tools above to correct geometry.</p>
       <div id="flag-list"></div>
     </aside>
   </main>
@@ -57,6 +73,18 @@
       <div class="modal-actions">
         <button id="missed-delete">Delete box</button>
         <button id="missed-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="letter-backdrop" class="backdrop">
+    <div class="modal">
+      <h3 id="letter-title">Letter</h3>
+      <p class="hint" id="letter-hint">Type the letter, then Enter. Esc to cancel.</p>
+      <input id="letter-input" type="text" autocomplete="off" spellcheck="false" />
+      <div class="modal-actions">
+        <button id="letter-ok">OK</button>
+        <button id="letter-cancel">Cancel</button>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 # Kraken line segmentation — findings & migration plan
 
-*Status: FINDINGS + STEP 1 BUILT. Recorded 2026-07-23.*
+*Status: FINDINGS + STEP 1 + STEP 2 BUILT. Recorded 2026-07-23, extended 2026-07-24.*
 *Companion to `docs/slice_categorization_findings_and_next_steps.md` (which diagnosed the
 shipping slicer's failures) and `docs/ocr_approach_comparison.md` (the OCR-engine comparison —
 this doc covers the orthogonal **line-segmentation** axis).*
@@ -103,12 +103,62 @@ dev/venv-grabar/bin/python dev/kraken_segment.py     # generate geometry (kraken
 uv run python -m dev.kraken_review.app               # review UI on :8090
 ```
 
+## Step 2 — three annotation fixes (2026-07-24)
+
+Reviewing real pages surfaced three recurring kraken errors the flag-only UI couldn't *fix*.
+Step 2 makes the review pass produce **corrected geometry**, not just error flags — via one
+automated heuristic plus manual editing tools. Corrections are stored as declarative ops
+layered on kraken's immutable `lines`, so the raw output is preserved and every edit is
+auditable. New review-JSON fields (all backward-compatible; older reviews load with them empty):
+
+```jsonc
+"initials":  [ {"id","key":"Ա","box":[x1,y1,x2,y2],"target_line_id":"line_039"} ],
+"merges":    [ {"id","line_ids":["line_012","line_013"]} ],
+"splits":    [ {"id","line_id":"line_045","at_x":1096.0} ],
+"section_titles": [ {"id","key":"Ս","box":[x1,y1,x2,y2],"source_line_id":"line_019"} ]
+```
+
+**1. Oversized initials (drop-caps).** Kraken variously splits an oversized first letter into
+its own box, mis-attaches it, or misses it. **UI tool (`i`):** box the letter, optionally type
+it; it auto-assigns to the **upper of the lines adjacent to the right** and is subtracted from
+any other line it overlaps (`target = target ∪ box`, `others = other − box`), so the ink is
+never duplicated. Not automated — too varied to trust a heuristic.
+
+**2. Two-column top line merged across the gutter.** Automated in `dev/kraken_segment.py`
+(`_post_process`, logged under a new `post_processing` key), **precision-first**. The book's
+two-column pages are separated by a printed vertical rule ("‖"); we find it as the longest
+contiguous vertical ink run near page center (reliable — even/odd pages mirror the margin, so
+`rule_x ≈ 1150` on recto, `≈ 1010` on verso), then split a line only when it straddles the rule
+with column-width extent on both sides, the line immediately below is itself two-column, and a
+real column boundary — **rule ink flanked by blank on both sides** — sits inside it. That last
+test is the key discriminator: a genuine full-width title's central word-gap is pure whitespace
+(no rule ink), so titles like "ԵՕԹՆԵՐԵԱԿ ՀՈՈՎՄԱՅԵՅԻՈՑ N." are left intact. A manual **Split**
+tool (`s`: click a line, click the cut x) backs it up. **Merge** (`m`) rejoins any wrongly-split
+lines.
+
+**Test (validated against all 191 sampled pages' geometry + renders, no re-run of kraken):**
+78 splits across 78 pages, ~one running-header per two-column page. Spot-checked ~20 cases:
+merged headers (e.g. p494/p460/p457-line5) split exactly at the "‖"; full-width titles
+(p457-line2, p562, p607-line59, p610) correctly skipped. Two acceptable misses — bottom-of-page
+footers (no row below) and headers whose right column opens with a drop-cap butting the rule —
+are covered by the manual Split tool.
+
+**3. Titular section letters (e.g. Ս).** These key the book's later sections. **UI tool (`t`):**
+box (or click) the letter and type it; stored as `{key, box, source_line_id}` for later
+`key → section-text` structuring.
+
+The review UI (`dev/kraken_review/static/`) gained a tool selector (Flag / Initial / Merge /
+Split / Title), a shared letter-input modal, on-canvas rendering of every op, and a side-panel
+op list with per-item delete; undo covers all op types. `–-force`-regenerating segmentation
+renumbers line ids on the 78 split pages, so re-review those pages after regeneration.
+
 ## Out of scope (explicit next steps)
 
-- **Acting on categories 1/2** — a fix/re-segmentation workflow (unknown; deferred by the user).
-- **Wiring category-3 non-text into downstream** filtering.
-- **Consuming `missed_lines`** — synthesize a baseline per box, merge into reading order via
-  `polygonal_reading_order`, and either crop raw or re-segment within the box.
+- **Consuming the corrections downstream** — apply `initials`/`merges`/`splits`/`section_titles`
+  (and category-3 non-text, `missed_lines`) when cropping/ordering. `missed_lines` still need a
+  synthesized baseline merged via `polygonal_reading_order`; splits/merges/initials rewrite line
+  geometry; `section_titles` feed section structure. Deferred to pipeline integration.
+- **Acting on categories 1/2** beyond the new merge/split/initial tools (e.g. re-segmentation).
 - **Productionizing kraken** — add `kraken`/`pypdfium2` to `pyproject.toml`/`uv.lock` and a
   kraken slicer entry in `pipeline/registry.py` (the registry deliberately keeps the slice slot
   open for "a future segmenter (e.g. learned line detection)").
@@ -119,3 +169,8 @@ uv run python -m dev.kraken_review.app               # review UI on :8090
   projection slicer to kraken, **gated on a human review pass**. Built Step 1 (review + record
   only): findings doc, geometry dump, review UI with the 1/2/3 taxonomy. Kept kraken isolated in
   the dev venv until the review validates it. Next: decide how to act on 1/2 and wire 3 downstream.
+- **2026-07-24:** Built Step 2 after review surfaced three recurring errors: a precision-first
+  automated gutter-split (rule-anchored, validated on 191 pages — 0 false splits in spot-checks),
+  and UI tools for drop-cap initials (box + auto-assign-right + subtract), section-title letters
+  (box + key), and manual merge/split. Corrections stored as declarative ops; consuming them
+  downstream is deferred to pipeline integration.

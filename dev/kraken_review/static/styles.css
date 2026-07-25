@@ -13,6 +13,11 @@
   --cat2: #4c8bf5; /* under-segmentation */
   --cat3: #e0564f; /* non-text           */
   --missed: #e05ac4; /* human drag-drawn missed line (must match MISSED_COLOR in app.js) */
+  /* correction-op colors (must match app.js) */
+  --initial: #a06cff; /* drop-cap initial            */
+  --merge:   #2fbf9f; /* merge group                 */
+  --split:   #ff5d5d; /* split cut                   */
+  --title:   #f0b429; /* section-title letter        */
 }
 
 * { box-sizing: border-box; }
@@ -60,6 +65,23 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 #saved.ok { color: var(--ok); }
 
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 3.1rem;
+  z-index: 4;
+  flex-wrap: wrap;
+}
+#toolbar .tool-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+#toolbar .tool.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+#toolbar .tool-hint { color: var(--warn); font-size: 0.85rem; min-width: 12rem; }
+#merge-commit { border-color: var(--merge); color: var(--merge); }
+
 main { padding: 1rem; display: flex; gap: 1rem; align-items: flex-start; }
 
 #canvas-wrap { position: relative; line-height: 0; }
@@ -80,6 +102,16 @@ aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
 .swatch.cat3 { background: var(--cat3); }
 .swatch.missed { background: transparent; border: 2px dashed var(--missed); }
 .swatch.none { background: transparent; border: 2px solid var(--ok); }
+.swatch.initial { background: var(--initial); }
+.swatch.merge { background: transparent; border: 2px dashed var(--merge); }
+.swatch.split { background: var(--split); }
+.swatch.title { background: var(--title); }
+
+#flag-list .flag button.del {
+  padding: 0 0.4rem; margin: 0; font-size: 0.9rem; line-height: 1.2;
+  border-color: var(--danger); color: var(--danger);
+}
+#flag-list .flag { align-items: center; gap: 0.4rem; }
 
 #flag-list { margin-top: 1rem; }
 #flag-list .flag {
@@ -114,3 +146,8 @@ aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
 .modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
 .modal-actions button { flex: 1; }
 #opt-clear, #missed-delete { border-color: var(--danger); color: var(--danger); }
+#letter-input {
+  width: 100%; font-size: 1.6rem; text-align: center; padding: 0.4rem;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
+}
+#letter-input:focus { outline: none; border-color: var(--accent); }
