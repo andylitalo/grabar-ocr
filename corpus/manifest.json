@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-08T15:56:52.863384+00:00",
+  "generated": "2026-07-08T21:57:45.556798+00:00",
   "page_range": [
-    458,
+    453,
     641
   ],
   "source_runs": [
@@ -44,9 +44,54 @@
       }
     }
   ],
-  "n_pages": 184,
-  "n_blank": 6,
+  "n_pages": 189,
+  "n_blank": 7,
   "pages": [
+    {
+      "page": 453,
+      "page_id": "page_0453_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 26,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 454,
+      "page_id": "page_0454_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 11,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 455,
+      "page_id": "page_0455",
+      "source_run": null,
+      "blank": true,
+      "n_lines": 0,
+      "has_translation": false,
+      "cer": null
+    },
+    {
+      "page": 456,
+      "page_id": "page_0456_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 3,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 457,
+      "page_id": "page_0457_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 67,
+      "has_translation": true,
+      "cer": null
+    },
     {
       "page": 458,
       "page_id": "page_0458_auto",

@@ -9,6 +9,15 @@ Everything here is **text only** — no images or PDFs. The heavy raster artifac
 renders, region crops, line slices) stay out of git; the files here point at them by
 relative repo path for traceability.
 
+> **Understanding the lectionary?** Start with **[`STRUCTURE.md`](STRUCTURE.md)** — the
+> master index of the book's two-volume structure, section-to-page map, and the gotchas
+> (chiefly: the year-letter is a *Julian* code). Companion hand-maintained docs:
+> [`GLOSSARY.md`](GLOSSARY.md) (controlled term renderings), [`ERRATA.md`](ERRATA.md)
+> (digitization/translation defects + the `book.*.corrected.md` overlays), and
+> [`TYPOS.md`](TYPOS.md) (errors in the printed source). `README.md`, `STRUCTURE.md`,
+> `GLOSSARY.md`, `ERRATA.md`, `TYPOS.md`, and `book.*.corrected.md` are **hand-maintained**;
+> everything else in this directory is **generated** by `pipeline.promote` — do not edit it.
+
 ## Layout
 
 ```
