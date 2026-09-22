@@ -1,9 +1,9 @@
 # Phase 8 — the citable corpus: from "digitized" to "true to the original"
 
-**Status:** planned · **Created:** 2026-09-20 · **Owner:** —
+**Status:** planned · **Created:** 2026-09-20 · **Updated:** 2026-09-21 · **Owner:** —
 **Depends on:** the promoted `corpus/` (pp.453–641), Phase 5 (LLM text-correction),
 Phase 6 (column detection), `docs/kraken_line_segmentation.md` (Steps 1–2).
-**Consumes:** `docs/phase_7_gemini_vision_correction.md` (re-scoped here — see §5.3).
+**Consumes:** `docs/phase_7_gemini_vision_correction.md` (re-scoped here — see W5).
 **Downstream customer:** `armenian-lectionary` — the reason this phase exists.
 
 ---
@@ -139,85 +139,204 @@ at roughly 5% line CER on a comparable book, whose residual errors cluster in a 
 enumerable set of glyph confusions**. That argues for targeted normalization and
 fine-tuning over a wholesale engine swap. **Fix E2's root-cause paragraph.**
 
+### 3.4 Phase 2b already ran, passed its primary gate, and was never recorded
+
+`ml_vision/tessdata/hye-grabar.traineddata` exists locally (built 2026-06-20), the
+training log is at `reports/phase2b_tesseract_ft_train.log` (finished at BCER train
+1.189%), and both eval runs completed — their results have been sitting unread in
+`reports/phase4_*_tesseract_ft.json`. Computed 2026-09-20:
+
+| eval | zero-shot `hye-calfa-n` | **FT `hye-grabar`** | TrOCR `scale_500` |
+|---|--:|--:|--:|
+| frozen 100 | 4.92% | **3.54%** | 4.37% |
+| page_0400 (71) | 4.56% | **1.84%** | 1.02% |
+
+Against Phase 2b's own cheat-sheet: **primary gate passed on both** evals; stretch passed
+on frozen (3.54% ≤ 4.37%), missed on page_0400 (1.84% > 1.02%). All runs are healthy
+(`arm_frac` 1.00, 0 empty, non-degenerate).
+
+**The corpus is still OCR'd with the zero-shot model.** Re-OCRing with `hye-grabar` is
+local, free, already built, and worth 28% relative CER on frozen and 60% on page_0400 —
+on *that* book (see the transfer caveat in §4.6).
+
+The error analysis also corroborates §3.2(a) directly: on the FT frozen set,
+lines **with** an abbreviation mark score 4.12% CER against **1.41%** for lines without —
+a ~3× gap. The residual error is concentrated in exactly the compressed, ligature-like
+glyph class that the tone codes and weekday abbreviations belong to.
+
+**Actions:** write the verdict subsection into `docs/phase_2_alternatives.md` (Phase 2b
+Step 5, never done), and promote `hye-grabar` to a registry entry in
+`pipeline/registry.py` so it is selectable as an OCR stage.
+
 ---
 
-## 4. Tooling evaluation — Datalab, Reducto, Calfa
+## 4. Tooling evaluation — Calfa, Datalab, Reducto, PaddleOCR
 
-Assessed 2026-09-20 against this phase's needs.
+Assessed 2026-09-20/21 against this phase's needs.
 
-### 4.1 Surya (Datalab) — **adopt for geometry and layout; evaluate for recognition**
+### 4.1 The Calfa family — the incumbent, and the under-exploited asset
 
-`datalab-to/surya`. Code **Apache 2.0**; model weights under a modified AI Pubs Open
-RAIL-M licence (free for research, personal use, and organisations under $5M
-funding/revenue — fine here; note it if the lectionary API ever goes commercial).
+Calfa is a French project specialising in Armenian palaeography, with published work on
+erkat'agir/bolorgir/nōtrgir/šłagir script identification. **It already supplies the
+corpus's OCR model** (§3.3). It now ships four things that matter here:
 
-- **Armenian is first-class:** `hy` appears in the 91-language table at a **90.1%** pass
-  rate on Datalab's internal benchmark.
-- **Line detection emits polygons** (`(x1,y1)…(x4,y4)`), axis-aligned bbox, and a
-  confidence score — exactly what gap (c) needs, and a strict superset of what kraken
-  was adopted for.
-- **Separate layout and reading-order models** on top of detection — directly relevant to
-  gap (d) and to §5.1's entry segmentation, which kraken does not address at all.
-- Fine-tuning is supported (Datalab offer a paid managed stack; not required).
+| Artefact | What it is | Status here |
+|---|---|---|
+| `calfa-co/hye-tesseract` → `hye-calfa-n` | Tesseract 5 traineddata, Classical/Western/Eastern Armenian incl. historical fonts | **shipping in the corpus**, zero-shot |
+| `hye-grabar` (ours) | `hye-calfa-n` fine-tuned on our 500-line split | **built, gate passed, unused** (§3.4) |
+| `calfa-co/hye-paddle` → `paddle-calfa-tiny` | PP-OCRv6-tiny **recognition** model, PaddleOCR inference format | **untested — the upgrade path** |
+| `calfa-co/hye-open-ocr` | full pipeline: layout → reading order → recognition | **untested — see §4.2** |
 
-**This collapses two open workstreams into one.** Kraken was adopted for geometry;
-Surya delivers geometry *plus* layout *plus* reading order from one actively-maintained,
-Armenian-aware, Apache-2.0 project, and unlike kraken it is not confined to a dev venv.
+**`hye-paddle` is a recognition model only** — no detector. Calfa's own framing is that
+`hye-calfa-n` (Tesseract) "is the default and fastest option" while `paddle-calfa-tiny`
+"provides better accuracy but slower performance." That is a documented upgrade path from
+the same vendor, over the same script, for the model we already run. No published
+head-to-head numbers exist on either repo, so "better accuracy" is a vendor claim, not a
+measurement — but it costs nothing to test locally, and it is CPU-only.
 
-**Caveat that must not be skipped:** 90.1% is on modern Armenian print. The Տօնացոյց is
-1915 Jerusalem Bolorgir with abbreviations, Armenian numerals and display faces. That
-number is a reason to *test*, not to adopt sight-unseen — and testing requires ground
-truth we do not have (gap (f)). See §5.2.
+**Licence: CC BY-NC 4.0** (see §4.6).
 
-### 4.2 Reducto — **no**
+### 4.2 `hye-open-ocr` — the closest fit to this phase's actual problem
 
-Reducto's parsing product is a closed commercial API. Their open-source release is
-**RolmOCR** (Apache 2.0) — a `Qwen2.5-VL-7B` fine-tune on `allenai/olmOCR-mix-0225`, an
-English-heavy academic-PDF corpus with no Armenian training signal. Nothing here is
-targeted at our problem, and §4.4 explains why that class of model is actively risky for
-it.
+This is the most interesting find, because it targets W1 rather than W5.
 
-### 4.3 Calfa — **already in use; the under-exploited asset**
+```
+image ──► LayoutEngine.analyze(image) ──► regions (reading order)
+      ──► Recognizer.recognize(image, regions) ──► paragraphs → lines → words
+```
 
-`calfa-co/hye-tesseract` (`hye-calfa-n.traineddata`) is **already the corpus's OCR
-model** (§3.3). Calfa is a French project specialising in Armenian palaeography, with
-published work on erkat'agir/bolorgir/nōtrgir/šłagir script identification, and
-Calfa Vision — a free annotation tool with real-time fine-tuning for non-Latin scripts,
-reporting >97% on bolorgir manuscripts from as few as **3 transcribed pages**.
+- **Layout detection + reading order + recognition in one chain**, Armenian-specific.
+  Layout via DocLayout-YOLO (default) or PP-DocLayoutV3; the paddle layout option is
+  stated to give "tight polygons on skewed/degraded scans."
+- **Output: ALTO XML v4**, plus structured JSON as *paragraphs → lines → words, with
+  boxes and confidences*, plus plain text and searchable PDF.
+- CPU-only; needs Python ≥3.10 and the Tesseract binary.
 
-Two consequences:
+Two of those matter disproportionately:
 
-- `docs/phase_2b_hye_tesseract_finetune_plan.md` is **ready to execute and unexecuted**.
-  Fine-tuning `hye-calfa-n` on in-book lines is the most direct attack on the ձ/շ/կ
-  confusions of §3.2(a), because those are this printing's glyph shapes, not a general
-  Armenian OCR weakness.
-- The "3 pages" result suggests ground-truth cost for a *targeted* fine-tune is far lower
-  than the ~500–1,000 lines Phase 4 estimated for TrOCR-from-scratch. Ground truth is
-  still required for *evaluation* at publication scale (§5.2) — but the training bill is
-  smaller than assumed.
+**ALTO XML v4 is the right target format for a citable corpus.** It is the standard the
+library/DH world already consumes for digitized text, it carries per-line *and per-word*
+geometry natively, and emitting it would close gap 3.2(c) (34% null geometry) while
+making the corpus citable in a form institutions can ingest without bespoke tooling. W1
+should strongly consider ALTO as the interchange format rather than inventing one.
 
-### 4.4 The general-VLM warning (GlotOCR Bench, LMU Munich)
+**Word-level confidence is a free triage signal.** The W3 normalizer and the W5
+token-grammar gate both get much sharper when a suspect token carries a confidence score:
+low-confidence + out-of-vocabulary is a near-certain OCR error; *high*-confidence +
+out-of-vocabulary is the hallucination signature §4.5 warns about.
 
-*GlotOCR Bench: OCR Models Still Struggle Beyond a Handful of Unicode Scripts*
-(arXiv 2604.12978) evaluates open and proprietary VLMs across 100+ Unicode scripts.
-Headline: most models perform well on **fewer than ten scripts**, and even the strongest
-frontier models fail to generalise beyond thirty. Armenian (`Armn`) is in the benchmark;
-per-script tables show several evaluated models scoring 0.0 on it. Surya is *not*
-evaluated; RolmOCR, olmOCR and Gemini are.
+**Caveat:** the paragraph/line/word hierarchy is a *typographic* structure, not the
+*liturgical* entry structure W1 needs. It gets us geometry and reading order, not entry
+boundaries. W1's entry segmentation is still ours to build.
 
-The finding that matters for us is the **failure mode**, not the ranking:
+### 4.3 Surya (Datalab) — strong, but now the second option for geometry
+
+`datalab-to/surya`. Code **Apache 2.0**; weights under a modified AI Pubs Open RAIL-M
+licence (free for research, personal use, and organisations under $5M funding/revenue).
+
+- Armenian is first-class: `hy` at a **90.1%** pass rate in the 91-language table.
+- Line detection emits **polygons** `(x1,y1)…(x4,y4)`, axis-aligned bbox, and confidence.
+- Separate **layout** and **reading-order** models on top of detection.
+- Fine-tuning supported (Datalab offer a paid managed stack; not required).
+
+Surya remains a serious candidate and its licence is the friendliest of the geometry
+options (§4.6). But `hye-open-ocr` now beats it on domain fit — Armenian-specific
+throughout, ALTO output, and built by the people whose recognition model we already
+depend on. **Both belong in the W5 bake-off; neither should be adopted sight-unseen.**
+Surya's 90.1% is on modern Armenian print, not 1915 Jerusalem Bolorgir with
+abbreviations, Armenian numerals and display faces.
+
+### 4.4 PaddleOCR upstream, and PP-OCRv6-for-kraken
+
+Two distinct things, easily conflated:
+
+- **PaddleOCR's own released models do not cover Armenian script** — stated explicitly in
+  the arXiv 2608.05911 benchmark below as its reason for excluding PaddleOCR. Calfa's
+  `paddle-calfa-tiny` is *their* Armenian model built on the PP-OCRv6-tiny architecture,
+  not an upstream release.
+- **PP-OCRv6 ported to kraken** (Zenodo 21788410 and siblings, **Apache-2.0**) covers 44
+  languages across 10 scripts including Armenian, with 15 private datasets behind the
+  Armenian entry. But **"Classical Armenian †" is synthetic-only**: its headline 0.06%
+  CER / 0.35% WER is flagged ‡ as a purely-synthetic evaluation, and the model card says
+  real-world accuracy "is probably limited," because the pangoline synthesis tool "is
+  limited to approximating modern, machine-printed text."
+
+Treat the Classical-Armenian number as meaningless for our book. The port is still worth
+knowing about for one reason: it is **Apache-2.0** and it is a *kraken* recognition model,
+so if kraken survives the §5 W5 decision, it drops straight in without the NC constraint.
+
+### 4.5 What the published evidence says about Armenian OCR
+
+**arXiv 2608.05911** (Armenian diaspora press, France; 500 pages, 3,270 region-level
+annotations) is the closest published benchmark to our domain — historical Armenian
+print, not modern:
+
+| System | CER | WER |
+|---|--:|--:|
+| Calfa OCR (generic CRNN recognizer) | **4.0%** | 23.4% |
+| CRAFT + Tesseract (Calfa) | 5.0% | 24.4% |
+| Gemini 3 Flash | 6.3% | 40.4% |
+| Tesseract 5 trained by Calfa | 20.5% | 48.9% |
+| Tesseract 5 (default) | 22.1% | 61.7% |
+| Qwen3-VL 32B-Instruct | 33.0% | 42.6% |
+| Qwen2.5-VL 72B-Instruct | 37.3% | 57.4% |
+
+Three findings, in order of consequence for us:
+
+1. **A dedicated Armenian CRNN beats the Calfa Tesseract traineddata by ~5×** on
+   historical Armenian print. We run the Tesseract flavour. This is the strongest
+   external evidence that §4.1's upgrade path is real.
+2. **Gemini vision is not the top performer** (6.3% vs 4.0%). Phase 7's premise — that a
+   frontier VLM is *the* quality lever — does not survive contact with Armenian-specific
+   evidence. It is one candidate among several, not the obvious winner.
+3. **General open VLMs are unusable here** (33–37% CER).
+
+**Transfer caveat, stated plainly:** these are full-page pipeline numbers on 20th-century
+Western-Armenian newspapers. Our 4.9% for `hye-calfa-n` is on *pre-cropped single lines
+at PSM 13*, a much easier task, on a different book. **The absolute numbers are not
+comparable and must not be quoted as if they were.** The transferable signal is the
+*ordering*, and that ordering is stable and clear.
+
+**GlotOCR Bench** (arXiv 2604.12978, LMU Munich, 100+ Unicode scripts) supplies the
+failure mode. Most models perform well on fewer than ten scripts; even frontier models
+fail beyond thirty. Armenian (`Armn`) is in the benchmark; per-script tables show several
+evaluated models scoring 0.0. Surya is not evaluated; RolmOCR, olmOCR and Gemini are.
 
 > "Models confronted with unfamiliar scripts either produce random noise or hallucinate
-> characters from similar scripts they already know." … "Cross-script hallucination is
-> the dominant failure mode: models overwhelmingly confabulate in a wrong script rather
-> than abstain."
+> characters from similar scripts they already know." … "Cross-script hallucination is the
+> dominant failure mode: models overwhelmingly confabulate in a wrong script rather than
+> abstain."
 
-For a citable corpus this inverts the usual risk calculus. **Tesseract garble is visibly
+For a *citable* corpus this inverts the usual risk calculus. **Tesseract garble is visibly
 wrong; VLM hallucination is invisibly wrong.** A model that silently emits fluent,
 plausible Grabar that is not on the page is far more dangerous to this project than one
-that emits `ՍՉմՍՉ`. This is the strongest argument for the token-grammar gate (§5.3),
-for keeping `ocr_raw` beside every corrected line permanently, and for not treating
-Phase 7's Gemini pass — or any VLM — as self-certifying.
+that emits `ՍՉմՍՉ`. Hence: the token-grammar gate (W5), `ocr_raw` retained permanently
+beside every corrected line, and no VLM pass treated as self-certifying.
+
+### 4.6 Licensing — decide before publication, not after
+
+| Component | Licence | Bearing on us |
+|---|---|---|
+| `hye-calfa-n`, `paddle-calfa-tiny`, `hye-open-ocr` | **CC BY-NC 4.0** | NC. **Already our exposure** — the shipped corpus was produced with `hye-calfa-n`. Not a new risk introduced by upgrading. |
+| DocLayout-YOLO, PyMuPDF (in `hye-open-ocr`) | AGPL-3.0 | Build-time only; the lectionary API does not serve these. Would matter only if OCR ran inside the served app. |
+| PaddleOCR (framework) | Apache-2.0 | Fine. |
+| PP-OCRv6-for-kraken (Zenodo) | Apache-2.0 | Fine — the NC-free recognition option. |
+| Surya code / weights | Apache-2.0 / mod. RAIL-M (<$5M) | Fine now; re-check before any commercial use. |
+| `armenian-lectionary` | Apache-2.0 | The asymmetry to resolve. |
+
+**The open question for the maintainer, not for this doc to settle:** an Apache-2.0
+engine whose underlying transcription was produced by NC-licensed models. Model outputs
+are generally not derivative works of the model, and the corpus is a scholarly/ecclesial
+publication rather than a commercial product — but this should be decided deliberately,
+and ideally confirmed with Calfa, *before* publication rather than after. The
+Apache-2.0 PP-OCRv6-kraken port exists as the fallback if an NC-free chain is wanted.
+
+### 4.7 Reducto — no
+
+Reducto's parsing product is a closed commercial API. Their open release is **RolmOCR**
+(Apache 2.0), a `Qwen2.5-VL-7B` fine-tune on `allenai/olmOCR-mix-0225` — English-heavy
+academic PDFs, no Armenian training signal. §4.5 rows 6–7 show what that class of model
+does on this script.
 
 ---
 
@@ -285,41 +404,68 @@ sample; zero edits that change a token already in-vocabulary; re-run
 `build/scan_defects.py` and record the drop. **Never apply a substitution where the
 target is ambiguous** — the point of a closed vocabulary is that it is not guessing.
 
-### W4 — Targeted fine-tune (Phase 2b, unblocked by W2)
+### W4 — Recognition upgrade *(mostly already done; cash it in)*
 
-Execute `docs/phase_2b_hye_tesseract_finetune_plan.md` against **in-book** lines from W2,
-weighted toward Vol II and toward the ձ/շ/կ confusion set. §4.3's "3 pages" result
-suggests this is cheap. This attacks the residual that W3 cannot: confusions with no
-closed vocabulary to snap to.
+Three of the four steps here are already paid for.
 
-**Gate:** CER on the W2 held-out split beats shipped hye-calfa-n, *and* the §5.3 token
-grammar improves. Record in `docs/ocr_approach_comparison.md`.
+1. **Ship `hye-grabar` now.** It is built, its gate passed, and the corpus still runs the
+   zero-shot model (§3.4). Add it to `pipeline/registry.py`, write the Phase 2b Step-5
+   verdict into `docs/phase_2_alternatives.md`, and re-OCR a Vol II sample.
+2. **Test `paddle-calfa-tiny`** (§4.1). CPU-only, no training, same vendor as the model
+   we already trust, and Calfa's own claim is that it is more accurate than the Tesseract
+   traineddata — a claim §4.5's 4.0%-vs-20.5% ordering independently supports. Cheapest
+   untried lever on the board.
+3. **Re-run the fine-tune on in-book lines** once W2 exists — weighted toward Vol II and
+   the ձ/շ/կ confusion set. §3.4's abbreviation-mark split (4.12% vs 1.41%) says that is
+   where the residual lives; §4.1's "3 transcribed pages" result says it is cheap.
+   Fine-tune whichever of (1)/(2) wins, not necessarily the Tesseract one.
 
-### W5 — Re-scope Phase 7, and run the bake-off
+**Gate:** beats shipped `hye-calfa-n` on the W2 held-out split, *and* improves the W5
+token grammar. Record every row in `docs/ocr_approach_comparison.md` — the tables exist
+and are still entirely `_TBD_`.
 
-Phase 7 remains the right instinct — only the image separates real text from noise — but
-§4.4 changes its terms, and §4.1 adds a competitor it did not know about.
+### W5 — The bake-off, and Phase 7 re-scoped
+
+§4.5 demotes Phase 7 from "the quality lever" to one candidate among six. Gemini
+vision measured **6.3% CER against a dedicated Armenian CRNN's 4.0%** on historical
+Armenian print. It is still worth running — only the image separates real text from noise
+— but it is no longer the presumed winner, and it should not be built before the cheaper
+local candidates are measured.
+
+**Candidates, all on the same W2 evaluation set:**
+
+| # | Candidate | Cost | Licence |
+|---|---|---|---|
+| 1 | `hye-calfa-n` zero-shot (shipped) | — | CC BY-NC |
+| 2 | `hye-grabar` (built, §3.4) | free, local | CC BY-NC |
+| 3 | `paddle-calfa-tiny` (§4.1) | free, local, CPU | CC BY-NC |
+| 4 | `hye-open-ocr` full chain (§4.2) | free, local, CPU | CC BY-NC + AGPL deps |
+| 5 | Surya (§4.3) | free, local | Apache / RAIL-M |
+| 6 | Phase 7 Gemini vision | ~$3–28 one-time | hosted |
 
 **Three changes to `docs/phase_7_gemini_vision_correction.md`:**
 
-1. **Change the gate.** Phase 7 currently gates on CER against golden pages *from a
-   different book*. Gate instead on the **token grammar**: tone codes in-vocabulary,
-   weekdays in-vocabulary, dates monotone within a month, book abbreviations resolvable,
-   taregir one letter or a reverse-consecutive pair (`STRUCTURE.md` gotcha #3). This is
-   self-validating, needs no new ground truth, and measures exactly the fields we cite.
-   Keep the W2 CER check as the *anti-hallucination* control — the grammar gate alone
-   would reward a model that confabulates well-formed nonsense (§4.4).
-2. **Add Surya to the comparison** as a local, free, reproducible alternative. For a
-   *published* corpus this matters beyond cost: "re-runnable with open weights" is a far
-   more defensible provenance claim than "we asked a hosted model in July 2026."
+1. **Change the gate.** It currently gates on CER against golden pages *from a different
+   book*. Gate instead on the **token grammar**: tone codes in-vocabulary, weekdays
+   in-vocabulary, dates monotone within a month, book abbreviations resolvable, taregir
+   one letter or a reverse-consecutive pair (`STRUCTURE.md` gotcha #3). Self-validating,
+   needs no new ground truth, measures exactly the fields we cite. Keep a W2 CER check as
+   the **anti-hallucination control** — the grammar gate alone would reward a model that
+   confabulates well-formed nonsense (§4.5), and word-level confidence from §4.2 sharpens
+   the distinction: low-confidence + out-of-vocabulary is an OCR error, *high*-confidence
+   + out-of-vocabulary is the hallucination signature.
+2. **Demote it in the running order.** Candidates 2–5 are free and local; measure them
+   first. For a *published* corpus "re-runnable with open weights" is also a stronger
+   provenance claim than "we asked a hosted model in July 2026."
 3. **Run Vol II (557–615) first** — worse text, and it is what the engine consumes.
 
-**Decide, don't drift, on kraken.** Its payoff was geometry; Surya supplies geometry plus
-layout plus reading order (§4.1), and the 19-page review with **zero** Step-2 ops
-recorded means the Step-2 correction tooling is still unvalidated by use. Before
-investing more review hours, run Surya on the same 19 reviewed pages and compare against
-the existing flags — that is a free head-to-head on already-reviewed ground. Retire or
-keep kraken on the result, and record it in `docs/kraken_line_segmentation.md`.
+**Decide, don't drift, on kraken.** Its payoff was geometry; both `hye-open-ocr` (§4.2)
+and Surya (§4.3) supply geometry plus layout plus reading order, and the 19-page review
+with **zero** Step-2 ops recorded means the Step-2 correction tooling is still unvalidated
+by use. Free head-to-head: run both on the same 19 already-reviewed pages and compare
+against the existing flags. Retire or keep kraken on the result and record it in
+`docs/kraken_line_segmentation.md`. If kraken survives, note that the Apache-2.0
+PP-OCRv6-for-kraken port (§4.4) becomes available as an NC-free recognition option.
 
 ### W6 — The derivation layer *(specified here, built in `armenian-lectionary`)*
 
@@ -344,23 +490,29 @@ distilled table on a named majority of Vol I days, with every disagreement triag
 ## 6. Sequencing
 
 ```
-W1 (citation address) ──┬── W3 (normalizer) ──┐
-                        │                      ├── W5 (bake-off: Phase 7 vs Surya vs FT)
-W2 (ground truth) ──────┴── W4 (fine-tune) ────┘
-                                               └── W6 (derivation layer, armenian-lectionary)
+W1 (citation address) ──┬── W3 (normalizer) ──────────┐
+                        │                              ├── W5 (bake-off, 6 candidates)
+W2 (ground truth) ──────┴── W4 (recognition upgrade) ──┘
+                                                       └── W6 (derivation, armenian-lectionary)
 ```
 
-W1 and W2 are independent and both block the rest. W3 can start immediately — it needs
-neither. W6 needs W1's entry units but not W5's re-OCR: **the derivation diff can begin
-on today's text**, because a 27% tone-code error rate does not prevent scripture-citation
-extraction (book abbreviations and Arabic chapter/verse numerals are a different, cleaner
-glyph class). Do not serialise W6 behind a perfect corpus.
+**Do first, today, in this order:**
 
----
+1. **W4.1 — ship `hye-grabar`** (§3.4). Built, gated, unused. Pure cash-in.
+2. **W3 — the normalizer.** Needs nothing; recovers ~500 tokens at the exact fields we cite.
+3. **W2 — ground truth.** Now the hard blocker: §4 hands us **six** recognition candidates
+   and there is still no instrument on this book to rank any of them. Every "which engine?"
+   question is unanswerable until this exists.
+
+W1 and W2 are independent and both block the rest. W6 needs W1's entry units but **not**
+W5's re-OCR: the derivation diff can begin on today's text, because a 27% tone-code error
+rate does not prevent scripture-citation extraction — book abbreviations and Arabic
+chapter/verse numerals are a different, cleaner glyph class (§2.1). Do not serialise W6
+behind a perfect corpus.
 
 ## 7. Risks
 
-- **Hallucinated fluency (§4.4)** — the dominant risk to a citable corpus. Mitigations:
+- **Hallucinated fluency (§4.5)** — the dominant risk to a citable corpus. Mitigations:
   keep `ocr_raw` permanently beside corrected text; the W2 CER control alongside the
   token-grammar gate; never let a VLM pass self-certify.
 - **Perfectionism deadlock** — waiting for a perfect corpus before starting W6. The
@@ -372,6 +524,13 @@ glyph class). Do not serialise W6 behind a perfect corpus.
 - **Entry segmentation is a new failure surface** — a wrong entry boundary produces a
   *confidently wrong* citation. Gate W1 on round-trip: every line lands in exactly one
   entry, no line orphaned.
+- **Licence asymmetry (§4.6)** — an Apache-2.0 engine over a transcription produced by
+  CC BY-NC models. Pre-existing, not introduced here, but decide it deliberately before
+  publication; confirm with Calfa; the Apache-2.0 PP-OCRv6-kraken port is the fallback.
+- **Cross-corpus number laundering** — §3.4's and §4.5's CER figures come from different
+  books, different tasks (pre-cropped lines vs full-page) and different scripts-in-period.
+  They rank options; they do not describe our corpus. Only W2 can do that. Never quote
+  them as this corpus's accuracy.
 
 ---
 
@@ -390,15 +549,36 @@ glyph class). Do not serialise W6 behind a perfect corpus.
   an anti-hallucination CER control, on the GlotOCR finding that mid-resource-script
   failure is *confabulation*, not noise.
 
+- **2026-09-21:** Found `calfa-co/hye-paddle` (`paddle-calfa-tiny`, PP-OCRv6-tiny
+  recognition, CC BY-NC 4.0) and `calfa-co/hye-open-ocr` (layout → reading order →
+  recognition, **ALTO XML v4** + word-level boxes and confidences). Calfa states
+  `paddle-calfa-tiny` is more accurate than `hye-calfa-n`; arXiv 2608.05911's
+  4.0%-vs-20.5% CRNN-vs-Tesseract ordering on historical Armenian press supports the
+  direction. Added both to the W5 bake-off; **W1 should target ALTO XML as the
+  interchange format** rather than inventing one. Same paper measures Gemini vision at
+  6.3% against a dedicated Armenian CRNN's 4.0%, which **demotes Phase 7 from presumed
+  winner to one candidate of six** and moves it behind the free local options.
+  Also discovered Phase 2b was already trained *and* evaluated, with its results unread
+  (§3.4) — primary gate passed, `hye-grabar` unused.
+- **Correction (2026-09-21):** an earlier pass concluded "no `hye-paddle` exists" from
+  two web searches plus arXiv 2608.05911's line that "PaddleOCR is not included: its
+  released models do not cover Armenian script." Both facts were true and the conclusion
+  was still wrong — the upstream project has no Armenian model, but Calfa built one. The
+  `calfa-co` GitHub org should have been listed directly. Absence of a search hit is not
+  evidence of absence.
+
 ## 9. See also
 
-- `docs/phase_7_gemini_vision_correction.md` — re-scoped by §5.5 (W5).
-- `docs/kraken_line_segmentation.md` — the kraken decision is reopened by §4.1.
+- `docs/phase_7_gemini_vision_correction.md` — re-scoped by W5.
+- `docs/kraken_line_segmentation.md` — the kraken decision is reopened by §4.2/§4.3.
 - `docs/phase_2b_hye_tesseract_finetune_plan.md` — W4.
 - `docs/ocr_approach_comparison.md` — where W2/W4/W5 numbers go.
 - `corpus/ERRATA.md` (E2 needs the §3.3 fix), `corpus/DEFECT_MAP.md`,
   `corpus/STRUCTURE.md`.
-- Surya: <https://github.com/datalab-to/surya> · RolmOCR:
-  <https://huggingface.co/reducto/RolmOCR> · Calfa hye-tesseract:
-  <https://github.com/calfa-co/hye-tesseract> · GlotOCR Bench:
+- Calfa: <https://github.com/calfa-co/hye-tesseract> ·
+  <https://github.com/calfa-co/hye-paddle> · <https://github.com/calfa-co/hye-open-ocr>
+- Surya: <https://github.com/datalab-to/surya> · PP-OCRv6-for-kraken:
+  <https://zenodo.org/records/21788410> · RolmOCR:
+  <https://huggingface.co/reducto/RolmOCR>
+- Armenian press OCR benchmark: <https://arxiv.org/abs/2608.05911> · GlotOCR Bench:
   <https://arxiv.org/abs/2604.12978>
