@@ -6,6 +6,28 @@ Phase 6 (column detection), `docs/kraken_line_segmentation.md` (Steps 1–2).
 **Consumes:** `docs/phase_7_gemini_vision_correction.md` (re-scoped here — see W5).
 **Downstream customer:** `armenian-lectionary` — the reason this phase exists.
 
+> ## ⚠️ Open decision for the maintainer — read before approving this plan
+>
+> **Every Armenian OCR model in the Calfa chain is CC BY-NC 4.0; `armenian-lectionary` is
+> Apache-2.0.** This is a pre-existing condition, not something this plan introduces —
+> the shipped corpus was already produced with `hye-calfa-n` — but the plan leans further
+> into that chain, so it should be settled deliberately *before* publication rather than
+> discovered after.
+>
+> **What needs deciding:**
+> 1. Is a scholarly/ecclesial publication, and a free lectionary API, within "NonCommercial"?
+>    (Model outputs are generally not derivative works of the model, but NC restricts *use*,
+>    and this is a judgement call — worth confirming directly with Calfa, who have been
+>    generous with open Armenian models and are the right people to ask.)
+> 2. If an NC-free chain is wanted, the Apache-2.0 path exists: **kraken** (§4.7) or
+>    **Surya** (§4.3) for segmentation + the **Apache-2.0 PP-OCRv6-for-kraken** recognition
+>    port (§4.4). It is weaker on Classical Armenian (synthetic-only training) and would
+>    cost a rebuild — so this is a real trade, not a free swap.
+> 3. Does the *corpus itself* get a licence distinct from the engine's Apache-2.0?
+>
+> Full table and reasoning in **§4.6**. Nothing else in this plan is blocked on the answer,
+> but the answer should be known before anything is published.
+
 ---
 
 ## 1. The goal, stated precisely
@@ -170,7 +192,7 @@ Step 5, never done), and promote `hye-grabar` to a registry entry in
 
 ---
 
-## 4. Tooling evaluation — Calfa, Datalab, Reducto, PaddleOCR
+## 4. Tooling evaluation — Calfa, Datalab, kraken, PaddleOCR, Reducto
 
 Assessed 2026-09-20/21 against this phase's needs.
 
@@ -331,7 +353,25 @@ publication rather than a commercial product — but this should be decided deli
 and ideally confirmed with Calfa, *before* publication rather than after. The
 Apache-2.0 PP-OCRv6-kraken port exists as the fallback if an NC-free chain is wanted.
 
-### 4.7 Reducto — no
+### 4.7 kraken — the segmentation option already in hand
+
+`docs/kraken_line_segmentation.md` recorded the original migration decision, and the work
+is further along than any other segmenter here: **geometry for 195 pages (448–642)**, a
+review UI, an automated rule-anchored gutter-split validated on 191 pages, and 19 pages
+human-reviewed. Neural baseline segmentation, polygons, native non-text filtering,
+single-step page→lines, and reading order via `polygonal_reading_order`.
+
+Two caveats, neither fatal: nothing downstream consumes it yet (§3.1), and the Step-2
+correction ops (`initials`/`merges`/`splits`/`section_titles`) have **zero** recorded
+entries, so that tooling is written but unexercised.
+
+**It stays on the table as a segmentation candidate** — W5 lists it as the first
+comparison to reach for if the baseline's line detection is the weak link, precisely
+because the geometry is already computed and 19 pages of human review exist to check
+against. The Apache-2.0 PP-OCRv6-for-kraken recognition port (§4.4) also pairs with it,
+which makes kraken the natural spine of an NC-free chain if §4.6 goes that way.
+
+### 4.8 Reducto — no
 
 Reducto's parsing product is a closed commercial API. Their open release is **RolmOCR**
 (Apache 2.0), a `Qwen2.5-VL-7B` fine-tune on `allenai/olmOCR-mix-0225` — English-heavy
@@ -424,48 +464,59 @@ Three of the four steps here are already paid for.
 token grammar. Record every row in `docs/ocr_approach_comparison.md` — the tables exist
 and are still entirely `_TBD_`.
 
-### W5 — The bake-off, and Phase 7 re-scoped
+### W5 — Pick one baseline, make it work, compare later
 
-§4.5 demotes Phase 7 from "the quality lever" to one candidate among six. Gemini
-vision measured **6.3% CER against a dedicated Armenian CRNN's 4.0%** on historical
-Armenian print. It is still worth running — only the image separates real text from noise
-— but it is no longer the presumed winner, and it should not be built before the cheaper
-local candidates are measured.
+**Operating principle for this workstream: we want something that works, not a survey.**
+Stand up the single strongest *simple* candidate end-to-end, measure it against W2, and
+treat every other option as a later comparison to be justified by a gap the baseline
+leaves. Do not run a six-way bake-off first.
 
-**Candidates, all on the same W2 evaluation set:**
+**The baseline: `hye-open-ocr` (§4.2).** It is the strongest-simplest because it is the
+only candidate that is *one install* covering the whole chain we need — segmentation,
+reading order, recognition — rather than parts we assemble:
 
-| # | Candidate | Cost | Licence |
-|---|---|---|---|
-| 1 | `hye-calfa-n` zero-shot (shipped) | — | CC BY-NC |
-| 2 | `hye-grabar` (built, §3.4) | free, local | CC BY-NC |
-| 3 | `paddle-calfa-tiny` (§4.1) | free, local, CPU | CC BY-NC |
-| 4 | `hye-open-ocr` full chain (§4.2) | free, local, CPU | CC BY-NC + AGPL deps |
-| 5 | Surya (§4.3) | free, local | Apache / RAIL-M |
-| 6 | Phase 7 Gemini vision | ~$3–28 one-time | hosted |
+- **Simplest:** `pip install .`, CPU-only, no GPU, no training, one pipeline call per page.
+  Every other path needs a detector bolted to a recognizer by us.
+- **Strongest on domain fit:** Armenian-specific end to end, from the vendor whose
+  recognition model the corpus already depends on, with `paddle-calfa-tiny` available as
+  a drop-in accuracy upgrade inside the same pipeline.
+- **It emits what W1 needs** — ALTO XML v4 with per-line and per-word geometry and
+  confidences — which no other candidate does natively. That alone closes gap 3.2(c).
 
-**Three changes to `docs/phase_7_gemini_vision_correction.md`:**
+**Steps:** install → run over a 10-page Vol II sample → compare against W2 ground truth
+and the token grammar → if it clears, run 453–641 and re-promote. Try `paddle-calfa-tiny`
+against `hye-calfa-n` *inside* the pipeline as the one cheap variation worth taking early
+(§4.1), since it is a config flag, not an integration.
 
-1. **Change the gate.** It currently gates on CER against golden pages *from a different
-   book*. Gate instead on the **token grammar**: tone codes in-vocabulary, weekdays
-   in-vocabulary, dates monotone within a month, book abbreviations resolvable, taregir
-   one letter or a reverse-consecutive pair (`STRUCTURE.md` gotcha #3). Self-validating,
-   needs no new ground truth, measures exactly the fields we cite. Keep a W2 CER check as
-   the **anti-hallucination control** — the grammar gate alone would reward a model that
-   confabulates well-formed nonsense (§4.5), and word-level confidence from §4.2 sharpens
-   the distinction: low-confidence + out-of-vocabulary is an OCR error, *high*-confidence
-   + out-of-vocabulary is the hallucination signature.
-2. **Demote it in the running order.** Candidates 2–5 are free and local; measure them
-   first. For a *published* corpus "re-runnable with open weights" is also a stronger
-   provenance claim than "we asked a hosted model in July 2026."
+**Gate:** beats the shipped corpus on the W2 held-out split *and* on the token grammar,
+with ALTO geometry present for every line.
+
+#### Comparisons, deferred until the baseline is measured
+
+Each of these earns its turn only by addressing a specific, observed baseline failure.
+
+| Candidate | Role | Take it up when |
+|---|---|---|
+| **kraken** (§4.7) — 195 pages already segmented, 19 reviewed | segmentation | baseline line detection is the weak link; the geometry is already in hand, so this is a cheap check, not a rebuild |
+| **Surya** (§4.3) | segmentation + layout + reading order | baseline layout/reading order fails on the odd pages, or the NC licence (§4.6) forces an Apache-path rebuild |
+| `hye-grabar` (§3.4) | recognition | free regardless — ship it under W4.1 and measure; it is not a W5 decision |
+| **Phase 7 Gemini vision** (§4.5) | recognition/correction | the baseline leaves a residual on display/heading faces or on the real-text-vs-noise call that local models cannot close |
+
+Phase 7's re-scoping still stands, whenever it is taken up:
+
+1. **Change the gate** from cross-book CER to the **token grammar** — tone codes
+   in-vocabulary, weekdays in-vocabulary, dates monotone within a month, book
+   abbreviations resolvable, taregir one letter or a reverse-consecutive pair
+   (`STRUCTURE.md` gotcha #3). Self-validating, needs no new ground truth, measures
+   exactly the fields we cite. Keep a W2 CER check as the **anti-hallucination control**:
+   the grammar gate alone would reward a model that confabulates well-formed nonsense
+   (§4.5). Word-level confidence (§4.2) sharpens this — low-confidence +
+   out-of-vocabulary is an OCR error, *high*-confidence + out-of-vocabulary is the
+   hallucination signature.
+2. **Demote it in the running order** — it is hosted and paid; the local candidates are
+   free, and "re-runnable with open weights" is a stronger provenance claim for a
+   published corpus than "we asked a hosted model in July 2026."
 3. **Run Vol II (557–615) first** — worse text, and it is what the engine consumes.
-
-**Decide, don't drift, on kraken.** Its payoff was geometry; both `hye-open-ocr` (§4.2)
-and Surya (§4.3) supply geometry plus layout plus reading order, and the 19-page review
-with **zero** Step-2 ops recorded means the Step-2 correction tooling is still unvalidated
-by use. Free head-to-head: run both on the same 19 already-reviewed pages and compare
-against the existing flags. Retire or keep kraken on the result and record it in
-`docs/kraken_line_segmentation.md`. If kraken survives, note that the Apache-2.0
-PP-OCRv6-for-kraken port (§4.4) becomes available as an NC-free recognition option.
 
 ### W6 — The derivation layer *(specified here, built in `armenian-lectionary`)*
 
@@ -549,6 +600,13 @@ behind a perfect corpus.
   an anti-hallucination CER control, on the GlotOCR finding that mid-resource-script
   failure is *confabulation*, not noise.
 
+- **2026-09-21:** Reframed W5 from a six-way bake-off to **one baseline, measured, with
+  comparisons deferred** — maintainer's call: "looking for something that works... test
+  the strongest, simplest baseline and evaluate extensions later." Baseline is
+  `hye-open-ocr` (one install, CPU, whole chain, ALTO out). kraken, Surya, Phase 7 and
+  `paddle-calfa-tiny` become comparisons, each with a named trigger condition. kraken
+  recorded as a live segmentation candidate (§4.7), not a retirement question — its 195
+  segmented pages and 19 human reviews make it the cheapest comparison to reach for.
 - **2026-09-21:** Found `calfa-co/hye-paddle` (`paddle-calfa-tiny`, PP-OCRv6-tiny
   recognition, CC BY-NC 4.0) and `calfa-co/hye-open-ocr` (layout → reading order →
   recognition, **ALTO XML v4** + word-level boxes and confidences). Calfa states
