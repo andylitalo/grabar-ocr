@@ -1,6 +1,6 @@
 # Phase 4 — Generalization Test (More Labeled Data)
 
-**Status:** Not started
+**Status:** Complete (closed 2026-09-30; gate met 2026-05-29, page-held-out follow-up recorded below)
 **Prerequisite:** Phase 3 complete (1.0% train CER on 34-line overfit set)
 **Runs on:** MacBook Pro M1 Pro — labeling is manual; training and eval are local
 
@@ -199,3 +199,17 @@ help?", not "does it generalize across pages?".
 ### Next step
 Label beyond the current 9 pages, then re-measure with a **page-held-out** set at
 ~500+ lines to separate cross-page-real CER from within-page-optimistic CER.
+
+### Page-held-out follow-up — done (recorded 2026-09-30)
+The "next step" above was answered in Phase 2 (`docs/phase_2_alternatives.md`), but it was
+never written back here. Fine-tuned TrOCR `scale_500` was evaluated on **page_0400**, a page
+absent from the training pool (71 lines). It scored **1.0% CER**, against 4.6% for zero-shot
+`hye-calfa-n` (`reports/phase4_newpage_page_0400_human*`). That is a genuine cross-page
+number, so the 2.5% line-split result was not just within-page optimism. Caveat: 71 lines is
+one page, not the ~500-line page-held-out set proposed above.
+
+**Further labeling is superseded.** All of these numbers are on *Ժամագիրք Ատենի*. The
+corpus is the Տօնացոյց, which has no measured CER. Its ground truth will come from human
+review under the new staged plan: verified line segments first (Phases 8–9), then
+transcription ground truth (`docs/backlog/README.md`). The shipped corpus was OCR'd with
+zero-shot `hye-calfa-n`, not TrOCR.
