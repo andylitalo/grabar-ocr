@@ -91,6 +91,9 @@ runs/
 # Tesseract traineddata (large binary; downloaded, not source — Phase 2 hye-tesseract benchmark)
 ml_vision/tessdata/
 
+# Tesseract fine-tuning scratch + tesstrain clone + staged GT (Phase 2b; large/derived)
+ml_vision/tessdata_ft/
+
 # BentoML local store
 ~/bentoml/
 

@@ -52,7 +52,7 @@ from predict_lines import collect_frozen, collect_page  # reuse identical target
 
 REPO = Path(__file__).resolve().parent.parent.parent
 TESSDATA = REPO / "ml_vision/tessdata"
-LANG = "hye-calfa-n"
+DEFAULT_LANG = "hye-calfa-n"
 PRED_BASE = REPO / "data/predictions"
 
 # --- character whitelist (Armenian script only) ------------------------------
@@ -78,17 +78,18 @@ _PUNCT = "՝,-.՜՚։…՛՞՟֊«»()"
 CHAR_WHITELIST = _ARM_UPPER + _ARM_LOWER + _LIGATURE + _DIGITS + _PUNCT + " "
 
 
-def recognize(image: Image.Image, psm: int, whitelist: bool = True) -> str:
+def recognize(image: Image.Image, psm: int, lang: str, whitelist: bool = True) -> str:
     """Single Tesseract pass over one line crop. --dpi 300 matches the scan DPI;
-    --tessdata-dir keeps the traineddata repo-local (out of system dirs). When
-    ``whitelist`` is set, recognition is restricted to CHAR_WHITELIST (Armenian +
-    digits + in-use punctuation + space), which strips stray Latin/garbage while
-    keeping word spacing."""
+    --tessdata-dir keeps the traineddata repo-local (out of system dirs).
+    Both hye-calfa-n (zero-shot) and hye-grabar (fine-tuned) live under TESSDATA,
+    so only --lang changes between the two models. When ``whitelist`` is set,
+    recognition is restricted to CHAR_WHITELIST (Armenian + digits + in-use
+    punctuation + space), which strips stray Latin/garbage while keeping word spacing."""
     config = f"--psm {psm} --dpi 300 --tessdata-dir {TESSDATA}"
     if whitelist:
         config += " -c " + shlex.quote("tessedit_char_whitelist=" + CHAR_WHITELIST)
         config += " -c preserve_interword_spaces=1"
-    return pytesseract.image_to_string(image, lang=LANG, config=config).strip()
+    return pytesseract.image_to_string(image, lang=lang, config=config).strip()
 
 
 def main() -> None:
@@ -100,13 +101,17 @@ def main() -> None:
     parser.add_argument("--psm", type=int, default=13, help="Tesseract page-seg mode (default: 13 raw-line)")
     parser.add_argument("--no-whitelist", action="store_true",
                         help="disable the Armenian-script char whitelist (A/B: allows Latin/garbage)")
+    parser.add_argument("--lang", default=DEFAULT_LANG,
+                        help="traineddata lang under ml_vision/tessdata "
+                             "(default: hye-calfa-n zero-shot; use hye-grabar for the FT model)")
     args = parser.parse_args()
     use_whitelist = not args.no_whitelist
 
-    if not (TESSDATA / f"{LANG}.traineddata").exists():
-        raise SystemExit(f"Missing {LANG}.traineddata under {TESSDATA.relative_to(REPO)} (see plan §Setup).")
+    lang = args.lang
+    if not (TESSDATA / f"{lang}.traineddata").exists():
+        raise SystemExit(f"Missing {lang}.traineddata under {TESSDATA.relative_to(REPO)} (see plan §Setup).")
 
-    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={LANG} "
+    print(f"Engine  : tesseract ({pytesseract.get_tesseract_version()}) lang={lang} "
           f"psm={args.psm} whitelist={'on' if use_whitelist else 'off'}")
 
     if args.frozen:
@@ -124,7 +129,7 @@ def main() -> None:
     n_empty = 0
     for i, t in enumerate(targets, start=1):
         image = Image.open(t["png"]).convert("RGB")
-        pred = recognize(image, args.psm, whitelist=use_whitelist)
+        pred = recognize(image, args.psm, lang, whitelist=use_whitelist)
         if not pred:
             n_empty += 1
 
@@ -145,7 +150,7 @@ def main() -> None:
         "model_tag": args.model_tag,
         "engine": "tesseract",
         "tesseract_version": str(pytesseract.get_tesseract_version()),
-        "lang": LANG,
+        "lang": lang,
         "psm": args.psm,
         "char_whitelist": CHAR_WHITELIST if use_whitelist else None,
         "target": page_key,

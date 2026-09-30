@@ -162,6 +162,73 @@ Keep the existing slicing pipeline; do not delegate segmentation to Tesseract.
   cross-check (e.g. disagreement flagging), not a replacement. Promoting it to a reusable/production backend
   and LLM post-correction of its output were explicitly out of scope for this one-off benchmark.
 
+### fine-tuning follow-up (2026-06-20)
+
+The zero-shot pass left one question open: *if we fine-tune `hye-calfa-n` on the exact 500-line split TrOCR
+scale_500 trained on, does it match or beat TrOCR?* Tesseract is fully open (LSTM weights local, training
+tools via `brew install tesseract`), so this is testable with no API. Plan:
+`docs/phase_2b_hye_tesseract_finetune_plan.md`.
+
+**Setup.** Staged the `splits_500.json` → `train` ids (the same 500 lines, same empty-skip as
+`finetune_phase4.py:samples_from_splits`) as tesstrain ground-truth pairs via the new
+`ml_vision/scripts/build_tesstrain_gt.py`. Contamination re-verified: page_0400 is absent from the train
+split and the frozen set is a separate dir — neither leaked into the GT dir (guarded in the script). Trained
+with the official **tesstrain** Makefile (`make training START_MODEL=hye-calfa-n`, MAX_ITERATIONS=4000,
+LR=1e-4, PSM=13, 90/10 internal split) on CPU (M1). Output `hye-grabar.traineddata` copied to the
+gitignored `ml_vision/tessdata/`. Scored with the **unchanged** harness
+(`predict_lines_tesseract.py --lang hye-grabar`, then `analyze_errors.py`) under model-tag `tesseract_ft` —
+same `jiwer` overall-CER metric as the zero-shot and TrOCR columns (all three re-derived here to confirm
+apples-to-apples). Raw OCR, no Phase 5 LLM correction.
+
+**Step-0 preflight (both gates clean).** (1) *Fine-tunable?* `combine_tessdata -e` extracts a 3.5 MB float
+`.lstm`; `lstmtraining --continue_from` loaded it without an integer-model error ("Continuing from … /
+Code range changed from 388 to 388"). The public `hye-calfa-n` **is** directly fine-tunable — no
+`tessdata_best` fallback needed. (2) *Unicharset coverage?* All 87 real content characters in the 500-line
+GT (every Armenian glyph + notation `՚ ։ ՝`, comma, hyphen, full stop, digits 0–9, em-dash) are already in
+the model's 389-entry `lstm-unicharset`. Plain `--continue_from` on the same net — **no top-layer
+replacement**. (Two crops stored a single-image-line GT with an embedded newline; tesstrain's box generator
+requires one physical line, so those were space-joined — a 2/500 cosmetic deviation from TrOCR's raw
+`.strip()`.)
+
+**Line-level CER — overall beam CER, same metric across all three columns:**
+
+| eval (clean, held-out) | zero-shot tesseract | **FT tesseract** | TrOCR scale_500 |
+|---|---|---|---|
+| frozen 100 lines | 4.9% | **3.5%** | 4.4% |
+| page_0400 (71 lines) | 4.6% | **1.8%** | 1.0% |
+
+Both FT reports are healthy: arm-frac 1.00, 0 empty preds, distinct preds = n (99/100 frozen, 71/71
+page_0400) — not degenerate.
+
+**Gate verdict.**
+- **Primary gate (did fine-tuning help): PASSED.** FT beats zero-shot on *both* evals — frozen 3.5% < 4.9%,
+  page_0400 1.8% < 4.6%. Fine-tuning on the 500-line split clearly helps (≈28% / ≈61% relative CER
+  reduction).
+- **Stretch gate (rival TrOCR: frozen ≤4.4% AND page_0400 ≤1.0%): PARTIALLY MET.** FT tesseract
+  **beats** TrOCR on the frozen set (3.5% vs 4.4%) but **loses** on page_0400 (1.8% vs 1.0%). It closed
+  most of the zero-shot gap on the new page (4.6% → 1.8%) without reaching TrOCR's 1.0%.
+
+**Training config / runtime.** START_MODEL `hye-calfa-n`, 4000 iterations, LR 1e-4, PSM 13, 90/10 internal
+split; final model = tesstrain's min-train-BCER checkpoint (train BCER 7.4% → 1.19%, monotonic — see
+`reports/phase2b_tesseract_ft_cer_curve.csv`). *Caveat:* tesstrain emitted no held-out eval-CER during
+training, so checkpoint selection rode train BCER alone (overfitting risk); the strong held-out frozen/0400
+numbers indicate it generalized rather than overfit, so no earlier-checkpoint sweep was needed. End-to-end
+~35 min wall on the M1 (CPU), dominated by one-time lstmf generation + stock-langdata download; the
+4000-iteration fine-tune itself is the minutes-scale tail. No W&B (tesseract doesn't integrate); the BCER
+curve is captured in the CSV above and the full log under `reports/phase2b_tesseract_ft_train.log`
+(gitignored).
+
+**Recommendation: keep TrOCR as the production backend.** TrOCR still wins on the new-page generalization
+test (page_0400 1.0% vs 1.8%), which is the metric that matters for unseen pages at scale. But fine-tuning
+materially strengthens hye-tesseract: it is now a **near-peer open, GPU-free, CPU-fast** model that *beats*
+TrOCR on the frozen set and trails it only modestly on new pages — an even stronger **fallback / ensemble
+cross-check** than the zero-shot model, and the obvious backend if the GPU/TrOCR path is ever unavailable.
+Promoting it to production or LLM-correcting its output remain out of scope here.
+
+Reports: `reports/phase4_error_analysis_frozen_tesseract_ft.{csv,html}`,
+`reports/phase4_newpage_page_0400_human_tesseract_ft.{csv,html}`,
+`reports/phase2b_tesseract_ft_cer_curve.csv` (`.json` is gitignored repo-wide).
+
 ---
 
 ## Recommended Experiment Order
