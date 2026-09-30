@@ -99,3 +99,10 @@ ml_vision/tessdata/
 # the corpus JSON is tracked (runs/ and data/ images stay ignored above).
 !/corpus/*.json
 !/corpus/**/*.json
+
+# Phase 8 clean-up: local kraken / tesstrain artifacts (regenerable, large)
+dev/venv-grabar/
+dev/kraken_review/data/
+dev/segmented_lines/
+dev/extracted_lines/
+ml_vision/tessdata_ft/

@@ -1,32 +1,81 @@
-# Phase 8 — the citable corpus: from "digitized" to "true to the original"
+# The citable corpus: from "digitized" to "true to the original" (roadmap)
 
-**Status:** planned · **Created:** 2026-09-20 · **Updated:** 2026-09-21 · **Owner:** —
-**Depends on:** the promoted `corpus/` (pp.453–641), Phase 5 (LLM text-correction),
-Phase 6 (column detection), `docs/kraken_line_segmentation.md` (Steps 1–2).
-**Consumes:** `docs/phase_7_gemini_vision_correction.md` (re-scoped here — see W5).
-**Downstream customer:** `armenian-lectionary` — the reason this phase exists.
+**Status:** BACKLOG, not an active phase · **Created:** 2026-09-20 · **Moved to backlog:**
+2026-09-30 · **Owner:** —
+**Downstream customer:** `armenian-lectionary`. This roadmap is the reason Phases 8–9 exist.
 
-> ## ⚠️ Open decision for the maintainer — read before approving this plan
+> ## Why this is in the backlog (2026-09-30)
+>
+> This document began as the Phase 8 plan. Its scope was too large for one gated phase, so
+> it was cut down. **Phase 8** is now repo clean-up plus a survey of line-segmentation tools
+> to choose a baseline (`docs/phase_8_line_segmentation_survey.md`). **Phase 9** is a
+> human-review UI that turns that baseline into verified line segments
+> (`docs/phase_9_line_segmentation_review.md`). Everything below stays here as the research
+> record and the longer roadmap. The index of deferred items and what blocks each one is in
+> [`README.md`](README.md).
+>
+> **The staged order the maintainer set:** segment lines → verify them by human review →
+> enumerate pages, lines and sections so every line can be cited → OCR (compare engines on
+> verified lines) → correct → enumerate entries and link them to lines → derivation layer.
+> Every workstream below sits somewhere in that order. None of them starts until line
+> segmentation is solid.
+>
+> **Maintainer's rulings on §5, recorded 2026-09-30:**
+> - **W1.** Agreed: the consumer-facing citation is `volume → section → page → entry` plus a
+>   content hash. But the original scan lines must stay reachable from every entry, so
+>   **lines are enumerated first**, from verified segmentation. After OCR, **entries are
+>   enumerated and linked to lines** (entry → [line ids]). A reading cites entries, and a UI
+>   can then follow the mapping to highlight the lines on the page scan. The UI itself is out
+>   of scope.
+>   Line ids come from verified geometry, not from today's region-relative `line_id`
+>   (§3.2(e)).
+> - **W2.** Ground truth comes from human review. The first review is of **line segments,
+>   before OCR** (Phase 9). Transcription ground truth comes after that.
+> - **W3.** Cheap win, but it must not distract from line segmentation. Deferred. Its
+>   closed-vocabulary tables may come back later as the token-grammar check used to score
+>   OCR engines.
+> - **W4.** Blocked on line segmentation.
+> - **W5.** `hye-open-ocr` is probably the right OCR baseline, but only after line
+>   segmentation is solid. Its *layout* component is a candidate in the Phase 8
+>   segmentation survey.
+> - **W6.** Starts once OCR is complete. Out of scope for now.
+>
+> **Corrections to the text below, found 2026-09-30:**
+> - §3.4 says Phase 2b "was never recorded". **Wrong.** The verdict *was* written into
+>   `docs/phase_2_alternatives.md` ("fine-tuning follow-up (2026-06-20)"), together with
+>   `reports/phase2b_tesseract_finetune_results.md`, on branch
+>   `phase2b-tesseract-finetune`. That branch was never merged, so it looked missing from
+>   `main`. The same applies to `corpus/ERRATA.md`, `STRUCTURE.md`, `GLOSSARY.md` and
+>   `DEFECT_MAP.md` (branch `feat/corpus-doc-layer`) and to all the kraken tooling (branch
+>   `kraken-line-seg-review`). See Phase 8 §2.
+> - §3.1 says Vol II pp.642–643 were "digitized". They are the printer's **colophon**
+>   (Յիշատակարան) and an editorial note on the taregir lists. They are not liturgical
+>   content.
+> - §6 "Do first, today" is superseded by the staged order above.
+
+> ## Licensing — settled (2026-09-30); rules for the future review service in §4.6.1
 >
 > **Every Armenian OCR model in the Calfa chain is CC BY-NC 4.0; `armenian-lectionary` is
-> Apache-2.0.** This is a pre-existing condition, not something this plan introduces —
-> the shipped corpus was already produced with `hye-calfa-n` — but the plan leans further
-> into that chain, so it should be settled deliberately *before* publication rather than
-> discovered after.
+> Apache-2.0; `grabar-ocr` has no licence declared.** This is a pre-existing condition,
+> not something this plan introduces — the shipped corpus was already produced with
+> `hye-calfa-n`.
 >
-> **What needs deciding:**
-> 1. Is a scholarly/ecclesial publication, and a free lectionary API, within "NonCommercial"?
->    (Model outputs are generally not derivative works of the model, but NC restricts *use*,
->    and this is a judgement call — worth confirming directly with Calfa, who have been
->    generous with open Armenian models and are the right people to ask.)
-> 2. If an NC-free chain is wanted, the Apache-2.0 path exists: **kraken** (§4.7) or
->    **Surya** (§4.3) for segmentation + the **Apache-2.0 PP-OCRv6-for-kraken** recognition
->    port (§4.4). It is weaker on Classical Armenian (synthetic-only training) and would
->    cost a rebuild — so this is a real trade, not a free swap.
-> 3. Does the *corpus itself* get a licence distinct from the engine's Apache-2.0?
+> **Settled:** the maintainer's use is **non-commercial**. Neither project will ever
+> receive money, and both are free scholarly/ecclesial publications of a public-domain
+> book. Neither project has to be relicensed NC to comply with Calfa's licence.
 >
-> Full table and reasoning in **§4.6**. Nothing else in this plan is blocked on the answer,
-> but the answer should be known before anything is published.
+> **Downstream, resolved:** `armenian-lectionary` serves only facts (rules and scripture
+> references) derived from the corpus, never corpus text; Fast & Pray's reading text comes
+> from API.Bible and sacredtradition.am under permissions handled in that project. The
+> invariant to preserve: **the engine cites the corpus by reference only.**
+>
+> **Where the corpus *is* served** — the planned researcher-facing review service — the
+> served transcription is **CC BY-NC 4.0** with Calfa attributed; code stays Apache-2.0.
+> Rules in **§4.6.1**.
+>
+> **Optional:** a courtesy note to Calfa describing the project. The Apache-2.0 NC-free
+> chain — **kraken** (§4.7) or **Surya** (§4.3) + **PP-OCRv6-for-kraken** (§4.4) —
+> remains the fallback, at the cost of Classical-Armenian accuracy and a rebuild.
 
 ---
 
@@ -345,13 +394,67 @@ beside every corrected line, and no VLM pass treated as self-certifying.
 | PP-OCRv6-for-kraken (Zenodo) | Apache-2.0 | Fine — the NC-free recognition option. |
 | Surya code / weights | Apache-2.0 / mod. RAIL-M (<$5M) | Fine now; re-check before any commercial use. |
 | `armenian-lectionary` | Apache-2.0 | The asymmetry to resolve. |
+| `grabar-ocr` (this repo, incl. `corpus/`) | **none declared** | Public on GitHub, but no `LICENSE`, no `pyproject` licence field → all rights reserved. Never released under Apache-2.0, so any licence chosen now is a first grant, not a relicensing. |
 
-**The open question for the maintainer, not for this doc to settle:** an Apache-2.0
-engine whose underlying transcription was produced by NC-licensed models. Model outputs
-are generally not derivative works of the model, and the corpus is a scholarly/ecclesial
-publication rather than a commercial product — but this should be decided deliberately,
-and ideally confirmed with Calfa, *before* publication rather than after. The
-Apache-2.0 PP-OCRv6-kraken port exists as the fallback if an NC-free chain is wanted.
+**The maintainer's own use is non-commercial (settled 2026-09-30).** CC BY-NC 4.0 §1(i)
+defines NonCommercial as "not primarily intended for or directed towards commercial
+advantage or monetary compensation." Neither `grabar-ocr` nor `armenian-lectionary` will
+ever receive money; both are free scholarly/ecclesial publications of a public-domain
+(1915) book. That is squarely within NC. Complying with Calfa's licence does **not**
+require making either project NC — whether to licence the corpus NC is a separate choice
+about how others may reuse it.
+
+**Downstream: resolved (2026-09-30).** The corpus is a *build-time* input to
+`armenian-lectionary`: `dev/` scripts read it to derive rules, and the engine never reads
+it at runtime. What the engine serves — which readings fall on which day, and scripture
+references — are facts, which carry no licence, so Calfa's NC terms do not follow them to
+Fast & Pray (whose free-will donations offset hosting, i.e. cost recovery). Fast & Pray's
+reading *text* comes from API.Bible and sacredtradition.am, licensed in that project. The
+short OCR excerpts quoted in `armenian-lectionary/docs/sources/` and `reports/` are
+evidence in documentation, not served content.
+
+**Invariant:** `armenian-lectionary` cites the corpus **by reference only** (W1 citation
+address: volume/section/page/entry id + hash). The day it serves corpus *text*, this
+analysis must be redone — Apache-2.0 invites commercial reuse of the engine, and bundled
+NC-derived text would travel with it.
+
+**Next step (courtesy, not obligation):** a short note to Calfa describing the project, to
+turn "very likely fine" into "confirmed." The Apache-2.0 PP-OCRv6-kraken port (§4.4)
+remains the fallback if an NC-free chain is ever wanted.
+
+#### 4.6.1 Licensing rules for the corpus review service
+
+A planned service, separate from `armenian-lectionary`, will show researchers and critics
+(1) an English explanation of the engine logic behind a given day's reading and (2) the
+Տօնացոյց pages it cites, with the relevant entries' lines highlighted and our Grabar
+transcription and English translation tagged to each line. Unlike the engine, this
+**serves corpus content directly**, so it is where the licensing actually bites. Not a
+design — just the rules to build it under:
+
+| Served content | Licence / status | Rule |
+|---|---|---|
+| Service code | Apache-2.0 | Same as the other repos. |
+| Grabar OCR transcription (`ocr_raw` and corrected) | **CC BY-NC 4.0** | Produced with Calfa's CC BY-NC models. Licensing it CC BY-NC is the conservative match to Calfa's terms, whether or not model output is legally a derivative. Applies to `corpus/` in this repo too. |
+| English translation (Gemini) | Label as **machine translation**; ship under the same CC BY-NC notice for simplicity | Gemini API terms permit publishing output; likely not copyrightable in the US absent human authorship, so the licence is a notice, not a strong claim. Human-corrected overlays (`*.corrected.md`) are ours and are covered. |
+| Page images | 1915 book is public domain; scans used with **full permission from the person who scanned them**, no contract terms | Record that permission (who, when) in provenance. Faithful scans of a public-domain page are generally not copyrightable (*Bridgeman v. Corel*; EU DSM Directive Art. 14). |
+
+**Build rules:**
+
+1. **Stay non-commercial.** Free, no ads, no paid tier or gated access. Sharing donation
+   funding for hosting is cost recovery and fine.
+2. **Attribute Calfa on every served transcription**, and record the producing model +
+   version per line (e.g. `hye-calfa-n`, or whatever the OCR re-run ships) — which the
+   service needs anyway so reviewers can tell machine reading from human correction
+   (`ocr_raw` kept beside corrected text, §4.5).
+3. **Publish a licence notice with the data**: "Transcription produced with Calfa OCR
+   models (CC BY-NC 4.0); this transcription is licensed CC BY-NC 4.0." Researchers will
+   copy lines; the notice tells them their terms.
+4. **Add `corpus/LICENSE` (CC BY-NC 4.0) and a repo `LICENSE` (Apache-2.0) for code**
+   before the service launches — today `grabar-ocr` declares neither.
+5. **Serve stored results only.** The AGPL-3.0 build tools (DocLayout-YOLO, PyMuPDF, §4.6
+   table) matter only if OCR runs inside the served app; don't run them there.
+6. **If the chain changes** (e.g. the Apache-2.0 kraken path), lines produced by a
+   non-Calfa model carry that model's terms — hence per-line model provenance.
 
 ### 4.7 kraken — the segmentation option already in hand
 
@@ -576,8 +679,11 @@ behind a perfect corpus.
   *confidently wrong* citation. Gate W1 on round-trip: every line lands in exactly one
   entry, no line orphaned.
 - **Licence asymmetry (§4.6)** — an Apache-2.0 engine over a transcription produced by
-  CC BY-NC models. Pre-existing, not introduced here, but decide it deliberately before
-  publication; confirm with Calfa; the Apache-2.0 PP-OCRv6-kraken port is the fallback.
+  CC BY-NC models. Settled 2026-09-30 (§4.6): use is non-commercial and the engine serves
+  only facts. Residual risks: (a) the engine starting to serve corpus text — keep W6
+  citations by reference; (b) the review service (§4.6.1) drifting commercial or dropping
+  Calfa attribution / the CC BY-NC notice. The Apache-2.0 PP-OCRv6-kraken port remains
+  the fallback.
 - **Cross-corpus number laundering** — §3.4's and §4.5's CER figures come from different
   books, different tasks (pre-cropped lines vs full-page) and different scripts-in-period.
   They rank options; they do not describe our corpus. Only W2 can do that. Never quote
@@ -624,6 +730,22 @@ behind a perfect corpus.
   was still wrong — the upstream project has no Armenian model, but Calfa built one. The
   `calfa-co` GitHub org should have been listed directly. Absence of a search hit is not
   evidence of absence.
+- **2026-09-30:** Licensing (§4.6). **Maintainer's use of the Calfa NC models is
+  non-commercial** — neither project will ever receive money; free scholarly/ecclesial
+  publication of a public-domain book. Found `grabar-ocr` has **no licence declared**
+  (public repo, no `LICENSE`), so it was never Apache-2.0 and any licence is a first grant.
+  Relicensing either project to NC is not needed for compliance. Remaining open items are
+  downstream: confirm Fast & Pray's commercial status, and have W6 cite corpus text by
+  reference rather than bundling it into the Apache-2.0 engine. Optional courtesy note to
+  Calfa.
+- **2026-09-30 (later):** Downstream resolved. `armenian-lectionary` uses the corpus only
+  at build time (`dev/` scripts) and serves facts — rules and scripture references — not
+  corpus text; Fast & Pray's reading text comes from API.Bible and sacredtradition.am,
+  licensed in that project; its donations are cost recovery. Invariant: engine cites the
+  corpus by reference only. For the planned **review service** that *does* serve corpus
+  pages, transcription and translation: **served transcription (and `corpus/`) is
+  CC BY-NC 4.0 with Calfa attributed; code is Apache-2.0**. Page scans are used with full
+  permission from the scanner, no contract terms. Rules recorded in §4.6.1.
 
 ## 9. See also
 
