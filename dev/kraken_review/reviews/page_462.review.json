@@ -1,0 +1,22 @@
+{
+  "page": 462,
+  "reviewed_by": "human",
+  "timestamp": "2026-07-24T05:01:34.852368+00:00",
+  "model": "blla.mlmodel",
+  "num_lines": 90,
+  "flags": {
+    "line_002": {
+      "category": 1,
+      "label": "over-segmentation"
+    },
+    "line_051": {
+      "category": 3,
+      "label": "non-text"
+    },
+    "line_050": {
+      "category": 3,
+      "label": "non-text"
+    }
+  },
+  "missed_lines": []
+}
