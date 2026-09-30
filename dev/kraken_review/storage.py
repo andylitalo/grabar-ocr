@@ -47,6 +47,9 @@ CATEGORY_LABELS = {
 
 _PAGE_DIR_RE = re.compile(r"^page_(\d+)$")
 
+# Page review status. "reviewed" locks the page in the UI and is what score.py counts.
+STATUSES = ("in_progress", "reviewed")
+
 
 def data_dir(page: int) -> Path:
     return DATA_DIR / f"page_{page}"
@@ -76,6 +79,12 @@ def list_pages() -> list[int]:
     return sorted(pages)
 
 
+def reviewed_pages() -> list[int]:
+    """Pages whose saved review has status "reviewed"."""
+    return [p for p in list_pages()
+            if review_path(p).exists() and load_review(p)["status"] == "reviewed"]
+
+
 def load_segmentation(page: int) -> dict:
     path = segmentation_path(page)
     if not path.exists():
@@ -95,10 +104,11 @@ def load_review(page: int) -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
         data.setdefault("flags", {})
         data.setdefault("missed_lines", [])
+        data.setdefault("status", "in_progress")
         for key in _CORRECTION_KEYS:
             data.setdefault(key, [])
         return data
-    skeleton = {"page": page, "flags": {}, "missed_lines": []}
+    skeleton = {"page": page, "status": "in_progress", "flags": {}, "missed_lines": []}
     skeleton.update({key: [] for key in _CORRECTION_KEYS})
     return skeleton
 
@@ -130,6 +140,7 @@ def save_review(
     merges: list[dict] | None = None,
     splits: list[dict] | None = None,
     section_titles: list[dict] | None = None,
+    status: str = "in_progress",
 ) -> dict:
     """Persist a page review.
 
@@ -155,6 +166,8 @@ def save_review(
     - ``section_titles``: titular section letters: ``{"id", "key",
       "box":[x1,y1,x2,y2], "source_line_id"}`` (source null if drawn fresh).
     """
+    if status not in STATUSES:
+        raise ValueError(f"Unknown status {status!r}; expected one of {STATUSES}")
     seg = load_segmentation(page)
     valid_ids = {str(line["id"]) for line in seg.get("lines", []) if "id" in line}
     bbox_by_id = {
@@ -225,6 +238,7 @@ def save_review(
 
     record = {
         "page": page,
+        "status": status,
         "reviewed_by": "human",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "tool": seg.get("tool", "kraken"),

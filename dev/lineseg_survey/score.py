@@ -1,8 +1,9 @@
 """Tally the human reviews into the Phase 8 §5 results table.
 
-Reads every ``dev/lineseg_survey/<tool>/reviews/page_<N>.review.json`` and prints a
-markdown table per tool. **Correction effort** is the number of ops a reviewer
-needed to make the page right: flags + missed boxes + initials + merges + splits.
+Reads every ``dev/lineseg_survey/<tool>/reviews/page_<N>.review.json`` whose status is
+"reviewed" (locked in the UI) and prints a markdown table per tool. **Correction
+effort** is the number of ops a reviewer needed to make the page right: flags + missed
+boxes + initials + merges + splits.
 Section-title marks are not errors and are not counted.
 
     python3 dev/lineseg_survey/score.py [--pages ...] [--tools kraken,surya,...]
@@ -29,6 +30,8 @@ def page_counts(tool: str, page: int) -> Counter | None:
     if not path.exists():
         return None
     review = json.loads(path.read_text(encoding="utf-8"))
+    if review.get("status") != "reviewed":  # still being edited: not scored yet
+        return None
     c: Counter = Counter()
     for info in review.get("flags", {}).values():
         c[CATS[int(info["category"])]] += 1

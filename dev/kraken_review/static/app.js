@@ -36,6 +36,8 @@ const state = {
   splits: [],         // [{id, line_id, at_x}] vertical cuts
   sectionTitles: [],  // [{id, key, box, source_line_id}] titular letters
   tool: "flag",
+  status: "in_progress",  // "reviewed" = page locked (read-only) until Resume editing
+  reviewed: new Set(),    // pages whose saved review is "reviewed" (page-select checkmarks)
   selection: [],      // merge tool: selected line ids
   splitLineId: null,  // split tool: line awaiting a cut-x click
   history: [],        // per-page undo stack: snapshots of the editable state
@@ -52,6 +54,8 @@ const state = {
 let drag = null;
 // Pending box + context awaiting a letter (Initial / Title tools).
 let pendingLetter = null;   // {tool, box, hitLineId}
+
+const isLocked = () => state.status === "reviewed";
 
 // ---- coordinate helpers (full-res page px <-> display px) ----
 const toDisp = (v) => v / state.scale;
@@ -569,14 +573,17 @@ async function saveReview() {
       merges: state.merges,
       splits: state.splits,
       section_titles: state.sectionTitles,
+      status: state.status,
     });
     const s = $("saved");
     s.textContent = "saved";
     s.classList.add("ok");
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => { s.textContent = ""; s.classList.remove("ok"); }, 1500);
+    return true;
   } catch (e) {
     $("saved").textContent = "save failed: " + e.message;
+    return false;
   }
 }
 
@@ -622,6 +629,7 @@ async function loadPage(page) {
   state.merges = (review.merges || []).map((x) => ({ ...x, line_ids: x.line_ids.slice() }));
   state.splits = (review.splits || []).map((x) => ({ ...x }));
   state.sectionTitles = (review.section_titles || []).map((x) => ({ ...x, box: x.box.slice() }));
+  state.status = review.status || "in_progress";
   state.selection = [];
   state.splitLineId = null;
   state.history = [];   // undo is scoped to the current page
@@ -630,6 +638,7 @@ async function loadPage(page) {
   drag = null;
   updateUndoButton();
   updateMergeButton();
+  renderStatus();
   $("count").textContent = `${state.lines.length} lines`;
   await new Promise((resolve) => {
     pageImg.onload = resolve;
@@ -647,9 +656,35 @@ function step(delta) {
   if (j >= 0 && j < state.pages.length) loadPage(state.pages[j]);
 }
 
+// ---- review status: "Mark reviewed" locks the page, "Resume editing" unlocks it ----
+function renderStatus() {
+  const locked = isLocked();
+  document.body.classList.toggle("locked", locked);
+  $("reviewed").textContent = locked ? "Resume editing" : "Mark reviewed";
+  $("status-badge").textContent = locked ? "\u2713 Reviewed" : "";
+  if (locked) state.reviewed.add(state.page); else state.reviewed.delete(state.page);
+  const opt = $("page-select").querySelector(`option[value="${state.page}"]`);
+  if (opt) opt.textContent = pageLabel(state.page);
+  $("progress").textContent = `${state.reviewed.size}/${state.pages.length} reviewed`;
+}
+
+function pageLabel(p) { return `${state.reviewed.has(p) ? "\u2713 " : ""}page ${p}`; }
+
+async function toggleReviewed() {
+  const prev = state.status;
+  state.status = isLocked() ? "in_progress" : "reviewed";
+  if (isLocked()) {
+    state.selection = []; state.splitLineId = null; updateMergeButton(); setToolHint("");
+  }
+  const ok = await saveReview();
+  if (!ok) state.status = prev;  // don't show a lock the server didn't record
+  renderStatus();
+  draw();
+}
+
 // ---- canvas interaction ----
 function updateHover(x, y) {
-  if (state.tool !== "flag") return;   // hover highlight only matters for the Flag tool
+  if (state.tool !== "flag" || isLocked()) return;   // hover highlight only matters for the Flag tool
   const m = hitMissed(x, y);
   const line = m ? null : hitTest(x, y);
   const mid = m ? m.id : null;
@@ -663,6 +698,7 @@ function updateHover(x, y) {
 }
 
 canvas.addEventListener("mousedown", (ev) => {
+  if (isLocked()) return;
   const { x, y } = canvasPos(ev);
   drag = { startX: x, startY: y, curX: x, curY: y, moved: false };
 });
@@ -687,6 +723,7 @@ canvas.addEventListener("mouseup", (ev) => {
   const { x, y } = canvasPos(ev);
   const d = drag;
   drag = null;
+  if (isLocked()) return;
   const movedFar = d && (Math.abs(x - d.startX) > DRAG_THRESHOLD || Math.abs(y - d.startY) > DRAG_THRESHOLD);
   const isDrag = d && (d.moved || movedFar);
   const line = hitTest(x, y);
@@ -771,16 +808,17 @@ $("letter-backdrop").addEventListener("click", (ev) => {
 // side-panel delete buttons (event delegation)
 $("flag-list").addEventListener("click", (ev) => {
   const btn = ev.target.closest("button.del");
-  if (btn) deleteOp(btn.dataset.del, btn.dataset.id);
+  if (btn && !isLocked()) deleteOp(btn.dataset.del, btn.dataset.id);
 });
 
 // tool buttons
 document.querySelectorAll(".tool").forEach((btn) => {
   btn.addEventListener("click", () => setTool(btn.dataset.tool));
 });
-$("merge-commit").addEventListener("click", commitMerge);
+$("merge-commit").addEventListener("click", () => { if (!isLocked()) commitMerge(); });
 
 document.addEventListener("keydown", (ev) => {
+  if (isLocked()) return;  // reviewed pages are read-only; use Resume editing
   if ((ev.metaKey || ev.ctrlKey) && !ev.shiftKey && (ev.key === "z" || ev.key === "Z")) {
     ev.preventDefault();
     undo();
@@ -811,18 +849,19 @@ document.addEventListener("keydown", (ev) => {
 
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
-$("blank").addEventListener("click", markBlank);
-$("reviewed").addEventListener("click", saveReview);  // a correct page still needs a review file
-$("undo").addEventListener("click", undo);
+$("blank").addEventListener("click", () => { if (!isLocked()) markBlank(); });
+$("reviewed").addEventListener("click", toggleReviewed);
+$("undo").addEventListener("click", () => { if (!isLocked()) undo(); });
 $("page-select").addEventListener("change", (ev) => loadPage(Number(ev.target.value)));
 
 async function init() {
-  const { pages, tool } = await api("GET", "/api/pages");
+  const { pages, tool, reviewed } = await api("GET", "/api/pages");
   state.pages = pages;
+  state.reviewed = new Set(reviewed || []);
   if (tool) document.title = `Line-seg review · ${tool}`;
   if (tool && $("tool-name")) $("tool-name").textContent = tool;
   const sel = $("page-select");
-  sel.innerHTML = pages.map((p) => `<option value="${p}">page ${p}</option>`).join("");
+  sel.innerHTML = pages.map((p) => `<option value="${p}">${pageLabel(p)}</option>`).join("");
   if (pages.length) loadPage(pages[0]);
   else $("count").textContent = "No segmented pages found. Run dev/kraken_segment.py first.";
 }

@@ -73,6 +73,8 @@ class ReviewRequest(BaseModel):
     merges: list[Merge] = []
     splits: list[Split] = []
     section_titles: list[SectionTitle] = []
+    # "reviewed" locks the page in the UI; "in_progress" while editing
+    status: str = "in_progress"
 
 
 @app.get("/")
@@ -82,7 +84,11 @@ def index() -> FileResponse:
 
 @app.get("/api/pages")
 def get_pages() -> dict:
-    return {"pages": storage.list_pages(), "tool": storage.TOOL or "kraken"}
+    return {
+        "pages": storage.list_pages(),
+        "reviewed": storage.reviewed_pages(),
+        "tool": storage.TOOL or "kraken",
+    }
 
 
 @app.get("/api/pages/{page}/image.png")
@@ -117,6 +123,7 @@ def post_review(page: int, req: ReviewRequest) -> dict:
             merges=[m.model_dump() for m in req.merges],
             splits=[s.model_dump() for s in req.splits],
             section_titles=[t.model_dump() for t in req.section_titles],
+            status=req.status,
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

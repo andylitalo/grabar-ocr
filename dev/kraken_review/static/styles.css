@@ -157,3 +157,11 @@ aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
   background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
 }
 #letter-input:focus { outline: none; border-color: var(--accent); }
+
+/* review status: a reviewed page is locked (read-only) until "Resume editing" */
+#status-badge { color: #2e9d5b; font-weight: 700; }
+#progress { color: #888; font-size: 0.9em; }
+body.locked #canvas { cursor: not-allowed !important; }
+body.locked .tool, body.locked #blank, body.locked #undo, body.locked #merge-commit,
+body.locked #flag-list button.del { opacity: 0.35; pointer-events: none; }
+body.locked #reviewed { background: #2e9d5b; color: #fff; }
