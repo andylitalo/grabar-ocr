@@ -44,7 +44,9 @@ One op per problem, so the effort count stays honest:
 - **Drop-cap left out of its line:** Initial tool (`I`). Box the letter; it attaches to
   the upper line on its right (check the connector). Do not *also* flag that line 4.
 - **Clips ink (4)** is for polygons that cut ordinary letters (ascenders, descenders,
-  line ends), not for a missing drop-cap. Edits autosave. When a page is done, press **Mark reviewed**: the page locks (✓ in the
+  line ends), not for a missing drop-cap.
+
+Edits autosave. When a page is done, press **Mark reviewed**: the page locks (✓ in the
 header and the page list) and becomes read-only. **Resume editing** unlocks it.
 `score.py` counts only locked pages, so a page that needed no fixes must still be marked.
 
