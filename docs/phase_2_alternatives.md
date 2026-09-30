@@ -229,6 +229,15 @@ Reports: `reports/phase4_error_analysis_frozen_tesseract_ft.{csv,html}`,
 `reports/phase4_newpage_page_0400_human_tesseract_ft.{csv,html}`,
 `reports/phase2b_tesseract_ft_cer_curve.csv` (`.json` is gitignored repo-wide).
 
+**Addendum (2026-09-30, Phase 8).** The fine-tuned `hye-grabar` model (built, gate passed) was
+never wired into `pipeline/registry.py`. Note also that this verdict recommended TrOCR as the
+production backend, but the shipped `corpus/` was OCR'd with **zero-shot `hye-calfa-n`**, not
+TrOCR. **No re-OCR will happen until line segmentation is verified** (Phases 8–9:
+`docs/phase_8_line_segmentation_survey.md`, `docs/phase_9_line_segmentation_review.md`).
+OCR engines (`hye-grabar`, `paddle-calfa-tiny`, `hye-open-ocr`, a Qwen-VL fine-tune) will then
+be compared on verified lines from the Տօնացոյց itself. Both evals above come from a different
+book, so they rank engines but do not describe the corpus.
+
 ---
 
 ## Recommended Experiment Order

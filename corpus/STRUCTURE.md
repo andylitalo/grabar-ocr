@@ -138,9 +138,10 @@ English. To align a specific English sentence to a line, match it against the or
 ---
 
 ## Coverage
-189 pages, **453–641**, **0 gaps**; 7 blank pages (455, 481, 495, 501, 521, 529, 552) are
-marked blank in the source, not missing. **Not yet in corpus:** Vol II **pp.642–643**
-(digitized/translated; awaiting a pipeline re-promote) — tracked in `ERRATA.md`.
+191 pages, **453–643**, **0 gaps**; 7 blank pages (455, 481, 495, 501, 521, 529, 552) are
+marked blank in the source, not missing. pp.642–643 (promoted 2026-09-30) are the printer's
+**colophon** (Յիշատակարան of the fourth Jerusalem printing) and an editorial note on how the
+Volume II taregir lists were set — no liturgical content.
 
 ## How to use this corpus (for a future agent)
 1. Need **readings** for a feast → Volume I (section index above).

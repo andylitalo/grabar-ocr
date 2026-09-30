@@ -1,0 +1,191 @@
+{
+  "page": 643,
+  "page_id": "page_0643_human",
+  "source": {
+    "run_slug": "human__proj__tess__gemini-min",
+    "crop": "human",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/643.pdf",
+    "deskew_render": "data/_labeling_work/page_0643/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0643_human.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 13,
+    "text": 13,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "In the indexes of the calendar of the second volume of the Tonatsuyts [Directory of Feasts], we followed a loose simplicity, preferring it\nto the crowded layout of tables and columns. And\nwhere the feasts of the saints were combined, we separated them\nwith additions.\nAt the end of the Manual of Hours [Book of Hours], we newly prepared\nthe succession of Catholicoi, following the newest\nstudies, and we placed the same in the place of the incomplete\nlist of the previous printings.\nAnd whatever may still be deficient in these words, we commit\nto the care of those who shall come after us.\nIn Jerusalem, Apostolic See of Saint James,\nAugust 15, ՌՅԿԴ [1364 Armenian Era / AD 1915]...",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_single/line_001",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Իցուցակս տարեգրոց երկրորդի հատորի Տօնացու-",
+      "grabar": "Իցուցակս տարեգրոց երկրորդի հատորի Տօնացու-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_single/line_002",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ցին, հետեւեցաք արձակ պարզութեան. նախադասելով",
+      "grabar": "ցին, հետեւեցաք արձակ պարզութեան. նախադասելով",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_002.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_01_single/line_003",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զայն խճողեալ դրութեան խորանաց եւ սիւնակաց։ Եւ",
+      "grabar": "զայն խճողեալ դրութեան խորանաց եւ սիւնակաց։ Եւ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_003.png"
+    },
+    {
+      "index": 3,
+      "line_id": "region_01_single/line_004",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ուր միաւորեալ էին տօնք սրբոց, զատուցաք զայնս (- և)",
+      "grabar": "ուր միաւորեալ էին տօնք սրբոց, զատուցաք զայնս (- և)",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_004.png"
+    },
+    {
+      "index": 4,
+      "line_id": "region_01_single/line_005",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "յաւելմամբ։",
+      "grabar": "յաւելմամբ։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_005.png"
+    },
+    {
+      "index": 5,
+      "line_id": "region_01_single/line_006",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Իվերջ Չեռաց Ժամագրոց ի նորոյ պատրաստեցաք",
+      "grabar": "Իվերջ Ձեռաց Ժամագրոց ի նորոյ պատրաստեցաք",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_006.png"
+    },
+    {
+      "index": 6,
+      "line_id": "region_01_single/line_007",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "զյաջորդութիւն կաթողիկոսաց, հետեւելով նորագոյն ու-",
+      "grabar": "զյաջորդութիւն կաթողիկոսաց, հետեւելով նորագոյն ու-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_007.png"
+    },
+    {
+      "index": 7,
+      "line_id": "region_01_single/line_008",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "սումնասիրութեանց, եւ եդաք զնոյն ի տեղի թերակա-",
+      "grabar": "սումնասիրութեանց, եւ եդաք զնոյն ի տեղի թերակա-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_008.png"
+    },
+    {
+      "index": 8,
+      "line_id": "region_01_single/line_009",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "տար ցուցակին նախորդ տպագրութեանց։",
+      "grabar": "տար ցուցակին նախորդ տպագրութեանց։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_009.png"
+    },
+    {
+      "index": 9,
+      "line_id": "region_01_single/line_010",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "Իսկ որ ինչ թերին իցէ տակաւին ի բանսդ, յանձն",
+      "grabar": "Իսկ որ ինչ թերին իցէ տակաւին ի բանսդ, յանձն",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_010.png"
+    },
+    {
+      "index": 10,
+      "line_id": "region_01_single/line_011",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "առնեմք հոգածութեան որոց զկնի մեր գալոց իցեն։",
+      "grabar": "առնեմք հոգածութեան որոց զկնի մեր գալոց իցեն։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_011.png"
+    },
+    {
+      "index": 11,
+      "line_id": "region_01_single/line_012",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ՅեՐՈՒՍԱՂԷՄ, ԱԹՈՌ ԱՌԱՔԵԼԱԿԱՆ ՍՐԲՈՑ ՅԱԿՈԲԵԱՆՑ",
+      "grabar": "ՅեՐՈՒՍԱՂԷՄ, ԱԹՈՌ ԱՌԱՔԵԼԱԿԱՆ ՍՐԲՈՑ ՅԱԿՈԲԵԱՆՑ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_012.png"
+    },
+    {
+      "index": 12,
+      "line_id": "region_01_single/line_013",
+      "region": "region_01_single",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ո9797915 ՕԳՈՍՏՈՍ. ՌՅԿԴ........",
+      "grabar": "ո9797915 ՕԳՈՍՏՈՍ. ՌՅԿԴ........",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0643_human_region_01_single.png",
+      "line_image": "data/lines/page_0643_human/region_01_single/line_013.png"
+    }
+  ]
+}

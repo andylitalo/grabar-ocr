@@ -41,7 +41,7 @@ depends on this phase and the next.
 Audit of 2026-09-30. Several items the roadmap listed as "gaps" were finished work sitting
 on branches that were never merged.
 
-### A1. Land three unmerged branches — ⏳ needs maintainer approval
+### A1. Land three unmerged branches — ✅ merged 2026-09-30
 
 | Branch | Commits | What it carries |
 |---|--:|---|
@@ -49,13 +49,13 @@ on branches that were never merged.
 | `kraken-line-seg-review` | 2 | `docs/kraken_line_segmentation.md`, `dev/kraken_segment.py`, the review UI (`dev/kraken_review/`), 17 page reviews |
 | `phase2b-tesseract-finetune` | 1 | The Phase 2b verdict in `docs/phase_2_alternatives.md`, `reports/phase2b_tesseract_finetune_results.md`, `build_tesstrain_gt.py`, FT eval reports |
 
-The first two are based on current `main`. `phase2b-tesseract-finetune` is 34 commits
-behind `main` and touches `.gitignore`, `predict_lines_tesseract.py` and
-`phase_2_alternatives.md`, so expect a small conflict.
+The first two are based on current `main`. Conflicts were in `.gitignore` (kraken and Phase 8 ignore rules combined) and
+`predict_lines_tesseract.py`, where Phase 2b's `--lang` flag was combined with the later
+Armenian character whitelist. Both are kept.
 
 **A4, A5 and A6 need A1 first**, because the files they change only exist on these branches.
 
-### A2. Delete stale branches — ⏳ needs maintainer approval
+### A2. Delete stale branches — ✅ approved 2026-09-30
 
 These are fully merged into `main` and carry nothing unique: `feat/book-run`,
 `feat/label-and-translate-ui`, `feat/modular-pipeline`, `feat/translation-stage`,
@@ -75,7 +75,7 @@ These are fully merged into `main` and carry nothing unique: `feat/book-run`,
 Also untracked: `reports/nonchar_garble_gate.html`, which `ERRATA.md` E2 cites (commit it
 or leave it as a regenerable report), and `reports/phase4_newpage_page_0400_human.{csv,html}`.
 
-### A4. Fix `corpus/ERRATA.md` E2's root cause (after A1)
+### A4. Fix `corpus/ERRATA.md` E2's root cause — ✅ applied 2026-09-30
 
 E2 says the corpus was transcribed "with **baseline `tesseract`**". It was transcribed
 with Tesseract running Calfa's **`hye-calfa-n`** historical-Armenian traineddata, zero-shot
@@ -93,7 +93,7 @@ label, not a model name. Replacement for E2's first sentence under "Root cause":
 
 The rest of E2 stays as written. The TrOCR comparison is still accurate.
 
-### A5. Phase 2b verdict + Phase 8 addendum (after A1)
+### A5. Phase 2b verdict + Phase 8 addendum — ✅ applied 2026-09-30
 
 The verdict already exists: `docs/phase_2_alternatives.md` → "fine-tuning follow-up
 (2026-06-20)", on the unmerged branch. Once it lands, append:
@@ -106,7 +106,7 @@ The verdict already exists: `docs/phase_2_alternatives.md` → "fine-tuning foll
 > Qwen-VL fine-tune) will be compared on verified lines from *this* book. Both evals above
 > come from a different book, so they rank engines but do not describe the corpus.
 
-### A6. Vol II pp.642–643 — ⏳ maintainer decision
+### A6. Vol II pp.642–643 — ✅ promoted 2026-09-30
 
 These two pages are the **colophon** of the 1915 Jerusalem printing. p.642 is the
 Յիշատակարան ("Memorial": the fourth Jerusalem printing of the Ժամագիրք and Տօնացոյց, in
@@ -190,8 +190,8 @@ That tool becomes Phase 9's baseline. The survey needs a winner, not a leaderboa
 
 ## 4. Open questions for the maintainer
 
-1. **A1/A2:** approve landing the three branches and deleting the stale ones?
-2. **A6:** promote pp.642–643 now, or leave them for the post-Phase-9 re-promote?
+None open. A1, A2 and A6 were approved 2026-09-30. The ERRATA candidate list is out of scope
+from here on.
 
 ## 5. Results
 
@@ -206,3 +206,6 @@ _Filled in as the survey runs._
 - **2026-09-30:** Audit found that the Phase 2b verdict, the corpus doc layer, and all
   kraken tooling exist on unmerged branches. The roadmap's "never recorded" (§3.4) and
   "nothing references kraken" (§3.1) findings were about `main` only.
+- **2026-09-30:** Part A done. Merged the three branches, fixed ERRATA E2, appended the
+  Phase 2b addendum, and promoted pp.453–643 (additive: only pp.642–643 changed). Deleted the
+  stale branches. The ERRATA candidate list is frozen and out of scope. Next: Part B.

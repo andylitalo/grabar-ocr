@@ -108,4 +108,5 @@ dev/venv-grabar/
 dev/kraken_review/data/
 dev/segmented_lines/
 dev/extracted_lines/
-ml_vision/tessdata_ft/
+# Kraken review decisions are human-verified ground truth; negate the global *.json rule.
+!/dev/kraken_review/reviews/*.json

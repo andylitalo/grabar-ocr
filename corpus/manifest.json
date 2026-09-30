@@ -1,8 +1,8 @@
 {
-  "generated": "2026-07-08T21:57:45.556798+00:00",
+  "generated": "2026-09-30T15:17:10.694248+00:00",
   "page_range": [
     453,
-    641
+    643
   ],
   "source_runs": [
     {
@@ -44,7 +44,7 @@
       }
     }
   ],
-  "n_pages": 189,
+  "n_pages": 191,
   "n_blank": 7,
   "pages": [
     {
@@ -1745,6 +1745,24 @@
       "source_run": "auto__proj__tess__gemini-min",
       "blank": false,
       "n_lines": 4,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 642,
+      "page_id": "page_0642_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 27,
+      "has_translation": true,
+      "cer": null
+    },
+    {
+      "page": 643,
+      "page_id": "page_0643_human",
+      "source_run": "human__proj__tess__gemini-min",
+      "blank": false,
+      "n_lines": 13,
       "has_translation": true,
       "cer": null
     }

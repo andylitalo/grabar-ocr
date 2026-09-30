@@ -74,8 +74,14 @@ Reviewed in batches by section/page range. For each candidate defect:
   automatic text rule (`is_ocr_garble`) is **not** a safe drop filter; it is only a *triage
   flag*. Dropping requires image confirmation (the visual gate, `build/nonchar_garble_gate.py`
   → `reports/nonchar_garble_gate.html`).
-- **Root cause is OCR quality.** The corpus was transcribed with **baseline `tesseract`**,
-  which (a) hallucinates on no-text slices and (b) mangles real display/heading text. The
+- **Root cause is OCR quality.** The corpus was transcribed with Tesseract running Calfa's
+  **`hye-calfa-n`** traineddata (Classical/Western/Eastern Armenian, incl. historical fonts),
+  zero-shot. It is *not* baseline Tesseract; the run-config `tag: "tesseract"` is a label.
+  (Corrected 2026-09-30; see `pipeline/registry.py` `OCR_ENGINES["tesseract"]` and
+  `DEFAULT_LANG` in `ml_vision/scripts/predict_lines_tesseract.py`.) On the *Ժամագիրք Ատենի*
+  eval sets it scores 4.9% (frozen) / 4.6% (page_0400) line CER
+  (`docs/phase_2_alternatives.md`). That is a different book; this corpus has no measured CER
+  yet. Even so, it (a) hallucinates on no-text slices and (b) mangles real display/heading text. The
   fine-tuned **TrOCR (`scale_500`)** already does better on both: on p458 it read the real
   line_003 correctly where Tesseract stuttered, and emitted **empty** on the true-noise
   line_016/017. Project Phase 4 (`reports/phase_4_results.md`): TrOCR fine-tune reaches 17.6%
@@ -143,7 +149,11 @@ Reviewed in batches by section/page range. For each candidate defect:
   genuine non-character.
 - This is the canonical example of E2 class (b): real text, bad OCR → recover, not drop.
 
-## Candidate defects (from the QA pass — awaiting batch review)
+## Candidate defects (from the QA pass — FROZEN 2026-09-30)
+> **Frozen, out of scope.** Almost every candidate below is an OCR, segmentation or column
+> defect that the planned re-segmentation (Phases 8–9) and re-OCR will change, so it is not
+> being adjudicated. Revisit whatever survives the re-OCR. See `docs/backlog/README.md`.
+
 Themed backlog, to be adjudicated page-by-page and promoted to "Confirmed" above. Anchors
 are `## page_NNNN`.
 
@@ -171,4 +181,5 @@ are `## page_NNNN`.
 ## Coverage items
 - **Vol I pp.453–457** — ✅ promoted (2026-07, `pipeline.promote --range 453-641`): p.453
   title page, p.454 dedication, p.455 blank, p.456 opening hymn, p.457 Theophany canon.
-- **Vol II pp.642–643** digitized + translated; awaiting the in-progress run + re-promote.
+- **Vol II pp.642–643** (colophon + editorial note) — ✅ promoted 2026-09-30
+  (`pipeline.promote --range 453-643`).

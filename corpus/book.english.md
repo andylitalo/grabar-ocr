@@ -8578,3 +8578,35 @@ Although the Epacts were not as necessary as the Dominical Letters, yet we place
 ## page_0641_auto
 
 [Unclear text / Rubric] ✷✷✷✷✷✷✷✷✷✷✷✷✷✷
+
+## page_0642_human
+
+COLOPHON
+OF THIS FOURTH JERUSALEM EDITION
+
+By the grace of the Lord, this fourth publication of the Book of Hours [Zhamagirk] and Directory [Tonatsuyts] of the Armenian Church has been brought to a successful completion, in a dual printing of the Chancel [Ateni] and Hand [Dzerats] volumes.
+
+Those things which have been in common use in all Orthodox churches of the Armenians since the days of Lord Simeon of Yerevan, the ever-memorable and highly meritorious Catholicos of All Armenians, have been kept unchanged.
+
+We deemed it appropriate only to introduce certain changes in letters and words, or in the form of instructions and explanations, as they suited accepted customs and ease of understanding.
+
+Herein, we have replaced the Armenian letter-numbers in the excerpts of the simple calendar and in the Five-Hundred-Year table with accepted [Arabic] numerals.
+
+In the references of the readings, we removed the Euthalian chapters, and we placed the numbers of the chapters and verses before the words of the commencements and endings, which we also abbreviated; for example, instead of writing "Gospel according to Luke, chapter 22, (Merձetsav) 'The feast of unleavened bread drew near' to 'the twelve tribes of Israel', verse 30," we wrote simply: "Luke 22:1 (Merձetsav) to verse 30 (Israel)."
+
+We corrected the spelling of names, and we put Lucian instead of Lunkianos, Adrian instead of Andrianos, Pelagia instead of Peligia, Tarachus instead of Taragros, Eugraphius instead of Grabos, and so forth.
+
+## page_0643_human
+
+In the indexes of the calendar of the second volume of the Tonatsuyts [Directory of Feasts], we followed a loose simplicity, preferring it
+to the crowded layout of tables and columns. And
+where the feasts of the saints were combined, we separated them
+with additions.
+At the end of the Manual of Hours [Book of Hours], we newly prepared
+the succession of Catholicoi, following the newest
+studies, and we placed the same in the place of the incomplete
+list of the previous printings.
+And whatever may still be deficient in these words, we commit
+to the care of those who shall come after us.
+In Jerusalem, Apostolic See of Saint James,
+August 15, ՌՅԿԴ [1364 Armenian Era / AD 1915]...
