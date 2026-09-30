@@ -38,7 +38,13 @@ uv run python -m dev.kraken_review.app --tool surya --port 8091   # one tool at 
 
 Flag each wrong line: 1 over-segmented, 2 under-segmented, 3 non-text, 4 clips ink,
 5 out of reading order. Drag a box for a missed line. Use Initial / Merge / Split where
-that is the fix. Edits autosave. Press **Mark reviewed** on every page when done, so a page
+that is the fix. Leave correct lines untouched: unflagged means correct.
+
+One op per problem, so the effort count stays honest:
+- **Drop-cap left out of its line:** Initial tool (`I`). Box the letter; it attaches to
+  the upper line on its right (check the connector). Do not *also* flag that line 4.
+- **Clips ink (4)** is for polygons that cut ordinary letters (ascenders, descenders,
+  line ends), not for a missing drop-cap. Edits autosave. Press **Mark reviewed** on every page when done, so a page
 that needed no fixes is still recorded as reviewed (`score.py` only counts pages with a
 review file).
 
