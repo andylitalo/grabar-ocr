@@ -11,8 +11,13 @@ Run from the repo root (no kraken needed; only FastAPI/uvicorn/Pillow):
     uv run python -m dev.kraken_review.app
 
 then open http://127.0.0.1:8090
+
+For the Phase 8 line-segmentation survey, point it at one tool's output:
+
+    uv run python -m dev.kraken_review.app --tool surya --port 8091
 """
 
+import argparse
 from pathlib import Path
 
 import uvicorn
@@ -77,7 +82,7 @@ def index() -> FileResponse:
 
 @app.get("/api/pages")
 def get_pages() -> dict:
-    return {"pages": storage.list_pages()}
+    return {"pages": storage.list_pages(), "tool": storage.TOOL or "kraken"}
 
 
 @app.get("/api/pages/{page}/image.png")
@@ -123,7 +128,12 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 def main() -> None:
-    uvicorn.run(app, host="127.0.0.1", port=8090)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tool", help="Phase 8 survey tool under dev/lineseg_survey/ (default: kraken review)")
+    ap.add_argument("--port", type=int, default=8090)
+    args = ap.parse_args()
+    storage.configure(args.tool)
+    uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 
 if __name__ == "__main__":

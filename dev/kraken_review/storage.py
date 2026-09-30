@@ -18,12 +18,31 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 REVIEWS_DIR = BASE_DIR / "reviews"
+# Renders are shared: every survey tool segments kraken's 300-DPI render.
+RENDER_DIR = DATA_DIR
+SURVEY_DIR = BASE_DIR.parent / "lineseg_survey"
+TOOL: str | None = None  # None = the original kraken review (paths above)
+
+
+def configure(tool: str | None) -> None:
+    """Point the UI at one Phase 8 survey tool's geometry and reviews.
+
+    ``dev/lineseg_survey/<tool>/{data,reviews}``; renders still come from
+    ``dev/kraken_review/data``. ``None`` keeps the original kraken review paths.
+    """
+    global DATA_DIR, REVIEWS_DIR, TOOL
+    TOOL = tool
+    if tool:
+        DATA_DIR = SURVEY_DIR / tool / "data"
+        REVIEWS_DIR = SURVEY_DIR / tool / "reviews"
 
 # category number -> human label; the single source of truth for the taxonomy.
 CATEGORY_LABELS = {
     1: "over-segmentation",
     2: "under-segmentation",
     3: "non-text",
+    4: "clips ink",             # polygon cuts off ascenders/descenders/drop-cap ink
+    5: "out of reading order",  # line sits in the wrong place in the order
 }
 
 _PAGE_DIR_RE = re.compile(r"^page_(\d+)$")
@@ -34,7 +53,7 @@ def data_dir(page: int) -> Path:
 
 
 def render_path(page: int) -> Path:
-    return data_dir(page) / "render.png"
+    return RENDER_DIR / f"page_{page}" / "render.png"
 
 
 def segmentation_path(page: int) -> Path:
@@ -208,6 +227,7 @@ def save_review(
         "page": page,
         "reviewed_by": "human",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "tool": seg.get("tool", "kraken"),
         "model": seg.get("model"),
         "num_lines": len(seg.get("lines", [])),
         "flags": normalized,

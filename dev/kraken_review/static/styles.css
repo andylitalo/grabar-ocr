@@ -12,6 +12,8 @@
   --cat1: #e0a64f; /* over-segmentation  */
   --cat2: #4c8bf5; /* under-segmentation */
   --cat3: #e0564f; /* non-text           */
+  --cat4: #00b8d4; /* clips ink          */
+  --cat5: #8d6e63; /* out of reading order */
   --missed: #e05ac4; /* human drag-drawn missed line (must match MISSED_COLOR in app.js) */
   /* correction-op colors (must match app.js) */
   --initial: #a06cff; /* drop-cap initial            */
@@ -100,6 +102,8 @@ aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
 .swatch.cat1 { background: var(--cat1); }
 .swatch.cat2 { background: var(--cat2); }
 .swatch.cat3 { background: var(--cat3); }
+.swatch.cat4 { background: var(--cat4); }
+.swatch.cat5 { background: var(--cat5); }
 .swatch.missed { background: transparent; border: 2px dashed var(--missed); }
 .swatch.none { background: transparent; border: 2px solid var(--ok); }
 .swatch.initial { background: var(--initial); }
@@ -143,6 +147,8 @@ aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
 .opt[data-cat="1"] .num { background: var(--cat1); }
 .opt[data-cat="2"] .num { background: var(--cat2); }
 .opt[data-cat="3"] .num { background: var(--cat3); }
+.opt[data-cat="4"] .num { background: var(--cat4); }
+.opt[data-cat="5"] .num { background: var(--cat5); }
 .modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
 .modal-actions button { flex: 1; }
 #opt-clear, #missed-delete { border-color: var(--danger); color: var(--danger); }

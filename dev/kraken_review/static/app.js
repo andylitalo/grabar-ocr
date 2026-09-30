@@ -1,7 +1,10 @@
 "use strict";
 
-const CATEGORY_COLORS = { 1: "#e0a64f", 2: "#4c8bf5", 3: "#e0564f" };
-const CATEGORY_LABELS = { 1: "over-segmentation", 2: "under-segmentation", 3: "non-text" };
+const CATEGORY_COLORS = { 1: "#e0a64f", 2: "#4c8bf5", 3: "#e0564f", 4: "#00b8d4", 5: "#8d6e63" };
+const CATEGORY_LABELS = {
+  1: "over-segmentation", 2: "under-segmentation", 3: "non-text",
+  4: "clips ink", 5: "out of reading order",
+};
 const NEUTRAL = "#3fb37f";
 const MISSED_COLOR = "#e05ac4"; // human drag-drawn missed line (matches --missed in CSS)
 // correction-op colors (must match the --initial/--merge/--split/--title vars in CSS)
@@ -785,7 +788,7 @@ document.addEventListener("keydown", (ev) => {
   }
   if (state.modalLineId) {
     if (ev.key === "Escape") closeModal();
-    else if (ev.key === "1" || ev.key === "2" || ev.key === "3") applyCategory(Number(ev.key));
+    else if (CATEGORY_LABELS[ev.key]) applyCategory(Number(ev.key));
     return;
   }
   if (state.missedModalId) {
@@ -809,12 +812,15 @@ document.addEventListener("keydown", (ev) => {
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
 $("blank").addEventListener("click", markBlank);
+$("reviewed").addEventListener("click", saveReview);  // a correct page still needs a review file
 $("undo").addEventListener("click", undo);
 $("page-select").addEventListener("change", (ev) => loadPage(Number(ev.target.value)));
 
 async function init() {
-  const { pages } = await api("GET", "/api/pages");
+  const { pages, tool } = await api("GET", "/api/pages");
   state.pages = pages;
+  if (tool) document.title = `Line-seg review · ${tool}`;
+  if (tool && $("tool-name")) $("tool-name").textContent = tool;
   const sel = $("page-select");
   sel.innerHTML = pages.map((p) => `<option value="${p}">page ${p}</option>`).join("");
   if (pages.length) loadPage(pages[0]);

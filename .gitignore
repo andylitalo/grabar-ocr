@@ -110,3 +110,10 @@ dev/segmented_lines/
 dev/extracted_lines/
 # Kraken review decisions are human-verified ground truth; negate the global *.json rule.
 !/dev/kraken_review/reviews/*.json
+# Phase 8 line-seg survey: venvs, vendored code and overlays are local; per-tool geometry
+# and human reviews are committed (reviews reference geometry line ids).
+dev/lineseg_survey/.venv-*/
+dev/lineseg_survey/vendor/
+dev/lineseg_survey/overlays/
+!/dev/lineseg_survey/*/data/*/segmentation.json
+!/dev/lineseg_survey/*/reviews/*.json

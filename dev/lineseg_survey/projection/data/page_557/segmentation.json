@@ -1,0 +1,13 @@
+{
+ "page": 557,
+ "tool": "projection",
+ "model": "projection slicer (data_prep)",
+ "source_image": "dev/kraken_review/data/page_557/render.png",
+ "width": 2184,
+ "height": 3271,
+ "generated_at": "2026-09-30T15:49:43.818092+00:00",
+ "lines": [],
+ "deferred": true,
+ "defer_reason": "two-column band unbalanced (218 vs 541)",
+ "layout_blocks": []
+}

@@ -156,6 +156,16 @@ That tool becomes Phase 9's baseline. The survey needs a winner, not a leaderboa
 **Optional if time allows:** PaddleOCR's script-agnostic text detector (DB). Calfa's
 `hye-paddle` is recognition-only, so this detector would be its natural partner.
 
+#### Desk-check outcome (2026-09-30)
+
+| Candidate | Line geometry | Reading order | Verdict |
+|---|---|---|---|
+| kraken | polygon + baseline | native (`polygonal_reading_order`) | **run** (geometry already exists) |
+| Surya 0.22.1 | 4-point polygon + confidence, no baseline | none from the detector. The layout/reading-order models are now VLM-based and need vllm or llama.cpp. The non-VLM `fast_layout` (rf-detr) gives ordered blocks, and lines are ordered by block | **run** as `surya` |
+| `hye-open-ocr` | **no line detector of its own**: "the layout stage only finds regions; line and word segmentation is left to the recognizer" (README) | X-Y cut over regions | **run twice**: `hyocr-tess` (DocLayout-YOLO + Tesseract `--psm 4` lines, axis-aligned boxes) and `hyocr-paddle` (PP-DocLayoutV3 + PaddleOCR DB detection, quad polygons). The second covers the optional Paddle detector |
+| LlamaParse | line-level **axis-aligned boxes** in a JSONL sidecar (`granular_bboxes`), PDF points | n/a | **dropped**: closed, paid hosted API with no polygons. Its open sibling LiteParse segments scans with bundled Tesseract, so `hyocr-tess` already covers that behaviour |
+| Projection slicer | full-width boxes per region | region order | **run** as the control, on the shared render (no deskew). A page the detector isn't confident on is recorded as deferred with zero lines |
+
 ### B2. Method
 
 1. **Desk check** (no runs). For each candidate: output shape (polygon? baseline? reading
@@ -190,12 +200,67 @@ That tool becomes Phase 9's baseline. The survey needs a winner, not a leaderboa
 
 ## 4. Open questions for the maintainer
 
-None open. A1, A2 and A6 were approved 2026-09-30. The ERRATA candidate list is out of scope
-from here on.
+1. **Human-scoring scope (§5.1):** score only kraken, Surya and hyocr-paddle, and keep
+   p.641 out of the effort totals?
+
+A1, A2 and A6 were approved 2026-09-30. The ERRATA candidate list is out of scope from here on.
 
 ## 5. Results
 
-_Filled in as the survey runs._
+Tooling: `dev/lineseg_survey/` (see its README). Every tool segments the same kraken
+render, writes the review UI's `segmentation.json` shape, and is scored in its own review
+dir (`python -m dev.kraken_review.app --tool <tool>`). Two flag categories were added for
+the survey: **4 clips ink** and **5 out of reading order**. `score.py` turns the reviews into
+the table below.
+
+### 5.1 Automated triage (2026-09-30, before human scoring)
+
+Lines emitted per page:
+
+| page | content | kraken | surya | hyocr-paddle | hyocr-tess | projection |
+|---:|---|--:|--:|--:|--:|--:|
+| 453 | title page | 26 | 25 | 15 | 24 | 26 |
+| 457 | two-col + header | 69 | 66 | 66 | 50 | 71 |
+| 488 | column debris | 92 | 84 | 91 | 53 | 95 |
+| 519 | Vol I body | 92 | 91 | 91 | 88 | 96 |
+| 530 | illustration | 58 | 13 | 2 | 2 | 1 |
+| 557 | Vol II header + taregir | 59 | 51 | 53 | 49 | 0 (deferred) |
+| 564 | taregir mid-page | 69 | 59 | 67 | 45 | 0 (deferred) |
+| 575 | Vol II laydown | 77 | 77 | 79 | 77 | 79 |
+| 593 | leap-pair taregir | 86 | 85 | 86 | 95 | 86 |
+| 610 | full-width titles | 74 | 73 | 75 | 73 | 0 (deferred) |
+| 641 | Paschal table | 199 | 571 | 583 | 15 | 112 |
+| 642 | colophon | 28 | 28 | 28 | 22 | 29 |
+
+Side-by-side overlays of pp.453, 457, 488, 530, 557, 564 and 641 (`overlay.py`) show:
+
+- **kraken** finds every text line, including display type and the taregir letter on
+  p.557. Its main cost is **non-text boxes on ornaments**: about 56 on p.530's border, and
+  a handful on every decorative header (457, 557).
+- **Surya** is clean on body text and mostly ignores ornaments. But it **missed the
+  taregir letter Ա on p.557**, the letter that keys a Vol II section. It merges adjacent
+  lines in some Vol II rubrics (p.564 top-left) and clips the title on p.453.
+- **hyocr-paddle** is the cleanest on body text and on the illustration page (exactly the
+  2 caption lines on p.530), and it caught the taregir letter on p.557. But it **dropped
+  11 of 26 lines on the title page** (p.453), and missed lines cost the most to fix.
+- **All three** missed the taregir letter Դ on p.564; only hyocr-tess boxed it. Phase 9's
+  section-title tool will be needed whichever tool wins.
+- **hyocr-tess** misses whole lines (p.457 right column; 53 vs ~92 on p.488) and draws
+  boxes across the gutter (p.564).
+- **projection** defers 3 of 12 pages (557, 564, 610), which in production meant a human
+  crop, and boxes the whole of p.530 as one line.
+- **p.641 (Paschal table)** is segmented at cell level by Surya and Paddle, and at a mix of
+  cell and row level by kraken. Line counts there mean little. The table is already
+  transcribed as a CSV (`corpus/STRUCTURE.md`).
+
+**Proposed:** drop `hyocr-tess` and `projection` from human scoring. Both are clearly
+beaten, and scoring them would add ~24 page reviews for no decision value. Score
+**kraken, Surya and hyocr-paddle** on the 11 sample pages other than 641; review 641 on
+its own for whichever tool wins.
+
+### 5.2 Human scoring
+
+_Pending: kraken, surya, hyocr-paddle × 11 pages._
 
 ## 6. Decision log
 
@@ -209,3 +274,10 @@ _Filled in as the survey runs._
 - **2026-09-30:** Part A done. Merged the three branches, fixed ERRATA E2, appended the
   Phase 2b addendum, and promoted pp.453–643 (additive: only pp.642–643 changed). Deleted the
   stale branches. The ERRATA candidate list is frozen and out of scope. Next: Part B.
+- **2026-09-30:** Part B started on `feat/line-seg-survey`. Desk check dropped LlamaParse
+  (closed API, axis-aligned boxes only). Found that `hye-open-ocr` has no line detector,
+  so it was run as two candidates (Tesseract lines, Paddle DB detection). Built survey
+  runners, a shared geometry format, overlays and a scorer; extended the review UI with
+  `--tool`, flag categories 4–5 and a "Mark reviewed" button. All five candidates run on
+  the 12-page sample. Automated triage proposes human-scoring three of them (§5.1).
+
