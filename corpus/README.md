@@ -106,3 +106,15 @@ Defaults: `--from auto__proj__tess__gemini-min human__proj__tess__gemini-min` (a
 order, so the human-verified run wins on overlapping pages) and `--translator gemini-flash`.
 Re-running is content-idempotent (only the manifest `generated` timestamp changes). See
 `pipeline/corpus.py` for the logic.
+
+## License
+
+**CC BY-NC 4.0** — see [`LICENSE`](LICENSE), which also records how the text was produced.
+The Grabar was OCR'd with Calfa's `hye-calfa-n` (CC BY-NC 4.0); credit both this corpus and
+Calfa when reusing it. The English is machine translation (Gemini). The 1915 printed book
+itself is public domain; the licence covers the digitization. The repository's code is
+Apache 2.0 (root [`LICENSE`](../LICENSE)); that licence does not apply here.
+
+If the corpus is regenerated with different OCR models, update `LICENSE` to match: the
+`source` block in each `pages/page_NNNN.lines.json` is the record of which model produced
+which page. See `docs/backlog/citable_corpus_roadmap.md` §4.6.

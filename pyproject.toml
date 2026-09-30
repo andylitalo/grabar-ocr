@@ -2,6 +2,7 @@
 name = "grabar-ocr"
 version = "0.1.0"
 description = "Classical Armenian (Grabar/Bolorgir) OCR digitization pipeline"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.11"
 dependencies = [
     # data_prep runtime (imported by the labeling tool)

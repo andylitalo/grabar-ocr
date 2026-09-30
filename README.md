@@ -113,3 +113,11 @@ helm install airflow apache-airflow/airflow -f airflow-values.yaml
 | Compute | Ubuntu Server | Ryzen 9, 128GB RAM, RTX 3090 24GB, 2TB NVMe |
 | Storage | Google Cloud Storage | Raw PDFs + intermediate images |
 | Translation | Anthropic / OpenAI API | Claude 3.5 Sonnet / GPT-4o |
+
+## License
+
+- **Code:** Apache License 2.0 — see [`LICENSE`](LICENSE).
+- **`corpus/`** (the digitized text, corrections and translation): **CC BY-NC 4.0** — see
+  [`corpus/LICENSE`](corpus/LICENSE). The OCR was produced with Calfa's `hye-calfa-n`
+  model (CC BY-NC 4.0); credit Calfa when reusing it. Short OCR excerpts quoted as evidence
+  in `docs/` and `reports/` are under the same terms as the corpus.
