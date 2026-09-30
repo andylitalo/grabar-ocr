@@ -165,3 +165,7 @@ body.locked #canvas { cursor: not-allowed !important; }
 body.locked .tool, body.locked #blank, body.locked #undo, body.locked #merge-commit,
 body.locked #flag-list button.del { opacity: 0.35; pointer-events: none; }
 body.locked #reviewed { background: #2e9d5b; color: #fff; }
+
+/* flag modal: categories already on the line (toggle on/off) */
+.opt.active { outline: 2px solid #fff; background: #3a3f4b; font-weight: 700; }
+.opt.active::after { content: " \2713"; }

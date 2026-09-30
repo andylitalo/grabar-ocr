@@ -64,8 +64,8 @@ class SectionTitle(BaseModel):
 
 
 class ReviewRequest(BaseModel):
-    # kraken line id ("line_003") -> category number (1/2/3)
-    flags: dict[str, int] = {}
+    # line id ("line_003") -> category numbers (1-5); a line may carry several
+    flags: dict[str, list[int]] = {}
     # human-drawn boxes for lines kraken missed entirely
     missed: list[MissedLine] = []
     # correction ops layered on kraken's immutable lines

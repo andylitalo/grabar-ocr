@@ -105,6 +105,10 @@ def load_review(page: int) -> dict:
         data.setdefault("flags", {})
         data.setdefault("missed_lines", [])
         data.setdefault("status", "in_progress")
+        for info in data["flags"].values():  # pre-multi-flag reviews stored one "category"
+            if "categories" not in info:
+                info["categories"] = [info.pop("category")]
+                info["labels"] = [info.pop("label", CATEGORY_LABELS[info["categories"][0]])]
         for key in _CORRECTION_KEYS:
             data.setdefault(key, [])
         return data
@@ -144,9 +148,10 @@ def save_review(
 ) -> dict:
     """Persist a page review.
 
-    ``flags`` maps kraken line id -> category number (1/2/3). A line id absent
-    from ``flags`` is implicitly "correct"; category 3 = non-text (ignore
-    downstream).
+    ``flags`` maps line id -> category numbers (1-5; a line may carry several,
+    e.g. under-segmented *and* clipping ink). A bare int is accepted for one. A
+    line id absent from ``flags`` is implicitly "correct"; category 3 = non-text
+    (ignore downstream).
 
     ``missed`` is a list of human-drawn boxes marking lines kraken missed
     entirely: ``[{"id": "missed_001", "box": [x1, y1, x2, y2]}, ...]`` in
@@ -177,13 +182,16 @@ def save_review(
     }
 
     normalized: dict[str, dict] = {}
-    for line_id, category in flags.items():
-        category = int(category)
-        if category not in CATEGORY_LABELS:
-            raise ValueError(f"Unknown category {category!r} for {line_id}")
+    for line_id, cats in flags.items():
+        cats = sorted({int(c) for c in (cats if isinstance(cats, list) else [cats])})
+        for c in cats:
+            if c not in CATEGORY_LABELS:
+                raise ValueError(f"Unknown category {c!r} for {line_id}")
+        if not cats:
+            continue
         normalized[line_id] = {
-            "category": category,
-            "label": CATEGORY_LABELS[category],
+            "categories": cats,
+            "labels": [CATEGORY_LABELS[c] for c in cats],
         }
 
     missed_out: list[dict] = []

@@ -34,7 +34,8 @@ def page_counts(tool: str, page: int) -> Counter | None:
         return None
     c: Counter = Counter()
     for info in review.get("flags", {}).values():
-        c[CATS[int(info["category"])]] += 1
+        for cat in info.get("categories") or [info["category"]]:  # one line can carry several
+            c[CATS[int(cat)]] += 1
     for op in OPS:
         c[op] += len(review.get(op, []))
     c["effort"] = sum(v for k, v in c.items() if k != "effort")

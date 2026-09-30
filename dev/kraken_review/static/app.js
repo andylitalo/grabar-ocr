@@ -28,7 +28,7 @@ const state = {
   pages: [],
   page: null,
   lines: [],        // segmentation lines: {index, id, boundary, baseline, bbox}
-  flags: {},        // line_id -> category number
+  flags: {},        // line_id -> sorted array of category numbers (a line can have several)
   missed: [],       // [{id, box:[x1,y1,x2,y2]}] human-drawn missed-line boxes
   // correction ops layered on kraken's immutable lines:
   initials: [],       // [{id, key, box, target_line_id}] drop-cap initials
@@ -168,7 +168,8 @@ function draw() {
   }
   const selected = new Set(state.selection);
   for (const line of state.lines) {
-    const cat = state.flags[line.id];
+    const cats = state.flags[line.id] || [];
+    const cat = cats[0];
     const color = cat ? CATEGORY_COLORS[cat] : NEUTRAL;
     const hover = line.id === state.hoverLineId;
     drawLinePath(line.boundary, line.bbox);
@@ -185,7 +186,8 @@ function draw() {
     if (line.bbox) {
       ctx.fillStyle = color;
       ctx.font = "12px sans-serif";
-      ctx.fillText(String(line.index), toDisp(line.bbox[0]) + 2, toDisp(line.bbox[1]) + 12);
+      const tag = cats.length ? `${line.index} [${cats.join(",")}]` : String(line.index);
+      ctx.fillText(tag, toDisp(line.bbox[0]) + 2, toDisp(line.bbox[1]) + 12);
     }
   }
 
@@ -350,9 +352,9 @@ function renderFlagList() {
   let html = `<h2>Flags (${ids.length})</h2>`;
   if (!ids.length) html += "<p>None yet.</p>";
   for (const id of ids) {
-    const cat = state.flags[id];
-    html += `<div class="flag"><span>${id}</span>` +
-      `<span style="color:${CATEGORY_COLORS[cat]}">${cat} ${CATEGORY_LABELS[cat]}</span></div>`;
+    const tags = state.flags[id].map((c) =>
+      `<span style="color:${CATEGORY_COLORS[c]}">${c} ${CATEGORY_LABELS[c]}</span>`).join("<br>");
+    html += `<div class="flag"><span>${id}</span><span>${tags}</span></div>`;
   }
   html += section("Missed lines", state.missed.map((m) =>
     `<span>${m.id.replace("missed_", "M")}</span>` +
@@ -376,19 +378,35 @@ function renderFlagList() {
 function openModal(line) {
   state.modalLineId = line.id;
   $("modal-title").textContent = `Flag ${line.id} (#${line.index})`;
+  renderModalOptions();
   $("modal-backdrop").classList.add("show");
+}
+// highlight the categories the open line already carries
+function renderModalOptions() {
+  const cats = state.flags[state.modalLineId] || [];
+  document.querySelectorAll(".opt").forEach((btn) => {
+    btn.classList.toggle("active", cats.includes(Number(btn.dataset.cat)));
+  });
 }
 function closeModal() {
   state.modalLineId = null;
   $("modal-backdrop").classList.remove("show");
 }
+// Toggle one category on the open line (a line may carry several, e.g. 2 + 4);
+// null clears all of them. The modal stays open so more can be toggled.
 async function applyCategory(cat) {
   const id = state.modalLineId;
   if (!id) return;
   pushHistory();
-  if (cat === null) { delete state.flags[id]; }
-  else { state.flags[id] = cat; }
-  closeModal();
+  if (cat === null) {
+    delete state.flags[id];
+  } else {
+    const cats = new Set(state.flags[id] || []);
+    if (cats.has(cat)) cats.delete(cat); else cats.add(cat);
+    if (cats.size) state.flags[id] = [...cats].sort((a, b) => a - b);
+    else delete state.flags[id];
+  }
+  if (cat === null) closeModal(); else renderModalOptions();
   draw();
   renderFlagList();
   await saveReview();
@@ -519,7 +537,7 @@ async function deleteOp(kind, id) {
 async function markBlank() {
   if (!state.lines.length) return;
   pushHistory();
-  for (const line of state.lines) state.flags[line.id] = 3;
+  for (const line of state.lines) state.flags[line.id] = [3];
   closeModal();
   closeMissedModal();
   draw();
@@ -623,7 +641,7 @@ async function loadPage(page) {
   state.imageW = seg.width;
   state.imageH = seg.height;
   state.flags = {};
-  for (const [id, info] of Object.entries(review.flags || {})) state.flags[id] = info.category;
+  for (const [id, info] of Object.entries(review.flags || {})) state.flags[id] = info.categories.slice();
   state.missed = (review.missed_lines || []).map((m) => ({ id: m.id, box: m.box.slice() }));
   state.initials = (review.initials || []).map((x) => ({ ...x, box: x.box.slice() }));
   state.merges = (review.merges || []).map((x) => ({ ...x, line_ids: x.line_ids.slice() }));
@@ -825,7 +843,7 @@ document.addEventListener("keydown", (ev) => {
     return;
   }
   if (state.modalLineId) {
-    if (ev.key === "Escape") closeModal();
+    if (ev.key === "Escape" || ev.key === "Enter") { ev.preventDefault(); closeModal(); }
     else if (CATEGORY_LABELS[ev.key]) applyCategory(Number(ev.key));
     return;
   }
