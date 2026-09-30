@@ -1,0 +1,359 @@
+{
+  "page": 642,
+  "page_id": "page_0642_human",
+  "source": {
+    "run_slug": "human__proj__tess__gemini-min",
+    "crop": "human",
+    "slice": "proj",
+    "ocr": {
+      "impl": "tesseract",
+      "tag": "tesseract"
+    },
+    "correct": {
+      "model": "gemini-3.1-pro",
+      "mode": "minimal-edit"
+    },
+    "translate": {
+      "model": "gemini-3.5-flash"
+    }
+  },
+  "provenance": {
+    "source_pdf": "data/pages/642.pdf",
+    "deskew_render": "data/_labeling_work/page_0642/page_deskew.png",
+    "region_boxes": "data/columns/boxes/page_0642_human.json"
+  },
+  "cer": null,
+  "counts": {
+    "total": 27,
+    "text": 27,
+    "non_character": 0,
+    "labeled": 0
+  },
+  "english": "COLOPHON\nOF THIS FOURTH JERUSALEM EDITION\n\nBy the grace of the Lord, this fourth publication of the Book of Hours [Zhamagirk] and Directory [Tonatsuyts] of the Armenian Church has been brought to a successful completion, in a dual printing of the Chancel [Ateni] and Hand [Dzerats] volumes.\n\nThose things which have been in common use in all Orthodox churches of the Armenians since the days of Lord Simeon of Yerevan, the ever-memorable and highly meritorious Catholicos of All Armenians, have been kept unchanged.\n\nWe deemed it appropriate only to introduce certain changes in letters and words, or in the form of instructions and explanations, as they suited accepted customs and ease of understanding.\n\nHerein, we have replaced the Armenian letter-numbers in the excerpts of the simple calendar and in the Five-Hundred-Year table with accepted [Arabic] numerals.\n\nIn the references of the readings, we removed the Euthalian chapters, and we placed the numbers of the chapters and verses before the words of the commencements and endings, which we also abbreviated; for example, instead of writing \"Gospel according to Luke, chapter 22, (Merձetsav) 'The feast of unleavened bread drew near' to 'the twelve tribes of Israel', verse 30,\" we wrote simply: \"Luke 22:1 (Merձetsav) to verse 30 (Israel).\"\n\nWe corrected the spelling of names, and we put Lucian instead of Lunkianos, Adrian instead of Andrianos, Pelagia instead of Peligia, Tarachus instead of Taragros, Eugraphius instead of Grabos, and so forth.",
+  "lines": [
+    {
+      "index": 0,
+      "line_id": "region_01_header/line_001",
+      "region": "region_01_header",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ՅԻՇԱՏԱԿԱՐԱՆ",
+      "grabar": "ՅԻՇԱՏԱԿԱՐԱՆ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_01_header.png",
+      "line_image": "data/lines/page_0642_human/region_01_header/line_001.png"
+    },
+    {
+      "index": 1,
+      "line_id": "region_01_header/line_002",
+      "region": "region_01_header",
+      "column": 1,
+      "non_character": false,
+      "ocr_raw": "ԵՐՈՒՍԱՂԵՄԱԿԱՆ ՉՈՐՐՈՐԴ ՏՊԱԳՐՈՒԹԵԱՆՍ",
+      "grabar": "ԵՐՈՒՍԱՂԵՄԱԿԱՆ ՉՈՐՐՈՐԴ ՏՊԱԳՐՈՒԹԵԱՆՍ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_01_header.png",
+      "line_image": "data/lines/page_0642_human/region_01_header/line_002.png"
+    },
+    {
+      "index": 2,
+      "line_id": "region_02_single/line_001",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ՇՆնորհիւ Տեառն յանգ ելեալ աւարտեցաւ չորրորդս",
+      "grabar": "ՇՆնորհիւ Տեառն յանգ ելեալ աւարտեցաւ չորրորդս",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_001.png"
+    },
+    {
+      "index": 3,
+      "line_id": "region_02_single/line_002",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "այս հրատարակութիւն Ժամագրոց եւ Տօնացուցի Հայաս-",
+      "grabar": "այս հրատարակութիւն Ժամագրոց եւ Տօնացուցի Հայաս-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_002.png"
+    },
+    {
+      "index": 4,
+      "line_id": "region_02_single/line_003",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "տանեայց Եկեղեցւոյս, զոյգ տպագրութեամբ ԱՏԵՆԻ եւ",
+      "grabar": "տանեայց Եկեղեցւոյս, զոյգ տպագրութեամբ ԱՏԵՆԻ եւ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_003.png"
+    },
+    {
+      "index": 5,
+      "line_id": "region_02_single/line_004",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ԶԵՌԱՑ հատորոց։",
+      "grabar": "ՁԵՌԱՑ հատորոց։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_004.png"
+    },
+    {
+      "index": 6,
+      "line_id": "region_02_single/line_005",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Անփոփոխ պահեալ են՝ որչափ ինչ յաւուըրց Տեառն",
+      "grabar": "Անփոփոխ պահեալ են՝ որչափ ինչ յաւուըրց Տեառն",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_005.png"
+    },
+    {
+      "index": 7,
+      "line_id": "region_02_single/line_006",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Սիմէոնի Երեւանեցւոյ, երջանկայիշատակ եւ բազմարդիւն",
+      "grabar": "Սիմէոնի Երեւանեցւոյ, երջանկայիշատակ եւ բազմարդիւն",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_006.png"
+    },
+    {
+      "index": 8,
+      "line_id": "region_02_single/line_007",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "կաթողիկոսի Ամենայն Հայոց, գտանին ի սովորական կիրա-",
+      "grabar": "կաթողիկոսի Ամենայն Հայոց, գտանին ի սովորական կիրա-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_007.png"
+    },
+    {
+      "index": 9,
+      "line_id": "region_02_single/line_008",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ռութեան յամենայն Ուղղափառ եկեղեցիս Հայոց։",
+      "grabar": "ռութեան յամենայն Ուղղափառ եկեղեցիս Հայոց։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_008.png"
+    },
+    {
+      "index": 10,
+      "line_id": "region_02_single/line_009",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Միայն ի դէպ վարկաք մուծանել ինչ ինչ փոփո-",
+      "grabar": "Միայն ի դէպ վարկաք մուծանել ինչ ինչ փոփո-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_009.png"
+    },
+    {
+      "index": 11,
+      "line_id": "region_02_single/line_010",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "խութիւնս ի տառս եւ ի բառս, կամ ի ձեւս խրատուց",
+      "grabar": "խութիւնս ի տառս եւ ի բառս, կամ ի ձեւս խրատուց",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_010.png"
+    },
+    {
+      "index": 12,
+      "line_id": "region_02_single/line_011",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եւ բացատրութեանց, որպէս ի դէպ գային ընկալեալ",
+      "grabar": "եւ բացատրութեանց, որպէս ի դէպ գային ընկալեալ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_011.png"
+    },
+    {
+      "index": 13,
+      "line_id": "region_02_single/line_012",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "սովորութեանց եւ դիւրութեան իմացուածոց։",
+      "grabar": "սովորութեանց եւ դիւրութեան իմացուածոց։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_012.png"
+    },
+    {
+      "index": 14,
+      "line_id": "region_02_single/line_013",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Աստ այսմ զհայկական թուատառս ի քաղուածս",
+      "grabar": "Աստ այսմ զհայկական թուատառս ի քաղուածս",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_013.png"
+    },
+    {
+      "index": 15,
+      "line_id": "region_02_single/line_014",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "պարզատոմարին եւ ի ցուցակի Հինգհարիւրեկին՝ փոխա-",
+      "grabar": "պարզատոմարին եւ ի ցուցակի Հինգհարիւրեկին՝ փոխա-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_014.png"
+    },
+    {
+      "index": 16,
+      "line_id": "region_02_single/line_015",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "նակեցաք ընկալեալ թուանշանօք։",
+      "grabar": "նակեցաք ընկալեալ թուանշանօք։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_015.png"
+    },
+    {
+      "index": 17,
+      "line_id": "region_02_single/line_016",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Ի յիշատակութիւնս ընթերցուածոց ջնջեցաք զԵւ-",
+      "grabar": "Ի յիշատակութիւնս ընթերցուածոց ջնջեցաք զԵւ-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_016.png"
+    },
+    {
+      "index": 18,
+      "line_id": "region_02_single/line_017",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "թաղեան գլուխս, եւ զթուահամարս գլխոց եւ տանց ե-",
+      "grabar": "թաղեան գլուխս, եւ զթուահամարս գլխոց եւ տանց ե-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_017.png"
+    },
+    {
+      "index": 19,
+      "line_id": "region_02_single/line_018",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "դաք յառաջ քան զբառս սկսուածոց եւ աւարտից, զորս",
+      "grabar": "դաք յառաջ քան զբառս սկսուածոց եւ աւարտից, զորս",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_018.png"
+    },
+    {
+      "index": 20,
+      "line_id": "region_02_single/line_019",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եւ համառօտեցաք. օրինակ իմն. փոխանակ դնելոյ Աւետարան",
+      "grabar": "եւ համառօտեցաք. օրինակ իմն. փոխանակ դնելոյ Աւետարան",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_019.png"
+    },
+    {
+      "index": 21,
+      "line_id": "region_02_single/line_020",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Ղուկ. մկ. Մեր)եցաւ տօն բաղարջակերաց իբ. գլ. վ. զէրկրտասան աղգն իսրայելի, համար 30.",
+      "grabar": "Ղուկ. մկ. Մեր)եցաւ տօն բաղարջակերաց իբ. գլ. վ. զէրկրտասան ազգն իսրայելի, համար 30.",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_020.png"
+    },
+    {
+      "index": 22,
+      "line_id": "region_02_single/line_021",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "եդաք պարզապէս. Ղուկ. ԻԲ. 1. Մերձեցաւ. վ. 30. իսրայելի։",
+      "grabar": "եդաք պարզապէս. Ղուկ. ԻԲ. 1. Մերձեցաւ. վ. 30. իսրայելի։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_021.png"
+    },
+    {
+      "index": 23,
+      "line_id": "region_02_single/line_022",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "ՀՀշդեցաք զուղղագրութիւնս անուանց, եւ եդաք",
+      "grabar": "ՀՀշդեցաք զուղղագրութիւնս անուանց, եւ եդաք",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_022.png"
+    },
+    {
+      "index": 24,
+      "line_id": "region_02_single/line_023",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Ղուկիանոսի փոխանակ Ղունկիանոսի, Ադրիսնսի փոխանակ Անդ-",
+      "grabar": "Ղուկիանոսի փոխանակ Ղունկիանոսի, Ադրիսնսի փոխանակ Անդ-",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_023.png"
+    },
+    {
+      "index": 25,
+      "line_id": "region_02_single/line_024",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "րիանոսի, Պեղագեայ փոխանակ Պեղիքեայ, Տարագոի փոխանակ",
+      "grabar": "րիանոսի, Պեղագեայ փոխանակ Պեղիքեայ, Տարագոի փոխանակ",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_024.png"
+    },
+    {
+      "index": 26,
+      "line_id": "region_02_single/line_025",
+      "region": "region_02_single",
+      "column": 2,
+      "non_character": false,
+      "ocr_raw": "Տարագրոսի, Ե-Գրափոի փոխանակ Գրաբոսի, եւայլն։",
+      "grabar": "Տարագրոսի, Ե-Գրափոի փոխանակ Գրաբոսի, եւայլն։",
+      "region_bbox": null,
+      "crop_image": "data/columns/page_0642_human_region_02_single.png",
+      "line_image": "data/lines/page_0642_human/region_02_single/line_025.png"
+    }
+  ]
+}

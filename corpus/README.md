@@ -1,13 +1,22 @@
 # `corpus/` — the productionized digitized + translated book
 
 This is the **canonical, committed deliverable**: the digitized Grabar and English
-translation of the Տօնացոյց (Tonatsoyts), pages 458–641, consolidated from the pipeline's
+translation of the Տօնացոյց (Tonatsoyts), pages 453–643, consolidated from the pipeline's
 best runs into one page-keyed tree. Other services consume this directory; it is the stable
 interface, decoupled from the prototyping runs under `runs/` (which are gitignored scratch).
 
 Everything here is **text only** — no images or PDFs. The heavy raster artifacts (page
 renders, region crops, line slices) stay out of git; the files here point at them by
 relative repo path for traceability.
+
+> **Understanding the lectionary?** Start with **[`STRUCTURE.md`](STRUCTURE.md)** — the
+> master index of the book's two-volume structure, section-to-page map, and the gotchas
+> (chiefly: the year-letter is a *Julian* code). Companion hand-maintained docs:
+> [`GLOSSARY.md`](GLOSSARY.md) (controlled term renderings), [`ERRATA.md`](ERRATA.md)
+> (digitization/translation defects + the `book.*.corrected.md` overlays), and
+> [`TYPOS.md`](TYPOS.md) (errors in the printed source). `README.md`, `STRUCTURE.md`,
+> `GLOSSARY.md`, `ERRATA.md`, `TYPOS.md`, and `book.*.corrected.md` are **hand-maintained**;
+> everything else in this directory is **generated** by `pipeline.promote` — do not edit it.
 
 ## Layout
 
@@ -67,8 +76,8 @@ The `source` block records the exact stage impls and model ids at each hop; the 
 ## Coverage, blanks & gaps
 
 `manifest.json` records the promoted `pages[]` (each with a `blank` flag), an `n_blank`
-count, and a `gaps[]` list. As of the current promotion: **184 of 184 pages** (458–641),
-of which **178 are digitized content and 6 are blank** (481, 495, 501, 521, 529, 552), and
+count, and a `gaps[]` list. As of the current promotion: **191 of 191 pages** (453–643),
+of which **184 are digitized content and 7 are blank** (455, 481, 495, 501, 521, 529, 552), and
 **0 gaps**.
 
 **Blank pages** are source pages a human marked in the labeling UI; the marker lives at
@@ -90,7 +99,7 @@ Promotion is a pure consolidation of existing run artifacts — no stage re-runs
 spend. From the repo root:
 
 ```bash
-.venv/bin/python -m pipeline.promote --range 458-641
+.venv/bin/python -m pipeline.promote --range 453-643
 ```
 
 Defaults: `--from auto__proj__tess__gemini-min human__proj__tess__gemini-min` (applied in

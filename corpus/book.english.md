@@ -1,3 +1,77 @@
+## page_0453_human
+
+DIRECTORY OF FEASTS [TONATSUYTS]
+FIRST VOLUME
+IN WHICH ARE INDICATED
+THE FEASTS AND FASTS, READINGS AND SERVICES
+OF THE HOLY ARMENIAN CHURCH
+ESTABLISHED
+BY OUR HOLY ENLIGHTENER [SAINT GREGORY]
+AT THE BEGINNING OF THE ENLIGHTENMENT
+OF THE ARMENIAN NATION,
+AND ARRANGED
+BY SAINT SAHAK PARTEV
+AND BY OUR BLESSED PATRIARCHS,
+PATRIARCH GIUT
+AND YOVHANNES MANDAKUNI,
+AND FINALLY,
+BY SAINT NERSES SHNORHALI,
+AND IN LATER TIMES,
+AT THE HOLY SEE OF ETCHMIADZIN,
+BY LORD SIMEON, CATHOLICOS OF THE ARMENIANS.
+PRINTING HOUSE OF THE APOSTOLIC SEE
+OF SAINTS JAMES
+JERUSALEM
+[In the Year of the Armenians] 1350 [= 1901]
+1901
+
+## page_0454_human
+
+During the Pontificate
+of Lord George V,
+Most Holy Catholicos
+[of All Armenians, Lord, Lord...]
+During the Patriarchate of Holy Jerusalem
+of Lord Haroutioun,
+the late Holy Archbishop,
+[filler letters: aamamamamaashsh]
+During the Patriarchate of Constantinople
+of Lord Zaven,
+Holy Archbishop.
+
+## page_0455
+
+_(blank page — no text in the source)_
+
+## page_0456_human
+
+A new king was born in the city of Bethlehem,
+O children of men, bless [Him],
+for He became incarnate for our sake.
+
+## page_0457_human
+
+CANON OF THE THEOPHANY
+AND BIRTH OF CHRIST OUR GOD
+
+In the night there is a vigil with psalms and services.
+And in the morning, the Blessing hymn: Tone 6 [gy] "Great Mystery" (Khorhourd mets). But the Patriarch, the priests, and all the ministers shall vest, and with lighted torches and candles they shall come into the chancel, and thus they shall sing the Blessing hymn. Likewise at the "Lord of heaven" (Ter yerknits) hymns, all being vested, they shall come into the chancel. And at the completion of the "Lord of heaven" hymns, the Patriarch or one of the honorable clergy shall go up to the Altar and they shall say "Proschume" [Orthiu]. Gospel according to Luke 2:8, "And there were shepherds..." to verse 14, "Glory to God in the highest, and on earth peace, good will among men." And they shall say "Glory to God in the highest" up to the middle, and then they shall read the remainder of the Gospel, Luke 2:15, "And it came to pass..." to verse 20, "as it was told unto them." And then they shall sing the rest of the "Glory to God in the highest." Morning Song: "Sun of Justice" (Aregakn ardaroutyan); Response: "In the beauty of holiness" (I vayelchoutyun srbots).
+
+But if it falls on a Sunday, they shall read the Gospel of the Myrrh-bearers. Litany: "Holy Mother" (Mayr sourb). Prayer: "We thank You" (Gohanamk zken). "Holy God, who were born and revealed."
+Hymn: Tone 8 [dk] "Great Mystery" (Khorhourd mets). After: "Proschume" [Orthiu]. Gospel according to Luke 1:1, "Forasmuch as many..." to verse 25, "...among men."
+Second hymn: "Today they rejoice" (Aysor tsndan). After: "Proschume" [Orthiu]. Gospel according to Luke 1:26, "And in the month..." to verse 38, "...and the angel departed from her."
+Third hymn: "Today the Word" (Aysor bann). After: "Proschume" [Orthiu]. Gospel according to Luke 1:39, "And Mary arose..." to verse 80, "...his showing unto Israel."
+Fourth hymn: "Dawning from the Father" (I hore tsag). After: "Proschume" [Orthiu]. Gospel according to Luke 2:1, "And it came to pass in those days..." to verse 7, "...room in the inn."
+Psalm 109 [110], Antiphon: "In the beauty [of holiness]." Response: "The Lord said unto my Lord." After: "Proschume" [Orthiu].
+Gospel according to Matthew 1:1, "The book of the generation of Jesus Christ..." to verse 17, "...fourteen generations."
+
+If it falls on a Sunday, they shall say "Newly Created" (Norasteghtsial), and if on another day, the "Creator-hymn" (Ararchakann) according to the day; and after, let them know [to say] "Hidden Mystery" (Tatskyal khorhourdn). Litany: "Let us ask" (Khndresgouk). "Save [us]" (Ketso). Prayer: "To Your all-powerful and wondrous Birth and Revelation, Christ our God."
+Introit of the Liturgy: "The Mother of God, confessing you" (Astvatsatsin zkez khostovanyal). Response: "My soul shall magnify" (Metsatsoustse). Hymn: Tone 3 [ey] "The Holy Mother of God" (Sourb zastvatsatsinn). Psalm 2, Antiphon: "The Lord said unto me." Response: "Why did the heathen rage?"
+The Apostle: Titus 2:11, "For there has appeared..." to verse 15, "...Let no man despise thee."
+Alleluia: "Today is born He who is from the Father."
+Gospel according to Matthew 1:18, "Now the birth of Jesus Christ..." to verse 25, "...His name Jesus."
+Hymn of the Hagiology [Sanctus]: "The multitude [of angels]" (Bazmoutyun) is used during these eight days.
+
 ## page_0458_auto
 
 And after the Liturgy, they shall go to the water with Cross and Gospel, singing the hymn in Tone 3 [gd]: "Light from Light" (Loys i lue). After this: Psalm 28 [29], antiphon: "The voice of the Lord is upon [the waters]", response: "Ascribe to the Lord". And they shall read the scriptures:
@@ -8504,3 +8578,35 @@ Although the Epacts were not as necessary as the Dominical Letters, yet we place
 ## page_0641_auto
 
 [Unclear text / Rubric] ✷✷✷✷✷✷✷✷✷✷✷✷✷✷
+
+## page_0642_human
+
+COLOPHON
+OF THIS FOURTH JERUSALEM EDITION
+
+By the grace of the Lord, this fourth publication of the Book of Hours [Zhamagirk] and Directory [Tonatsuyts] of the Armenian Church has been brought to a successful completion, in a dual printing of the Chancel [Ateni] and Hand [Dzerats] volumes.
+
+Those things which have been in common use in all Orthodox churches of the Armenians since the days of Lord Simeon of Yerevan, the ever-memorable and highly meritorious Catholicos of All Armenians, have been kept unchanged.
+
+We deemed it appropriate only to introduce certain changes in letters and words, or in the form of instructions and explanations, as they suited accepted customs and ease of understanding.
+
+Herein, we have replaced the Armenian letter-numbers in the excerpts of the simple calendar and in the Five-Hundred-Year table with accepted [Arabic] numerals.
+
+In the references of the readings, we removed the Euthalian chapters, and we placed the numbers of the chapters and verses before the words of the commencements and endings, which we also abbreviated; for example, instead of writing "Gospel according to Luke, chapter 22, (Merձetsav) 'The feast of unleavened bread drew near' to 'the twelve tribes of Israel', verse 30," we wrote simply: "Luke 22:1 (Merձetsav) to verse 30 (Israel)."
+
+We corrected the spelling of names, and we put Lucian instead of Lunkianos, Adrian instead of Andrianos, Pelagia instead of Peligia, Tarachus instead of Taragros, Eugraphius instead of Grabos, and so forth.
+
+## page_0643_human
+
+In the indexes of the calendar of the second volume of the Tonatsuyts [Directory of Feasts], we followed a loose simplicity, preferring it
+to the crowded layout of tables and columns. And
+where the feasts of the saints were combined, we separated them
+with additions.
+At the end of the Manual of Hours [Book of Hours], we newly prepared
+the succession of Catholicoi, following the newest
+studies, and we placed the same in the place of the incomplete
+list of the previous printings.
+And whatever may still be deficient in these words, we commit
+to the care of those who shall come after us.
+In Jerusalem, Apostolic See of Saint James,
+August 15, ՌՅԿԴ [1364 Armenian Era / AD 1915]...

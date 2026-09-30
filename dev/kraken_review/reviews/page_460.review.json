@@ -1,0 +1,66 @@
+{
+  "page": 460,
+  "reviewed_by": "human",
+  "timestamp": "2026-07-24T04:59:58.332840+00:00",
+  "model": "blla.mlmodel",
+  "num_lines": 88,
+  "flags": {
+    "line_002": {
+      "category": 1,
+      "label": "over-segmentation"
+    },
+    "line_056": {
+      "category": 2,
+      "label": "under-segmentation"
+    },
+    "line_057": {
+      "category": 1,
+      "label": "over-segmentation"
+    },
+    "line_013": {
+      "category": 2,
+      "label": "under-segmentation"
+    },
+    "line_014": {
+      "category": 1,
+      "label": "over-segmentation"
+    },
+    "line_032": {
+      "category": 2,
+      "label": "under-segmentation"
+    },
+    "line_033": {
+      "category": 1,
+      "label": "over-segmentation"
+    }
+  },
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        1164.0,
+        1080.0,
+        1995.0,
+        1236.0
+      ]
+    },
+    {
+      "id": "missed_002",
+      "box": [
+        304.0,
+        1005.0,
+        1123.0,
+        1146.0
+      ]
+    },
+    {
+      "id": "missed_003",
+      "box": [
+        302.0,
+        2174.0,
+        1115.0,
+        2306.0
+      ]
+    }
+  ]
+}

@@ -91,6 +91,9 @@ runs/
 # Tesseract traineddata (large binary; downloaded, not source — Phase 2 hye-tesseract benchmark)
 ml_vision/tessdata/
 
+# Tesseract fine-tuning scratch + tesstrain clone + staged GT (Phase 2b; large/derived)
+ml_vision/tessdata_ft/
+
 # BentoML local store
 ~/bentoml/
 
@@ -99,3 +102,11 @@ ml_vision/tessdata/
 # the corpus JSON is tracked (runs/ and data/ images stay ignored above).
 !/corpus/*.json
 !/corpus/**/*.json
+
+# Phase 8 clean-up: local kraken / tesstrain artifacts (regenerable, large)
+dev/venv-grabar/
+dev/kraken_review/data/
+dev/segmented_lines/
+dev/extracted_lines/
+# Kraken review decisions are human-verified ground truth; negate the global *.json rule.
+!/dev/kraken_review/reviews/*.json
