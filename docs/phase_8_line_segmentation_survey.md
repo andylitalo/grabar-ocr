@@ -416,4 +416,10 @@ section.
   runners, a shared geometry format, overlays and a scorer; extended the review UI with
   `--tool`, flag categories 4–5 and a "Mark reviewed" button. All five candidates run on
   the 12-page sample. Automated triage proposes human-scoring three of them (§5.1).
+- **2026-09-30: Baseline chosen: `paddle-filled` (agree ≥ 0.4).** hyocr-paddle needed the
+  fewest corrections of the three scored tools (4.1 ops/page vs kraken 10.6, Surya 20.3;
+  §5.3), with zero non-text boxes and zero reading-order errors. Its one weakness, missed
+  lines, is closed by adding kraken lines that Surya agrees on and Paddle lacks (§5.4):
+  15/15 missed lines recovered, 2 false adds, ≈2.9 ops/page projected. The reviewer chose
+  the rule. p.641 is out of scoring (hand-transcribed CSV).
 
