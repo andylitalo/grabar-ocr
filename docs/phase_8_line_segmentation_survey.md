@@ -398,6 +398,65 @@ Taregir title letters (e.g. Դ on p.564) are missed by all three tools. The revi
 them with the section-title tool in Phase 9 regardless, since that box is what marks the
 section.
 
+### 5.5 Non-text filter for filled lines (2026-10-01)
+
+Once hyocr-paddle had run on 104 pages (453–549 plus the sample), the fill rule proposed
+**136 lines on 64 pages**. Checked by eye against the scan (not yet Phase 9-reviewed),
+**123 are real lines and 13 are not.** The real ones are:
+
+- **Lines opening with a large capital** (Զ, Տ, Ս, Պ…), on almost every body page.
+  Paddle's DB detector skips them; the line is inside a layout region.
+- **Runs of a column that no layout region covers**: 12 lines on p.490, 6 on p.491, 9 on
+  p.531. This is a layout-stage miss, which a detector setting or fine-tune would not fix.
+- **Running-header page numbers** ("(482)").
+
+The 13 non-text fills are border/woodcut bands (8 on the illustration pages 456, 482, 496,
+502, 514 ×2, 522, 530; 2 on p.545), the rule ornament on p.453, and 2 speckle-noise boxes in
+p.520's bottom margin.
+
+Box shape doesn't separate them: the bands have title-line aspect ratios (~11) and
+display-type heights (1.9–2.8× the median line). Ink texture does
+(`ensemble.nontext_reason`):
+
+| measure (inside the box) | real lines (123) | non-text (13) | cutoff |
+|---|---|---|---|
+| share of pixel columns with no ink | ≥ 0.11 (median 0.26) | 10 of 13 ≤ 0.03 | drop if < 0.05 (`ornament`) |
+| share of ink blobs < 20 px | ≤ 0.26 | the other 3: 0.65–0.86 | drop if > 0.5 (`speckle`) |
+
+**Result: 13 of 13 non-text fills dropped, 0 of 123 real lines lost.** On the reviewed
+sample: 15/15 missed lines still recovered, false adds 2 → 0, so projected effort is
+**30 over 11 pages ≈ 2.7 per page**. Both cutoffs sit at least 2× from the nearest real
+line, but they were fitted on the pages they're scored on, and Vol II (pp.550–640) hasn't
+been checked yet. The filter only touches fills, never Paddle's own lines. Dropped boxes are
+kept in `segmentation.json` as `filtered_fills` with the reason.
+
+### 5.6 Lower DB `box_thresh` for large-capital lines? No (2026-10-01)
+
+Tried before the full run: can Paddle's detector find the large-capital lines itself, if
+it keeps lower-scoring boxes? `ARMENIAN_OCR_PADDLE_DET_BOX_THRESH` at 0.5 / 0.4 / 0.3 (the
+PaddleOCR default is 0.6), on pp.453, 457, 488, 519, 557, written as tools
+`hyocr-paddle-bt<X>` (`run_hyocr.py --tool`) and compared with the Paddle reviews:
+
+| box_thresh | body-line misses recovered | other misses (p.453 title, p.557 header) | original lines lost | new unmatched boxes |
+|---:|---:|---:|---:|---:|
+| 0.5 | 3/4 | 0/10 | 0 | 3 |
+| 0.4 | **4/4** | 0/10 | 0 | 4 |
+| 0.3 | 4/4 | 0/10 | 0 | 4 |
+
+- At 0.4 Paddle finds every large-capital line it missed in the sample (457, 488 ×2, 519)
+  and loses nothing.
+- The new unmatched boxes are noise: three slivers 6–21 px tall inside existing lines or on
+  a dot (p.488 ×2, p.519; Paddle's real lines are ≥ 35 px), and a box around p.557's drop
+  cap Ե as its own line.
+- The title-page and header misses don't move: those lines sit outside any layout region,
+  so the detector never sees them.
+
+**Decision: keep the default 0.6.** The kraken+Surya fill already recovers all 4 of these
+lines (§5.4), so on `paddle-filled` lowering the threshold saves nothing and adds about 1
+noise box per page. It becomes the right lever only if the fill's kraken/Surya inputs are
+dropped, e.g. to make the tool Paddle-only for other books. In that case use 0.4 plus a
+minimum line height (≈ 0.5× the page's median).
+
 ## 6. Decision log
 
 - **2026-09-30:** Cut Phase 8 down from the full citable-corpus plan to clean-up plus a
@@ -423,3 +482,8 @@ section.
   15/15 missed lines recovered, 2 false adds, ≈2.9 ops/page projected. The reviewer chose
   the rule. p.641 is out of scoring (hand-transcribed CSV).
 
+- **2026-10-01: Non-text filter added to the fill** (§5.5). On 104 pages it dropped 13 of
+  13 ornament/speckle fills and no real line; sample projection ≈2.7 ops/page. Lowering
+  Paddle's DB `box_thresh` was tried and rejected for this baseline (§5.6): it finds the
+  same lines the fill already recovers and adds noise. Fine-tuning (Paddle DB, kraken) is
+  kept as a future experiment, not needed for Phase 9.

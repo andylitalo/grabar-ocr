@@ -13,6 +13,13 @@ line that matches none is a false add (it would cost the reviewer a delete).
 ``--write --pages 453-643`` writes the merged geometry as tool ``paddle-filled`` (the
 Phase 9 baseline). Added lines carry ``"source": "kraken-fill"`` and are slotted into
 paddle's reading order (see ``insert_in_order``).
+
+Non-text filter (on by default, ``--no-filter`` to skip): a proposal is dropped when its
+box has almost no blank pixel columns (ornament bands, woodcuts) or its ink is mostly
+speckle (scan noise). See ``nontext_reason``. Dropped proposals are kept in
+``segmentation.json`` as ``filtered_fills`` so nothing is lost silently. The filter needs
+numpy + OpenCV, so run with the repo venv (``.venv/bin/python``); ``--no-filter`` runs on
+the stdlib.
 """
 
 from __future__ import annotations
@@ -79,6 +86,55 @@ def proposals(page: int, agree: float, covered: float) -> list[dict]:
     return out
 
 
+# Phase 8 §5.4 filter, fitted on the fills of pp.453-549: 123 real lines have blank
+# columns >= 0.11 and speckle <= 0.26; all 13 non-text fills fall past these cutoffs.
+MIN_BLANK_COLS = 0.05
+MAX_SPECKLE = 0.5
+SPECKLE_AREA = 20  # px at 300 DPI: below this an ink blob is noise, not a glyph part
+INK_LEVEL = 128
+
+
+def nontext_reason(gray, box: list[float]) -> str | None:
+    """Why ``box`` on the grayscale page ``gray`` is not a text line, or ``None``.
+
+    - ``ornament``: under ``MIN_BLANK_COLS`` of the box's pixel columns are free of ink.
+      Text always leaves gaps between letters and words; borders and woodcuts don't.
+    - ``speckle``: over ``MAX_SPECKLE`` of the ink blobs are smaller than ``SPECKLE_AREA``.
+    """
+    import cv2
+    import numpy as np
+
+    x1, y1, x2, y2 = (int(round(v)) for v in box)
+    ink = (gray[max(0, y1):y2, max(0, x1):x2] < INK_LEVEL).astype(np.uint8)
+    if ink.size == 0:
+        return None
+    if (ink.sum(axis=0) == 0).mean() < MIN_BLANK_COLS:
+        return "ornament"
+    _, _, stats, _ = cv2.connectedComponentsWithStats(ink, connectivity=8)
+    areas = stats[1:, cv2.CC_STAT_AREA]
+    if len(areas) and (areas < SPECKLE_AREA).mean() > MAX_SPECKLE:
+        return "speckle"
+    return None
+
+
+def split_nontext(page: int, adds: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Partition proposals into (kept, filtered); filtered ones carry ``filter_reason``."""
+    if not adds:
+        return [], []
+    import numpy as np
+    from PIL import Image
+
+    gray = np.array(Image.open(common.render_path(page)).convert("L"))
+    kept, dropped = [], []
+    for a in adds:
+        reason = nontext_reason(gray, a["bbox"])
+        if reason:
+            dropped.append({**a, "filter_reason": reason})
+        else:
+            kept.append(a)
+    return kept, dropped
+
+
 def insert_in_order(base: list[dict], add: dict) -> int:
     """Index at which ``add`` joins paddle's ordered ``base`` lines.
 
@@ -104,11 +160,15 @@ def insert_in_order(base: list[dict], add: dict) -> int:
     return sum(1 for b in base if cy(b) < acy)
 
 
-def write_filled(page: int, agree: float, covered: float) -> tuple[int, int]:
+def write_filled(page: int, agree: float, covered: float,
+                 use_filter: bool = True) -> tuple[int, int, int]:
     seg_path = common.tool_data_dir("hyocr-paddle", page) / "segmentation.json"
     seg = json.loads(seg_path.read_text())
     merged = [dict(l) for l in seg["lines"]]
     adds = proposals(page, agree, covered)
+    dropped: list[dict] = []
+    if use_filter:
+        adds, dropped = split_nontext(page, adds)
     for a in sorted(adds, key=lambda a: (a["bbox"][1], a["bbox"][0])):
         rec = {"boundary": a["boundary"], "baseline": a["baseline"], "bbox": a["bbox"],
                "source": "kraken-fill", "kraken_id": a["id"], "agree_iou": a["agree_iou"]}
@@ -117,8 +177,16 @@ def write_filled(page: int, agree: float, covered: float) -> tuple[int, int]:
         line.setdefault("source", "hyocr-paddle")
     out = common.write_segmentation(
         "paddle-filled", page, merged, width=seg["width"], height=seg["height"],
-        model=f"hyocr-paddle + kraken lines Surya agrees on (agree>={agree}, covered<{covered})",
-        extra={"layout_blocks": seg.get("layout_blocks", [])},
+        model=(f"hyocr-paddle + kraken lines Surya agrees on (agree>={agree}, covered<{covered}"
+               + (", non-text filter)" if use_filter else ")")),
+        extra={
+            "layout_blocks": seg.get("layout_blocks", []),
+            "filtered_fills": [
+                {"kraken_id": d["id"], "bbox": d["bbox"], "boundary": d["boundary"],
+                 "agree_iou": d["agree_iou"], "filter_reason": d["filter_reason"]}
+                for d in dropped
+            ],
+        },
     )
     # write_segmentation keeps only geometry + confidence/text; restore provenance fields
     rec = json.loads(out.read_text())
@@ -127,7 +195,7 @@ def write_filled(page: int, agree: float, covered: float) -> tuple[int, int]:
             if key in src:
                 line[key] = src[key]
     out.write_text(json.dumps(rec, indent=1), encoding="utf-8")
-    return len(seg["lines"]), len(adds)
+    return len(seg["lines"]), len(adds), len(dropped)
 
 
 def main() -> None:
@@ -136,25 +204,27 @@ def main() -> None:
     ap.add_argument("--covered", type=float, default=0.3)
     ap.add_argument("--match", type=float, default=0.3)
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--no-filter", action="store_true", help="keep non-text fills (see nontext_reason)")
     ap.add_argument("--write", action="store_true", help="write tool paddle-filled instead of evaluating")
     ap.add_argument("--pages", help="pages for --write, e.g. 453-643")
     args = ap.parse_args()
 
     if args.write:
-        total_add = 0
+        total_add = total_drop = 0
         for page in common.parse_pages(args.pages):
             needed = [common.tool_data_dir(t, page) / "segmentation.json"
                       for t in ("hyocr-paddle", "kraken", "surya")]
             if not all(p.exists() for p in needed):
                 print(f"page {page}: missing input geometry, skipped")
                 continue
-            n, k = write_filled(page, args.agree, args.covered)
+            n, k, d = write_filled(page, args.agree, args.covered, not args.no_filter)
             total_add += k
-            print(f"page {page}: {n} paddle + {k} filled")
-        print(f"total filled lines: {total_add}")
+            total_drop += d
+            print(f"page {page}: {n} paddle + {k} filled" + (f" ({d} non-text dropped)" if d else ""))
+        print(f"total filled lines: {total_add}; non-text fills dropped: {total_drop}")
         return
 
-    tot_missed = tot_rec = tot_add = tot_false = 0
+    tot_missed = tot_rec = tot_add = tot_false = tot_drop = 0
     for page in common.SAMPLE_PAGES:
         if page in common.TABLE_PAGES:
             continue
@@ -162,18 +232,26 @@ def main() -> None:
                              / f"page_{page}.review.json").read_text())
         missed = [m["box"] for m in review.get("missed_lines", [])]
         adds = proposals(page, args.agree, args.covered)
+        dropped: list[dict] = []
+        if not args.no_filter:
+            adds, dropped = split_nontext(page, adds)
+        tot_drop += len(dropped)
         recovered = {i for i, m in enumerate(missed)
                      if any(iou(a["bbox"], m) >= args.match for a in adds)}
         false = [a for a in adds if not any(iou(a["bbox"], m) >= args.match for m in missed)]
         tot_missed += len(missed); tot_rec += len(recovered)
         tot_add += len(adds); tot_false += len(false)
-        if args.verbose or missed or adds:
+        if args.verbose or missed or adds or dropped:
             print(f"p.{page}: missed {len(missed)}, recovered {len(recovered)}; "
-                  f"added {len(adds)}, false {len(false)}"
+                  f"added {len(adds)}, false {len(false)}, filtered {len(dropped)}"
                   + ("".join(f"\n    false add {a['id']} bbox={[round(v) for v in a['bbox']]}" for a in false)
+                     + "".join(f"\n    filtered {d['id']} ({d['filter_reason']}) "
+                               f"bbox={[round(v) for v in d['bbox']]}" for d in dropped)
                      if args.verbose else ""))
-    print(f"\nagree>={args.agree} covered<{args.covered}: recovered {tot_rec}/{tot_missed} missed lines; "
-          f"{tot_add} added, {tot_false} false adds")
+    print(f"\nagree>={args.agree} covered<{args.covered}"
+          + ("" if args.no_filter else ", non-text filter")
+          + f": recovered {tot_rec}/{tot_missed} missed lines; "
+          f"{tot_add} added, {tot_false} false adds, {tot_drop} filtered")
 
 
 if __name__ == "__main__":

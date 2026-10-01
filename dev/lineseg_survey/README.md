@@ -57,3 +57,14 @@ python3 dev/lineseg_survey/score.py                   # §5 results table from t
 dev/lineseg_survey/.venv-surya/bin/python dev/lineseg_survey/overlay.py 453-642 \
     --tools kraken,surya,hyocr-paddle,hyocr-tess,projection --scale 0.3   # side-by-side PNGs
 ```
+
+## Phase 9 baseline (`paddle-filled`)
+
+```bash
+.venv/bin/python dev/lineseg_survey/ensemble.py -v                         # score the fill on the sample reviews
+.venv/bin/python dev/lineseg_survey/ensemble.py --write --pages 453-643     # write paddle-filled
+```
+
+The non-text filter (ornament bands, speckle) needs numpy + OpenCV, so use the repo
+`.venv`. Dropped fills are kept per page as `filtered_fills`. `--no-filter` turns it off
+and runs on the stdlib `python3`.

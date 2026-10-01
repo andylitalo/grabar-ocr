@@ -53,11 +53,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", choices=["tess", "paddle"], required=True)
     ap.add_argument("--pages", help="e.g. 453-643 or 457,530 (default: survey sample)")
+    ap.add_argument("--tool", help="output tool name (default hyocr-<config>); use for "
+                    "parameter experiments, e.g. with ARMENIAN_OCR_PADDLE_DET_BOX_THRESH set")
     ap.add_argument("--skip-existing", action="store_true",
                     help="leave pages that already have geometry untouched (their reviews "
                          "reference its line ids)")
     args = ap.parse_args()
-    tool = f"hyocr-{args.config}"
+    tool = args.tool or f"hyocr-{args.config}"
     pipeline = build(args.config)
 
     for page_no in common.parse_pages(args.pages):
@@ -91,7 +93,7 @@ def main() -> None:
         path = common.write_segmentation(
             tool, page_no, lines,
             width=page.width, height=page.height,
-            model=f"hye-open-ocr {args.config}",
+            model=f"hye-open-ocr {args.config}" + (f" ({tool})" if args.tool else ""),
             extra={"layout_blocks": blocks},
         )
         print(f"page {page_no}: {len(lines)} lines, {len(blocks)} regions → {path.relative_to(common.REPO_ROOT)}")
