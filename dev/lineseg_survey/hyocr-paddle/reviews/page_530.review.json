@@ -1,0 +1,15 @@
+{
+  "page": 530,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:32:28.478312+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 2,
+  "flags": {},
+  "missed_lines": [],
+  "initials": [],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

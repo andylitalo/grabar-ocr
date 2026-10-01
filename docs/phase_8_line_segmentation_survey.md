@@ -327,7 +327,44 @@ The same pad will be applied to kraken and hyocr-paddle before comparing.
   drop-caps left out 5 vs 24, reading order 5 vs 11, splits 1 vs 10, and only 1 missed
   line. Its weak spot is ornaments on decorative pages (p.557: 5 non-text, 3 over).
 
-_Pending: hyocr-paddle._
+**hyocr-paddle: reviewed 2026-09-30, 11 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 15 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 9 |
+| 457 | 66 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 2 |
+| 488 | 91 | 0 | 1 | 0 | 1 | 0 | 2 | 1 | 0 | 0 | 5 |
+| 519 | 91 | 1 | 1 | 0 | 5 | 0 | 1 | 2 | 0 | 0 | 10 |
+| 530 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 557 | 53 | 2 | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 6 |
+| 564 | 67 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 575 | 79 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 5 |
+| 593 | 86 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| 610 | 75 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 4 |
+| 642 | 28 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| **11 pages** | **653** | **8** | **7** | **0** | **7** | **0** | **15** | **5** | **3** | **0** | **45** |
+
+- **Effort: 45 over 11 pages = 4.1 per page.** The 8 px pad cures only 2 of its 7 clip
+  flags (padded: 3.9 per page).
+- **Zero non-text boxes and zero reading-order errors.** The layout stage drops figures
+  and ornaments before line detection, which is why p.530 is clean. The X-Y-cut region
+  order held on every page.
+- **Its weakness is missed lines: 15, 9 of them on the title page (p.453).** A missed
+  line is the riskiest error, because text silently disappears if no one draws the box.
+  Outside p.453 it missed 6 lines across 10 pages.
+
+### 5.3 Comparison
+
+| tool | ops / page (raw) | with 8 px pad free | without p.530 |
+|---|--:|--:|--:|
+| **hyocr-paddle** | **4.1** | **3.9** | **4.5** |
+| kraken | 10.6 | 10.0 | 6.1 |
+| Surya | 20.3 | ~9.9 | ~9.9 |
+
+hyocr-paddle needs the fewest corrections under every adjustment. Its missed lines are
+the one error class where it trails kraken (15 vs 1), and they cluster on the display-type
+title page. Phase 9 must make missed lines easy to spot, e.g. by highlighting ink that no
+line covers.
 
 ## 6. Decision log
 
