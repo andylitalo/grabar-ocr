@@ -27,7 +27,6 @@ import common  # noqa: E402
 
 INK = 128      # gray < INK counts as ink
 INSET = 3      # px trimmed from each side of the x-range (ignores neighbours' edges)
-TABLE_PAGES = {641}  # Paschal table: cell-level, scored apart
 
 
 def needs(ink: np.ndarray, bbox: list[float], search: int) -> tuple[int, int]:
@@ -56,7 +55,7 @@ def main() -> None:
 
     flagged = cured = 0
     for page in common.SAMPLE_PAGES:
-        if page in TABLE_PAGES:
+        if page in common.TABLE_PAGES:
             continue
         rev_path = common.SURVEY_DIR / args.tool / "reviews" / f"page_{page}.review.json"
         if not rev_path.exists():
@@ -75,7 +74,7 @@ def main() -> None:
             cured += top <= args.pad and bottom <= args.pad
     pct = 100 * cured / flagged if flagged else 0.0
     print(f"{args.tool}: {cured}/{flagged} clip flags ({pct:.0f}%) cured by a uniform {args.pad}px pad "
-          f"(pages other than {sorted(TABLE_PAGES)})")
+          f"(pages other than {sorted(common.TABLE_PAGES)})")
 
 
 if __name__ == "__main__":

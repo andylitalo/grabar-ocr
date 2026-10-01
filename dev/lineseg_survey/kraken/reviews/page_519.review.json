@@ -1,0 +1,94 @@
+{
+  "page": 519,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:19:43.615638+00:00",
+  "tool": "kraken",
+  "model": "blla.mlmodel",
+  "num_lines": 92,
+  "flags": {
+    "line_003": {
+      "categories": [
+        2,
+        5
+      ],
+      "labels": [
+        "under-segmentation",
+        "out of reading order"
+      ]
+    },
+    "line_019": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_066": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_026": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_037": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_067": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_078": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_087": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u053b",
+      "box": [
+        1026.0,
+        1360.0,
+        1101.0,
+        1496.0
+      ],
+      "target_line_id": "line_066"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

@@ -260,8 +260,10 @@ its own for whichever tool wins.
 
 ### 5.2 Human scoring
 
-Scope approved 2026-09-30: kraken, Surya and hyocr-paddle. p.641 (Paschal table) is
-reported separately and kept out of the per-page effort. "Effort" is ops per page
+Scope approved 2026-09-30: kraken, Surya and hyocr-paddle. **p.641 (Paschal table) is out
+of scoring for every tool** (maintainer, 2026-09-30): kraken's errors there were too many
+to review, no tool segments it as lines, and it is already hand-transcribed as a CSV.
+`score.py` skips it. "Effort" is ops per page
 (`score.py`): each flag category, missed box, initial, merge and split counts 1.
 
 **Surya: reviewed 2026-09-30, all 12 pages.**
@@ -280,7 +282,7 @@ reported separately and kept out of the per-page effort. "Effort" is ops per pag
 | 610 | 73 | 0 | 2 | 0 | 6 | 0 | 0 | 1 | 0 | 0 | 9 |
 | 642 | 28 | 0 | 1 | 0 | 10 | 0 | 0 | 5 | 0 | 0 | 16 |
 | **11 pages** | **652** | **0** | **29** | **11** | **138** | **11** | **0** | **24** | **0** | **10** | **223** |
-| 641 (table) | 571 | 2 | 11 | 0 | 0 | 0 | 5 | 0 | 1 | 8 | 27 |
+| 641 (table, not scored) | 571 | 2 | 11 | 0 | 0 | 0 | 5 | 0 | 1 | 8 | 27 |
 
 - **Effort: 223 over 11 pages = 20.3 per page.**
 - **Clips ink is 62% of it** (138 of 223), and it is systematic: Surya's boxes are tight
@@ -297,7 +299,35 @@ reported separately and kept out of the per-page effort. "Effort" is ops per pag
 
 The same pad will be applied to kraken and hyocr-paddle before comparing.
 
-_Pending: kraken, hyocr-paddle._
+**kraken: reviewed 2026-09-30, 11 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 26 | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 5 |
+| 457 | 69 | 0 | 1 | 2 | 2 | 1 | 0 | 1 | 0 | 0 | 7 |
+| 488 | 92 | 0 | 2 | 0 | 5 | 2 | 0 | 0 | 0 | 0 | 9 |
+| 519 | 92 | 0 | 2 | 0 | 6 | 1 | 0 | 1 | 0 | 0 | 10 |
+| 530 | 58 | 0 | 0 | 56 | 0 | 0 | 0 | 0 | 0 | 0 | 56 |
+| 557 | 59 | 3 | 1 | 5 | 1 | 0 | 1 | 1 | 0 | 0 | 12 |
+| 564 | 69 | 0 | 2 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 5 |
+| 575 | 77 | 0 | 3 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 7 |
+| 593 | 86 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| 610 | 74 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 642 | 28 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 3 |
+| **11 pages** | **730** | **3** | **15** | **67** | **20** | **5** | **1** | **5** | **0** | **1** | **117** |
+
+- **Effort: 117 over 11 pages = 10.6 per page**, about half of Surya's 20.3.
+- **The 8 px pad helps kraken little:** 7 of 20 clip flags (its polygons already follow
+  the ink). Padded effort is 110, **10.0 per page**, against Surya's ~9.9.
+- **56 of the 117 are ornament boxes on one page (p.530).** In practice that is one
+  "Mark blank" click (every box on the page is non-text). Without p.530, kraken is
+  **61 over 10 pages = 6.1 per page** (padded 5.4), against Surya's 21.3 raw / ~9.9 padded
+  on the same 10 pages.
+- Outside p.530, kraken beats Surya in every category: under-segmentation 15 vs 29,
+  drop-caps left out 5 vs 24, reading order 5 vs 11, splits 1 vs 10, and only 1 missed
+  line. Its weak spot is ornaments on decorative pages (p.557: 5 non-text, 3 over).
+
+_Pending: hyocr-paddle._
 
 ## 6. Decision log
 

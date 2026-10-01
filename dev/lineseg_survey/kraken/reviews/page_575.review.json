@@ -1,0 +1,76 @@
+{
+  "page": 575,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:25:13.294927+00:00",
+  "tool": "kraken",
+  "model": "blla.mlmodel",
+  "num_lines": 77,
+  "flags": {
+    "line_001": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_030": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_061": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_064": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_077": {
+      "categories": [
+        2,
+        5
+      ],
+      "labels": [
+        "under-segmentation",
+        "out of reading order"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [],
+  "merges": [],
+  "splits": [
+    {
+      "id": "split_001",
+      "line_id": "line_077",
+      "at_x": 1053.0
+    }
+  ],
+  "section_titles": [
+    {
+      "id": "title_001",
+      "key": "\u0539",
+      "box": [
+        982.0,
+        2143.0,
+        1118.0,
+        2287.0
+      ],
+      "source_line_id": null
+    }
+  ]
+}

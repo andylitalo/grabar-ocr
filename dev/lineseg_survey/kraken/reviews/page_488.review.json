@@ -1,0 +1,76 @@
+{
+  "page": 488,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:18:15.604466+00:00",
+  "tool": "kraken",
+  "model": "blla.mlmodel",
+  "num_lines": 92,
+  "flags": {
+    "line_003": {
+      "categories": [
+        2,
+        5
+      ],
+      "labels": [
+        "under-segmentation",
+        "out of reading order"
+      ]
+    },
+    "line_023": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_042": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_092": {
+      "categories": [
+        2,
+        5
+      ],
+      "labels": [
+        "under-segmentation",
+        "out of reading order"
+      ]
+    },
+    "line_057": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_075": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_076": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

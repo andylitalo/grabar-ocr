@@ -39,6 +39,10 @@ SAMPLE_PAGES = [
     642,  # colophon
 ]
 
+# Pages segmented but not scored: the Paschal table is cell-level and already
+# hand-transcribed as a CSV (corpus/STRUCTURE.md).
+TABLE_PAGES = {641}
+
 
 def render_path(page: int) -> Path:
     return KRAKEN_DATA / f"page_{page}" / "render.png"

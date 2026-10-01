@@ -49,7 +49,9 @@ def main() -> None:
     ap.add_argument("--pages", help="default: survey sample")
     ap.add_argument("--tools", default=",".join(DEFAULT_TOOLS))
     args = ap.parse_args()
-    pages = common.parse_pages(args.pages)
+    # The Paschal table (p.641) is out of scoring: it is already hand-transcribed as a
+    # CSV and is cell-level, not line-level (maintainer, 2026-09-30).
+    pages = [p for p in common.parse_pages(args.pages) if p not in common.TABLE_PAGES]
     cols = ["lines", *CATS.values(), *OPS, "effort"]
 
     summary = []
