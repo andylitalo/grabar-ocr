@@ -1,0 +1,96 @@
+{
+  "page": 530,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-09-30T22:25:10.693734+00:00",
+  "tool": "surya",
+  "model": "surya detection + fast_layout",
+  "num_lines": 13,
+  "flags": {
+    "line_003": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_002": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_004": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_007": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_008": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_011": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_013": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_012": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_009": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_010": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

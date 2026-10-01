@@ -1,0 +1,160 @@
+{
+  "page": 642,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:02:12.845186+00:00",
+  "tool": "surya",
+  "model": "surya detection + fast_layout",
+  "num_lines": 28,
+  "flags": {
+    "line_001": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_004": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_007": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_012": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_015": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_016": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_018": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_019": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_021": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_024": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_025": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0547",
+      "box": [
+        467.0,
+        813.0,
+        521.0,
+        901.0
+      ],
+      "target_line_id": null
+    },
+    {
+      "id": "initial_002",
+      "key": "\u0544",
+      "box": [
+        467.0,
+        1495.0,
+        533.0,
+        1583.0
+      ],
+      "target_line_id": null
+    },
+    {
+      "id": "initial_003",
+      "key": "\u0538",
+      "box": [
+        460.0,
+        1841.0,
+        523.0,
+        1941.0
+      ],
+      "target_line_id": null
+    },
+    {
+      "id": "initial_004",
+      "key": "\u053b",
+      "box": [
+        452.0,
+        2093.0,
+        523.0,
+        2183.0
+      ],
+      "target_line_id": "line_019"
+    },
+    {
+      "id": "initial_005",
+      "key": "\u0543",
+      "box": [
+        452.0,
+        2583.0,
+        513.0,
+        2658.0
+      ],
+      "target_line_id": "line_025"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

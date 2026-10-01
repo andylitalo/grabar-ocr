@@ -260,7 +260,44 @@ its own for whichever tool wins.
 
 ### 5.2 Human scoring
 
-_Pending: kraken, surya, hyocr-paddle × 11 pages._
+Scope approved 2026-09-30: kraken, Surya and hyocr-paddle. p.641 (Paschal table) is
+reported separately and kept out of the per-page effort. "Effort" is ops per page
+(`score.py`): each flag category, missed box, initial, merge and split counts 1.
+
+**Surya: reviewed 2026-09-30, all 12 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 25 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 457 | 66 | 0 | 5 | 0 | 20 | 0 | 0 | 4 | 0 | 0 | 29 |
+| 488 | 84 | 0 | 11 | 0 | 8 | 9 | 0 | 4 | 0 | 9 | 41 |
+| 519 | 91 | 0 | 5 | 0 | 28 | 1 | 0 | 7 | 0 | 1 | 42 |
+| 530 | 13 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 10 |
+| 557 | 51 | 0 | 1 | 0 | 18 | 0 | 0 | 1 | 0 | 0 | 20 |
+| 564 | 59 | 0 | 2 | 0 | 15 | 1 | 0 | 1 | 0 | 0 | 19 |
+| 575 | 77 | 0 | 1 | 0 | 20 | 0 | 0 | 1 | 0 | 0 | 22 |
+| 593 | 85 | 0 | 1 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 13 |
+| 610 | 73 | 0 | 2 | 0 | 6 | 0 | 0 | 1 | 0 | 0 | 9 |
+| 642 | 28 | 0 | 1 | 0 | 10 | 0 | 0 | 5 | 0 | 0 | 16 |
+| **11 pages** | **652** | **0** | **29** | **11** | **138** | **11** | **0** | **24** | **0** | **10** | **223** |
+| 641 (table) | 571 | 2 | 11 | 0 | 0 | 0 | 5 | 0 | 1 | 8 | 27 |
+
+- **Effort: 223 over 11 pages = 20.3 per page.**
+- **Clips ink is 62% of it** (138 of 223), and it is systematic: Surya's boxes are tight
+  rectangles that shave ascenders and descenders. A uniform vertical pad, which is a code
+  fix rather than reviewer work, cures most of it (`clip_padding.py`): 6 px → 102/138,
+  **8 px → 114/138 (83%)**, 10 px → 117/138. With an 8 px pad counted as free, effort
+  drops to **109 over 11 pages ≈ 9.9 per page**. This is an estimate: where lines are too
+  tightly spaced for a blank row between them, the measure can't separate descender
+  from neighbour.
+- **What remains is real:** 29 under-segmentations (11 on p.488), 24 drop-cap initials
+  left outside their lines, 11 reading-order errors (9 on p.488), 10 ornament boxes on
+  p.530, and 10 splits on p.488.
+- No missed lines outside the table, and no over-segmentation.
+
+The same pad will be applied to kraken and hyocr-paddle before comparing.
+
+_Pending: kraken, hyocr-paddle._
 
 ## 6. Decision log
 

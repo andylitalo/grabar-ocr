@@ -1,0 +1,255 @@
+{
+  "page": 457,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-09-30T22:23:40.604314+00:00",
+  "tool": "surya",
+  "model": "surya detection + fast_layout",
+  "num_lines": 66,
+  "flags": {
+    "line_005": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_012": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_013": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_017": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_020": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_021": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_023": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_024": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_027": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_031": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_006": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_008": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_009": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_032": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_034": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_035": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_046": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_048": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_051": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_054": {
+      "categories": [
+        2,
+        4
+      ],
+      "labels": [
+        "under-segmentation",
+        "clips ink"
+      ]
+    },
+    "line_060": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_058": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_057": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_055": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0531",
+      "box": [
+        166.0,
+        1148.0,
+        295.0,
+        1317.0
+      ],
+      "target_line_id": "line_003"
+    },
+    {
+      "id": "initial_002",
+      "key": "\u0535",
+      "box": [
+        156.0,
+        1351.0,
+        224.0,
+        1450.0
+      ],
+      "target_line_id": "line_010"
+    },
+    {
+      "id": "initial_003",
+      "key": "\u053b",
+      "box": [
+        156.0,
+        2529.0,
+        214.0,
+        2620.0
+      ],
+      "target_line_id": "line_061"
+    },
+    {
+      "id": "initial_004",
+      "key": "\u0539",
+      "box": [
+        1016.0,
+        1957.0,
+        1086.0,
+        2047.0
+      ],
+      "target_line_id": null
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}
