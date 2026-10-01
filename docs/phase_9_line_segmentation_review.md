@@ -71,11 +71,11 @@ exception: the materializer drops those lines.
 4. **Page status + coverage.** The four states above per page, persisted in the review
    JSON (the survey's `status` field extends to `fixing` / `fixed` / `verified`), with a
    coverage view over 453–643.
-6. **Missed-line aid.** Highlight ink no box covers, so the rare remaining missed line
-   (Phase 8 §5.4) can't slip through the clean view.
 5. **Stable line ids.** Mint ids from the *verified* geometry, not the tool's raw numbering,
    because re-running the tool renumbers raw lines. How ids are formed, and how they survive
    later edits, is this phase's key design decision. Record it here before minting.
+6. **Missed-line aid.** Highlight ink no box covers, so the rare remaining missed line
+   (Phase 8 §5.4) can't slip through the clean view.
 
 ## Gate
 
