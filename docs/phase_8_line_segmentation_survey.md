@@ -366,6 +366,38 @@ the one error class where it trails kraken (15 vs 1), and they cluster on the di
 title page. Phase 9 must make missed lines easy to spot, e.g. by highlighting ink that no
 line covers.
 
+### 5.4 Filling Paddle's missed lines from kraken + Surya (maintainer's proposal)
+
+Rule (`ensemble.py`): add a kraken line when Surya **agrees** on it (bbox IoU ≥ *agree*)
+and **no Paddle line covers it** (Paddle boxes cover < 30% of it). The kraken polygon is
+used because Surya's rectangles clip ink. Scored against the 15 lines the reviewer boxed
+as missed in Paddle's review (p.641 excluded):
+
+| agree ≥ | missed lines recovered | lines added | false adds |
+|--:|--:|--:|--:|
+| 0.3 | 15/15 | 18 | 3 |
+| **0.4** | **15/15** | **17** | **2** |
+| 0.5–0.6 | 14/15 | 15 | 1 |
+| 0.7 | 10/15 | 10 | 0 |
+
+The coverage threshold (0.2–0.5) made no difference. The one line lost at 0.5 is p.575's
+printed page number "571" in the running header: Surya's box there is much wider than
+kraken's. **Chosen: agree ≥ 0.4.** A false add costs one non-text flag; a missed line
+risks silently losing text.
+
+Projected Paddle effort with filling: 45 − 15 missed + 2 false adds = **32 over 11 pages
+≈ 2.9 per page**. Caveat: the threshold was chosen on the same 11 pages it is scored on.
+The plateau from 0.4 to 0.6 suggests it isn't overfit.
+
+Filled lines are slotted into Paddle's reading order after the nearest Paddle line above
+them in the same column, and tagged `"source": "kraken-fill"` so Phase 9 can show them.
+On p.453 all 10 filled title lines came out in correct order. The result is written as
+tool **`paddle-filled`**, the proposed Phase 9 baseline.
+
+Taregir title letters (e.g. Դ on p.564) are missed by all three tools. The reviewer boxes
+them with the section-title tool in Phase 9 regardless, since that box is what marks the
+section.
+
 ## 6. Decision log
 
 - **2026-09-30:** Cut Phase 8 down from the full citable-corpus plan to clean-up plus a

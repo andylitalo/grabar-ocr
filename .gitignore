@@ -115,5 +115,19 @@ dev/extracted_lines/
 dev/lineseg_survey/.venv-*/
 dev/lineseg_survey/vendor/
 dev/lineseg_survey/overlays/
-!/dev/lineseg_survey/*/data/*/segmentation.json
+# Candidate tools: commit only the 12 survey-sample pages (the reviews reference them);
+# their full runs are regenerable inputs. The Phase 9 baseline is committed in full.
+!/dev/lineseg_survey/*/data/page_453/segmentation.json
+!/dev/lineseg_survey/*/data/page_457/segmentation.json
+!/dev/lineseg_survey/*/data/page_488/segmentation.json
+!/dev/lineseg_survey/*/data/page_519/segmentation.json
+!/dev/lineseg_survey/*/data/page_530/segmentation.json
+!/dev/lineseg_survey/*/data/page_557/segmentation.json
+!/dev/lineseg_survey/*/data/page_564/segmentation.json
+!/dev/lineseg_survey/*/data/page_575/segmentation.json
+!/dev/lineseg_survey/*/data/page_593/segmentation.json
+!/dev/lineseg_survey/*/data/page_610/segmentation.json
+!/dev/lineseg_survey/*/data/page_641/segmentation.json
+!/dev/lineseg_survey/*/data/page_642/segmentation.json
+!/dev/lineseg_survey/paddle-filled/data/*/segmentation.json
 !/dev/lineseg_survey/*/reviews/*.json

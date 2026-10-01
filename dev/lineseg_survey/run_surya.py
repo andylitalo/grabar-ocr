@@ -29,6 +29,9 @@ TOOL = "surya"
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pages", help="e.g. 453-643 or 457,530 (default: survey sample)")
+    ap.add_argument("--skip-existing", action="store_true",
+                    help="leave pages that already have geometry untouched (their reviews "
+                         "reference its line ids)")
     args = ap.parse_args()
 
     det = DetectionPredictor.local()
@@ -38,6 +41,9 @@ def main() -> None:
         src = common.render_path(page)
         if not src.exists():
             print(f"page {page}: no render, skipped")
+            continue
+        if args.skip_existing and (common.tool_data_dir(TOOL, page) / "segmentation.json").exists():
+            print(f"page {page}: exists, kept")
             continue
         image = Image.open(src).convert("RGB")
         [det_res] = det([image])
