@@ -14,6 +14,8 @@ Recognition runs too (it is how the lines are produced) but the text is only kep
 as an aid for the reviewer, never scored here.
 
     dev/lineseg_survey/.venv-hyocr/bin/python dev/lineseg_survey/run_hyocr.py --config tess [--pages ...]
+    # full run, keeping the reviewed sample pages as they are:
+    dev/lineseg_survey/.venv-hyocr/bin/python dev/lineseg_survey/run_hyocr.py --config paddle --pages 453-643 --skip-existing
 """
 
 from __future__ import annotations
@@ -51,6 +53,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", choices=["tess", "paddle"], required=True)
     ap.add_argument("--pages", help="e.g. 453-643 or 457,530 (default: survey sample)")
+    ap.add_argument("--skip-existing", action="store_true",
+                    help="leave pages that already have geometry untouched (their reviews "
+                         "reference its line ids)")
     args = ap.parse_args()
     tool = f"hyocr-{args.config}"
     pipeline = build(args.config)
@@ -59,6 +64,9 @@ def main() -> None:
         src = common.render_path(page_no)
         if not src.exists():
             print(f"page {page_no}: no render, skipped")
+            continue
+        if args.skip_existing and (common.tool_data_dir(tool, page_no) / "segmentation.json").exists():
+            print(f"page {page_no}: exists, kept")
             continue
         image = np.array(Image.open(src).convert("RGB"))
         page = pipeline.process_image(image, dpi=300)
