@@ -29,7 +29,11 @@ real test.
 ## What needs building (to be refined once the baseline is chosen)
 
 1. **Edit, not just flag.** Categories 1 and 2 are flag-only today. Reviewers need to fix
-   geometry directly: move, add or delete polygon vertices, and redraw a line.
+   geometry directly: move, add or delete polygon vertices, and redraw a line. The
+   Split tool only cuts **vertically** (built for header lines fused across the column
+   gutter). Lines fused **one above the other** need a horizontal cut too, ideally
+   following the inter-line gap rather than a straight line. Clipped ink (flag 4) needs a
+   way to grow a polygon.
 2. **Reading order.** Show the order and let the reviewer fix it. Missed-line boxes need a
    synthesized baseline so they slot into the order.
 3. **Apply the ops.** A materializer turns raw output + ops into one verified geometry file
