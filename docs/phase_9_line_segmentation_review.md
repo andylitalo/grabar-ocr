@@ -1,6 +1,6 @@
 # Phase 9 — human review of line segmentation
 
-**Status:** design agreed 2026-10-02; build not started · **Created:** 2026-09-30 · **Owner:** —
+**Status:** building (step 1 done 2026-10-02) · **Created:** 2026-09-30 · **Owner:** —
 **Depends on:** `docs/phase_8_line_segmentation_survey.md`, which supplies the chosen
 baseline segmenter's output for pp.453–643 in the common `segmentation.json` format.
 **Baseline (chosen 2026-09-30):** `paddle-filled`: hyocr-paddle lines plus the kraken lines
@@ -138,6 +138,27 @@ non-text with one key. Dismissals are saved as ops, so a blob isn't raised again
 
 Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over to
 `paddle-filled` by matching geometry, since those reviews point at `hyocr-paddle` line ids.
+
+## Build log
+
+- **2026-10-02, step 1 done.** New package `dev/line_review/` (see its README), run with
+  `uv run python -m dev.line_review.app`. It is a new package rather than an extension of
+  `dev/kraken_review`, whose flag-format reviews `score.py` still reads for the Phase 8
+  tables. It reuses that app's canvas approach and the initial-target rule. Built:
+  - the materializer, implementing every op in the table above (geometry via `shapely`, now a
+    repo dependency), plus id minting and the verified record, all test-first
+    (`tests/test_line_review_materialize.py`, 24 tests);
+  - storage with the status rules and a baseline-hash guard (`tests/test_line_review_storage.py`);
+  - the reproducibility check for committed output (`tests/test_verified_lines_reproduce.py`);
+  - the UI: fixing view (lines coloured by source, deleted lines as ghosts, edit list with
+    per-edit removal, undo), clean view with reading-order numbers, Enter to advance, and
+    a banner when the blank markers disagree with the lines.
+
+  Smoke-tested in a browser on temp copies of pp.453, 457, 495: delete, add, split, undo,
+  fix → verify (ids and output file written), auto-advance. Already usable for pages that
+  need only deletes, adds, splits, merges and initials. Still to come: vertex reshape
+  (step 2), the missed-line guard (step 3), the reading-order editor (step 4), the
+  coverage view (step 5), and carrying the sample reviews over.
 
 ## Gate
 
