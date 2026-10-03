@@ -133,7 +133,8 @@ def _guard_baseline(review: dict) -> None:
 
 
 def materialized(page: int, review: dict) -> list[dict]:
-    return mz.apply_ops(mz.baseline_lines(load_baseline(page)), review["ops"])
+    return mz.materialize_page(mz.baseline_lines(load_baseline(page)), review["ops"],
+                               review.get("section_titles", []))["lines"]
 
 
 def save_ops(page: int, ops: list[dict], section_titles: list[dict]) -> tuple[dict, list[dict]]:
@@ -142,7 +143,8 @@ def save_ops(page: int, ops: list[dict], section_titles: list[dict]) -> tuple[di
     _guard_baseline(review)
     if review["status"] not in ("unreviewed", "fixing"):
         raise StateError(f"page {page} is {review['status']}: Resume fixing to edit")
-    lines = mz.apply_ops(mz.baseline_lines(load_baseline(page)), ops)  # raises OpError
+    lines = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
+                                section_titles)["lines"]  # raises OpError
     review.update(ops=ops, section_titles=section_titles, status="fixing")
     return _write_review(review), lines
 
@@ -167,7 +169,7 @@ def set_status(page: int, status: str) -> dict:
 
     if status == "verified":
         seg = load_baseline(page)
-        lines = mz.apply_ops(mz.baseline_lines(seg), review["ops"])
+        lines = materialized(page, review)
         review.update(mz.mint_ids(page, lines, review))
         review["verified_at"] = _now()
         record = mz.verified_record(seg, review, baseline_sha256=baseline_sha256(page))

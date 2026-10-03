@@ -74,6 +74,7 @@ each one is now a geometry edit.
 | `initial(box, line)` | initial | box unioned into `line` and subtracted from every other line it overlaps |
 | `grow(box, line)` | (new) | same geometry as `initial`, without a letter: takes missed ink into a line |
 | `page_number(line \| box, value)` | (new) | the printed page number: taken out of the lines and the reading order, stored as a page element `{value, box}` |
+| `break(y)` | (new) | the column gutter is interrupted at `y` (see reading order below) |
 | `order(lines…)` | flag 5 (reading order) | explicit reading order for the page |
 
 Section titles stay as page annotations and don't change geometry. Lines created by an op
@@ -82,8 +83,15 @@ halves of a split, `add_001`… for added lines. The UI can offer richer tools t
 table, but every action saves as one of these ops.
 
 The **materializer** is a pure function, baseline + ops → final lines, written test-first.
-Default reading order is the baseline's, with added lines slotted in by
-`ensemble.insert_in_order`; an `order` op overrides it.
+**Default reading order is column-first** (maintainer, 2026-10-03), not the baseline's:
+Paddle's X-Y cut splits the page horizontally wherever the two columns' gaps line up
+(p.460). Rule: find the gutter (the middle of the widest x-run no line crosses); each
+column reads top to bottom, and the page splits into bands only where the gutter is
+interrupted, by a line that crosses it, a section-title box on it (a taregir letter), or a
+`break` op. Boxes on one row (a drop cap and its line, a title in pieces, "1." beside a
+title) read left to right. An explicit `order` op overrides the rule. Over the book it
+changes the order on 60 pages outside the header band; checked by eye on pp.460, 462
+(a fill that had been put last), 471, 575 and 610. All six reviewed pages keep their order.
 
 ### Stable line ids
 
@@ -192,3 +200,8 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   output too. Fixed: an initial box that doesn't touch its line was joined by a convex
   hull that could cut across the next line; the gap is now bridged inside the shared rows.
   **Open:** running headers (the text beside the page number): lines or page elements?
+- **2026-10-03: column-first reading order** (maintainer's rule: columns first while the
+  gutter runs unbroken, a horizontal split only where it's interrupted). See "Default
+  reading order" above. New `break` op (tool **B**) for interruptions with no line on
+  them; section titles on the gutter count too. Image-based detection of breaks in the
+  printed gutter rule was tried and dropped: too noisy (107 pages flagged).

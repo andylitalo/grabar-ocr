@@ -323,3 +323,85 @@ def test_verified_record_carries_page_elements():
     assert rec["lines"][0]["initial"] == "Ա"
     assert rec["lines"][1]["initial"] is None
     assert len(rec["lines"]) == 4
+
+
+# --- reading order: column first --------------------------------------------------------
+
+
+def _page(lines: list[tuple[str, list[float]]]) -> list[dict]:
+    seg = {**SEG, "lines": [seg_line(k, b) for k, b in lines]}
+    return mz.baseline_lines(seg)
+
+
+def test_columns_read_top_to_bottom_before_the_next_column():
+    # Baseline order cuts across: a block of both columns, then the next block of both.
+    lines = _page([
+        ("a1", [100, 100, 900, 150]), ("a2", [100, 200, 900, 250]),
+        ("b1", [1100, 100, 1900, 150]), ("b2", [1100, 200, 1900, 250]),
+        ("a3", [100, 400, 900, 450]), ("a4", [100, 500, 900, 550]),
+        ("b3", [1100, 400, 1900, 450]), ("b4", [1100, 500, 1900, 550]),
+    ])
+    assert keys(mz.apply_ops(lines, [])) == ["a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4"]
+
+
+def test_full_width_lines_divide_the_page_into_bands():
+    lines = _page([
+        ("a1", [100, 100, 900, 150]), ("b1", [1100, 100, 1900, 150]),
+        ("a2", [100, 200, 900, 250]), ("b2", [1100, 200, 1900, 250]),
+        ("a3", [100, 300, 900, 350]), ("b3", [1100, 300, 1900, 350]),
+        ("title", [300, 400, 1700, 460]),
+        ("c1", [100, 500, 900, 550]), ("d1", [1100, 500, 1900, 550]),
+    ])
+    assert keys(mz.apply_ops(lines, [])) == ["a1", "a2", "a3", "b1", "b2", "b3", "title", "c1", "d1"]
+
+
+def test_boxes_on_a_full_width_row_read_left_to_right():
+    # A title split in two pieces plus a section number on the same row.
+    lines = _page([
+        ("a1", [100, 100, 900, 150]), ("a2", [100, 200, 900, 250]), ("a3", [100, 300, 900, 350]),
+        ("b1", [1100, 100, 1900, 150]), ("b2", [1100, 200, 1900, 250]), ("b3", [1100, 300, 1900, 350]),
+        ("num", [1750, 402, 1850, 458]), ("t2", [800, 401, 1600, 459]), ("t1", [300, 400, 790, 460]),
+    ])
+    assert keys(mz.apply_ops(lines, []))[-3:] == ["t1", "t2", "num"]
+
+
+def test_drop_cap_box_comes_before_the_line_beside_it():
+    lines = _page([
+        ("a1", [100, 100, 900, 150]), ("line", [200, 200, 900, 250]), ("cap", [100, 200, 190, 320]),
+        ("a3", [100, 330, 900, 380]),
+        ("b1", [1100, 100, 1900, 150]), ("b2", [1100, 200, 1900, 250]), ("b3", [1100, 300, 1900, 350]),
+    ])
+    assert keys(mz.apply_ops(lines, []))[:4] == ["a1", "cap", "line", "a3"]
+
+
+def test_an_order_op_overrides_the_column_rule():
+    order = ["line_004", "line_005", "line_001", "line_002", "line_003"]
+    lines = run([{"op": "order", "lines": order},
+                 {"op": "add", "key": "add_001", "boundary": rect(1100, 300, 1900, 350)}])
+    # the explicit order stands; a line added afterwards slots into its column
+    assert keys(lines) == ["line_004", "line_005", "add_001", "line_001", "line_002", "line_003"]
+
+
+TWO_BLOCKS = [  # both columns, a gap at y 260-390 with no line across it
+    ("a1", [100, 100, 900, 150]), ("a2", [100, 200, 900, 250]),
+    ("b1", [1100, 100, 1900, 150]), ("b2", [1100, 200, 1900, 250]),
+    ("a3", [100, 400, 900, 450]), ("a4", [100, 500, 900, 550]),
+    ("b3", [1100, 400, 1900, 450]), ("b4", [1100, 500, 1900, 550]),
+]
+
+
+def test_a_gutter_break_splits_the_page_before_the_columns():
+    page = mz.materialize_page(_page(TWO_BLOCKS), [{"op": "break", "y": 320}])
+    assert keys(page["lines"]) == ["a1", "a2", "b1", "b2", "a3", "a4", "b3", "b4"]
+
+
+def test_a_section_title_on_the_gutter_is_a_break():
+    titles = [{"letter": "Դ", "box": [970, 280, 1030, 370]}]
+    page = mz.materialize_page(_page(TWO_BLOCKS), [], section_titles=titles)
+    assert keys(page["lines"]) == ["a1", "a2", "b1", "b2", "a3", "a4", "b3", "b4"]
+
+
+def test_a_section_title_inside_one_column_is_not_a_break():
+    titles = [{"letter": "Դ", "box": [400, 280, 460, 370]}]
+    page = mz.materialize_page(_page(TWO_BLOCKS), [], section_titles=titles)
+    assert keys(page["lines"]) == ["a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4"]

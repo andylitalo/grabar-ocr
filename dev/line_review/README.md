@@ -36,7 +36,12 @@ Editing (fixing only):
 - **Initial (I):** drag a box around a drop cap. It joins the upper line on its right and
   is carved out of any other line it overlaps. Typing the letter is optional but worth it:
   it's kept on the line (`initial`) in the verified output.
-- **Title (T):** box or click a section-title letter and type it.
+- **Title (T):** box or click a section-title letter and type it. A title box sitting on the column gutter
+  (a taregir letter) also interrupts the reading order there.
+- **Gutter break (B):** click at the height where something interrupts the column gutter
+  without a text line across it (an ornament). Reading order is column-first: each column
+  reads top to bottom, and only a gutter interruption (a line across it, a title on it,
+  or a break) makes the page read the band above first.
 - **Delete all:** for blank pages.
 - **Cmd+Z** undoes; the × next to an edit in the side panel removes just that edit.
 - **← / →** change page.

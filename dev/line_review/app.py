@@ -40,7 +40,8 @@ def _payload(page: int, review: dict) -> dict:
     seg = storage.load_baseline(page)
     error, page_number = None, None
     try:
-        page_el = mz.materialize_page(mz.baseline_lines(seg), review["ops"])
+        page_el = mz.materialize_page(mz.baseline_lines(seg), review["ops"],
+                                      review.get("section_titles", []))
         page_number = page_el["page_number"]
         lines = page_el["lines"]
     except mz.OpError as e:  # only if the baseline changed under saved ops

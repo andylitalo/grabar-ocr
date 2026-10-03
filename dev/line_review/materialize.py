@@ -11,6 +11,7 @@ a review holds an ordered list of ops applied to it:
     {"op": "initial", "box": [x1, y1, x2, y2], "line": KEY, "letter": "Ա"}
     {"op": "grow",    "box": [x1, y1, x2, y2], "line": KEY}   # take in missed ink
     {"op": "page_number", "line": KEY | "box": [x1, y1, x2, y2], "value": "454"}
+    {"op": "break",   "y": Y}                                  # the gutter is interrupted here
     {"op": "order",   "lines": [KEY, ...]}                     # full permutation
     {"op": "dismiss_ink", "box": [x1, y1, x2, y2]}             # no geometry effect
 
@@ -18,6 +19,15 @@ Keys: baseline lines keep their ``line_NNN`` id; split halves are ``KEY/1``, ``K
 (left-to-right for a vertical cut, top-to-bottom for a horizontal one); a merge is
 ``KEY+KEY``; added lines carry the key the UI gave them. Later ops may reference
 any of these.
+
+Reading order: unless the review has an ``order`` op, the final lines are put in
+column-first order (``reading_order``): find the gutter; anything that interrupts it
+divides the page into bands, and each band reads its left column top to bottom, then its
+right one. Interruptions are lines that cross the gutter, section-title boxes that sit
+on it (a taregir letter under an ornament, p.564), and ``break`` ops for anything else.
+Boxes sharing a row (a drop cap and its line, a title in pieces) read left to right.
+The baseline's own order (Paddle's X-Y cut) cut the page horizontally first wherever
+the columns' gaps lined up (p.460).
 
 A page number is a page element, not text: the op takes its line out of the lines (and
 the reading order) and records ``{value, box}`` for the page. Initial letters stay on
@@ -214,13 +224,115 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
             lines[i] = _with_boundary(line, _points(rest))
 
 
+# --- reading order --------------------------------------------------------------
+
+GUTTER_MARGIN = 15     # px a line must reach past the gutter to count as crossing it
+GUTTER_SPAN = (0.35, 0.65)  # where to look for the gutter, as a share of the text width
+MAX_CROSSING = 0.25    # more lines than this crossing the best gutter = single column
+MIN_PER_COLUMN = 2     # lines needed on each side of a gutter (no real page changes at 2 vs 3)
+
+
+def _height(l: dict) -> float:
+    return l["bbox"][3] - l["bbox"][1]
+
+
+def _same_row(a: dict, b: dict) -> bool:
+    overlap = min(a["bbox"][3], b["bbox"][3]) - max(a["bbox"][1], b["bbox"][1])
+    return overlap >= 0.5 * min(_height(a), _height(b))
+
+
+def _by_rows(lines: list[dict]) -> list[dict]:
+    """Top to bottom; boxes sharing a row read left to right."""
+    rows: list[list[dict]] = []
+    for l in sorted(lines, key=lambda l: l["bbox"][1]):
+        if rows and any(_same_row(l, m) for m in rows[-1]):
+            rows[-1].append(l)
+        else:
+            rows.append([l])
+    return [l for row in rows for l in sorted(row, key=lambda l: l["bbox"][0])]
+
+
+def _crosses(l: dict, x: float) -> bool:
+    return l["bbox"][0] < x - GUTTER_MARGIN and l["bbox"][2] > x + GUTTER_MARGIN
+
+
+def find_gutter(lines: list[dict]) -> float | None:
+    """x of the column gutter, or None for a single-column page."""
+    if len(lines) < 2 * MIN_PER_COLUMN:
+        return None
+    x0 = min(l["bbox"][0] for l in lines)
+    width = max(l["bbox"][2] for l in lines) - x0
+    scores = []
+    for x in range(int(x0 + GUTTER_SPAN[0] * width), int(x0 + GUTTER_SPAN[1] * width), 5):
+        left = sum(l["bbox"][2] <= x + GUTTER_MARGIN for l in lines)
+        right = sum(l["bbox"][0] >= x - GUTTER_MARGIN for l in lines)
+        if left >= MIN_PER_COLUMN and right >= MIN_PER_COLUMN:
+            scores.append((x, sum(_crosses(l, x) for l in lines)))
+    if not scores:
+        return None
+    least = min(c for _, c in scores)
+    if least > MAX_CROSSING * len(lines):
+        return None
+    # the middle of the first run of best x's, not its edge
+    run = []
+    for x, c in scores:
+        if c == least:
+            run.append(x)
+        elif run:
+            break
+    return run[len(run) // 2]
+
+
+def reading_order(lines: list[dict], dividers: list[list[float]] = ()) -> list[dict]:
+    """Column-first reading order (see the module docstring).
+
+    ``dividers`` are boxes that interrupt the gutter if they sit on it (section titles,
+    and ``break`` ops as zero-height boxes spanning the page).
+    """
+    g = find_gutter(lines)
+    if g is None:
+        return _by_rows(lines)
+    full = [l for l in lines if _crosses(l, g)]
+    cols = [l for l in lines if not _crosses(l, g)]
+    full += [l for l in cols if any(_same_row(l, f) for f in full)]  # e.g. "1." beside a title
+    cols = [l for l in cols if l not in full]
+    rows: list[list[dict]] = []
+    for l in _by_rows(full):
+        if rows and any(_same_row(l, m) for m in rows[-1]):
+            rows[-1].append(l)
+        else:
+            rows.append([l])
+
+    def mid(ls: list[dict]) -> float:
+        return (min(l["bbox"][1] for l in ls) + max(l["bbox"][3] for l in ls)) / 2
+
+    # (y, lines on that row): full-width rows carry lines, dividers carry none
+    cuts = [(mid(row), row) for row in rows]
+    cuts += [((d[1] + d[3]) / 2, []) for d in dividers if d[0] < g < d[2]]
+    cuts.sort(key=lambda c: c[0])
+    out: list[dict] = []
+    top = float("-inf")
+    for bottom, row in cuts + [(float("inf"), [])]:
+        band = [l for l in cols if top <= mid([l]) < bottom]
+        out += _by_rows([l for l in band if (l["bbox"][0] + l["bbox"][2]) / 2 < g])
+        out += _by_rows([l for l in band if (l["bbox"][0] + l["bbox"][2]) / 2 >= g])
+        out += row
+        top = bottom
+    return out
+
+
 def apply_ops(lines: list[dict], ops: list[dict]) -> list[dict]:
     """Apply ``ops`` in order to ``lines`` (from ``baseline_lines``); returns new lines."""
     return materialize_page(lines, ops)["lines"]
 
 
-def materialize_page(lines: list[dict], ops: list[dict]) -> dict:
-    """Apply ``ops``; returns ``{"lines": [...], "page_number": {value, box} | None}``."""
+def materialize_page(lines: list[dict], ops: list[dict],
+                     section_titles: list[dict] = ()) -> dict:
+    """Apply ``ops``; returns ``{"lines": [...], "page_number": {value, box} | None}``.
+
+    ``section_titles`` (the review's) only matter for reading order: one sitting on the
+    gutter interrupts it.
+    """
     lines = [dict(l) for l in lines]
     page_number = None
     for n, op in enumerate(ops, start=1):
@@ -262,11 +374,18 @@ def materialize_page(lines: list[dict], ops: list[dict]) -> dict:
             else:
                 raise OpError(f"{ctx}: page number needs a line or a box")
             page_number = {"value": value, "box": box}
+        elif kind == "break":
+            if not isinstance(op.get("y"), (int, float)):
+                raise OpError(f"{ctx}: break needs a y")
         elif kind == "dismiss_ink":
             if len(op.get("box") or []) != 4:
                 raise OpError(f"{ctx}: box must be [x1, y1, x2, y2]")
         else:
             raise OpError(f"{ctx}: unknown op")
+    if not any(op.get("op") == "order" for op in ops):
+        dividers = [t["box"] for t in section_titles]
+        dividers += [[float("-inf"), op["y"], float("inf"), op["y"]] for op in ops if op.get("op") == "break"]
+        lines = reading_order(lines, dividers)
     return {"lines": lines, "page_number": page_number}
 
 
@@ -322,7 +441,8 @@ def verified_record(seg: dict, review: dict, *, baseline_sha256: str) -> dict:
     Deterministic: everything comes from the baseline and the review (including
     ``verified_at``), so re-materializing reproduces the file byte for byte.
     """
-    page = materialize_page(baseline_lines(seg), review.get("ops", []))
+    page = materialize_page(baseline_lines(seg), review.get("ops", []),
+                            review.get("section_titles", []))
     lines = page["lines"]
     ids = review.get("ids", {})
     missing = [l["key"] for l in lines if l["key"] not in ids]

@@ -6,7 +6,7 @@
 const COLORS = {  // must match the --paddle/--fill/--edited/--ghost/--clean vars in CSS
   paddle: "#3fb37f", fill: "#4c8bf5", edited: "#e05ac4", ghost: "#9aa0ac",
   clean: "#ff9f1c", select: "#ffffff", initial: "#a06cff", title: "#f0b429", split: "#ff5d5d",
-  pageno: "#2fbfbf",
+  pageno: "#2fbfbf", brk: "#ff5d5d",
 };
 const STATUS_GLYPH = { unreviewed: "·", fixing: "✎", fixed: "◐", verified: "✓" };
 const DRAG_THRESHOLD = 5;  // display px of movement before a press counts as a drag
@@ -294,6 +294,17 @@ function draw() {
       ctx.fillText(op.letter || "I", toDisp(x1) + 2, toDisp(y1) + 13);
     }
   }
+  for (const op of state.ops) {
+    if (op.op !== "break") continue;
+    ctx.setLineDash([10, 6]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = COLORS.brk;
+    ctx.beginPath();
+    ctx.moveTo(0, toDisp(op.y));
+    ctx.lineTo(canvas.width, toDisp(op.y));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
   if (state.data.page_number) {
     const { box, value } = state.data.page_number;
     strokeBox(box, COLORS.pageno, 2.5, [6, 3]);
@@ -330,6 +341,7 @@ function opLabel(op) {
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
     case "grow": return `grow ${op.line}`;
     case "page_number": return `page number ${op.value}`;
+    case "break": return `gutter break at y ${op.y}`;
     case "order": return "reading order";
     case "dismiss_ink": return "dismiss ink";
     default: return op.op;
@@ -497,6 +509,7 @@ function setTool(tool) {
   state.splitKey = null;
   setHint({
     select: "", split: "Click a line to split.",
+    break: "Click at the height where the gutter is interrupted.",
     initial: "Drag a box around the drop-cap.", title: "Drag a box (or click a line) over the title letter.",
   }[tool]);
   document.querySelectorAll(".tool").forEach((b) => b.classList.toggle("active", b.dataset.tool === tool));
@@ -635,6 +648,10 @@ canvas.addEventListener("mouseup", (ev) => {
     pushOp({ op: "split", line: target.key, cut });
     return;
   }
+  if (state.tool === "break") {
+    if (!d.moved) pushOp({ op: "break", y: Math.round(toFull(y)) });
+    return;
+  }
   if (state.tool === "initial" || state.tool === "title") {
     const box = d.moved ? dragToBox(d) : (line ? line.bbox.map(Math.round) : null);
     if (box) openLetterModal(state.tool, box, line ? line.key : null);
@@ -694,7 +711,7 @@ document.addEventListener("keydown", (ev) => {
     openLetterModal("page", l.bbox, l.key);
     return;
   }
-  const tool = { v: "select", s: "split", i: "initial", t: "title" }[k];
+  const tool = { v: "select", s: "split", i: "initial", t: "title", b: "break" }[k];
   if (tool) setTool(tool);
 });
 
