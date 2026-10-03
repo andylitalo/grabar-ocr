@@ -274,3 +274,52 @@ def test_initial_with_a_gap_bridges_within_the_target_row_only():
     assert target.contains(Point(55, 240))     # the cap's foot is in the target...
     assert not target.contains(Point(500, 225))  # ...but no hull across line_002's text
     assert target.intersection(below).area == 0
+
+
+# --- page elements: page number, initial letters, section titles -------------------------
+
+
+def test_page_number_takes_a_line_out_of_the_text():
+    page = mz.materialize_page(mz.baseline_lines(SEG), [
+        {"op": "page_number", "line": "line_004", "value": "496"}])
+    assert "line_004" not in keys(page["lines"])
+    assert page["page_number"] == {"value": "496", "box": [1100, 100, 1900, 150]}
+
+
+def test_page_number_can_be_a_drawn_box():
+    page = mz.materialize_page(mz.baseline_lines(SEG), [
+        {"op": "page_number", "box": [950, 20, 1050, 60], "value": "496"}])
+    assert keys(page["lines"]) == keys(run([]))
+    assert page["page_number"]["box"] == [950, 20, 1050, 60]
+
+
+def test_only_one_page_number_per_page():
+    with pytest.raises(mz.OpError):
+        run([{"op": "page_number", "line": "line_004", "value": "496"},
+             {"op": "page_number", "line": "line_005", "value": "497"}])
+    with pytest.raises(mz.OpError):
+        run([{"op": "page_number", "line": "line_004", "value": " "}])
+
+
+def test_initial_letter_is_kept_on_its_line():
+    lines = run([{"op": "initial", "box": [40, 100, 140, 250], "line": "line_001", "letter": "Ա"}])
+    assert lines[0]["initial"] == "Ա"
+    assert "initial" not in lines[1]
+    grown = run([{"op": "grow", "box": [40, 100, 140, 250], "line": "line_001"}])
+    assert "initial" not in grown[0]
+
+
+def test_verified_record_carries_page_elements():
+    ops = [{"op": "page_number", "line": "line_004", "value": "496"},
+           {"op": "initial", "box": [40, 100, 140, 250], "line": "line_001", "letter": "Ա"}]
+    lines = run(ops)
+    review = {"page": 500, "status": "verified", "ops": ops, "verified_at": "x",
+              "section_titles": [{"id": "title_001", "letter": "Դ", "box": [10, 10, 60, 60],
+                                  "source_line": None}],
+              **mz.mint_ids(500, lines, mz.empty_id_state())}
+    rec = mz.verified_record(SEG, review, baseline_sha256="abc")
+    assert rec["page_number"] == {"value": "496", "box": [1100, 100, 1900, 150]}
+    assert rec["section_titles"] == [{"letter": "Դ", "box": [10, 10, 60, 60]}]
+    assert rec["lines"][0]["initial"] == "Ա"
+    assert rec["lines"][1]["initial"] is None
+    assert len(rec["lines"]) == 4

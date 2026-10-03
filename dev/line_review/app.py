@@ -36,14 +36,15 @@ class StatusRequest(BaseModel):
     status: str
 
 
-def _payload(page: int, review: dict, lines: list[dict] | None = None) -> dict:
+def _payload(page: int, review: dict) -> dict:
     seg = storage.load_baseline(page)
-    error = None
-    if lines is None:
-        try:
-            lines = mz.apply_ops(mz.baseline_lines(seg), review["ops"])
-        except mz.OpError as e:  # only if the baseline changed under saved ops
-            lines, error = [], str(e)
+    error, page_number = None, None
+    try:
+        page_el = mz.materialize_page(mz.baseline_lines(seg), review["ops"])
+        page_number = page_el["page_number"]
+        lines = page_el["lines"]
+    except mz.OpError as e:  # only if the baseline changed under saved ops
+        lines, error = [], str(e)
     baseline = {l["id"]: l for l in seg["lines"]}
     deleted = {op["line"] for op in review["ops"] if op.get("op") == "delete"}
     ids = review.get("ids", {})
@@ -54,9 +55,11 @@ def _payload(page: int, review: dict, lines: list[dict] | None = None) -> dict:
         "status": review["status"],
         "ops": review["ops"],
         "section_titles": review.get("section_titles", []),
+        "page_number": page_number,
+        "expected_page_number": str(page - storage.PRINTED_OFFSET),
         "lines": [
             {"key": l["key"], "order": n, "id": ids.get(l["key"]), "boundary": l["boundary"],
-             "bbox": l["bbox"], "source": l["source"],
+             "bbox": l["bbox"], "source": l["source"], "initial": l.get("initial"),
              "edited": l["key"] not in baseline or l["boundary"] != baseline[l["key"]]["boundary"]}
             for n, l in enumerate(lines, start=1)
         ],
@@ -101,12 +104,12 @@ def get_page(page: int) -> dict:
 def put_ops(page: int, req: OpsRequest) -> dict:
     _page_or_404(page)
     try:
-        review, lines = storage.save_ops(page, req.ops, req.section_titles)
+        review, _ = storage.save_ops(page, req.ops, req.section_titles)
     except mz.OpError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except storage.StateError as e:
         raise HTTPException(status_code=409, detail=str(e))
-    return _payload(page, review, lines)
+    return _payload(page, review)
 
 
 @app.post("/api/pages/{page}/status")

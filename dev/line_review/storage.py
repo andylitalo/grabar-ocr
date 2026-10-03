@@ -30,6 +30,9 @@ VERIFIED_DIR = REPO_ROOT / "data" / "verified_lines"
 BLANK_DIR = REPO_ROOT / "data" / "pages" / "blank"
 
 SCHEMA = 2
+# Printed page number = PDF page - PRINTED_OFFSET throughout the Տօնացոյց (p.458 is
+# printed "454"). Only a default for the page-number prompt; a mismatch is flagged.
+PRINTED_OFFSET = 4
 STATUSES = ("unreviewed", "fixing", "fixed", "verified")
 _PAGE_DIR_RE = re.compile(r"^page_(\d+)$")
 

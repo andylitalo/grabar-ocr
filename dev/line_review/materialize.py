@@ -10,6 +10,7 @@ a review holds an ordered list of ops applied to it:
     {"op": "merge",   "lines": [KEY, KEY, ...]}
     {"op": "initial", "box": [x1, y1, x2, y2], "line": KEY, "letter": "Ա"}
     {"op": "grow",    "box": [x1, y1, x2, y2], "line": KEY}   # take in missed ink
+    {"op": "page_number", "line": KEY | "box": [x1, y1, x2, y2], "value": "454"}
     {"op": "order",   "lines": [KEY, ...]}                     # full permutation
     {"op": "dismiss_ink", "box": [x1, y1, x2, y2]}             # no geometry effect
 
@@ -17,6 +18,10 @@ Keys: baseline lines keep their ``line_NNN`` id; split halves are ``KEY/1``, ``K
 (left-to-right for a vertical cut, top-to-bottom for a horizontal one); a merge is
 ``KEY+KEY``; added lines carry the key the UI gave them. Later ops may reference
 any of these.
+
+A page number is a page element, not text: the op takes its line out of the lines (and
+the reading order) and records ``{value, box}`` for the page. Initial letters stay on
+their line as ``initial``.
 
 Line ids (``p<page>.<NNN>``) are minted from the materialized lines at verification
 (``mint_ids``) and never reused; see the design section of the Phase 9 doc.
@@ -142,9 +147,11 @@ def _split(lines: list[dict], op: dict, ctx: str) -> None:
     vertical = abs(cx2 - cx1) < abs(cy2 - cy1)
     pieces.sort(key=lambda p: p.centroid.x if vertical else p.centroid.y)
     for n, piece in enumerate(pieces, start=1):
-        _insert(lines, _line(f"{line['key']}/{n}", _points(piece), source=line["source"],
-                             derived_from=line["derived_from"],
-                             lineage=line["lineage"] + [line["key"]]))
+        new = _line(f"{line['key']}/{n}", _points(piece), source=line["source"],
+                    derived_from=line["derived_from"], lineage=line["lineage"] + [line["key"]])
+        if n == 1 and "initial" in line:  # the drop cap opens the line
+            new["initial"] = line["initial"]
+        _insert(lines, new)
 
 
 def _merge(lines: list[dict], op: dict, ctx: str) -> None:
@@ -164,6 +171,9 @@ def _merge(lines: list[dict], op: dict, ctx: str) -> None:
                    source=members[0]["source"] if len({m["source"] for m in members}) == 1 else "human",
                    derived_from=[d for m in members for d in m["derived_from"]],
                    lineage=[k for m in members for k in m["lineage"] + [m["key"]]])
+    letters = [m["initial"] for m in members if "initial" in m]
+    if letters:
+        merged["initial"] = letters[0]
     for i in reversed(idx):
         lines.pop(i)
     lines.insert(idx[0], merged)
@@ -193,6 +203,8 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
         poly = _polygon(line["boundary"], ctx)
         if i == t:
             lines[i] = _with_boundary(line, _points(_single(poly.union(added), ctx)))
+            if op.get("op") == "initial" and str(op.get("letter", "")).strip():
+                lines[i]["initial"] = str(op["letter"]).strip()
         elif poly.intersection(added).area > 0:
             rest = poly.difference(added)
             if rest.is_empty:
@@ -204,7 +216,13 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
 
 def apply_ops(lines: list[dict], ops: list[dict]) -> list[dict]:
     """Apply ``ops`` in order to ``lines`` (from ``baseline_lines``); returns new lines."""
+    return materialize_page(lines, ops)["lines"]
+
+
+def materialize_page(lines: list[dict], ops: list[dict]) -> dict:
+    """Apply ``ops``; returns ``{"lines": [...], "page_number": {value, box} | None}``."""
     lines = [dict(l) for l in lines]
+    page_number = None
     for n, op in enumerate(ops, start=1):
         kind = op.get("op")
         ctx = f"op {n} ({kind})"
@@ -231,12 +249,25 @@ def apply_ops(lines: list[dict], ops: list[dict]) -> list[dict]:
                 raise OpError(f"{ctx}: order must list every current line exactly once")
             by_key = {l["key"]: l for l in lines}
             lines = [by_key[k] for k in order]
+        elif kind == "page_number":
+            value = str(op.get("value", "")).strip()
+            if not value:
+                raise OpError(f"{ctx}: page number needs a value")
+            if page_number is not None:
+                raise OpError(f"{ctx}: the page already has a page number")
+            if op.get("line") is not None:
+                box = lines.pop(_index(lines, op["line"], ctx))["bbox"]
+            elif len(op.get("box") or []) == 4:
+                box = list(op["box"])
+            else:
+                raise OpError(f"{ctx}: page number needs a line or a box")
+            page_number = {"value": value, "box": box}
         elif kind == "dismiss_ink":
             if len(op.get("box") or []) != 4:
                 raise OpError(f"{ctx}: box must be [x1, y1, x2, y2]")
         else:
             raise OpError(f"{ctx}: unknown op")
-    return lines
+    return {"lines": lines, "page_number": page_number}
 
 
 # --- stable line ids --------------------------------------------------------------
@@ -291,7 +322,8 @@ def verified_record(seg: dict, review: dict, *, baseline_sha256: str) -> dict:
     Deterministic: everything comes from the baseline and the review (including
     ``verified_at``), so re-materializing reproduces the file byte for byte.
     """
-    lines = apply_ops(baseline_lines(seg), review.get("ops", []))
+    page = materialize_page(baseline_lines(seg), review.get("ops", []))
+    lines = page["lines"]
     ids = review.get("ids", {})
     missing = [l["key"] for l in lines if l["key"] not in ids]
     if missing:
@@ -300,10 +332,14 @@ def verified_record(seg: dict, review: dict, *, baseline_sha256: str) -> dict:
         "page": seg["page"],
         "baseline": {"tool": seg.get("tool", "paddle-filled"), "sha256": baseline_sha256},
         "verified_at": review.get("verified_at"),
+        "page_number": page["page_number"],
+        "section_titles": [{"letter": t["letter"], "box": t["box"]}
+                           for t in review.get("section_titles", [])],
         "lines": [
             {"id": ids[l["key"]], "order": n, "key": l["key"], "boundary": l["boundary"],
              "baseline": l["baseline"], "baseline_source": l["baseline_source"],
-             "bbox": l["bbox"], "source": l["source"], "derived_from": l["derived_from"]}
+             "bbox": l["bbox"], "source": l["source"], "derived_from": l["derived_from"],
+             "initial": l.get("initial")}
             for n, l in enumerate(lines, start=1)
         ],
         "retired": review.get("retired", {}),

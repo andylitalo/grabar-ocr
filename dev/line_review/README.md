@@ -25,13 +25,17 @@ Editing (fixing only):
   - **Option-drag** a rectangle to add missed ink to the selected line (it's carved out of
     any neighbour it overlaps);
   - **Delete** removes it; Shift-click selects more lines, and **M** merges them.
+  - **P** marks it as the printed page number: confirm the pre-filled number (PDF page − 4)
+    with Enter. It leaves the lines and the reading order and is stored as a page element.
+    If Paddle missed the number, drag a box over it first.
 
   Drag on empty page to add a new line. kraken-fill outlines follow the ink, so their dots
   are dense (simplified to within 2.5 px for editing); Option-drag is usually quicker there.
 - **Split (S):** click a line, then click the cut. A plain click cuts vertically, Shift-click
   cuts horizontally.
 - **Initial (I):** drag a box around a drop cap. It joins the upper line on its right and
-  is carved out of any other line it overlaps.
+  is carved out of any other line it overlaps. Typing the letter is optional but worth it:
+  it's kept on the line (`initial`) in the verified output.
 - **Title (T):** box or click a section-title letter and type it.
 - **Delete all:** for blank pages.
 - **Cmd+Z** undoes; the × next to an edit in the side panel removes just that edit.

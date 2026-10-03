@@ -6,6 +6,7 @@
 const COLORS = {  // must match the --paddle/--fill/--edited/--ghost/--clean vars in CSS
   paddle: "#3fb37f", fill: "#4c8bf5", edited: "#e05ac4", ghost: "#9aa0ac",
   clean: "#ff9f1c", select: "#ffffff", initial: "#a06cff", title: "#f0b429", split: "#ff5d5d",
+  pageno: "#2fbfbf",
 };
 const STATUS_GLYPH = { unreviewed: "·", fixing: "✎", fixed: "◐", verified: "✓" };
 const DRAG_THRESHOLD = 5;  // display px of movement before a press counts as a drag
@@ -223,7 +224,7 @@ function lineColor(l) {
   return l.source === "kraken-fill" ? COLORS.fill : COLORS.paddle;
 }
 
-const SELECT_HINT = "Drag a dot, an edge or the box to reshape it. Option-drag a rectangle to add missed ink to it.";
+const SELECT_HINT = "Drag a dot, an edge or the box to reshape it. Option-drag adds missed ink. P = it's the page number.";
 
 function draw() {
   if (state.tool === "select" && editable()) {
@@ -293,6 +294,13 @@ function draw() {
       ctx.fillText(op.letter || "I", toDisp(x1) + 2, toDisp(y1) + 13);
     }
   }
+  if (state.data.page_number) {
+    const { box, value } = state.data.page_number;
+    strokeBox(box, COLORS.pageno, 2.5, [6, 3]);
+    ctx.fillStyle = COLORS.pageno;
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillText(`page no. ${value}`, toDisp(box[0]), toDisp(box[1]) - 4);
+  }
   for (const t of state.titles) {
     strokeBox(t.box, COLORS.title, 2.5);
     ctx.fillStyle = COLORS.title;
@@ -321,6 +329,7 @@ function opLabel(op) {
     case "merge": return `merge ${op.lines.join(" + ")}`;
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
     case "grow": return `grow ${op.line}`;
+    case "page_number": return `page number ${op.value}`;
     case "order": return "reading order";
     case "dismiss_ink": return "dismiss ink";
     default: return op.op;
@@ -374,6 +383,9 @@ function renderHeader() {
   if (d.error) warn.push(`Edits failed to apply: ${d.error}`);
   if (d.blank_marker && d.lines.length) warn.push(`This page has a blank marker (data/pages/blank/), but ${d.lines.length} lines remain: delete them, or the marker is wrong.`);
   if (!d.blank_marker && !d.lines.length) warn.push("No lines and no blank marker: is this page really blank?");
+  if (d.page_number && d.page_number.value !== d.expected_page_number) {
+    warn.push(`Printed page number ${d.page_number.value} isn't the expected ${d.expected_page_number} (PDF page \u2212 4): check it.`);
+  }
   $("banner").textContent = warn.join("  ");
 }
 
@@ -493,12 +505,14 @@ function setTool(tool) {
 
 function openLetterModal(tool, box, lineKey) {
   pendingLetter = { tool, box, lineKey };
-  const isTitle = tool === "title";
-  $("letter-title").textContent = isTitle ? "Section-title letter" : "Initial letter";
-  $("letter-hint").textContent = isTitle
-    ? "Type the section letter (required), then Enter."
-    : "Type the letter (optional), then Enter. It joins the upper line on its right.";
-  $("letter-input").value = "";
+  $("letter-title").textContent = { title: "Section-title letter", initial: "Initial letter",
+    page: "Printed page number" }[tool];
+  $("letter-hint").textContent = {
+    title: "Type the section letter (required), then Enter.",
+    initial: "Type the letter (optional), then Enter. It joins the upper line on its right.",
+    page: "The number printed on the page. Pre-filled with PDF page \u2212 4; Enter to confirm.",
+  }[tool];
+  $("letter-input").value = tool === "page" ? state.data.expected_page_number : "";
   $("letter-backdrop").classList.add("show");
   setTimeout(() => $("letter-input").focus(), 0);
 }
@@ -512,6 +526,12 @@ function confirmLetter() {
   if (!pendingLetter) return;
   const letter = $("letter-input").value.trim();
   const { tool, box, lineKey } = pendingLetter;
+  if (tool === "page") {
+    if (!letter) { $("letter-input").focus(); return; }
+    closeLetterModal();
+    pushOp({ op: "page_number", line: lineKey, value: letter });
+    return;
+  }
   if (tool === "title") {
     if (!letter) { $("letter-input").focus(); return; }
     closeLetterModal();
@@ -667,6 +687,13 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "Escape") { state.selection.clear(); state.splitKey = null; setHint(""); draw(); return; }
   const k = ev.key.toLowerCase();
   if (k === "m") { mergeSelected(); return; }
+  if (k === "p") {
+    const l = soleSelected();
+    if (!l) { setHint("Select the page-number box first (drag one if it's missing), then press P."); return; }
+    if (state.data.page_number) { setHint("This page already has a page number; remove that edit first."); return; }
+    openLetterModal("page", l.bbox, l.key);
+    return;
+  }
   const tool = { v: "select", s: "split", i: "initial", t: "title" }[k];
   if (tool) setTool(tool);
 });

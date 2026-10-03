@@ -73,6 +73,7 @@ each one is now a geometry edit.
 | `merge(lines)` | merge | lines joined into one |
 | `initial(box, line)` | initial | box unioned into `line` and subtracted from every other line it overlaps |
 | `grow(box, line)` | (new) | same geometry as `initial`, without a letter: takes missed ink into a line |
+| `page_number(line \| box, value)` | (new) | the printed page number: taken out of the lines and the reading order, stored as a page element `{value, box}` |
 | `order(lines…)` | flag 5 (reading order) | explicit reading order for the page |
 
 Section titles stay as page annotations and don't change geometry. Lines created by an op
@@ -124,7 +125,9 @@ non-text with one key. Dismissals are saved as ops, so a blob isn't raised again
 - The materialized output is committed too: **`data/verified_lines/page_<N>.json`**
   (allow-listed in `.gitignore` like `data/columns/boxes/`), one record per line:
   `id`, `order`, `boundary`, `baseline`, `baseline_source`, `bbox`, `source`
-  (`hyocr-paddle` / `kraken-fill` / `human`), `derived_from`. A test checks that
+  (`hyocr-paddle` / `kraken-fill` / `human`), `derived_from`, `initial` (the drop-cap
+  letter, if typed). Page elements sit beside the lines: `page_number` `{value, box}` and
+  `section_titles` `[{letter, box}]`. A test checks that
   re-materializing reproduces every committed file byte for byte.
 
 ### Build order
@@ -181,3 +184,11 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
 ## Out of scope
 
 OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog/README.md`).
+- **2026-10-02: page numbers and drop-cap letters (maintainer).** Printed page numbers are
+  page elements, not text: kept (they're the reader's citation page and they verify the
+  PDF → printed map, printed = PDF − 4) but outside the lines and reading order. New op
+  `page_number`, key **P** on a selected box, pre-filled with PDF − 4; a mismatch is
+  flagged. Typed drop-cap letters and section-title letters now reach the verified
+  output too. Fixed: an initial box that doesn't touch its line was joined by a convex
+  hull that could cut across the next line; the gap is now bridged inside the shared rows.
+  **Open:** running headers (the text beside the page number): lines or page elements?
