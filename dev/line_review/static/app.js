@@ -29,6 +29,10 @@ const state = {
   scale: 1,
 };
 let drag = null;           // in-progress press/drag (display px)
+// In-progress reshape of the one selected line: drag a vertex, an edge, or the body.
+let edit = null;           // {key, kind: "vertex"|"edge"|"move", index, start:[fx,fy], orig, preview}
+const HANDLE_R = 7;        // display px: grab radius for a vertex dot
+const EDGE_R = 5;          // display px: grab distance for an edge
 let pendingLetter = null;  // {tool, box, lineKey}
 
 const editable = () => state.data && ["unreviewed", "fixing"].includes(state.data.status)
@@ -68,6 +72,82 @@ function pointInPolygon(px, py, poly) {
     if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;
+}
+
+// kraken polygons carry ~100 points (many duplicates), too dense to drag one by one.
+// Before showing handles, drop duplicates and simplify (Ramer-Douglas-Peucker) to
+// within SIMPLIFY_TOL full-res px of the original; Paddle's 4-point boxes pass through.
+const SIMPLIFY_TOL = 2.5;
+const MAX_RAW_POINTS = 12;
+
+// Ramer-Douglas-Peucker on an open path; keeps both endpoints.
+function simplifyPath(path) {
+  let far = -1, farD = 0;
+  for (let i = 1; i < path.length - 1; i++) {
+    const d = segmentDistance(path[i][0], path[i][1], path[0], path[path.length - 1]);
+    if (d > farD) { far = i; farD = d; }
+  }
+  if (farD <= SIMPLIFY_TOL) return [path[0], path[path.length - 1]];
+  return [...simplifyPath(path.slice(0, far + 1)).slice(0, -1), ...simplifyPath(path.slice(far))];
+}
+
+function simplifyRing(pts) {
+  const dedup = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
+  if (dedup.length <= MAX_RAW_POINTS) return dedup;
+  // Cut the ring at the point farthest from the first, simplify both halves as paths.
+  let split = 1, best = 0;
+  dedup.forEach((p, i) => {
+    const d = Math.hypot(p[0] - dedup[0][0], p[1] - dedup[0][1]);
+    if (d > best) { best = d; split = i; }
+  });
+  const a = simplifyPath(dedup.slice(0, split + 1));
+  const b = simplifyPath([...dedup.slice(split), dedup[0]]);
+  return [...a, ...b.slice(1, -1)];
+}
+
+// Points shown as handles (and edited) for a line.
+const handlePoints = (l) => simplifyRing(l.boundary);
+
+// The single selected line, if exactly one is selected (only then are handles shown).
+function soleSelected() {
+  if (state.selection.size !== 1) return null;
+  return lineByKey([...state.selection][0]);
+}
+
+function segmentDistance(px, py, [ax, ay], [bx, by]) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+// What a press at display (x, y) grabs on the selected line: a vertex, an edge, or the body.
+function hitHandle(dispX, dispY) {
+  const l = soleSelected();
+  if (!l) return null;
+  const pts = handlePoints(l);
+  for (let i = 0; i < pts.length; i++) {
+    if (Math.hypot(toDisp(pts[i][0]) - dispX, toDisp(pts[i][1]) - dispY) <= HANDLE_R) {
+      return { key: l.key, kind: "vertex", index: i };
+    }
+  }
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i].map(toDisp), b = pts[(i + 1) % pts.length].map(toDisp);
+    if (segmentDistance(dispX, dispY, a, b) <= EDGE_R) return { key: l.key, kind: "edge", index: i };
+  }
+  if (pointInPolygon(toFull(dispX), toFull(dispY), pts)) return { key: l.key, kind: "move", index: -1 };
+  return null;
+}
+
+// The boundary after dragging ``edit`` by (dx, dy) full-res px.
+function draggedBoundary(e, dx, dy) {
+  const pts = clone(e.orig);
+  const n = pts.length;
+  const move = (i) => { pts[i][0] = Math.round(pts[i][0] + dx); pts[i][1] = Math.round(pts[i][1] + dy); };
+  if (e.kind === "vertex") move(e.index);
+  else if (e.kind === "edge") { move(e.index); move((e.index + 1) % n); }
+  else for (let i = 0; i < n; i++) move(i);
+  return pts;
 }
 
 function hitLine(dispX, dispY) {
@@ -143,7 +223,14 @@ function lineColor(l) {
   return l.source === "kraken-fill" ? COLORS.fill : COLORS.paddle;
 }
 
+const SELECT_HINT = "Drag a dot, an edge or the box to reshape it. Option-drag a rectangle to add missed ink to it.";
+
 function draw() {
+  if (state.tool === "select" && editable()) {
+    const hint = $("tool-hint");
+    if (soleSelected()) hint.textContent = SELECT_HINT;
+    else if (hint.textContent === SELECT_HINT) hint.textContent = "";
+  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (pageImg.complete && pageImg.naturalWidth) ctx.drawImage(pageImg, 0, 0, canvas.width, canvas.height);
   if (!state.data) return;
@@ -163,12 +250,25 @@ function draw() {
   for (const l of state.data.lines) {
     const color = lineColor(l);
     const hover = l.key === state.hoverKey;
-    tracePolygon(l.boundary);
-    if (hover) { ctx.fillStyle = color + "44"; ctx.fill(); }
-    ctx.lineWidth = clean ? 2 : (hover ? 2.5 : 1.5);
-    ctx.strokeStyle = color;
+    const selected = !clean && state.selection.has(l.key);
+    const boundary = edit && edit.key === l.key ? edit.preview : l.boundary;
+    tracePolygon(boundary);
+    if (selected) { ctx.fillStyle = color + "55"; ctx.fill(); }
+    else if (hover) { ctx.fillStyle = color + "33"; ctx.fill(); }
+    ctx.lineWidth = selected ? 2.5 : clean ? 2 : (hover ? 2.5 : 1.5);
+    ctx.strokeStyle = selected ? COLORS.select : color;
     ctx.stroke();
-    if (state.selection.has(l.key)) strokeBox(l.bbox, COLORS.select, 3);
+    if (selected && state.selection.size === 1) {
+      for (const [x, y] of (edit && edit.key === l.key ? edit.preview : handlePoints(l))) {
+        ctx.beginPath();
+        ctx.arc(toDisp(x), toDisp(y), 4, 0, 2 * Math.PI);
+        ctx.fillStyle = COLORS.select;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      }
+    }
     if (l.key === state.splitKey) strokeBox(l.bbox, COLORS.split, 3, [4, 3]);
     // reading-order number at the line's left edge
     ctx.font = clean ? "bold 13px sans-serif" : "11px sans-serif";
@@ -202,7 +302,7 @@ function draw() {
 
   if (drag && drag.moved && state.tool !== "split") {
     const x = Math.min(drag.startX, drag.curX), y = Math.min(drag.startY, drag.curY);
-    const c = state.tool === "title" ? COLORS.title : state.tool === "initial" ? COLORS.initial : COLORS.edited;
+    const c = state.tool === "title" ? COLORS.title : state.tool === "initial" || drag.grow ? COLORS.initial : COLORS.edited;
     ctx.setLineDash([5, 3]);
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = c;
@@ -220,6 +320,7 @@ function opLabel(op) {
     case "split": return `split ${op.line}`;
     case "merge": return `merge ${op.lines.join(" + ")}`;
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
+    case "grow": return `grow ${op.line}`;
     case "order": return "reading order";
     case "dismiss_ink": return "dismiss ink";
     default: return op.op;
@@ -310,6 +411,16 @@ async function commit(ops, titles) {
 }
 
 const pushOp = (op) => commit([...state.ops, op], state.titles);
+
+// Save a reshape. Back-to-back reshapes of the same line collapse into one op, so a
+// box adjusted in several drags is still one edit (undo steps back drag by drag).
+function commitReshape(key, boundary) {
+  const last = state.ops[state.ops.length - 1];
+  const op = { op: "reshape", line: key, boundary };
+  const ops = last && last.op === "reshape" && last.line === key
+    ? [...state.ops.slice(0, -1), op] : [...state.ops, op];
+  commit(ops, state.titles);
+}
 
 async function undo() {
   if (!editable() || !state.history.length) return;
@@ -423,6 +534,13 @@ canvas.addEventListener("mousedown", (ev) => {
   if (!editable()) return;
   const { x, y } = canvasPos(ev);
   drag = { startX: x, startY: y, curX: x, curY: y, moved: false };
+  drag.grow = state.tool === "select" && ev.altKey && soleSelected() ? soleSelected().key : null;
+  const h = state.tool === "select" && !ev.shiftKey && !drag.grow ? hitHandle(x, y) : null;
+  if (h) {
+    const l = lineByKey(h.key);
+    const pts = handlePoints(l);
+    edit = { ...h, start: [toFull(x), toFull(y)], orig: clone(pts), preview: clone(pts) };
+  }
 });
 
 canvas.addEventListener("mousemove", (ev) => {
@@ -431,7 +549,16 @@ canvas.addEventListener("mousemove", (ev) => {
   if (drag) {
     drag.curX = x; drag.curY = y;
     if (Math.abs(x - drag.startX) > DRAG_THRESHOLD || Math.abs(y - drag.startY) > DRAG_THRESHOLD) drag.moved = true;
+    if (drag.moved && edit) {
+      edit.preview = draggedBoundary(edit, toFull(x) - edit.start[0], toFull(y) - edit.start[1]);
+      draw();
+      return;
+    }
     if (drag.moved) { draw(); return; }
+  }
+  if (editable() && state.tool === "select") {
+    const h = hitHandle(x, y);
+    canvas.style.cursor = !h ? "crosshair" : h.kind === "move" ? "move" : "grab";
   }
   const l = hitLine(x, y);
   const key = l ? l.key : null;
@@ -444,10 +571,19 @@ canvas.addEventListener("mousemove", (ev) => {
 
 canvas.addEventListener("mouseup", (ev) => {
   const d = drag;
+  const e = edit;
   drag = null;
+  edit = null;
   if (!editable() || !d) return;
   const { x, y } = canvasPos(ev);
   const line = hitLine(x, y);
+
+  if (e && d.moved) { commitReshape(e.key, e.preview); return; }
+  if (d.grow && d.moved) {
+    const box = dragToBox(d);
+    if (box) pushOp({ op: "grow", line: d.grow, box }); else draw();
+    return;
+  }
 
   if (state.tool === "select") {
     if (d.moved) {
@@ -457,7 +593,7 @@ canvas.addEventListener("mouseup", (ev) => {
       return;
     }
     if (!line) { state.selection.clear(); draw(); return; }
-    if (!ev.shiftKey) state.selection = new Set(state.selection.has(line.key) && state.selection.size === 1 ? [] : [line.key]);
+    if (!ev.shiftKey) state.selection = new Set([line.key]);
     else if (state.selection.has(line.key)) state.selection.delete(line.key);
     else state.selection.add(line.key);
     draw();
@@ -488,6 +624,7 @@ canvas.addEventListener("mouseup", (ev) => {
 
 canvas.addEventListener("mouseleave", () => {
   drag = null;
+  if (edit) { edit = null; draw(); }
   if (state.hoverKey) { state.hoverKey = null; draw(); }
 });
 

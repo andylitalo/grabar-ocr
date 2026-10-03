@@ -9,6 +9,7 @@ a review holds an ordered list of ops applied to it:
     {"op": "split",   "line": KEY, "cut": [[x, y], ...]}      # polyline across the line
     {"op": "merge",   "lines": [KEY, KEY, ...]}
     {"op": "initial", "box": [x1, y1, x2, y2], "line": KEY, "letter": "Ա"}
+    {"op": "grow",    "box": [x1, y1, x2, y2], "line": KEY}   # take in missed ink
     {"op": "order",   "lines": [KEY, ...]}                     # full permutation
     {"op": "dismiss_ink", "box": [x1, y1, x2, y2]}             # no geometry effect
 
@@ -169,6 +170,7 @@ def _merge(lines: list[dict], op: dict, ctx: str) -> None:
 
 
 def _initial(lines: list[dict], op: dict, ctx: str) -> None:
+    """Union ``box`` into the target line and carve it out of every other line."""
     box = op.get("box") or []
     if len(box) != 4:
         raise OpError(f"{ctx}: box must be [x1, y1, x2, y2]")
@@ -208,7 +210,7 @@ def apply_ops(lines: list[dict], ops: list[dict]) -> list[dict]:
             _split(lines, op, ctx)
         elif kind == "merge":
             _merge(lines, op, ctx)
-        elif kind == "initial":
+        elif kind in ("initial", "grow"):  # same geometry; initial also records the letter
             _initial(lines, op, ctx)
         elif kind == "order":
             order = op.get("lines") or []

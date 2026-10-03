@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 
 import pytest
+from shapely.geometry import Point, Polygon
 
 from dev.line_review import materialize as mz
 
@@ -253,3 +254,14 @@ def test_verified_record_requires_an_id_for_every_line():
               **mz.mint_ids(500, run([]), mz.empty_id_state())}
     with pytest.raises(mz.OpError):
         mz.verified_record(SEG, review, baseline_sha256="abc")
+
+
+def test_grow_adds_an_area_to_a_line_and_carves_neighbours():
+    # Ink above line_002 that it missed, overlapping line_001's bottom edge.
+    lines = run([{"op": "grow", "line": "line_002", "box": [300, 140, 500, 210]}])
+    assert lines[1]["key"] == "line_002"
+    assert lines[1]["bbox"][1] == 140
+    notched = Polygon(lines[0]["boundary"])  # line_001 loses the overlap, keeps the rest
+    assert not notched.contains(Point(400, 145))
+    assert notched.contains(Point(200, 145))
+    assert keys(lines) == keys(run([]))

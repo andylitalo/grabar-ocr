@@ -17,8 +17,17 @@ uv run python -m dev.line_review.app          # http://127.0.0.1:8092
 
 Editing (fixing only):
 
-- **Select / add (V):** click a line to select it (Shift adds more). **Delete** removes the
-  selection, **M** merges it. Drag on the page to add a line.
+- **Select / add (V):** click a line to select it: it fills in and shows its vertices as
+  dots. Then:
+  - drag a **dot** to move that vertex, an **edge** to move that side, or the **inside** to
+    move the whole box. Each drag saves on release, and repeated drags of one line count
+    as one edit;
+  - **Option-drag** a rectangle to add missed ink to the selected line (it's carved out of
+    any neighbour it overlaps);
+  - **Delete** removes it; Shift-click selects more lines, and **M** merges them.
+
+  Drag on empty page to add a new line. kraken-fill outlines follow the ink, so their dots
+  are dense (simplified to within 2.5 px for editing); Option-drag is usually quicker there.
 - **Split (S):** click a line, then click the cut. A plain click cuts vertically, Shift-click
   cuts horizontally.
 - **Initial (I):** drag a box around a drop cap. It joins the upper line on its right and

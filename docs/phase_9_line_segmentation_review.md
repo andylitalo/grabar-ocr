@@ -72,6 +72,7 @@ each one is now a geometry edit.
 | `split(line, cut)` | split (vertical only today) | `cut` is any polyline across the line: vertical for gutter-fused headers, horizontal for lines stacked one above the other |
 | `merge(lines)` | merge | lines joined into one |
 | `initial(box, line)` | initial | box unioned into `line` and subtracted from every other line it overlaps |
+| `grow(box, line)` | (new) | same geometry as `initial`, without a letter: takes missed ink into a line |
 | `order(lines…)` | flag 5 (reading order) | explicit reading order for the page |
 
 Section titles stay as page annotations and don't change geometry. Lines created by an op
@@ -159,6 +160,14 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
   need only deletes, adds, splits, merges and initials. Still to come: vertex reshape
   (step 2), the missed-line guard (step 3), the reading-order editor (step 4), the
   coverage view (step 5), and carrying the sample reviews over.
+- **2026-10-02, step 2 started (maintainer's spec).** Click a line to select it: it fills
+  and shows its vertices as dots. Drag a dot, an edge (moves both endpoints, so a Paddle
+  quad grows one side at a time) or the inside (moves the box); each drag saves a
+  `reshape` on release, and back-to-back reshapes of one line collapse into one op.
+  kraken outlines have ~100 points, many duplicated; handles use a Ramer-Douglas-Peucker
+  simplification within 2.5 px (median 37 points; coarser tolerances change the area by up
+  to 18%), so **Option-drag** adds a rectangle of missed ink to the selected line (new
+  `grow` op). Remaining for step 2: adding and removing vertices.
 
 ## Gate
 
