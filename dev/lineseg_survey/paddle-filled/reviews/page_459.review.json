@@ -1,0 +1,23 @@
+{
+ "schema": 2,
+ "page": 459,
+ "status": "fixing",
+ "baseline": {
+  "tool": "paddle-filled",
+  "sha256": "60a5b849609d89d8e153b9548fbde1616a8953b940899f810890aa50405d38cd"
+ },
+ "ops": [
+  {
+   "op": "page_number",
+   "line": "line_097",
+   "value": "455"
+  }
+ ],
+ "section_titles": [],
+ "ids": {},
+ "retired": {},
+ "retired_keys": {},
+ "next_seq": 1,
+ "verified_at": null,
+ "updated_at": "2026-10-03T20:54:32+00:00"
+}
