@@ -170,20 +170,33 @@ def _merge(lines: list[dict], op: dict, ctx: str) -> None:
 
 
 def _initial(lines: list[dict], op: dict, ctx: str) -> None:
-    """Union ``box`` into the target line and carve it out of every other line."""
+    """Union ``box`` into the target line and carve it out of every other line.
+
+    If the box doesn't touch the target (a drop cap drawn with a small gap), the gap is
+    bridged by a strip inside the rows they share, never by a hull, which could reach
+    across the next line's text.
+    """
     box = op.get("box") or []
     if len(box) != 4:
         raise OpError(f"{ctx}: box must be [x1, y1, x2, y2]")
-    cap = shapely_box(*box)
     t = _index(lines, op.get("line"), ctx)
+    target = _polygon(lines[t]["boundary"], ctx)
+    added = shapely_box(*box)
+    if not target.intersects(added):
+        tx1, ty1, tx2, ty2 = target.bounds
+        bx1, by1, bx2, by2 = added.bounds
+        y1, y2 = max(ty1, by1), min(ty2, by2)
+        if y2 > y1:
+            x1, x2 = sorted((min(tx2, bx2), max(tx1, bx1)))
+            added = added.union(shapely_box(x1, y1, x2, y2))
     for i, line in enumerate(lines):
         poly = _polygon(line["boundary"], ctx)
         if i == t:
-            lines[i] = _with_boundary(line, _points(_single(poly.union(cap), ctx)))
-        elif poly.intersection(cap).area > 0:
-            rest = poly.difference(cap)
+            lines[i] = _with_boundary(line, _points(_single(poly.union(added), ctx)))
+        elif poly.intersection(added).area > 0:
+            rest = poly.difference(added)
             if rest.is_empty:
-                raise OpError(f"{ctx}: initial box covers all of {line['key']!r}")
+                raise OpError(f"{ctx}: box covers all of {line['key']!r}")
             if isinstance(rest, MultiPolygon):
                 rest = max(rest.geoms, key=lambda g: g.area)
             lines[i] = _with_boundary(line, _points(rest))

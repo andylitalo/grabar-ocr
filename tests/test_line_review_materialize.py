@@ -265,3 +265,12 @@ def test_grow_adds_an_area_to_a_line_and_carves_neighbours():
     assert not notched.contains(Point(400, 145))
     assert notched.contains(Point(200, 145))
     assert keys(lines) == keys(run([]))
+
+
+def test_initial_with_a_gap_bridges_within_the_target_row_only():
+    # Drop-cap box ends at x=90, short of line_001 (x>=100), and reaches down past line_002.
+    lines = run([{"op": "initial", "box": [20, 100, 90, 250], "line": "line_001", "letter": "Ա"}])
+    target, below = Polygon(lines[0]["boundary"]), Polygon(lines[1]["boundary"])
+    assert target.contains(Point(55, 240))     # the cap's foot is in the target...
+    assert not target.contains(Point(500, 225))  # ...but no hull across line_002's text
+    assert target.intersection(below).area == 0
