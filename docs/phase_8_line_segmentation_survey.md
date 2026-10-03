@@ -438,6 +438,15 @@ horizontal runs longer than 1.5 box heights before counting blank columns
 (`RULE_LEN`). After the fix, every kept fill has ≥ 0.10 blank columns and every ornament
 ≤ 0.03. Six pages have no lines and are blank in the scan (455, 481, 501, 521, 529, 552).
 
+**Agree lowered to 0.3 (maintainer, 2026-10-02).** With the filter in place, the 0.3 row of
+§5.4 no longer costs a false add on the sample: p.530's extra candidate (the INRI plaque
+inside the woodcut) is dropped as an ornament, so the sample still shows 15/15 recovered
+and 0 false adds. Over the book, 0.3 adds 7 lines to the 0.4 run, 6 of them real (three
+page numbers, p.462's large-capital line, p.554's display-title words, p.624's rubric line).
+The seventh is a rule ornament on p.553 that the filter misses. It also drops 6 more
+non-text candidates (ornament bands, a grape cluster, p.530's INRI, speckle on blank
+p.521). The baseline is now **agree ≥ 0.3**: 179 filled lines, 21 dropped.
+
 ### 5.6 Lower DB `box_thresh` for large-capital lines? No (2026-10-01)
 
 Tried before the full run: can Paddle's detector find the large-capital lines itself, if
@@ -499,3 +508,6 @@ minimum line height (≈ 0.5× the page's median).
   pages, 172 filled lines, 15 non-text fills dropped) in the common `segmentation.json`
   format. The filter now ignores horizontal rules, so page numbers set between dashes
   aren't dropped (§5.5). Next: Phase 9.
+- **2026-10-02: fill agreement lowered from 0.4 to 0.3** (§5.5). With the non-text filter,
+  0.3 keeps the sample at 15/15 recovered and 0 false adds, and adds 6 real lines (plus 1
+  ornament) over the book.

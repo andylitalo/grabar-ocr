@@ -1,11 +1,11 @@
 {
  "page": 565,
  "tool": "paddle-filled",
- "model": "hyocr-paddle + kraken lines Surya agrees on (agree>=0.4, covered<0.3, non-text filter)",
+ "model": "hyocr-paddle + kraken lines Surya agrees on (agree>=0.3, covered<0.3, non-text filter)",
  "source_image": "dev/kraken_review/data/page_565/render.png",
  "width": 2184,
  "height": 3276,
- "generated_at": "2026-10-03T05:27:03.667394+00:00",
+ "generated_at": "2026-10-03T05:30:07.958078+00:00",
  "lines": [
   {
    "index": 1,

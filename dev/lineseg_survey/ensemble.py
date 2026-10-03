@@ -8,7 +8,7 @@ Evaluation uses the human paddle reviews: each human-drawn ``missed_lines`` box 
 paddle missed. An added line that matches one (IoU >= --match) is a recovery; an added
 line that matches none is a false add (it would cost the reviewer a delete).
 
-    python3 dev/lineseg_survey/ensemble.py [--agree 0.4] [--covered 0.3] [--match 0.3] [-v]
+    .venv/bin/python dev/lineseg_survey/ensemble.py [--agree 0.3] [--covered 0.3] [--match 0.3] [-v]
 
 ``--write --pages 453-643`` writes the merged geometry as tool ``paddle-filled`` (the
 Phase 9 baseline). Added lines carry ``"source": "kraken-fill"`` and are slotted into
@@ -205,7 +205,7 @@ def write_filled(page: int, agree: float, covered: float,
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--agree", type=float, default=0.4)
+    ap.add_argument("--agree", type=float, default=0.3)
     ap.add_argument("--covered", type=float, default=0.3)
     ap.add_argument("--match", type=float, default=0.3)
     ap.add_argument("-v", "--verbose", action="store_true")

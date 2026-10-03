@@ -1,11 +1,11 @@
 {
  "page": 477,
  "tool": "paddle-filled",
- "model": "hyocr-paddle + kraken lines Surya agrees on (agree>=0.4, covered<0.3, non-text filter)",
+ "model": "hyocr-paddle + kraken lines Surya agrees on (agree>=0.3, covered<0.3, non-text filter)",
  "source_image": "dev/kraken_review/data/page_477/render.png",
  "width": 2192,
  "height": 3267,
- "generated_at": "2026-10-03T05:27:00.234214+00:00",
+ "generated_at": "2026-10-03T05:30:04.420365+00:00",
  "lines": [
   {
    "index": 1,
@@ -1980,6 +1980,163 @@
    "id": "line_049",
    "boundary": [
     [
+     1142.0,
+     197.0
+    ],
+    [
+     1125.0,
+     197.0
+    ],
+    [
+     1109.0,
+     181.0
+    ],
+    [
+     1102.0,
+     181.0
+    ],
+    [
+     1096.0,
+     181.0
+    ],
+    [
+     1075.0,
+     196.0
+    ],
+    [
+     1031.0,
+     181.0
+    ],
+    [
+     1029.0,
+     181.0
+    ],
+    [
+     1017.0,
+     181.0
+    ],
+    [
+     1007.0,
+     188.0
+    ],
+    [
+     997.0,
+     181.0
+    ],
+    [
+     995.0,
+     181.0
+    ],
+    [
+     993.0,
+     181.0
+    ],
+    [
+     991.0,
+     181.0
+    ],
+    [
+     989.0,
+     181.0
+    ],
+    [
+     987.0,
+     181.0
+    ],
+    [
+     987.0,
+     183.0
+    ],
+    [
+     975.0,
+     194.0
+    ],
+    [
+     977.0,
+     239.0
+    ],
+    [
+     977.0,
+     252.0
+    ],
+    [
+     987.0,
+     261.0
+    ],
+    [
+     989.0,
+     261.0
+    ],
+    [
+     991.0,
+     261.0
+    ],
+    [
+     993.0,
+     261.0
+    ],
+    [
+     1076.0,
+     252.0
+    ],
+    [
+     1113.0,
+     263.0
+    ],
+    [
+     1115.0,
+     263.0
+    ],
+    [
+     1116.0,
+     263.0
+    ],
+    [
+     1118.0,
+     263.0
+    ],
+    [
+     1155.0,
+     246.0
+    ],
+    [
+     1155.0,
+     237.0
+    ],
+    [
+     1151.0,
+     205.0
+    ],
+    [
+     1142.0,
+     197.0
+    ]
+   ],
+   "baseline": [
+    [
+     977.0,
+     239.0
+    ],
+    [
+     1155.0,
+     237.0
+    ]
+   ],
+   "bbox": [
+    975.0,
+    181.0,
+    1155.0,
+    263.0
+   ],
+   "source": "kraken-fill",
+   "kraken_id": "line_001",
+   "agree_iou": 0.38
+  },
+  {
+   "index": 50,
+   "id": "line_050",
+   "boundary": [
+    [
      1042.0,
      333.0
     ],
@@ -2017,8 +2174,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 50,
-   "id": "line_050",
+   "index": 51,
+   "id": "line_051",
    "boundary": [
     [
      1047.0,
@@ -2058,8 +2215,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 51,
-   "id": "line_051",
+   "index": 52,
+   "id": "line_052",
    "boundary": [
     [
      1044.0,
@@ -2099,8 +2256,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 52,
-   "id": "line_052",
+   "index": 53,
+   "id": "line_053",
    "boundary": [
     [
      1046.0,
@@ -2140,8 +2297,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 53,
-   "id": "line_053",
+   "index": 54,
+   "id": "line_054",
    "boundary": [
     [
      1044.0,
@@ -2181,8 +2338,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 54,
-   "id": "line_054",
+   "index": 55,
+   "id": "line_055",
    "boundary": [
     [
      1044.0,
@@ -2222,8 +2379,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 55,
-   "id": "line_055",
+   "index": 56,
+   "id": "line_056",
    "boundary": [
     [
      1047.0,
@@ -2263,8 +2420,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 56,
-   "id": "line_056",
+   "index": 57,
+   "id": "line_057",
    "boundary": [
     [
      1045.0,
@@ -2304,8 +2461,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 57,
-   "id": "line_057",
+   "index": 58,
+   "id": "line_058",
    "boundary": [
     [
      1047.0,
@@ -2345,8 +2502,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 58,
-   "id": "line_058",
+   "index": 59,
+   "id": "line_059",
    "boundary": [
     [
      1045.0,
@@ -2386,8 +2543,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 59,
-   "id": "line_059",
+   "index": 60,
+   "id": "line_060",
    "boundary": [
     [
      1332.0,
@@ -2427,8 +2584,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 60,
-   "id": "line_060",
+   "index": 61,
+   "id": "line_061",
    "boundary": [
     [
      1152.0,
@@ -2468,8 +2625,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 61,
-   "id": "line_061",
+   "index": 62,
+   "id": "line_062",
    "boundary": [
     [
      1046.0,
@@ -2509,8 +2666,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 62,
-   "id": "line_062",
+   "index": 63,
+   "id": "line_063",
    "boundary": [
     [
      1044.0,
@@ -2550,8 +2707,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 63,
-   "id": "line_063",
+   "index": 64,
+   "id": "line_064",
    "boundary": [
     [
      1044.0,
@@ -2591,8 +2748,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 64,
-   "id": "line_064",
+   "index": 65,
+   "id": "line_065",
    "boundary": [
     [
      1044.0,
@@ -2632,8 +2789,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 65,
-   "id": "line_065",
+   "index": 66,
+   "id": "line_066",
    "boundary": [
     [
      1045.0,
@@ -2673,8 +2830,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 66,
-   "id": "line_066",
+   "index": 67,
+   "id": "line_067",
    "boundary": [
     [
      1046.0,
@@ -2714,8 +2871,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 67,
-   "id": "line_067",
+   "index": 68,
+   "id": "line_068",
    "boundary": [
     [
      1046.0,
@@ -2755,8 +2912,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 68,
-   "id": "line_068",
+   "index": 69,
+   "id": "line_069",
    "boundary": [
     [
      1046.0,
@@ -2796,8 +2953,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 69,
-   "id": "line_069",
+   "index": 70,
+   "id": "line_070",
    "boundary": [
     [
      1235.0,
@@ -2837,8 +2994,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 70,
-   "id": "line_070",
+   "index": 71,
+   "id": "line_071",
    "boundary": [
     [
      1053.0,
@@ -2878,8 +3035,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 71,
-   "id": "line_071",
+   "index": 72,
+   "id": "line_072",
    "boundary": [
     [
      1046.0,
@@ -2919,8 +3076,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 72,
-   "id": "line_072",
+   "index": 73,
+   "id": "line_073",
    "boundary": [
     [
      1048.0,
@@ -2960,8 +3117,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 73,
-   "id": "line_073",
+   "index": 74,
+   "id": "line_074",
    "boundary": [
     [
      1047.0,
@@ -3001,8 +3158,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 74,
-   "id": "line_074",
+   "index": 75,
+   "id": "line_075",
    "boundary": [
     [
      1050.0,
@@ -3042,8 +3199,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 75,
-   "id": "line_075",
+   "index": 76,
+   "id": "line_076",
    "boundary": [
     [
      1048.0,
@@ -3083,8 +3240,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 76,
-   "id": "line_076",
+   "index": 77,
+   "id": "line_077",
    "boundary": [
     [
      1048.0,
@@ -3124,8 +3281,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 77,
-   "id": "line_077",
+   "index": 78,
+   "id": "line_078",
    "boundary": [
     [
      1049.0,
@@ -3165,8 +3322,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 78,
-   "id": "line_078",
+   "index": 79,
+   "id": "line_079",
    "boundary": [
     [
      1049.0,
@@ -3206,8 +3363,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 79,
-   "id": "line_079",
+   "index": 80,
+   "id": "line_080",
    "boundary": [
     [
      1047.0,
@@ -3247,8 +3404,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 80,
-   "id": "line_080",
+   "index": 81,
+   "id": "line_081",
    "boundary": [
     [
      1050.0,
@@ -3288,8 +3445,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 81,
-   "id": "line_081",
+   "index": 82,
+   "id": "line_082",
    "boundary": [
     [
      1196.0,
@@ -3329,8 +3486,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 82,
-   "id": "line_082",
+   "index": 83,
+   "id": "line_083",
    "boundary": [
     [
      1197.0,
@@ -3370,8 +3527,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 83,
-   "id": "line_083",
+   "index": 84,
+   "id": "line_084",
    "boundary": [
     [
      1048.0,
@@ -3411,8 +3568,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 84,
-   "id": "line_084",
+   "index": 85,
+   "id": "line_085",
    "boundary": [
     [
      1050.0,
@@ -3452,8 +3609,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 85,
-   "id": "line_085",
+   "index": 86,
+   "id": "line_086",
    "boundary": [
     [
      1049.0,
@@ -3493,8 +3650,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 86,
-   "id": "line_086",
+   "index": 87,
+   "id": "line_087",
    "boundary": [
     [
      1046.0,
@@ -3534,8 +3691,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 87,
-   "id": "line_087",
+   "index": 88,
+   "id": "line_088",
    "boundary": [
     [
      1047.0,
@@ -3575,8 +3732,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 88,
-   "id": "line_088",
+   "index": 89,
+   "id": "line_089",
    "boundary": [
     [
      1048.0,
@@ -3616,8 +3773,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 89,
-   "id": "line_089",
+   "index": 90,
+   "id": "line_090",
    "boundary": [
     [
      1047.0,
@@ -3657,8 +3814,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 90,
-   "id": "line_090",
+   "index": 91,
+   "id": "line_091",
    "boundary": [
     [
      1048.0,
@@ -3698,8 +3855,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 91,
-   "id": "line_091",
+   "index": 92,
+   "id": "line_092",
    "boundary": [
     [
      1049.0,
@@ -3739,8 +3896,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 92,
-   "id": "line_092",
+   "index": 93,
+   "id": "line_093",
    "boundary": [
     [
      1048.0,
@@ -3780,8 +3937,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 93,
-   "id": "line_093",
+   "index": 94,
+   "id": "line_094",
    "boundary": [
     [
      1045.0,
@@ -3821,8 +3978,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 94,
-   "id": "line_094",
+   "index": 95,
+   "id": "line_095",
    "boundary": [
     [
      1046.0,
@@ -3862,8 +4019,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 95,
-   "id": "line_095",
+   "index": 96,
+   "id": "line_096",
    "boundary": [
     [
      1047.0,
@@ -3903,8 +4060,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 96,
-   "id": "line_096",
+   "index": 97,
+   "id": "line_097",
    "boundary": [
     [
      1048.0,
@@ -3944,8 +4101,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 97,
-   "id": "line_097",
+   "index": 98,
+   "id": "line_098",
    "boundary": [
     [
      1048.0,
@@ -3985,8 +4142,8 @@
    "source": "hyocr-paddle"
   },
   {
-   "index": 98,
-   "id": "line_098",
+   "index": 99,
+   "id": "line_099",
    "boundary": [
     [
      1046.0,
