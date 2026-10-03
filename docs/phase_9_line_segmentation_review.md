@@ -1,6 +1,6 @@
 # Phase 9 — human review of line segmentation
 
-**Status:** planned (starts after Phase 8's gate) · **Created:** 2026-09-30 · **Owner:** —
+**Status:** design agreed 2026-10-02; build not started · **Created:** 2026-09-30 · **Owner:** —
 **Depends on:** `docs/phase_8_line_segmentation_survey.md`, which supplies the chosen
 baseline segmenter's output for pp.453–643 in the common `segmentation.json` format.
 **Baseline (chosen 2026-09-30):** `paddle-filled`: hyocr-paddle lines plus the kraken lines
@@ -56,31 +56,95 @@ Because the clean view shows only what the ops produced, every Phase 9 problem m
 materialized geometry, so in Phase 9 each becomes an edit op. Category 3 (non-text) is the
 exception: the materializer drops those lines.
 
-## What needs building (to be refined once the baseline is chosen)
+## Design (agreed 2026-10-02)
 
-1. **Edit, not just flag.** Categories 1 and 2 are flag-only today. Reviewers need to fix
-   geometry directly: move, add or delete polygon vertices, and redraw a line. The
-   Split tool only cuts **vertically** (built for header lines fused across the column
-   gutter). Lines fused **one above the other** need a horizontal cut too, ideally
-   following the inter-line gap rather than a straight line. Clipped ink (flag 4) needs a
-   way to grow a polygon.
-2. **Reading order.** Show the order and let the reviewer fix it. Missed-line boxes need a
-   synthesized baseline so they slot into the order.
-3. **Apply the ops.** A materializer turns raw output + ops into one verified geometry file
-   per page.
-4. **Page status + coverage.** The four states above per page, persisted in the review
-   JSON (the survey's `status` field extends to `fixing` / `fixed` / `verified`), with a
-   coverage view over 453–643.
-5. **Stable line ids.** Mint ids from the *verified* geometry, not the tool's raw numbering,
-   because re-running the tool renumbers raw lines. How ids are formed, and how they survive
-   later edits, is this phase's key design decision. Record it here before minting.
-6. **Missed-line aid.** Highlight ink no box covers, so the rare remaining missed line
-   (Phase 8 §5.4) can't slip through the clean view.
+### Edits: a short ordered op list on the immutable baseline
+
+Every reviewer action is saved as one of a few ops, applied in order to
+`paddle-filled/data/page_<N>/segmentation.json`. The survey's flags 1, 2, 4 and 5 go away;
+each one is now a geometry edit.
+
+| op | replaces | effect |
+|---|---|---|
+| `delete(line)` | flag 3 (non-text) | line removed |
+| `reshape(line, polygon)` | flag 4 (clips ink); also vertex drag, grow, redraw | the line gets a new polygon |
+| `add(polygon)` | missed-line box | a new line (a drawn box is a 4-point polygon) |
+| `split(line, cut)` | split (vertical only today) | `cut` is any polyline across the line: vertical for gutter-fused headers, horizontal for lines stacked one above the other |
+| `merge(lines)` | merge | lines joined into one |
+| `initial(box, line)` | initial | box unioned into `line` and subtracted from every other line it overlaps |
+| `order(lines…)` | flag 5 (reading order) | explicit reading order for the page |
+
+Section titles stay as page annotations and don't change geometry. Lines created by an op
+get deterministic keys so later ops can refer to them: `line_012/1`, `line_012/2` for the
+halves of a split, `add_001`… for added lines. The UI can offer richer tools than this
+table, but every action saves as one of these ops.
+
+The **materializer** is a pure function, baseline + ops → final lines, written test-first.
+Default reading order is the baseline's, with added lines slotted in by
+`ensemble.insert_in_order`; an `order` op overrides it.
+
+### Stable line ids
+
+- **Format `p<PDF page>.<NNN>`**, e.g. `p617.023`. The PDF page is used, not the printed
+  page (printed = PDF − 4; title and illustration pages have no printed number). Printed
+  numbers go in a separate page → printed map.
+- **Minted at the page's first Mark verified.** `NNN` is the line's reading-order position at
+  that moment, so ids and order agree at first. The id assignments are saved in the review
+  file, so re-running the materializer reproduces the ids too.
+- **Ids are permanent, and reading order is a separate field.** Re-editing a line keeps its id.
+  A line added later gets the next unused number and is placed by `order`; nothing is
+  renumbered. A split or merge retires the old id and records `superseded_by`. Ids are never
+  reused.
+- Content hashes belong on entries, not lines (roadmap §5): line ids only need to stay
+  stable for entry → line links.
+
+### Baselines
+
+Paddle lines and added lines keep the synthetic baseline (a straight line ¾ of the way down
+the box), tagged `baseline_source: "synthetic"`. kraken-fill lines keep kraken's baseline
+(`"kraken"`). The OCR engines to be compared read line crops, not baselines. Real
+baselines can be computed from the ink later if a kraken-style consumer needs them.
+
+### Missed-line guard (blocks verification)
+
+On Mark fixed, the server finds ink blobs that no final line covers, ignoring speckle and
+long horizontal rules (the same measures as the fill filter, `ensemble.nontext_reason`).
+The clean view shows the blobs, with `filtered_fills` as faint ghost boxes. **Mark verified
+is refused until every blob is resolved**: either an `add` covers it, or it is dismissed as
+non-text with one key. Dismissals are saved as ops, so a blob isn't raised again.
+
+### Pages, storage, output
+
+- Page status in the review file: `unreviewed → fixing → fixed → verified`, with a coverage
+  view over 453–643. A blank page is verified with zero lines and cross-checked against the
+  blank markers in `data/pages/blank/`.
+- Ops are the source of truth: `dev/lineseg_survey/paddle-filled/reviews/page_<N>.review.json`
+  (committed).
+- The materialized output is committed too: **`data/verified_lines/page_<N>.json`**
+  (allow-listed in `.gitignore` like `data/columns/boxes/`), one record per line:
+  `id`, `order`, `boundary`, `baseline`, `baseline_source`, `bbox`, `source`
+  (`hyocr-paddle` / `kraken-fill` / `human`), `derived_from`. A test checks that
+  re-materializing reproduces every committed file byte for byte.
+
+### Build order
+
+1. **The core:** the op schema, the materializer (test-first), the status states, the clean
+   view and id minting. Pages that only need deletes and adds can already be verified.
+2. **Geometry editing:** vertex drag, redraw, split along any polyline.
+3. **The missed-line guard.**
+4. **Reading-order display and fixes.** Paddle made 0 order errors on the sample, so this
+   comes last.
+5. **The coverage view.**
+
+Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over to
+`paddle-filled` by matching geometry, since those reviews point at `hyocr-paddle` line ids.
 
 ## Gate
 
 - Every content page in 453–643 is marked verified. Blank pages are confirmed blank.
-- Every verified line has a stable id, a polygon, a baseline and a reading-order position.
+- Every verified line has a stable id, a polygon, a baseline (synthetic allowed, tagged) and a
+  reading-order position.
+- No verified page has unresolved uncovered ink.
 - Re-running the materializer from raw output + ops reproduces the verified geometry
   exactly.
 
