@@ -1,6 +1,6 @@
 # Phase 8 — clean baseline + line-segmentation survey
 
-**Status:** in progress · **Created:** 2026-09-30 · **Owner:** —
+**Status:** complete (gate passed 2026-10-02) · **Created:** 2026-09-30 · **Owner:** —
 **Supersedes:** the broader "citable corpus" plan, now in
 [`docs/backlog/citable_corpus_roadmap.md`](backlog/citable_corpus_roadmap.md). The deferred
 items and what blocks each one are indexed in [`docs/backlog/README.md`](backlog/README.md).
@@ -430,6 +430,14 @@ line, but they were fitted on the pages they're scored on, and Vol II (pp.550–
 been checked yet. The filter only touches fills, never Paddle's own lines. Dropped boxes are
 kept in `segmentation.json` as `filtered_fills` with the reason.
 
+**Full run (2026-10-02, pp.453–643):** 172 lines filled, 15 non-text fills dropped
+(the 13 above plus a vine band and a rule ornament on p.551). The first full run also
+dropped the running-header page numbers on pp.617 and 643: kraken's box there takes in
+the "—(" and ")—" dashes, and a horizontal rule leaves no ink-free column. Fix: remove
+horizontal runs longer than 1.5 box heights before counting blank columns
+(`RULE_LEN`). After the fix, every kept fill has ≥ 0.10 blank columns and every ornament
+≤ 0.03. Six pages have no lines and are blank in the scan (455, 481, 501, 521, 529, 552).
+
 ### 5.6 Lower DB `box_thresh` for large-capital lines? No (2026-10-01)
 
 Tried before the full run: can Paddle's detector find the large-capital lines itself, if
@@ -487,3 +495,7 @@ minimum line height (≈ 0.5× the page's median).
   Paddle's DB `box_thresh` was tried and rejected for this baseline (§5.6): it finds the
   same lines the fill already recovers and adds noise. Fine-tuning (Paddle DB, kraken) is
   kept as a future experiment, not needed for Phase 9.
+- **2026-10-02: Phase 8 gate passed.** `paddle-filled` written for all of pp.453–643 (191
+  pages, 172 filled lines, 15 non-text fills dropped) in the common `segmentation.json`
+  format. The filter now ignores horizontal rules, so page numbers set between dashes
+  aren't dropped (§5.5). Next: Phase 9.

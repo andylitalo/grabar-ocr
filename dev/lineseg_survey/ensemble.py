@@ -91,6 +91,7 @@ def proposals(page: int, agree: float, covered: float) -> list[dict]:
 MIN_BLANK_COLS = 0.05
 MAX_SPECKLE = 0.5
 SPECKLE_AREA = 20  # px at 300 DPI: below this an ink blob is noise, not a glyph part
+RULE_LEN = 1.5  # box heights: a horizontal ink run at least this long is a rule, not a glyph
 INK_LEVEL = 128
 
 
@@ -99,6 +100,8 @@ def nontext_reason(gray, box: list[float]) -> str | None:
 
     - ``ornament``: under ``MIN_BLANK_COLS`` of the box's pixel columns are free of ink.
       Text always leaves gaps between letters and words; borders and woodcuts don't.
+      Horizontal rules (runs longer than ``RULE_LEN`` box heights) are removed first, or
+      a page number set as "—( 613 )—" would have no blank column (pp.617, 643).
     - ``speckle``: over ``MAX_SPECKLE`` of the ink blobs are smaller than ``SPECKLE_AREA``.
     """
     import cv2
@@ -108,7 +111,9 @@ def nontext_reason(gray, box: list[float]) -> str | None:
     ink = (gray[max(0, y1):y2, max(0, x1):x2] < INK_LEVEL).astype(np.uint8)
     if ink.size == 0:
         return None
-    if (ink.sum(axis=0) == 0).mean() < MIN_BLANK_COLS:
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(1, int(RULE_LEN * ink.shape[0])), 1))
+    glyphs = ink & ~cv2.morphologyEx(ink, cv2.MORPH_OPEN, kernel)
+    if (glyphs.sum(axis=0) == 0).mean() < MIN_BLANK_COLS:
         return "ornament"
     _, _, stats, _ = cv2.connectedComponentsWithStats(ink, connectivity=8)
     areas = stats[1:, cv2.CC_STAT_AREA]

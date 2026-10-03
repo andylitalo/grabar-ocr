@@ -1,0 +1,106 @@
+{
+ "page": 495,
+ "tool": "paddle-filled",
+ "model": "hyocr-paddle + kraken lines Surya agrees on (agree>=0.4, covered<0.3, non-text filter)",
+ "source_image": "dev/kraken_review/data/page_495/render.png",
+ "width": 2184,
+ "height": 3267,
+ "generated_at": "2026-10-03T05:27:00.899023+00:00",
+ "lines": [
+  {
+   "index": 1,
+   "id": "line_001",
+   "boundary": [
+    [
+     1555.0,
+     1906.0
+    ],
+    [
+     1705.0,
+     1968.0
+    ],
+    [
+     1677.0,
+     2035.0
+    ],
+    [
+     1527.0,
+     1973.0
+    ]
+   ],
+   "baseline": [
+    [
+     1527.0,
+     2002.75
+    ],
+    [
+     1705.0,
+     2002.75
+    ]
+   ],
+   "bbox": [
+    1527.0,
+    1906.0,
+    1705.0,
+    2035.0
+   ],
+   "confidence": 21.72,
+   "text": "\u0561\u0580\u0561\u0580",
+   "source": "hyocr-paddle"
+  },
+  {
+   "index": 2,
+   "id": "line_002",
+   "boundary": [
+    [
+     521.0,
+     2358.0
+    ],
+    [
+     889.0,
+     2464.0
+    ],
+    [
+     857.0,
+     2572.0
+    ],
+    [
+     489.0,
+     2465.0
+    ]
+   ],
+   "baseline": [
+    [
+     489.0,
+     2518.5
+    ],
+    [
+     889.0,
+     2518.5
+    ]
+   ],
+   "bbox": [
+    489.0,
+    2358.0,
+    889.0,
+    2572.0
+   ],
+   "confidence": 14.19,
+   "text": "\u0580",
+   "source": "hyocr-paddle"
+  }
+ ],
+ "layout_blocks": [
+  {
+   "bbox": [
+    489.0,
+    1906.0,
+    1705.0,
+    2572.0
+   ],
+   "position": 0,
+   "label": "page"
+  }
+ ],
+ "filtered_fills": []
+}
