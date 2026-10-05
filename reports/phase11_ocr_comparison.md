@@ -1,6 +1,6 @@
 # Phase 11: OCR engine comparison (provisional)
 
-Generated 2026-10-05T15:06:52+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phase_11_ocr_comparison.md`.
+Generated 2026-10-05T15:35:02+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phase_11_ocr_comparison.md`.
 
 **12 lines, 382 characters**, scored identically for every engine (of 12 transcribed). CER is pooled over lines; look-alike punctuation is folded. Intervals are 95% bootstrap over lines: where they overlap, the ranking isn't settled.
 
@@ -12,6 +12,7 @@ Generated 2026-10-05T15:06:52+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phas
 | `gemini-pro` | **6.3%** | 2.9%–10.2% | 0.9% | 8.9% |
 | `gemini-flash` | **7.1%** | 4.2%–10.5% | 0.9% | 10.5% |
 | `trocr-ft` | **8.6%** | 2.2%–21.6% | 7.6% | 8.6% |
+| `dots-mocr` | **12.3%** | 7.4%–18.8% | 11.8% | 14.1% |
 | `surya` | **28.8%** | 17.8%–45.7% | 28.8% | 31.4% |
 
 ## Breakdown
@@ -24,6 +25,7 @@ Generated 2026-10-05T15:06:52+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phas
 | `gemini-pro` | 6.3% | 6.3% |
 | `gemini-flash` | 7.1% | 7.1% |
 | `trocr-ft` | 8.6% | 8.6% |
+| `dots-mocr` | 12.3% | 12.3% |
 | `surya` | 28.8% | 28.8% |
 
 ## Noise floor
@@ -84,6 +86,18 @@ No blind rechecks yet.
 - `p458.056` (vol1-body)
   - ref: Օրհնութիւնն ասա։ Իսկ զկնի Հայր գը-
   - hyp: Օրհնութիւնն ասա։ Իսկ զկնի հայր գշ-
+
+**`dots-mocr`**
+
+- `p453.006` (vol1-body)
+  - ref: ՍԿԶԲՆԱՒՈՐԵԱԼ
+  - hyp: U49FնԱհՈրեԱL
+- `p458.086` (vol1-body)
+  - ref: Եբր. Ա. 1. Բազում մասամբք. վ. 12.
+  - hyp: երր. Ա. 1. Բազին մասամբ, Լ. 12.
+- `p457.062` (vol1-body)
+  - ref: Բ. 11. Քանզի երեւեցաւ. վ. 15. զի
+  - hyp: Բ . 11 . Բանզի երեւեցաւ. ղ . 15 . զի
 
 **`surya`**
 

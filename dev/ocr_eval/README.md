@@ -15,6 +15,7 @@ PYTHONPATH=. dev/lineseg_survey/.venv-hyocr/bin/python -m dev.ocr_eval.run_paddl
 uv run python -m dev.ocr_eval.run_gemini --model flash              # ~6 s/line, API
 uv run python -m dev.ocr_eval.run_gemini --model pro                # ~25 s/line, API
 PYTHONPATH=. dev/lineseg_survey/.venv-surya/bin/python -m dev.ocr_eval.run_surya   # needs llama-server; ~5 min load
+PYTHONPATH=. dev/ocr_eval/.venv-mlx/bin/python -m dev.ocr_eval.run_dots           # MLX, ~1 s/line
 uv run python -m dev.ocr_eval.score                                 # writes the report
 ```
 
@@ -25,6 +26,7 @@ uv run python -m dev.ocr_eval.score                                 # writes the
 | `run_trocr.py` | `trocr-ft` | `.venv_ml` |
 | `run_gemini.py` | `gemini-flash`, `gemini-pro` | repo `.venv` |
 | `run_surya.py` | `surya` (block mode) | `.venv-surya` |
+| `run_dots.py` | `dots-mocr` (MLX) | `dev/ocr_eval/.venv-mlx` (`uv venv -p 3.12` + `uv pip install mlx-vlm`) |
 | `score.py` | CER table, breakdowns, noise floor, worst lines | repo `.venv` |
 
 Predictions: `data/ocr_predictions/<engine>.json` (committed). Crops: `runs/ocr_eval/crops/`

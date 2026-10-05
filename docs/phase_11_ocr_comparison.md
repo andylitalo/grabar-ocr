@@ -22,6 +22,7 @@ CER in the repo so far is from *Ժամագիրք Ատենի*; this is the first 
 | `surya` | Surya recognition, zero-shot (Armenian listed), block mode on each crop | `.venv-surya` | strongest general open recognizer; runs on llama.cpp (`llama-server`) |
 | `gemini-pro` | `gemini-3.1-pro-preview` (the pipeline's model), zero-shot on the line image | `.venv` | Phase 2's untested frontier-VLM route; the corpus already uses Gemini for correction |
 | `gemini-flash` | `gemini-3.5-flash`, same prompt | `.venv` | 4× faster than pro (~6 s vs ~25 s a line); the cheap VLM option |
+| `dots-mocr` | dots.mocr (~3B) zero-shot via MLX (`mlx-community/dots.mocr-bf16`) | `dev/ocr_eval/.venv-mlx` | best open model on Armenian in GlotOCR Bench; fits this Mac |
 
 - **`hye-open-ocr`** is a pipeline (layout → lines → recognizer). Given verified lines,
   what's left of it is its recognizer, so `paddle-calfa-tiny` run through its own
@@ -72,6 +73,7 @@ in rank order, which mixes strata.
 | `gemini-pro` | 6.3% | 2.9–10.2% | 0.9% |
 | `gemini-flash` | 7.1% | 4.2–10.5% | 0.9% |
 | `trocr-ft` | 8.6% | 2.2–21.6% | 7.6% |
+| `dots-mocr` (run 2026-10-05, same lines) | 12.3% | 7.4–18.8% | 11.8% |
 | `surya` (run 2026-10-05, same lines) | 28.8% | 17.8–45.7% | 28.8% |
 
 - **Both Calfa engines read clean Vol I body text perfectly**, character for character
@@ -85,6 +87,10 @@ in rank order, which mixes strata.
   (`Քանզի երեւեցաւ` → `Pwńgh hpbcbgmc`), the failure GlotOCR Bench reports for most open
   VLMs on Armenian. Full-page mode on a line crop was worse (it returned a table), so it
   runs in block mode.
+- **dots.mocr (best open model on Armenian in GlotOCR) is mid-table here: 12.3%.** It
+  swaps similar letters (`Քանզի` → `Բանզի`, `վ` → `ղ`, `Եբր` → `երր`) and mixes Latin
+  into display capitals (`ՍԿԶԲՆԱՒՈՐԵԱԼ` → `U49FնԱհՈրեԱL`): 1915 Bolorgir is far from
+  GlotOCR's rendered modern fonts. Runs locally via MLX (bf16, ~1 s a line).
 - **Nothing is decided.** Body text doesn't separate the top engines; the display,
   drop-cap and Vol II lines (and the abbreviation mark ՟, absent from these 12) will.
 
@@ -116,8 +122,7 @@ Not run; from published benchmarks. **Armenian is the deciding fact, not model s
   damaged print, Vol II. Its language prior cuts both ways: it can recover damaged letters,
   but it also "fixes" spelling and case (Gemini's `եբր` for `Եբր`), which a literal corpus
   must not have.
-- **Next step if wanted:** run dots.mocr locally as a seventh candidate (MLX, no special
-  hosting). Decide on a Qwen fine-tune only if the full test set shows the Calfa engines
+- **dots.mocr was then run** (see Results): 12.3%, behind the Calfa engines. Decide on a Qwen fine-tune only if the full test set shows the Calfa engines
   failing on the hard strata.
 
 ## Gate
