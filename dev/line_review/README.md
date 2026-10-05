@@ -64,3 +64,13 @@ Verified output: `data/verified_lines/page_<N>.json`. Both are committed.
 Tests: `uv run python -m pytest tests/test_line_review_materialize.py
 tests/test_line_review_storage.py tests/test_verified_lines_reproduce.py`. The last one
 is the gate's reproducibility check.
+
+## Transcription (Phase 10)
+
+`/transcribe` (or **Transcribe →** in the header): type the text of sampled verified
+lines for the OCR test set (`docs/phase_10_ocr_test_set.md`). **Top up sample** adds lines
+from newly verified pages; **Enter** submits and moves on; **Alt+I** illegible; **Alt+B**
+bad crop (the box is wrong). The palette inserts characters a standard Armenian
+keyboard makes awkward (՟ ֊ ։ ՝ ՛ ․ « » և). **Blind recheck** retypes about 1 line in 10
+without showing the first pass. Pass `--contributor NAME` to record who typed. Output:
+`data/transcriptions/testset/` (committed).

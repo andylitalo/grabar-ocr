@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Line Transcription</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="transcribe">
+  <header>
+    <h1>Transcription <small>test set</small></h1>
+    <a href="/" class="nav">&larr; Line review</a>
+    <div class="modes">
+      <button class="mode active" data-mode="first" title="Type each sampled line">First pass</button>
+      <button class="mode" data-mode="recheck" title="Retype queued lines without seeing the first pass">Blind recheck <span id="recheck-count"></span></button>
+    </div>
+    <button id="top-up" title="Add lines from newly verified pages to the sample">Top up sample</button>
+    <span id="progress"></span>
+    <span class="spacer"></span>
+    <span id="saved"></span>
+  </header>
+
+  <div id="strata"></div>
+  <div id="banner"></div>
+  <div id="pill-strip" class="pill-strip"></div>
+
+  <main class="t-main">
+    <div class="t-line">
+      <div class="t-meta"><span id="line-id"></span> <span id="line-stratum" class="badge"></span>
+        <span id="line-status" class="badge"></span></div>
+      <div class="crop-wrap"><img id="crop" alt="line crop" /></div>
+      <textarea id="text" rows="2" lang="hy" spellcheck="false"
+                placeholder="Type the line exactly as printed. Enter submits and moves on."></textarea>
+      <div id="palette" class="palette"></div>
+      <div class="row">
+        <button id="submit" class="primary">Submit &#9166;</button>
+        <button id="illegible" title="Alt+I">Illegible</button>
+        <button id="bad-crop" class="danger" title="The box is wrong: send the line back to line review (Alt+B)">Bad crop</button>
+        <span class="spacer"></span>
+        <button id="back" title="Alt+&larr;">&#9664; Back</button>
+        <button id="next" title="Alt+&rarr;">Next &#9654;</button>
+      </div>
+      <p class="legend"><b>Enter</b> submit + next &middot; <b>Shift+Enter</b> newline &middot;
+        <b>Alt+I</b> illegible &middot; <b>Alt+B</b> bad crop &middot; <b>Alt+&larr;/&rarr;</b> back/next.
+        Literal, as printed: keep pativ abbreviations with &#1375;, line-end &#1418;, punctuation as printed.</p>
+    </div>
+    <div class="t-context">
+      <h2>Context</h2>
+      <img id="context" alt="page around the line" />
+    </div>
+  </main>
+
+  <script src="/static/transcribe.js"></script>
+</body>
+</html>

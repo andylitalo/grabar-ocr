@@ -88,6 +88,11 @@ runs/
 # paddle-filled + human review ops, committed so later stages read stable line ids.
 !/data/verified_lines/
 !/data/verified_lines/*.json
+# Phase 10 transcriptions keyed by verified line id (data/transcriptions/<task>/...).
+!/data/transcriptions/
+/data/transcriptions/*
+!/data/transcriptions/*/
+!/data/transcriptions/*/*.json
 *.pdf
 *.tiff
 *.tif

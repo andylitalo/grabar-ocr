@@ -104,3 +104,40 @@ body.clean #canvas { cursor: default; }
   background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
 }
 #letter-input:focus { outline: none; border-color: var(--accent); }
+
+/* ---- transcription (/transcribe) ---- */
+body.transcribe header h1 small { color: var(--muted); font-weight: 400; }
+a.nav { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+.modes { display: flex; gap: 0.3rem; }
+.mode.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+#strata { display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--muted); }
+#strata b { color: var(--ink); }
+.pill-strip { display: flex; flex-wrap: wrap; gap: 3px; padding: 0.3rem 1rem 0.6rem; }
+.pill { width: 14px; height: 14px; border-radius: 3px; background: #4a4d57; cursor: pointer; border: 2px solid transparent; }
+.pill.done { background: var(--ok); }
+.pill.illegible { background: var(--warn); }
+.pill.bad-crop { background: var(--danger); }
+.pill.rechecked { box-shadow: inset 0 0 0 2px #fff; }
+.pill.current { border-color: #fff; }
+.t-main { display: flex; gap: 1.5rem; align-items: flex-start; }
+.t-line { flex: 1; min-width: 0; }
+.t-meta { margin-bottom: 0.5rem; font-size: 0.9rem; }
+.badge { font-size: 0.8rem; padding: 0.1rem 0.45rem; border-radius: 4px; background: var(--panel); color: var(--muted); }
+.crop-wrap { background: #fff; border-radius: 4px; padding: 6px; overflow-x: auto; line-height: 0; }
+#crop { max-width: 100%; image-rendering: auto; }
+#text {
+  width: 100%; margin-top: 0.8rem; font-size: 1.7rem; line-height: 1.4; padding: 0.4rem 0.6rem;
+  font-family: "Noto Serif Armenian", "Mshtakan", "Sylfaen", serif;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+}
+#text:focus { outline: none; border-color: var(--accent); }
+.palette { display: flex; gap: 0.3rem; margin: 0.5rem 0; flex-wrap: wrap; }
+.palette button { font-size: 1.2rem; min-width: 2.4rem; font-family: "Noto Serif Armenian", "Mshtakan", serif; }
+.row { display: flex; gap: 0.5rem; align-items: center; }
+.legend { color: var(--muted); font-size: 0.8rem; }
+button.danger { border-color: var(--danger); color: var(--danger); }
+.t-context { width: 34rem; flex-shrink: 0; }
+.t-context h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 0.4rem; }
+#context { max-width: 100%; background: #fff; border-radius: 4px; }
+body.transcribe.recheck #text { border-color: var(--warn); }
+body.transcribe.recheck #illegible, body.transcribe.recheck #bad-crop { display: none; }
