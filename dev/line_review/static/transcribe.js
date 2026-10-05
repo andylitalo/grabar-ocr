@@ -98,6 +98,7 @@ async function showLine(i) {
   $("text").value = state.mode === "first" ? (t ? t.text : "")
     : (t && t.recheck ? t.recheck.text : "");
   renderPills();
+  checkChars();
   $("text").focus();
 }
 
@@ -139,12 +140,21 @@ async function save(status) {
   await showLine(next >= 0 ? next : state.index + 1);
 }
 
+// The ligature character U+0587 looks like ե+ւ but is one code point; flag it so it's
+// only used where the page prints the ligature.
+function checkChars() {
+  $("char-warning").textContent = $("text").value.includes("\u0587")
+    ? "Contains the ligature character \u0587 (U+0587, one code point). Type \u0565 + \u0582 unless the page prints the ligature."
+    : "";
+}
+
 function insertAtCursor(ch) {
   const ta = $("text");
   const { selectionStart: a, selectionEnd: b, value } = ta;
   ta.value = value.slice(0, a) + ch + value.slice(b);
   ta.selectionStart = ta.selectionEnd = a + ch.length;
   ta.focus();
+  checkChars();
 }
 
 // ---- controls ----
@@ -177,6 +187,7 @@ document.querySelectorAll(".mode").forEach((b) => b.addEventListener("click", as
   await showLine(firstOpen());
 }));
 // Recheck mode hides the first pass, so illegible/bad-crop belong to the first pass only.
+$("text").addEventListener("input", checkChars);
 $("text").addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); save("done"); }
   else if (ev.key === "Escape") $("text").blur();

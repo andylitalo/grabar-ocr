@@ -127,12 +127,12 @@ a.nav { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
 #crop { max-width: 100%; image-rendering: auto; }
 #text {
   width: 100%; margin-top: 0.8rem; font-size: 1.7rem; line-height: 1.4; padding: 0.4rem 0.6rem;
-  font-family: "Noto Serif Armenian", "Mshtakan", "Sylfaen", serif;
+  font-family: "Noto Serif Armenian", "Noto Sans Armenian", "Sylfaen", "Arial Unicode MS", sans-serif;
   background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; resize: vertical;
 }
 #text:focus { outline: none; border-color: var(--accent); }
 .palette { display: flex; gap: 0.3rem; margin: 0.5rem 0; flex-wrap: wrap; }
-.palette button { font-size: 1.2rem; min-width: 2.4rem; font-family: "Noto Serif Armenian", "Mshtakan", serif; }
+.palette button { font-size: 1.2rem; min-width: 2.4rem; font-family: "Noto Serif Armenian", "Noto Sans Armenian", "Sylfaen", "Arial Unicode MS", sans-serif; }
 .row { display: flex; gap: 0.5rem; align-items: center; }
 .legend { color: var(--muted); font-size: 0.8rem; }
 button.danger { border-color: var(--danger); color: var(--danger); }
@@ -141,3 +141,8 @@ button.danger { border-color: var(--danger); color: var(--danger); }
 #context { max-width: 100%; background: #fff; border-radius: 4px; }
 body.transcribe.recheck #text { border-color: var(--warn); }
 body.transcribe.recheck #illegible, body.transcribe.recheck #bad-crop { display: none; }
+/* Some Armenian fonts draw ե+ւ as one և glyph though the text holds two characters.
+   Transcription must show exactly what was typed, so ligatures are off, and macOS's
+   Mshtakan is left out of the font lists above: it draws the ligature regardless. */
+#text, .palette button { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0; }
+#char-warning { color: var(--warn); font-size: 0.85rem; min-height: 1.2em; }
