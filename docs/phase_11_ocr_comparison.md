@@ -19,7 +19,7 @@ CER in the repo so far is from *Ժամագիրք Ատենի*; this is the first 
 | `tess-grabar` | `hye-calfa-n` fine-tuned on our 500 lines (Phase 2b) | `.venv_ml` | built, gate passed, never used (4.6% → 1.8% CER on page_0400) |
 | `paddle-calfa-tiny` | Calfa's PP-OCR recognizer via `hye-open-ocr`'s own `PaddleRecognizer` | `.venv-hyocr` | Calfa's "better accuracy" option; also stands in for `hye-open-ocr` at line level (below) |
 | `trocr-ft` | TrOCR fine-tuned on 500 lines of *Ժամագիրք Ատենի* (`finetune_phase4_scale_500`) | `.venv_ml` | Phase 2b's recommended production engine (1.0% CER on page_0400) |
-| `surya` | Surya recognition, zero-shot (Armenian listed) | `.venv-surya` | strongest general open recognizer. **Not run yet:** its recognizer needs llama.cpp's `llama-server` |
+| `surya` | Surya recognition, zero-shot (Armenian listed), block mode on each crop | `.venv-surya` | strongest general open recognizer; runs on llama.cpp (`llama-server`) |
 | `gemini-pro` | `gemini-3.1-pro-preview` (the pipeline's model), zero-shot on the line image | `.venv` | Phase 2's untested frontier-VLM route; the corpus already uses Gemini for correction |
 | `gemini-flash` | `gemini-3.5-flash`, same prompt | `.venv` | 4× faster than pro (~6 s vs ~25 s a line); the cheap VLM option |
 
@@ -72,6 +72,7 @@ in rank order, which mixes strata.
 | `gemini-pro` | 6.3% | 2.9–10.2% | 0.9% |
 | `gemini-flash` | 7.1% | 4.2–10.5% | 0.9% |
 | `trocr-ft` | 8.6% | 2.2–21.6% | 7.6% |
+| `surya` (run 2026-10-05, same lines) | 28.8% | 17.8–45.7% | 28.8% |
 
 - **Both Calfa engines read clean Vol I body text perfectly**, character for character
   the same as the human (including the same `.`/`-`/`։` choices). The corpus's garble came
@@ -80,12 +81,16 @@ in rank order, which mixes strata.
   (`եբր` for `Եբր`). With spaces ignored, both score 0.9%.
 - **TrOCR (trained on the other book) breaks on display capitals** (p.453: `ՍԿԶԲՆԱՒՈՐԵԱԼ` →
   `Սէ Ձ բչ ս Լ Լ ո Ո է սւ`) and drops or swaps letters at line ends.
+- **Surya hallucinates across scripts**: Armenian read as look-alike Latin
+  (`Քանզի երեւեցաւ` → `Pwńgh hpbcbgmc`), the failure GlotOCR Bench reports for most open
+  VLMs on Armenian. Full-page mode on a line crop was worse (it returned a table), so it
+  runs in block mode.
 - **Nothing is decided.** Body text doesn't separate the top engines; the display,
   drop-cap and Vol II lines (and the abbreviation mark ՟, absent from these 12) will.
 
 Operational notes: Gemini Pro takes ~25 s a line and its API returned 504s under load
 (one line still failed after 3 retries, retried on the next run); the runner sends 8
-lines at a time. Surya needs `llama-server` (llama.cpp), not installed.
+lines at a time. Surya runs on llama.cpp (installed 2026-10-05); the first call loads the model (~5 min), then ~0.6 s a line.
 
 ## Gate
 

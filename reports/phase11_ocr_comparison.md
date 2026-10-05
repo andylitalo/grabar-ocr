@@ -1,6 +1,6 @@
 # Phase 11: OCR engine comparison (provisional)
 
-Generated 2026-10-05T14:42:36+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phase_11_ocr_comparison.md`.
+Generated 2026-10-05T15:06:52+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phase_11_ocr_comparison.md`.
 
 **12 lines, 382 characters**, scored identically for every engine (of 12 transcribed). CER is pooled over lines; look-alike punctuation is folded. Intervals are 95% bootstrap over lines: where they overlap, the ranking isn't settled.
 
@@ -12,6 +12,7 @@ Generated 2026-10-05T14:42:36+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phas
 | `gemini-pro` | **6.3%** | 2.9%–10.2% | 0.9% | 8.9% |
 | `gemini-flash` | **7.1%** | 4.2%–10.5% | 0.9% | 10.5% |
 | `trocr-ft` | **8.6%** | 2.2%–21.6% | 7.6% | 8.6% |
+| `surya` | **28.8%** | 17.8%–45.7% | 28.8% | 31.4% |
 
 ## Breakdown
 
@@ -23,6 +24,7 @@ Generated 2026-10-05T14:42:36+00:00 by `dev/ocr_eval/score.py`. Plan: `docs/phas
 | `gemini-pro` | 6.3% | 6.3% |
 | `gemini-flash` | 7.1% | 7.1% |
 | `trocr-ft` | 8.6% | 8.6% |
+| `surya` | 28.8% | 28.8% |
 
 ## Noise floor
 
@@ -82,4 +84,16 @@ No blind rechecks yet.
 - `p458.056` (vol1-body)
   - ref: Օրհնութիւնն ասա։ Իսկ զկնի Հայր գը-
   - hyp: Օրհնութիւնն ասա։ Իսկ զկնի հայր գշ-
+
+**`surya`**
+
+- `p457.062` (vol1-body)
+  - ref: Բ. 11. Քանզի երեւեցաւ. վ. 15. զի
+  - hyp: ^{\text{F}} , 11, Pwńgh hpbcbgmc , q , 15, qh
+- `p459.028` (vol1-body)
+  - ref: նիւքս այսոքիւք։ Ալէ. Եհան զիս. Աւե-
+  - hyp: Նիկոլ այստիկ.բ։ Ալէ․ Իհան զիս․ Ալե.
+- `p459.009` (vol1-body)
+  - ref: որ յաթոռ. իւր սարօքն։ Աւետարան
+  - hyp: Իր յաթեոռ․ իլը ասրօքն : Աննտարան
 
