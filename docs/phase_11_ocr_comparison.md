@@ -92,6 +92,34 @@ Operational notes: Gemini Pro takes ~25 s a line and its API returned 504s under
 (one line still failed after 3 retries, retried on the next run); the runner sends 8
 lines at a time. Surya runs on llama.cpp (installed 2026-10-05); the first call loads the model (~5 min), then ~0.6 s a line.
 
+## Open OCR VLMs: feasibility (desk check, 2026-10-05)
+
+Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**
+
+- **GlotOCR Bench** (2026; 100+ scripts, *rendered modern fonts*, not 1915 Bolorgir) on
+  Armenian: Gemini 3.1 Flash-Lite 97% of sentences within 5% CER, dots.mocr 95%,
+  dots.ocr 93%; **most open models ~0%, including Qwen3-VL-8B**, which hallucinates other
+  scripts. That matches Surya here (Armenian read as look-alike Latin).
+- **Leaderboards measure something else.** OmniDocBench and olmOCR-Bench are dominated by
+  Latin/CJK documents; small specialists (PaddleOCR-VL-1.6, TeleOCR ~1B) beat
+  Qwen3-VL-235B there, which says nothing about Armenian.
+- **What fits this Mac (M1 Pro, 32 GB)** through MLX: dots.ocr/dots.mocr (~3B, ~6 GB bf16;
+  `mlx-community/dots.mocr-bf16` exists), Qwen3-VL-8B (4-bit ~5 GB), Qwen3-VL-32B or
+  Qwen3.6-35B-A3B at 4-bit (~18–20 GB, slow). What doesn't: Qwen3-VL-235B-A22B (~130 GB
+  even at 4-bit: a multi-GPU cloud box or a 192 GB Mac Studio).
+- **Qwen would need fine-tuning to be useful** (zero-shot ~0% on Armenian). The Manchu
+  study (arXiv 2507.06761) took Qwen2.5-VL from ~25–30% to ~5–8% CER with LoRA on 1,000
+  synthetic images, and it transferred to real documents. LoRA on a 7–8B model is a few
+  GPU-hours on one rented 48–80 GB card; on this Mac, MLX LoRA is possible but slow.
+- **Expected gain is narrow.** The Calfa engines already read clean body text at 0%
+  here. A VLM can only help on what's left: display type, drop caps, abbreviations,
+  damaged print, Vol II. Its language prior cuts both ways: it can recover damaged letters,
+  but it also "fixes" spelling and case (Gemini's `եբր` for `Եբր`), which a literal corpus
+  must not have.
+- **Next step if wanted:** run dots.mocr locally as a seventh candidate (MLX, no special
+  hosting). Decide on a Qwen fine-tune only if the full test set shows the Calfa engines
+  failing on the hard strata.
+
 ## Gate
 
 - Phase 10's gate is met (300 lines, rechecks done).
