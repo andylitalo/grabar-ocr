@@ -93,6 +93,9 @@ runs/
 /data/transcriptions/*
 !/data/transcriptions/*/
 !/data/transcriptions/*/*.json
+# Phase 11 OCR predictions per engine, keyed by verified line id.
+!/data/ocr_predictions/
+!/data/ocr_predictions/*.json
 *.pdf
 *.tiff
 *.tif

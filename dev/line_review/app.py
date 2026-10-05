@@ -180,7 +180,9 @@ def _transcribe_state() -> dict:
     recheck = set(tr.recheck_ids(sample))
     pages: dict[int, dict] = {}
     picks = []
-    for p in sample["picks"]:
+    # Serve in rank order, not pick order: picks are appended stratum by stratum, so pick
+    # order would serve every body line before the first display or drop-cap line.
+    for p in sorted(sample["picks"], key=lambda p: tr.rank(sample["seed"], p["id"])):
         if p["page"] not in pages:
             pages[p["page"]] = tr.load_page(p["page"])
         rec = pages[p["page"]].get(p["id"])
