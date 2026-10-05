@@ -19,7 +19,11 @@ line id, so OCR engines can be ranked by CER on this book rather than on *Ժամ
 - **A stratified line sample, not whole pages.** More variety per hour typed.
 - **Literal, as printed** (Phase 0 rules): exact characters; pativ abbreviations kept with
   their mark (՟), not expanded; no spelling fixes; punctuation as printed (։ ՝ ՛ ․ « »);
-  a line-end hyphen typed as printed (֊). Engines are scored on what is on the page.
+  a line-end hyphen typed as printed. Engines are scored on what is on the page.
+- **Look-alike punctuation is one character** (maintainer, 2026-10-04): type whichever is
+  easiest; scoring treats each set as identical, and the punctuation is normalized later.
+  Sets so far: hyphen `-` / `֊` (U+058A) / `‐` (U+2010); dot `.` / `․` (U+2024); colon-like
+  full stop `:` / `։` (U+0589). The first test lines used ASCII `-` and `.`.
 - **Its own phase doc** (this one).
 
 ## Sample
