@@ -101,6 +101,10 @@ def reference(key: str) -> str | None:
 
 def score() -> None:
     preds = _predictions()
+    for path in sorted(common.PREDICTIONS_DIR.glob("*.json")):  # correctors etc. too
+        name = path.stem
+        if name not in preds:
+            preds[name] = json.loads(path.read_text(encoding="utf-8"))["lines"]
     smp = tr.load_sample(SET)
     pop = smp["population"]
     total = pop["agree"] + pop["disagree"]
@@ -122,35 +126,44 @@ def score() -> None:
             out += pop[stratum] / total * sum(wrong(engine, k) for k in ks) / len(ks)
         return out
 
-    by = {s: [k for k, (st, _) in typed.items() if st == s] for s in ("disagree", "agree")}
-    out = ["# Phase 11: ceiling of the Calfa engines (provisional)", "",
+    def pct(x: float) -> str:
+        return "–" if x != x else f"{100 * x:.1f}%"
+
+    def per(x: float) -> str:
+        return "–" if x != x else "∞" if x == 0 else f"{1 / x:,.0f}"
+
+    out = ["# Phase 11: ceiling of the Calfa engines, and LLM correction (provisional)", "",
            f"Generated {datetime.now(timezone.utc).isoformat(timespec='seconds')} by "
            "`dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after "
-           "normalization (look-alike punctuation folded, spaces ignored).", "",
-           f"Book: {total} lines; the engines disagree on {pop['disagree']} "
-           f"({100 * pop['disagree'] / total:.1f}%). Typed so far: {len(by['disagree'])} of "
-           f"{smp['quotas']['disagree']} disagreements, {len(by['agree'])} of "
-           f"{smp['quotas']['agree']} agreements.", "",
-           "| engine | wrong on disagree | wrong on agree | est. line error rate | ≈ lines per error | 95% interval (lines per error) |",
-           "|---|--:|--:|--:|--:|--:|"]
+           "normalization (look-alike punctuation folded, spaces ignored). Rates are weighted "
+           "back to the whole book from the two strata.", "",
+           f"Book: {total} lines; the OCR engines disagree on {pop['disagree']} "
+           f"({100 * pop['disagree'] / total:.1f}%). Typed so far: {sum(v[0] == 'disagree' for v in typed.values())} "
+           f"of {smp['quotas']['disagree']} sampled disagreements, "
+           f"{sum(v[0] == 'agree' for v in typed.values())} of {smp['quotas']['agree']} agreements.", "",
+           "| engine | lines | wrong on disagree | wrong on agree | **error-free lines** | 95% interval | ≈ lines per error | broke (agreed & right → wrong) |",
+           "|---|--:|--:|--:|--:|--:|--:|--:|"]
     rng = random.Random(SEED)
-    for e in ENGINES:
+    rows = []
+    for e in preds:
+        keys = [k for k in typed if k in preds[e]]
+        by = {s: [k for k in keys if typed[k][0] == s] for s in ("disagree", "agree")}
         r = rate(e, by)
         boots = sorted(rate(e, {s: [rng.choice(ks) for _ in ks] for s, ks in by.items()})
-                       for _ in range(BOOTSTRAP))
-        lo, hi = boots[int(0.025 * BOOTSTRAP)], boots[int(0.975 * BOOTSTRAP) - 1]
-        def per(x: float) -> str:
-            return "–" if x != x else "∞" if x == 0 else f"{1 / x:,.0f}"
-
-        out.append(f"| `{e}` | {sum(wrong(e, k) for k in by['disagree'])}/{len(by['disagree'])} | "
-                   f"{sum(wrong(e, k) for k in by['agree'])}/{len(by['agree'])} | "
-                   f"{'–' if r != r else f'{100 * r:.2f}%'} | {per(r)} | {'–' if r != r else f'{per(hi)}–{per(lo)}'} |")
-    out += ["", "## Agreed but wrong (both engines made the same mistake)", ""]
-    both = [k for k in by["agree"] if wrong(ENGINES[0], k)]
+                       for _ in range(BOOTSTRAP)) if r == r else []
+        lo, hi = (boots[int(0.025 * BOOTSTRAP)], boots[int(0.975 * BOOTSTRAP) - 1]) if boots else (r, r)
+        broke = sum(1 for k in by["agree"] if not wrong(ENGINES[0], k) and wrong(e, k))
+        rows.append((r if r == r else 9, f"| `{e}` | {len(keys)} | {sum(wrong(e, k) for k in by['disagree'])}/{len(by['disagree'])} | "
+                    f"{sum(wrong(e, k) for k in by['agree'])}/{len(by['agree'])} | **{pct(1 - r)}** | "
+                    f"{'–' if r != r else f'{pct(1 - hi)}–{pct(1 - lo)}'} | {per(r)} | {broke if e not in ENGINES else '–'} |"))
+    out += [row for _, row in sorted(rows)]
+    out += ["", "## Agreed but wrong (both OCR engines made the same mistake)", ""]
+    agreed = [k for k, (st, _) in typed.items() if st == "agree"]
+    both = [k for k in agreed if wrong(ENGINES[0], k)]
     out += [f"- `{k}`: ref `{typed[k][1]}`, both `{preds[ENGINES[0]][k]}`" for k in both] or ["- none yet"]
     path = common.REPO_ROOT / "reports" / "phase11_ceiling.md"
     path.write_text("\n".join(out) + "\n", encoding="utf-8")
-    print("\n".join(out[4:8 + len(ENGINES)]))
+    print("\n".join(out[4:8 + len(rows)]))
     print(f"\nreport: {path.relative_to(common.REPO_ROOT)}")
 
 

@@ -119,6 +119,29 @@ on **every line of the book** (14,388 lines; verified lines where they exist, ot
   unverified pages carry baseline keys (`p520~line_013`), not stable ids; a box that clips
   the text is marked Bad crop and left out.
 
+### LLM correction of the Calfa output (2026-10-09, built; awaiting typed lines)
+
+Target (maintainer): **> 90% of lines error-free**; below that, correcting lines costs
+more than typing them. Phase 5 found Gemini 3.1 Pro the best and cheapest corrector and
+Opus comparable, with GPT-5.5 over-correcting and strict rules essential.
+
+`dev/ocr_eval/correct.py` sends each page with **both engines' readings** where they
+disagree (`A: … ‖ B: …`) and one reading where they agree, under Phase 5's v2 rules
+adapted to two readings. Candidates: `claude-opus-5-5`, `gemini-3.1-pro-preview`,
+`gemini-3.8-flash`, `gpt-6.1-sol` (Gemini 4 isn't reachable with this API key yet:
+`gemini-pro-latest` still serves 3.1 Pro). Opus calls carry the server-side refusal
+fallback (`fallbacks: "default"`, sent via `extra_body`: the repo's anthropic SDK 0.107
+predates the parameter).
+
+Smoke test on p.615 (86 lines, 42 with two readings): all four parse cleanly and agree
+on the clear cases (`ԴՁՉ`/`ԴՁ` → `ԴՁ`, `Գչշ`/`Գշ` → `Գշ`, `բ)`/`բձ` → `բձ`); Opus, Gemini Pro
+and Flash change no agreed line, GPT 6.1 changes 2. Per page: Opus 26 s (~$0.08),
+Gemini Pro 33 s, Flash 11 s, GPT 6.1 31 s.
+
+Scoring (`ceiling.py score`) rates every engine, correctors included, by error-free
+lines weighted back to the book, with a bootstrap interval and a count of lines a
+corrector broke (both OCR engines right, corrector wrong).
+
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
 Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**
