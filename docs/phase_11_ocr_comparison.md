@@ -142,6 +142,22 @@ Scoring (`ceiling.py score`) rates every engine, correctors included, by error-f
 lines weighted back to the book, with a bootstrap interval and a count of lines a
 corrector broke (both OCR engines right, corrector wrong).
 
+#### Prompt A/B: v2 vs v3 (maintainer's idea, 2026-10-09)
+
+v3 = v2 + **this book's common errors with examples**, mined from the engines'
+disagreements over the whole book (every example word also occurs outside both test
+samples, so the A/B isn't scored on lines the prompt quotes). It names: tone codes
+(letter-numeral + Ձ/ձ, misread as Չ/Զ/3/)), weekday codes (letter-numeral + շ, misread as
+չ by *both* engines), շ/չ inside words (Ճաչու → Ճաշու), Տէս → Տես, Քարող → Քարոզ, տեղաոյս →
+տեղւոյս, no Latin letters, and a warning that Չ/Զ are right in Չորրորդ, Զկնի, Զատիկ.
+Unlike v2, v3 lets these patterns be fixed even where both readings agree: 15 agreed
+lines have a weekday code with չ, 19 a tone code with Չ/Զ/3/), 12 read Ճաչու.
+
+**Test:** the same model, both prompts, the same pages; compare error-free lines and
+lines broken on the typed ceiling lines (`--prompt v3` → engine `corr-<model>-v3`).
+**Open:** whether the print has ՚ before standalone ի (Paddle reads `'ի` 274 times,
+hye-calfa-n never); left out of v3 until confirmed.
+
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
 Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**

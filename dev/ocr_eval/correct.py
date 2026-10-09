@@ -13,6 +13,7 @@ Only pages holding typed ceiling lines are corrected (the rest can't be scored);
 
     uv run python -m dev.ocr_eval.correct --model opus-5.5
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro
+    uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v3   # A/B: + common errors
 """
 
 from __future__ import annotations
@@ -67,6 +68,30 @@ SYSTEM = (
 )
 
 
+# v3 = v2 + the errors this book's OCR makes most (from the engines' disagreements over the
+# whole book; every example word also occurs outside the test samples). A/B against v2:
+# does naming them help, and does it make the model alter correct lines?
+COMMON_ERRORS = (
+    "\n\nCOMMON ERRORS IN THIS BOOK. These may be fixed even where both readings agree, but only "
+    "when the result is a correct Grabar word or the book's standard abbreviation. The goal is "
+    "correct Grabar vocabulary and grammar exactly as printed, never modern spelling.\n"
+    "1. Tone codes: a letter-numeral followed by Ձ (for ձայն): ԱՁ. ԲՁ. ԳՁ. ԴՁ., lowercase "
+    "աձ. բձ. գձ. դձ.; the plagal tones use Կ: ԱԿ. ԲԿ. ԳԿ. ԴԿ., lowercase ակ. բկ. գկ. դկ. The OCR "
+    "misreads this Ձ/ձ as Չ, Զ, 3 or ): ԱՉ. → ԱՁ., ԲԶ. → ԲՁ., գ3. → գձ., բ). → բձ.; also "
+    "Չայն → Ձայն.\n"
+    "2. Weekday codes: a letter-numeral followed by շ (from շաբթի): Բշ. Գշ. Դշ. Եշ.; also Կիր. "
+    "Ուր. Շբ. The OCR misreads this շ as չ: Բչ. → Բշ., Գչ. → Գշ., Դչ. → Դշ.\n"
+    "3. շ and չ are confused inside words: Ճաչու → Ճաշու, զաբաթ → շաբաթ, գիչերին → գիշերին.\n"
+    "4. Other frequent misreads: Տէս → Տես (\"see\", in cross-references), Քարող → Քարոզ, "
+    "տեղաոյս → տեղւոյս.\n"
+    "5. The text has no Latin letters: a Latin letter is always a misread Armenian one "
+    "(Փեsրուար → Փետրուար).\n"
+    "Չ and Զ are correct in many words (Չորրորդ, Զկնի, Զատիկ): change them only in the codes "
+    "above or where the result is clearly the correct Grabar word."
+)
+PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS}
+
+
 def _load_env() -> None:
     env = common.REPO_ROOT / ".env"
     for line in env.read_text().splitlines() if env.exists() else []:
@@ -78,14 +103,14 @@ def _load_env() -> None:
 # --- providers ---------------------------------------------------------------------
 
 
-def call_anthropic(model: str, user: str) -> tuple[str, dict]:
+def call_anthropic(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
     import anthropic
 
     client = anthropic.Anthropic(timeout=HTTP_TIMEOUT_S)
     # Opus 5.5: thinking is always on (effort controls depth; default medium). Streaming
     # because a page plus thinking can run long. Server-side refusal fallback on by default.
     with client.beta.messages.stream(
-        model=model, max_tokens=MAX_TOKENS, system=SYSTEM,
+        model=model, max_tokens=MAX_TOKENS, system=system,
         output_config={"effort": "medium"},
         # `fallbacks` via extra_body: the repo's SDK (0.107) predates the typed parameter.
         betas=["server-side-fallback-2026-07-01"], extra_body={"fallbacks": "default"},
@@ -98,7 +123,7 @@ def call_anthropic(model: str, user: str) -> tuple[str, dict]:
     return text, {"in": msg.usage.input_tokens, "out": msg.usage.output_tokens, "served_by": msg.model}
 
 
-def call_gemini(model: str, user: str) -> tuple[str, dict]:
+def call_gemini(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
     from google import genai
     from google.genai import types
 
@@ -106,20 +131,20 @@ def call_gemini(model: str, user: str) -> tuple[str, dict]:
     resp = client.models.generate_content(
         model=model, contents=user,
         config=types.GenerateContentConfig(
-            system_instruction=SYSTEM, max_output_tokens=MAX_TOKENS,
+            system_instruction=system, max_output_tokens=MAX_TOKENS,
             thinking_config=types.ThinkingConfig(thinking_budget=GEMINI_THINKING_BUDGET)))
     um = resp.usage_metadata
     return resp.text or "", {"in": um.prompt_token_count or 0, "out": um.candidates_token_count or 0,
                              "served_by": resp.model_version}
 
 
-def call_openai(model: str, user: str) -> tuple[str, dict]:
+def call_openai(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
     from openai import OpenAI
 
     client = OpenAI(timeout=HTTP_TIMEOUT_S, max_retries=0)
     resp = client.chat.completions.create(
         model=model, max_completion_tokens=MAX_TOKENS, reasoning_effort="low",
-        messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}])
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
     return resp.choices[0].message.content or "", {
         "in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens, "served_by": resp.model}
 
@@ -174,6 +199,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", choices=list(MODELS), required=True)
     ap.add_argument("--all", action="store_true", help="every sampled page, not only pages with typed lines")
+    ap.add_argument("--prompt", choices=list(PROMPTS), default="v2",
+                    help="v2: Phase 5 rules; v3: + this book's common errors with examples")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
     a = ap.parse_args()
@@ -184,7 +211,8 @@ def main() -> None:
     sample = tr.load_sample(SET)
     pages = sorted({p["page"] for p in sample["picks"] if a.all or reference(p["id"]) is not None})
 
-    engine = f"corr-{a.model}"
+    system = PROMPTS[a.prompt]
+    engine = f"corr-{a.model}" + ("" if a.prompt == "v2" else f"-{a.prompt}")
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
     done_pages = {lines.page_of(k) for k in out}
@@ -194,7 +222,7 @@ def main() -> None:
 
     def do_page(page: int):
         keys = [l["key"] for l in lines.page_lines(page)]
-        text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds)))
+        text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system))
         corrected, fallbacks = parse(text, keys, preds)
         return page, corrected, fallbacks, u
 
@@ -215,7 +243,8 @@ def main() -> None:
             usage["served_by"].add(u["served_by"])
             print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
                   f"({n}/{len(todo)}, {(time.time() - start) / n:.0f} s/page)", flush=True)
-            common._write(engine, {"model": model, "provider": provider, "prompt": SYSTEM,
+            common._write(engine, {"model": model, "provider": provider, "prompt_version": a.prompt,
+                                   "prompt": system,
                                    "inputs": list(ENGINES)}, out)
     usage["served_by"] = sorted(usage["served_by"])
     log = common.REPO_ROOT / "reports" / "phase11_correction_usage.json"
