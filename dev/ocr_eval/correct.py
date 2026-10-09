@@ -14,11 +14,17 @@ Only pages holding typed ceiling lines are corrected (the rest can't be scored);
     uv run python -m dev.ocr_eval.correct --model opus-5.5
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v3   # A/B: + common errors
+    uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v4   # + line images
+
+v4 is v3 plus the image of each line where the engines disagree, so the model can look at
+the disputed letters (Ձ vs Չ) where the meaning doesn't settle them.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
+import io
 import json
 import os
 import re
@@ -26,7 +32,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
-from dev.line_review import lines
+from dev.line_review import crops, lines, storage
 from dev.line_review import transcribe as tr
 
 from . import common
@@ -91,7 +97,19 @@ COMMON_ERRORS = (
     "Չ and Զ are correct in many words (Չորրորդ, Զկնի, Զատիկ): change them only in the codes "
     "above or where the result is clearly the correct Grabar word."
 )
-PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS}
+# v4 = v3 + the image of every line with two readings.
+LINE_IMAGES = (
+    "\n\nLINE IMAGES. After the lines, the scanned image of each line with two readings follows, "
+    "labeled `Line <number>`. Look at the disputed letters in the image to choose between the "
+    "readings: the image settles look-alike letters (Ձ/Չ/Զ, շ/չ, է/ե, գ/դ) that the meaning "
+    "cannot. Transcribe what is printed; do not correct the printed text itself. The images "
+    "are only evidence: still return EVERY line of the page, from 1 to the last, including the "
+    "lines without an image, in the format above."
+)
+PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS, "v4": SYSTEM + COMMON_ERRORS + LINE_IMAGES}
+WITH_IMAGES = {"v4"}
+
+Images = list[tuple[int, bytes]]  # (line number, PNG) for the lines with two readings
 
 
 def _load_env() -> None:
@@ -105,8 +123,14 @@ def _load_env() -> None:
 # --- providers ---------------------------------------------------------------------
 
 
-def call_anthropic(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
+def call_anthropic(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
     import anthropic
+
+    content: list[dict] = [{"type": "text", "text": user}]
+    for n, png in images:
+        content += [{"type": "text", "text": f"Line {n}"},
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/png",
+                                                 "data": base64.b64encode(png).decode()}}]
 
     client = anthropic.Anthropic(timeout=HTTP_TIMEOUT_S)
     # Opus 5.5: thinking is always on (effort controls depth; default medium). Streaming
@@ -116,7 +140,7 @@ def call_anthropic(model: str, user: str, system: str = SYSTEM) -> tuple[str, di
         output_config={"effort": "medium"},
         # `fallbacks` via extra_body: the repo's SDK (0.107) predates the typed parameter.
         betas=["server-side-fallback-2026-07-01"], extra_body={"fallbacks": "default"},
-        messages=[{"role": "user", "content": user}],
+        messages=[{"role": "user", "content": content}],
     ) as stream:
         msg = stream.get_final_message()
     if msg.stop_reason == "refusal":
@@ -125,13 +149,17 @@ def call_anthropic(model: str, user: str, system: str = SYSTEM) -> tuple[str, di
     return text, {"in": msg.usage.input_tokens, "out": msg.usage.output_tokens, "served_by": msg.model}
 
 
-def call_gemini(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
+def call_gemini(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
     from google import genai
     from google.genai import types
 
+    contents: list = [user]
+    for n, png in images:
+        contents += [f"Line {n}", types.Part.from_bytes(data=png, mime_type="image/png")]
+
     client = genai.Client(http_options=types.HttpOptions(timeout=HTTP_TIMEOUT_S * 1000))
     resp = client.models.generate_content(
-        model=model, contents=user,
+        model=model, contents=contents,
         config=types.GenerateContentConfig(
             system_instruction=system, max_output_tokens=MAX_TOKENS,
             thinking_config=types.ThinkingConfig(thinking_budget=GEMINI_THINKING_BUDGET)))
@@ -140,13 +168,19 @@ def call_gemini(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]
                              "served_by": resp.model_version}
 
 
-def call_openai(model: str, user: str, system: str = SYSTEM) -> tuple[str, dict]:
+def call_openai(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
     from openai import OpenAI
+
+    content: list[dict] = [{"type": "text", "text": user}]
+    for n, png in images:
+        content += [{"type": "text", "text": f"Line {n}"},
+                    {"type": "image_url", "image_url": {
+                        "url": "data:image/png;base64," + base64.b64encode(png).decode()}}]
 
     client = OpenAI(timeout=HTTP_TIMEOUT_S, max_retries=0)
     resp = client.chat.completions.create(
         model=model, max_completion_tokens=MAX_TOKENS, reasoning_effort="low",
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": content}])
     return resp.choices[0].message.content or "", {
         "in": resp.usage.prompt_tokens, "out": resp.usage.completion_tokens, "served_by": resp.model}
 
@@ -168,12 +202,30 @@ def with_retries(fn, attempts: int = 3):
 # --- pages -------------------------------------------------------------------------
 
 
+def disagrees(k: str, preds: dict[str, dict[str, str]]) -> bool:
+    return normalize(preds[ENGINES[0]].get(k, "")) != normalize(preds[ENGINES[1]].get(k, ""))
+
+
 def page_prompt(keys: list[str], preds: dict[str, dict[str, str]]) -> str:
     rows = []
     for n, k in enumerate(keys, 1):
         a, b = preds[ENGINES[0]].get(k, ""), preds[ENGINES[1]].get(k, "")
-        rows.append(f"{n}\t{a}" if normalize(a) == normalize(b) else f"{n}\tA: {a} ‖ B: {b}")
+        rows.append(f"{n}\tA: {a} ‖ B: {b}" if disagrees(k, preds) else f"{n}\t{a}")
     return "\n".join(rows)
+
+
+def page_images(page: int, page_lines: list[dict], preds: dict[str, dict[str, str]]) -> Images:
+    """The crop (as the engines read it) of every line with two readings."""
+    from PIL import Image
+
+    render = Image.open(storage.render_path(page)).convert("L")
+    out = []
+    for n, line in enumerate(page_lines, 1):
+        if disagrees(line["key"], preds):
+            buf = io.BytesIO()
+            crops.line_crop(render, line).save(buf, format="PNG")
+            out.append((n, buf.getvalue()))
+    return out
 
 
 LINE = re.compile(r"^\s*(\d+)\t(.*)$")
@@ -204,7 +256,8 @@ def main() -> None:
     ap.add_argument("--model", choices=list(MODELS), required=True)
     ap.add_argument("--all", action="store_true", help="every sampled page, not only pages with typed lines")
     ap.add_argument("--prompt", choices=list(PROMPTS), default="v2",
-                    help="v2: Phase 5 rules; v3: + this book's common errors with examples")
+                    help="v2: Phase 5 rules; v3: + this book's common errors with examples; "
+                         "v4: v3 + images of the lines where the engines disagree")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
     a = ap.parse_args()
@@ -225,9 +278,17 @@ def main() -> None:
     usage = {"in": 0, "out": 0, "fallback_lines": 0, "pages": 0, "served_by": set()}
 
     def do_page(page: int):
-        keys = [l["key"] for l in lines.page_lines(page)]
-        text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system))
-        corrected, fallbacks = parse(text, keys, preds)
+        page_lines = lines.page_lines(page)
+        keys = [l["key"] for l in page_lines]
+        images = page_images(page, page_lines, preds) if a.prompt in WITH_IMAGES else []
+        for attempt in (1, 2):  # a page with fallback lines is asked once more
+            text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system, images))
+            corrected, fallbacks = parse(text, keys, preds)
+            if not fallbacks:
+                break
+            unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
+            print(f"  p{page}: {fallbacks} fallback lines (try {attempt}); "
+                  f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
         return page, corrected, fallbacks, u
 
     start = time.time()

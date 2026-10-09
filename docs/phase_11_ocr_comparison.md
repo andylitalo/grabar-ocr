@@ -183,6 +183,61 @@ hye-calfa-n never); left out of v3 until confirmed.
 - v2's run echoed the `A: … ‖ B:` markers on 2 lines; `parse` now treats such lines as
   fallbacks.
 
+**Typing target** (maintainer, 2026-10-09): about 60 disagreements and 90 agreements, not
+the full 300 + 200. That narrows the interval to about ±3.5 points, enough to tell whether its
+lower end clears 90%. Keep watching v3 vs v2 as lines are added.
+
+#### v4: line images for the disagreements (maintainer's idea, 2026-10-09)
+
+v4 = v3 + the scanned crop of every line where the engines disagree (the same
+`crops.line_crop` the engines read), sent after the text and labeled `Line <n>`. Agreed
+lines stay text-only, which keeps cost down: the image is for the look-alike calls
+(Ձ/Չ/Զ, շ/չ) that the meaning can't settle. It is scored against v2 and v3 on the same pages
+(`--prompt v4` → `corr-<model>-v4`).
+
+**Result so far (2026-10-09; Gemini 3.1 Pro; 160 typed lines: 58 disagreements, 102
+agreements).** Em dash `—` is now folded with `-` in scoring, like the other look-alike
+punctuation.
+
+| corrector + `՚ի` rule | lines scored | wrong (disagree) | wrong (agree) | error-free | 95% interval | broke |
+|---|--:|--:|--:|--:|--:|--:|
+| v4 (images) | 54 | 1/20 | 3/34 | **92.6%** | 85.2–98.2% | 0 |
+| v3 | 117 | 5/50 | 4/67 | **92.6%** | 87.7–96.9% | 0 |
+| v2 | 115 | 8/49 | 4/66 | **90.2%** | 84.5–95.1% | 1 |
+| Paddle (no LLM) | 160 | 25/58 | 8/102 | 79.3% | 73.6–84.9% | – |
+
+- **Paired on the 45 lines all three cover**: v2 7 wrong, v3 4, v4 3. v4's only gain over
+  v3 is the period in `Ալէ.` on p519; v3 and v4 otherwise make the same calls.
+- **v2 broke one correct line** (p478: `զնան` → `զնա`). v3 and v4 haven't broken any.
+- **What's left is mostly agreed lines** where both engines read the same wrong thing: a
+  tone or numeral letter (`բկ.` for `բձ.`, `գկ.` for `դկ.`), case (`թագաւորեաց` for
+  `Թագաւորեաց`), a dropped letter (`զայլն` for `զայլսն`, `եդեալդ` for `եդեալքդ`), a
+  comma read as a period. v4 sends images only for disagreements, so it can't see these.
+- **p512 `Յասմաւուրքէն`**: the transcription has it without յ; both engines and the
+  correctors read `Յայսմաւուրքէն`. This needs checking against the scan: a print error,
+  or a typing slip.
+- **Cost**: the images make v4 ~10× v3's input tokens on Gemini (~35k vs ~3.5k per page;
+  Gemini bills a line crop at its high default resolution). The first v4 run returned
+  only the imaged lines on 3 pages; the prompt now says to return every line, and the
+  runner retries a page once if lines fall back. The rerun hit the Gemini key's monthly
+  spending cap after 31 pages, so v4 covers fewer lines than v3.
+
+#### Planned: review buckets (maintainer, 2026-10-09)
+
+Every line will still go to a human for final review. The pipeline sorts lines into
+buckets so the reviewer can move quickly through the likely-correct ones and spend
+attention where the machine is least sure. Candidate signals:
+
+- **likely correct**: both engines agree and the corrector left the line unchanged;
+- **possible error**: the engines disagree and the corrector chose one reading, or the
+  corrector changed an agreed line;
+- **likely error**: the corrector's output matches neither reading, or it changed more
+  than one or two letters, or the line has a low-confidence stratum (display type, drop
+  cap, bad crop).
+
+Each bucket's actual error rate is measured on the typed ceiling lines before the
+thresholds are trusted. Not built yet.
+
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
 Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**
