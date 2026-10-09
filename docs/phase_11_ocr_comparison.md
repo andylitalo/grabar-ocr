@@ -177,8 +177,9 @@ hye-calfa-n never); left out of v3 until confirmed.
   model add it.
 - **With the rule, correction clears the 90% target**; the interval's lower end (~88%)
   needs more typed lines to confirm.
-- **v3 vs v2: not settled.** v3 was right on 2 more disagreement lines and wrong on 1
-  more agreed line (`ճըդ-` → `ճըգ-`... changed a correct դ). A paired comparison needs more lines.
+- **v3 vs v2: not settled.** v3 was right on 2 more disagreement lines; on 1 agreed line
+  where both engines read `ճըդ-` (print `ճըգ-`), v2 fixed it and v3 left it. Neither broke
+  a correct line. A paired comparison needs more lines.
 - v2's run echoed the `A: … ‖ B:` markers on 2 lines; `parse` now treats such lines as
   fallbacks.
 
