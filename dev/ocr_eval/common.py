@@ -2,6 +2,9 @@
 
     runs/ocr_eval/crops/<line id>.png      written by export_crops.py (repo venv)
     data/ocr_predictions/<engine>.json     written by each run_*.py, read by score.py
+
+Pass ``--set ceiling`` to any runner to work on the ceiling set instead
+(``runs/ocr_eval/ceiling_crops/`` -> ``data/ocr_predictions/ceiling/``; see ceiling.py).
 """
 
 from __future__ import annotations
@@ -19,9 +22,17 @@ CROPS_DIR = REPO_ROOT / "runs" / "ocr_eval" / "crops"
 PREDICTIONS_DIR = REPO_ROOT / "data" / "ocr_predictions"
 
 
+def use_set(name: str) -> None:
+    """Point the runners at another line set ("testset" is the default)."""
+    global CROPS_DIR, PREDICTIONS_DIR
+    if name != "testset":
+        CROPS_DIR = REPO_ROOT / "runs" / "ocr_eval" / f"{name}_crops"
+        PREDICTIONS_DIR = REPO_ROOT / "data" / "ocr_predictions" / name
+
+
 def crop_paths(ids: list[str] | None = None) -> list[Path]:
     """Exported crops, optionally limited to ``ids``, in id order."""
-    paths = sorted(CROPS_DIR.glob("p*.png"))
+    paths = sorted(CROPS_DIR.glob("p*.png"))  # p457.023 (verified) or p520~line_013 (baseline)
     if not paths:
         sys.exit(f"No crops in {CROPS_DIR}: run `uv run python -m dev.ocr_eval.export_crops` first")
     return [p for p in paths if ids is None or p.stem in ids]
@@ -69,7 +80,14 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
         json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def add_set_arg(ap: argparse.ArgumentParser) -> None:
+    ap.add_argument("--set", default="testset", help="line set: testset (default) or ceiling")
+
+
 def args(description: str) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=description)
     ap.add_argument("--redo", action="store_true", help="re-predict every line")
-    return ap.parse_args()
+    add_set_arg(ap)
+    a = ap.parse_args()
+    use_set(a.set)
+    return a

@@ -8,8 +8,12 @@
 </head>
 <body class="transcribe">
   <header>
-    <h1>Transcription <small>test set</small></h1>
+    <h1>Transcription <small id="set-name">test set</small></h1>
     <a href="/" class="nav">&larr; Line review</a>
+    <div class="sets">
+      <button class="set" data-set="testset" title="Phase 10: the stratified OCR test set">Test set</button>
+      <button class="set" data-set="ceiling" title="Lines where the two Calfa engines disagree, plus a sample where they agree">Ceiling</button>
+    </div>
     <div class="modes">
       <button class="mode active" data-mode="first" title="Type each sampled line">First pass</button>
       <button class="mode" data-mode="recheck" title="Retype queued lines without seeing the first pass">Blind recheck <span id="recheck-count"></span></button>

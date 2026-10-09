@@ -98,6 +98,27 @@ Operational notes: Gemini Pro takes ~25 s a line and its API returned 504s under
 (one line still failed after 3 retries, retried on the next run); the runner sends 8
 lines at a time. Surya runs on llama.cpp (installed 2026-10-05); the first call loads the model (~5 min), then ~0.6 s a line.
 
+### Ceiling of the Calfa engines (2026-10-08, sample built, typing under way)
+
+The 12-line result (both 0%) was the luck of a small, easy sample. Both engines were run
+on **every line of the book** (14,388 lines; verified lines where they exist, otherwise the
+`paddle-filled` baseline with fixes so far): `dev/ocr_eval/ceiling.py`.
+
+- **They disagree on 36.6% of lines** (5,264), **2.2% of characters**. Only 94 differ just
+  in spacing. The rest are look-alike Bolorgir letters: Չ/Ձ/Զ (600+, mostly large line
+  initials), չ/շ, զ/ղ, է/ե, գ/դ, and `3` or `)` for ձ. Where they disagree, at least one is
+  wrong, so **their line error rates sum to at least 36.6%** and their CERs to at least
+  about 2.2%: roughly 1–2% CER each, i.e. an error every few lines, not a near-perfect
+  read.
+- **Sample** (`data/transcriptions/ceiling/sample.json`, served at `/transcribe?set=ceiling`):
+  300 random disagreements + 200 random agreements, 164 pages, half Vol I, half Vol II.
+  Each engine's line error rate = the two groups' rates weighted by their share of the
+  book; lines-per-error is its inverse, with a bootstrap interval
+  (`reports/phase11_ceiling.md`). Agreements also catch identical mistakes by both.
+- Test-set transcriptions of verified lines are reused, not retyped. Lines from
+  unverified pages carry baseline keys (`p520~line_013`), not stable ids; a box that clips
+  the text is marked Bad crop and left out.
+
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
 Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**

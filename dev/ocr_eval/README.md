@@ -31,3 +31,9 @@ uv run python -m dev.ocr_eval.score                                 # writes the
 
 Predictions: `data/ocr_predictions/<engine>.json` (committed). Crops: `runs/ocr_eval/crops/`
 (scratch, regenerable).
+
+## Ceiling experiment (`ceiling.py`)
+
+How often do the two Calfa engines err across the whole book? See the docstring of
+`ceiling.py` for the steps (export every line, run both engines with `--set ceiling`,
+sample, score). Type the sample at `/transcribe?set=ceiling`.

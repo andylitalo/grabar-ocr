@@ -39,8 +39,8 @@ def _now() -> str:
 
 
 def page_of(line_id: str) -> int:
-    """``p457.023`` -> 457."""
-    return int(line_id[1:].split(".")[0])
+    """``p457.023`` -> 457; also baseline keys, ``p520~line_013`` -> 520."""
+    return int(line_id[1:].split("~")[0].split(".")[0])
 
 
 # --- sample ----------------------------------------------------------------------
@@ -117,19 +117,19 @@ def recheck_ids(sample: dict, every: int = RECHECK_EVERY, cap: int = RECHECK_CAP
     return chosen[:cap]
 
 
-def sample_path() -> Path:
-    return TRANSCRIPTIONS_DIR / TESTSET / "sample.json"
+def sample_path(task: str = TESTSET) -> Path:
+    return TRANSCRIPTIONS_DIR / task / "sample.json"
 
 
-def load_sample() -> dict:
-    path = sample_path()
+def load_sample(task: str = TESTSET) -> dict:
+    path = sample_path(task)
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else new_sample()
 
 
-def save_sample(sample: dict) -> None:
-    sample_path().parent.mkdir(parents=True, exist_ok=True)
-    sample_path().write_text(json.dumps(sample, indent=1, ensure_ascii=False) + "\n",
-                             encoding="utf-8")
+def save_sample(sample: dict, task: str = TESTSET) -> None:
+    sample_path(task).parent.mkdir(parents=True, exist_ok=True)
+    sample_path(task).write_text(json.dumps(sample, indent=1, ensure_ascii=False) + "\n",
+                                 encoding="utf-8")
 
 
 # --- transcriptions --------------------------------------------------------------
@@ -153,6 +153,15 @@ def _write_page(page: int, task: str, records: dict) -> None:
 
 def load_line(line_id: str, task: str = TESTSET) -> dict | None:
     return load_page(page_of(line_id), task).get(line_id)
+
+
+def effective_line(key: str, task: str) -> dict | None:
+    """``key``'s transcription for ``task``: its own, else (for a verified line id) one
+    already typed for the test set, so no line is typed twice."""
+    rec = load_line(key, task)
+    if rec is None and task != TESTSET and "~" not in key:
+        rec = load_line(key, TESTSET)
+    return rec
 
 
 def save_line(line_id: str, *, text: str, status: str, task: str = TESTSET,

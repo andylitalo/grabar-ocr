@@ -146,3 +146,6 @@ body.transcribe.recheck #illegible, body.transcribe.recheck #bad-crop { display:
    Mshtakan is left out of the font lists above: it draws the ligature regardless. */
 #text, .palette button { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0; }
 #char-warning { color: var(--warn); font-size: 0.85rem; min-height: 1.2em; }
+.sets { display: flex; gap: 0.3rem; }
+.set.active { background: var(--ok); border-color: var(--ok); color: #fff; }
+body.set-ceiling .modes, body.set-ceiling #top-up { display: none; }

@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
 
-from . import crops
+from . import crops, lines
 from . import materialize as mz
 from . import storage
 from . import transcribe as tr
@@ -54,6 +54,7 @@ class RecheckRequest(BaseModel):
 
 
 CONTRIBUTOR = "maintainer"  # set by --contributor; stored as ``by`` on each transcription
+SETS = (tr.TESTSET, "ceiling")  # line sets the transcription page can serve
 
 
 def _payload(page: int, review: dict) -> dict:
@@ -156,16 +157,18 @@ def _verified_pages() -> list[dict]:
     return out
 
 
-def _verified_line(line_id: str) -> tuple[dict, dict]:
-    """(the line, its page record) from data/verified_lines, or 404."""
-    page = tr.page_of(line_id)
-    path = storage.verified_path(page)
-    if path.exists():
-        rec = json.loads(path.read_text(encoding="utf-8"))
-        for line in rec["lines"]:
-            if line["id"] == line_id:
-                return line, rec
-    raise HTTPException(status_code=404, detail=f"No verified line {line_id}")
+def _line(key: str) -> tuple[dict, list[dict]]:
+    """(the line, its page's lines), verified id or baseline key; 404 if absent."""
+    try:
+        return lines.find(key)
+    except (KeyError, FileNotFoundError, ValueError):
+        raise HTTPException(status_code=404, detail=f"No line {key}")
+
+
+def _set(name: str) -> str:
+    if name not in SETS:
+        raise HTTPException(status_code=400, detail=f"unknown set {name!r}; expected one of {SETS}")
+    return name
 
 
 def _png(img: Image.Image) -> Response:
@@ -174,26 +177,26 @@ def _png(img: Image.Image) -> Response:
     return Response(buf.getvalue(), media_type="image/png")
 
 
-def _transcribe_state() -> dict:
-    sample = tr.load_sample()
-    pool = tr.candidates(_verified_pages())
-    recheck = set(tr.recheck_ids(sample))
-    pages: dict[int, dict] = {}
+def _transcribe_state(task: str) -> dict:
+    sample = tr.load_sample(task)
+    testset = task == tr.TESTSET
+    pool = tr.candidates(_verified_pages()) if testset else []
+    recheck = set(tr.recheck_ids(sample)) if testset else set()
     picks = []
     # Serve in rank order, not pick order: picks are appended stratum by stratum, so pick
     # order would serve every body line before the first display or drop-cap line.
     for p in sorted(sample["picks"], key=lambda p: tr.rank(sample["seed"], p["id"])):
-        if p["page"] not in pages:
-            pages[p["page"]] = tr.load_page(p["page"])
-        rec = pages[p["page"]].get(p["id"])
+        rec = tr.effective_line(p["id"], task)
         picks.append({**p, "status": rec["status"] if rec else "pending",
                       "recheck": p["id"] in recheck,
                       "rechecked": bool(rec and "recheck" in rec)})
+    population = sample.get("population", {})
     strata = {name: {"quota": q, "picked": sum(p["stratum"] == name for p in picks),
                      "done": sum(p["stratum"] == name and p["status"] != "pending" for p in picks),
-                     "pool": sum(c["stratum"] == name for c in pool)}
+                     "pool": sum(c["stratum"] == name for c in pool) if testset else population.get(name, 0)}
               for name, q in sample["quotas"].items()}
-    return {"picks": picks, "strata": strata, "missing": tr.missing_picks(sample, pool),
+    return {"set": task, "picks": picks, "strata": strata,
+            "missing": tr.missing_picks(sample, pool) if testset else [],
             "per_page": sample.get("per_page"), "contributor": CONTRIBUTOR}
 
 
@@ -203,41 +206,43 @@ def transcribe_page() -> FileResponse:
 
 
 @app.get("/api/transcribe/state")
-def transcribe_state() -> dict:
-    return _transcribe_state()
+def transcribe_state(set: str = tr.TESTSET) -> dict:  # noqa: A002 (query parameter name)
+    return _transcribe_state(_set(set))
 
 
 @app.post("/api/transcribe/sample")
 def top_up_sample() -> dict:
+    """Top up the Phase 10 test set (the ceiling sample is made by dev/ocr_eval/ceiling.py)."""
     tr.save_sample(tr.top_up(tr.load_sample(), tr.candidates(_verified_pages())))
-    return _transcribe_state()
+    return _transcribe_state(tr.TESTSET)
 
 
 @app.get("/api/lines/{line_id}")
-def get_line(line_id: str) -> dict:
-    line, rec = _verified_line(line_id)
-    return {"id": line_id, "page": rec["page"], "bbox": line["bbox"], "initial": line.get("initial"),
-            "transcription": tr.load_line(line_id)}
+def get_line(line_id: str, set: str = tr.TESTSET) -> dict:  # noqa: A002
+    line, _ = _line(line_id)
+    return {"id": line_id, "page": lines.page_of(line_id), "bbox": line["bbox"],
+            "initial": line.get("initial"), "transcription": tr.effective_line(line_id, _set(set))}
 
 
 @app.get("/api/lines/{line_id}/crop.png")
 def get_line_crop(line_id: str) -> Response:
-    line, rec = _verified_line(line_id)
-    return _png(crops.line_crop(Image.open(storage.render_path(rec["page"])).convert("L"), line))
+    line, _ = _line(line_id)
+    page = Image.open(storage.render_path(lines.page_of(line_id))).convert("L")
+    return _png(crops.line_crop(page, line))
 
 
 @app.get("/api/lines/{line_id}/context.png")
 def get_line_context(line_id: str) -> Response:
-    line, rec = _verified_line(line_id)
-    page = Image.open(storage.render_path(rec["page"]))
-    return _png(crops.context_crop(page, line, rec["lines"]))
+    line, page_lines = _line(line_id)
+    page = Image.open(storage.render_path(lines.page_of(line_id)))
+    return _png(crops.context_crop(page, line, page_lines))
 
 
 @app.put("/api/transcribe/lines/{line_id}")
-def put_transcription(line_id: str, req: TranscriptionRequest) -> dict:
-    _verified_line(line_id)
+def put_transcription(line_id: str, req: TranscriptionRequest, set: str = tr.TESTSET) -> dict:  # noqa: A002
+    _line(line_id)
     try:
-        return tr.save_line(line_id, text=req.text, status=req.status, by=CONTRIBUTOR)
+        return tr.save_line(line_id, text=req.text, status=req.status, task=_set(set), by=CONTRIBUTOR)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

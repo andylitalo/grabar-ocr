@@ -155,3 +155,20 @@ def test_each_stratum_has_its_own_page_cap():
                                      per_page={"vol1-body": 4, "drop-cap": 1}),
                        tr.candidates([verified(500, lines)]))
     assert "p500.010" in [p["id"] for p in sample["picks"]]
+
+
+# --- ceiling set: baseline keys and reuse of test-set transcriptions --------------------
+
+
+def test_page_of_accepts_baseline_keys():
+    assert tr.page_of("p457.023") == 457
+    assert tr.page_of("p520~line_013") == 520
+    assert tr.page_of("p520~line_013/2") == 520
+
+
+def test_ceiling_reuses_test_set_transcriptions_of_verified_lines(tmp_dirs):
+    tr.save_line("p457.023", text="Աւետարան", status="done")
+    assert tr.effective_line("p457.023", "ceiling")["text"] == "Աւետարան"
+    tr.save_line("p457.023", text="Աւետարան։", status="done", task="ceiling")
+    assert tr.effective_line("p457.023", "ceiling")["text"] == "Աւետարան։"  # its own wins
+    assert tr.effective_line("p520~line_013", "ceiling") is None

@@ -14,6 +14,11 @@ const PALETTE = [
 const STATUS_LABEL = { pending: "not typed", done: "done", illegible: "illegible", "bad-crop": "bad crop" };
 
 const $ = (id) => document.getElementById(id);
+// Which line set: ?set=ceiling or the default Phase 10 test set.
+const SET = new URLSearchParams(location.search).get("set") || "testset";
+const SET_NAMES = { testset: "test set", ceiling: "ceiling (where the Calfa engines disagree)" };
+const q = (url) => `${url}${url.includes("?") ? "&" : "?"}set=${SET}`;
+
 const state = {
   picks: [], strata: {}, mode: "first", queue: [], index: 0, current: null,
 };
@@ -84,7 +89,7 @@ async function showLine(i) {
   }
   state.index = Math.max(0, Math.min(i, state.queue.length - 1));
   const id = state.queue[state.index];
-  const line = await api("GET", `/api/lines/${id}`);
+  const line = await api("GET", q(`/api/lines/${id}`));
   state.current = line;
   const p = pickById(id);
   $("line-id").textContent = `${id}  (page ${line.page})`;
@@ -103,7 +108,7 @@ async function showLine(i) {
 }
 
 async function refresh(keepIndex) {
-  const s = await api("GET", "/api/transcribe/state");
+  const s = await api("GET", q("/api/transcribe/state"));
   state.picks = s.picks;
   state.strata = s.strata;
   buildQueue();
@@ -121,7 +126,7 @@ async function save(status) {
   if (status === "done" && !text) { flash("Empty line: use Illegible, or Bad crop", "err"); return; }
   try {
     if (state.mode === "first") {
-      const rec = await api("PUT", `/api/transcribe/lines/${id}`, { text, status });
+      const rec = await api("PUT", q(`/api/transcribe/lines/${id}`), { text, status });
       pickById(id).status = rec.status;
     } else {
       await api("PUT", `/api/transcribe/lines/${id}/recheck`, { text });
@@ -132,7 +137,7 @@ async function save(status) {
     flash(e.message, "err");
     return;
   }
-  const s = await api("GET", "/api/transcribe/state");
+  const s = await api("GET", q("/api/transcribe/state"));
   state.strata = s.strata;
   renderStrata();
   // advance to the next line not yet done, else just the next one
@@ -199,6 +204,13 @@ document.addEventListener("keydown", (ev) => {
   else if (ev.code === "ArrowRight") { ev.preventDefault(); showLine(state.index + 1); }
   else if (ev.code === "KeyI" && state.mode === "first") { ev.preventDefault(); save("illegible"); }
   else if (ev.code === "KeyB" && state.mode === "first") { ev.preventDefault(); save("bad-crop"); }
+});
+
+$("set-name").textContent = SET_NAMES[SET] || SET;
+document.body.classList.add(`set-${SET}`);
+document.querySelectorAll(".set").forEach((b) => {
+  b.classList.toggle("active", b.dataset.set === SET);
+  b.addEventListener("click", () => { location.search = `?set=${b.dataset.set}`; });
 });
 
 refresh(false);
