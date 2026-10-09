@@ -17,7 +17,12 @@ Only pages holding typed ceiling lines are corrected (the rest can't be scored);
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v4   # + line images
 
 v4 is v3 plus the image of each line where the engines disagree, so the model can look at
-the disputed letters (Ձ vs Չ) where the meaning doesn't settle them.
+the disputed letters (Ձ vs Չ) where the meaning doesn't settle them. v5 shows the same
+lines with their neighbours above and below in the image (the line outlined), for a word
+broken across lines and for comparing letter shapes; the text of every line is in the
+prompt in all versions.
+
+    uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v5   # + neighbours
 """
 
 from __future__ import annotations
@@ -37,7 +42,7 @@ from dev.line_review import transcribe as tr
 
 from . import common
 from .ceiling import ENGINES, SET, reference
-from .score import normalize
+from .score import edits, normalize
 
 # name -> (provider, API model id)
 MODELS = {
@@ -106,8 +111,21 @@ LINE_IMAGES = (
     "are only evidence: still return EVERY line of the page, from 1 to the last, including the "
     "lines without an image, in the format above."
 )
-PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS, "v4": SYSTEM + COMMON_ERRORS + LINE_IMAGES}
-WITH_IMAGES = {"v4"}
+# v5 = v4 with each image showing the line between its neighbours.
+CONTEXT_IMAGES = (
+    "\n\nLINE IMAGES. After the lines, a scan of each line with two readings follows, labeled "
+    "`Line <number>`. The line is outlined in orange; the lines above and below it are shown "
+    "for context (a word broken across lines, and the same letters printed nearby). Look at "
+    "the disputed letters in the outlined line to choose between the readings: the image "
+    "settles look-alike letters (Ձ/Չ/Զ, շ/չ, է/ե, գ/դ) that the meaning cannot. Transcribe "
+    "what is printed; do not correct the printed text itself. The images are only evidence: "
+    "still return EVERY line of the page, from 1 to the last, including the lines without an "
+    "image, in the format above."
+)
+PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS, "v4": SYSTEM + COMMON_ERRORS + LINE_IMAGES,
+           "v5": SYSTEM + COMMON_ERRORS + CONTEXT_IMAGES}
+WITH_IMAGES = {"v4": "line", "v5": "context"}
+CONTEXT_MARGIN = 1.3  # line heights above and below: one neighbour each side
 
 Images = list[tuple[int, bytes]]  # (line number, PNG) for the lines with two readings
 
@@ -214,8 +232,10 @@ def page_prompt(keys: list[str], preds: dict[str, dict[str, str]]) -> str:
     return "\n".join(rows)
 
 
-def page_images(page: int, page_lines: list[dict], preds: dict[str, dict[str, str]]) -> Images:
-    """The crop (as the engines read it) of every line with two readings."""
+def page_images(page: int, page_lines: list[dict], preds: dict[str, dict[str, str]],
+                kind: str = "line") -> Images:
+    """For every line with two readings: its crop as the engines read it (``line``), or the
+    line outlined between its neighbours (``context``)."""
     from PIL import Image
 
     render = Image.open(storage.render_path(page)).convert("L")
@@ -223,27 +243,43 @@ def page_images(page: int, page_lines: list[dict], preds: dict[str, dict[str, st
     for n, line in enumerate(page_lines, 1):
         if disagrees(line["key"], preds):
             buf = io.BytesIO()
-            crops.line_crop(render, line).save(buf, format="PNG")
+            img = (crops.line_crop(render, line) if kind == "line"
+                   else crops.context_crop(render, line, page_lines, margin=CONTEXT_MARGIN))
+            img.save(buf, format="PNG")
             out.append((n, buf.getvalue()))
     return out
 
 
 LINE = re.compile(r"^\s*(\d+)\t(.*)$")
+# A correction changes a few letters. A line further than this from both OCR readings is
+# another line's text (the model skipped or merged a row and the numbering shifted).
+MAX_CHANGE = 0.3  # share of the line's characters
+
+
+def drifted(text: str, k: str, preds: dict[str, dict[str, str]]) -> bool:
+    readings = [preds[e].get(k, "") for e in ENGINES]
+    nearest = min(edits(normalize(r), normalize(text)) for r in readings)
+    return nearest > max(4, MAX_CHANGE * max(len(normalize(r)) for r in readings))
 
 
 def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
-    """Corrected text per key; lines the model didn't return, or returned still marked
-    up as `A: … ‖ B: …`, fall back to the OCR (the agreed reading, else Paddle's).
+    """Corrected text per key; lines the model didn't return, returned still marked up as
+    `A: … ‖ B: …`, or returned as some other line's text (``drifted``) fall back to the
+    OCR (the agreed reading, else Paddle's).
     Returns (lines, number of fallbacks)."""
     got = {}
     for row in text.splitlines():
         m = LINE.match(row)
         if m:
-            got[int(m.group(1))] = m.group(2).strip()
+            row_text = m.group(2).strip()
+            if "‖" not in row_text:  # one reading chosen but its label kept: `B: …`
+                row_text = re.sub(r"^[AB]:\s*", "", row_text)
+            got[int(m.group(1))] = row_text
     out, fallbacks = {}, 0
     for n, k in enumerate(keys, 1):
         # A line that still carries the two-reading markers was echoed, not corrected.
-        if n in got and got[n] and "‖" not in got[n] and not re.match(r"^[AB]:", got[n]):
+        if (n in got and got[n] and "‖" not in got[n] and not re.match(r"^[AB]:", got[n])
+                and not drifted(got[n], k, preds)):
             out[k] = got[n]
         else:
             out[k] = preds[ENGINES[1]].get(k, "")
@@ -257,7 +293,8 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="every sampled page, not only pages with typed lines")
     ap.add_argument("--prompt", choices=list(PROMPTS), default="v2",
                     help="v2: Phase 5 rules; v3: + this book's common errors with examples; "
-                         "v4: v3 + images of the lines where the engines disagree")
+                         "v4: v3 + images of the lines where the engines disagree; "
+                         "v5: v4 with each image showing the neighbouring lines")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
     a = ap.parse_args()
@@ -280,7 +317,8 @@ def main() -> None:
     def do_page(page: int):
         page_lines = lines.page_lines(page)
         keys = [l["key"] for l in page_lines]
-        images = page_images(page, page_lines, preds) if a.prompt in WITH_IMAGES else []
+        images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
+                  if a.prompt in WITH_IMAGES else [])
         for attempt in (1, 2):  # a page with fallback lines is asked once more
             text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system, images))
             corrected, fallbacks = parse(text, keys, preds)

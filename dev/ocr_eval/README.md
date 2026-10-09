@@ -38,6 +38,7 @@ How often do the two Calfa engines err across the whole book? See the docstring 
 `ceiling.py` for the steps (export every line, run both engines with `--set ceiling`,
 sample, score). Type the sample at `/transcribe?set=ceiling`.
 
-LLM correction (`correct.py`, `--prompt v2|v3|v4`; v4 adds line images for disagreements)
+LLM correction (`correct.py`, `--prompt v2|v3|v4|v5`; v4 adds line images for disagreements, v5 shows them with
+neighbouring lines)
 and the `՚ի` rule (`rules.py`) write more prediction files to the ceiling set, scored the
 same way.

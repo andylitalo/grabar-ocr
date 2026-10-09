@@ -222,6 +222,47 @@ punctuation.
   runner retries a page once if lines fall back. The rerun hit the Gemini key's monthly
   spending cap after 31 pages, so v4 covers fewer lines than v3.
 
+#### v2–v5 on all typed lines (2026-10-09, 160 lines: 58 disagreements, 102 agreements)
+
+**v5** (maintainer's idea): each disagreement line's image shows the lines above and
+below too, with the line outlined (`crops.context_crop`, 1.3 line heights each side). The
+neighbours' *text* was already in every version: the whole page goes in one prompt.
+
+Three fixes before scoring:
+
+- **Shifted lines.** On p534, v4 skipped a row and every line after it got its
+  neighbour's text. `parse` now rejects a line that is more than max(4 characters, 30%)
+  away from both OCR readings (`drifted`), and it falls back to the OCR. On the 160 typed
+  lines the true text is at most 3 characters from the nearer reading, so the guard never
+  rejects a real correction. It was applied after the fact to the runs already made:
+  v2 12 lines, v3 7, v4 92, v5 21 over the book.
+- **Kept labels.** On p474 the model returned `B: …` for its chosen reading; `parse` now
+  strips a lone `A:`/`B:`.
+- **p512 transcription** corrected to `Յայսմաւուրքէն` (maintainer's typing slip).
+
+| corrector + `՚ի` rule | wrong (disagree) | wrong (agree) | **error-free** | 95% interval | broke |
+|---|--:|--:|--:|--:|--:|
+| **v4** (line images) | 2/58 | 7/102 | **94.4%** | 90.7–97.5% | 0 |
+| v5 (images with neighbours) | 3/58 | 8/102 | 93.1% | 89.3–96.9% | 1 |
+| v3 (common errors) | 4/58 | 7/102 | 93.1% | 88.8–96.9% | 1 |
+| v2 | 6/58 | 7/102 | 91.9% | 87.5–95.6% | 2 |
+| Paddle + rule, no LLM | 25/58 | 8/102 | 79.3% | 73.6–84.9% | 0 |
+
+v4 is the first approach whose whole interval clears 90%. The neighbours in v5's images
+didn't help. Cost: v4 sends about 35k input tokens per page against v3's 3.5k, about
+$0.10 per page on Gemini 3.1 Pro, so roughly $20 for the book's ~190 pages.
+
+**v4's 9 remaining errors.** Images go only with disagreement lines, so 7 of the 9 are
+lines where both engines read the same wrong thing and the model saw no image.
+
+| kind | lines | example (print → v4) | what could fix it |
+|---|--:|--:|---|
+| letter-numeral in a tone code | 3 | `բձ.` → `բկ.` (p494), `դկ.` → `գկ.` (p457), `աձ.` → `այ.` (p638) | image for agreed lines with a code; `այ.` example in rule 1 |
+| a letter inside a word | 3 | `ճըգ-` → `ճըդ-` (p632), `զոգի` → `զողի` (p505, v3 fixed it), `եդեալքդ` → `եդեալդ` (p593, disagreement) | vocabulary examples drawn from outside the sample; image |
+| capital at an incipit | 1 | `Թագաւորեաց` → `թագաւորեաց` (p533) | image |
+| comma read as period | 1 | `,` → `.` (p543) | image; the prompt forbids punctuation edits on agreed lines |
+| transcription? | 1 | `ասա` typed, all read `աստ` (p604) | maintainer to check the scan |
+
 #### Planned: review buckets (maintainer, 2026-10-09)
 
 Every line will still go to a human for final review. The pipeline sorts lines into

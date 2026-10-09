@@ -34,3 +34,16 @@ def test_apostrophe_rule_marks_only_standalone_i():
     assert apply_rules("Կուսին ի յԱննայէ։") == "Կուսին ՚ի յԱննայէ։"
     assert apply_rules("Կուսին ՚ի յԱննայէ") == "Կուսին ՚ի յԱննայէ"   # already there
     assert apply_rules("ինքն իմ ի") == "ինքն իմ ՚ի"                       # only the word ի
+
+
+def test_correction_parse_strips_a_kept_label_and_rejects_shifted_lines():
+    from dev.ocr_eval.correct import ENGINES, parse
+    keys = ["k1", "k2", "k3"]
+    preds = {ENGINES[0]: {"k1": "Բչ. Ճաշու սաղ.", "k2": "Եւ առաւօտու օրհնութիւն", "k3": "Տէր թագաւորեաց"},
+             ENGINES[1]: {"k1": "Բշ. Ճաշու սաղ.", "k2": "Եւ առաւօտու օրհնութիւն", "k3": "Տէր թագաւորեաց"}}
+    # Line 1 chose reading B but kept its label; line 2 carries line 3's text (a row was
+    # skipped); line 3 is missing.
+    out, fallbacks = parse("1\tB: Բշ. Ճաշու սաղ.\n2\tՏէր թագաւորեաց", keys, preds)
+    assert out["k1"] == "Բշ. Ճաշու սաղ."
+    assert out["k2"] == "Եւ առաւօտու օրհնութիւն" and out["k3"] == "Տէր թագաւորեաց"
+    assert fallbacks == 2
