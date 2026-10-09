@@ -21,3 +21,16 @@ def test_spacing_around_punctuation_can_be_ignored():
 def test_pooled_cer_weights_by_reference_length():
     assert score.pooled([(1, 10), (0, 30)]) == 1 / 40
     assert score.edits("աբգ", "") == 3 and score.edits("", "աբ") == 2
+
+
+def test_apostrophe_forms_are_folded_but_a_missing_one_still_counts():
+    assert score.normalize("'ի") == score.normalize("՚ի") == score.normalize("’ի")
+    assert score.edits(score.normalize("՚ի տեղւոյս"), score.normalize("ի տեղւոյս")) == 1
+
+
+def test_apostrophe_rule_marks_only_standalone_i():
+    from dev.ocr_eval.rules import apply_rules
+    assert apply_rules("ի վերդ ես։") == "՚ի վերդ ես։"
+    assert apply_rules("Կուսին ի յԱննայէ։") == "Կուսին ՚ի յԱննայէ։"
+    assert apply_rules("Կուսին ՚ի յԱննայէ") == "Կուսին ՚ի յԱննայէ"   # already there
+    assert apply_rules("ինքն իմ ի") == "ինքն իմ ՚ի"                       # only the word ի

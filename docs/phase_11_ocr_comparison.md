@@ -158,6 +158,30 @@ lines broken on the typed ceiling lines (`--prompt v3` → engine `corr-<model>-
 **Open:** whether the print has ՚ before standalone ի (Paddle reads `'ի` 274 times,
 hye-calfa-n never); left out of v3 until confirmed.
 
+#### First A/B result (2026-10-09, 75 typed lines: 30 disagreements, 45 agreements)
+
+| engine (Gemini 3.1 Pro corrector) | error-free lines | 95% interval | broke |
+|---|--:|--:|--:|
+| v3 + `՚ի` rule | **93.7%** | 88.5–98.8% | 0 |
+| v2 + `՚ի` rule | 92.7% | 87.8–97.6% | 0 |
+| v3 | 81.6% | 72.5–89.7% | 0 |
+| v2 | 80.6% | 71.8–89.5% | 0 |
+| Paddle + rule (no LLM) | 81.3% | 74.1–87.8% | 0 |
+| Paddle | 71.8% | 62.8–80.3% | – |
+| hye-calfa-n | 59.6% | 52.0–67.3% | – |
+
+- **The missing ՚ before standalone ի was most of what was left**: 8 of v3's 13 wrong
+  lines, 6 of them where both engines agree. The print has ՚ before standalone ի
+  (maintainer; 10 of 10 in the first 87 typed lines), so `dev/ocr_eval/rules.py` adds it
+  deterministically after correction, written as `<engine>+rules`. Neither prompt made the
+  model add it.
+- **With the rule, correction clears the 90% target**; the interval's lower end (~88%)
+  needs more typed lines to confirm.
+- **v3 vs v2: not settled.** v3 was right on 2 more disagreement lines and wrong on 1
+  more agreed line (`ճըդ-` → `ճըգ-`... changed a correct դ). A paired comparison needs more lines.
+- v2's run echoed the `A: … ‖ B:` markers on 2 lines; `parse` now treats such lines as
+  fallbacks.
+
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
 Not run; from published benchmarks. **Armenian is the deciding fact, not model size.**

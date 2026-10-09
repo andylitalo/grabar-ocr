@@ -86,6 +86,8 @@ COMMON_ERRORS = (
     "տեղաոյս → տեղւոյս.\n"
     "5. The text has no Latin letters: a Latin letter is always a misread Armenian one "
     "(Փեsրուար → Փետրուար).\n"
+    "6. The preposition ի standing alone is printed with an apostrophe before it: ՚ի. One OCR "
+    "reading often drops it (ի → ՚ի) or writes it as ' (keep the apostrophe as given).\n"
     "Չ and Զ are correct in many words (Չորրորդ, Զկնի, Զատիկ): change them only in the codes "
     "above or where the result is clearly the correct Grabar word."
 )
@@ -178,8 +180,9 @@ LINE = re.compile(r"^\s*(\d+)\t(.*)$")
 
 
 def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
-    """Corrected text per key; lines the model didn't return fall back to the OCR
-    (the agreed reading, else Paddle's). Returns (lines, number of fallbacks)."""
+    """Corrected text per key; lines the model didn't return, or returned still marked
+    up as `A: … ‖ B: …`, fall back to the OCR (the agreed reading, else Paddle's).
+    Returns (lines, number of fallbacks)."""
     got = {}
     for row in text.splitlines():
         m = LINE.match(row)
@@ -187,7 +190,8 @@ def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple
             got[int(m.group(1))] = m.group(2).strip()
     out, fallbacks = {}, 0
     for n, k in enumerate(keys, 1):
-        if n in got and got[n]:
+        # A line that still carries the two-reading markers was echoed, not corrected.
+        if n in got and got[n] and "‖" not in got[n] and not re.match(r"^[AB]:", got[n]):
             out[k] = got[n]
         else:
             out[k] = preds[ENGINES[1]].get(k, "")

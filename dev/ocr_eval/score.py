@@ -22,7 +22,9 @@ from .common import PREDICTIONS_DIR, REPO_ROOT
 REPORT = REPO_ROOT / "reports" / "phase11_ocr_comparison.md"
 ABBREVIATION_MARK = "՟"
 # Look-alike punctuation counts as one character (Phase 10 decision, 2026-10-04).
-FOLD = str.maketrans({"֊": "-", "‐": "-", "․": ".", "։": ":"})
+# Apostrophes too: the print's ՚ (as in ՚ի) comes out of Paddle as ASCII '.
+FOLD = str.maketrans({"֊": "-", "‐": "-", "–": "-", "․": ".", "։": ":",
+                      "'": "՚", "’": "՚"})
 BOOTSTRAP, SEED = 2000, 11
 
 
