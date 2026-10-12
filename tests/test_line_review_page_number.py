@@ -90,6 +90,7 @@ def tmp_store(tmp_path, monkeypatch):
     (base / "page_463" / "segmentation.json").write_text(json.dumps(s))
     monkeypatch.setattr(storage, "BASELINE_DIR", base)
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
+    monkeypatch.setattr(storage, "RENDER_DIR", tmp_path / "renders")  # no image: no initials
     return tmp_path
 
 

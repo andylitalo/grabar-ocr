@@ -319,6 +319,12 @@ function draw() {
     ctx.fillText(t.letter, toDisp(t.box[0]) + 2, toDisp(t.box[1]) + 13);
   }
 
+  if (pendingLetter && pendingLetter.tool === "initial") {  // the capital found, and its line
+    strokeBox(pendingLetter.box, COLORS.initial, 3);
+    const target = pendingLetter.lineKey && state.data.lines.find((l) => l.key === pendingLetter.lineKey);
+    if (target) strokeBox(target.bbox, COLORS.initial, 1.5, [5, 3]);
+  }
+
   if (drag && drag.moved && state.tool !== "split") {
     const x = Math.min(drag.startX, drag.curX), y = Math.min(drag.startY, drag.curY);
     const c = state.tool === "title" ? COLORS.title : state.tool === "initial" || drag.grow ? COLORS.initial : COLORS.edited;
@@ -332,6 +338,10 @@ function draw() {
 
 // ---- side panel ----
 function opLabel(op) {
+  return baseLabel(op) + (op.auto && op.op !== "page_number" ? " (auto)" : "");
+}
+
+function baseLabel(op) {
   switch (op.op) {
     case "delete": return `delete ${op.line}`;
     case "add": return `add ${op.key}`;
@@ -510,19 +520,22 @@ function setTool(tool) {
   setHint({
     select: "", split: "Click a line to split.",
     break: "Click at the height where the gutter is interrupted.",
-    initial: "Drag a box around the drop-cap.", title: "Drag a box (or click a line) over the title letter.",
+    initial: "Click the capital (or drag a box around it).", title: "Drag a box (or click a line) over the title letter.",
   }[tool]);
   document.querySelectorAll(".tool").forEach((b) => b.classList.toggle("active", b.dataset.tool === tool));
   draw();
 }
 
-function openLetterModal(tool, box, lineKey) {
-  pendingLetter = { tool, box, lineKey };
+function openLetterModal(tool, box, lineKey, absorbs = []) {
+  pendingLetter = { tool, box, lineKey, absorbs };
+  draw();
   $("letter-title").textContent = { title: "Section-title letter", initial: "Initial letter",
     page: "Printed page number" }[tool];
   $("letter-hint").textContent = {
     title: "Type the section letter (required), then Enter.",
-    initial: "Type the letter (optional), then Enter. It joins the upper line on its right.",
+    initial: lineKey
+      ? `Type the letter (optional), then Enter. It joins ${lineKey}.`
+      : "Type the letter (optional), then Enter. It joins the upper line on its right.",
     page: "The number printed on the page. Pre-filled with PDF page \u2212 4; Enter to confirm.",
   }[tool];
   $("letter-input").value = tool === "page" ? state.data.expected_page_number : "";
@@ -533,6 +546,19 @@ function openLetterModal(tool, box, lineKey) {
 function closeLetterModal() {
   pendingLetter = null;
   $("letter-backdrop").classList.remove("show");
+  draw();
+}
+
+// Initial tool: ask the server for the capital under a click (all its pieces) or the
+// line a drawn box joins; it picks the line the capital starts, in the same column.
+async function findInitial(body, fallbackLine) {
+  try {
+    const r = await api("POST", `/api/pages/${state.page}/initial`, body);
+    openLetterModal("initial", r.box, r.line, r.absorbs || []);
+  } catch (e) {
+    if (fallbackLine) openLetterModal("initial", fallbackLine.bbox.map(Math.round), null);
+    else { setHint(`No capital there (${e.message}). Drag a box around it instead.`); draw(); }
+  }
 }
 
 function confirmLetter() {
@@ -551,10 +577,13 @@ function confirmLetter() {
     commit(state.ops, [...state.titles, { id: nextTitleId(), letter, box, source_line: lineKey || null }]);
     return;
   }
+  const absorbs = pendingLetter.absorbs || [];
   closeLetterModal();
-  const target = computeTargetLine(box);
+  const target = lineKey || (computeTargetLine(box) || {}).key;
   if (!target) { setHint("No line to the right of that box to attach the initial to."); return; }
-  pushOp({ op: "initial", box, line: target.key, letter });
+  const op = { op: "initial", box, line: target };
+  if (letter) op.letter = letter;
+  commit([...state.ops, ...absorbs.map((k) => ({ op: "delete", line: k })), op], state.titles);
 }
 
 // ---- canvas interaction ----
@@ -652,7 +681,16 @@ canvas.addEventListener("mouseup", (ev) => {
     if (!d.moved) pushOp({ op: "break", y: Math.round(toFull(y)) });
     return;
   }
-  if (state.tool === "initial" || state.tool === "title") {
+  if (state.tool === "initial") {
+    if (d.moved) {
+      const box = dragToBox(d);
+      if (box) findInitial({ box }); else draw();
+    } else {
+      findInitial({ x: Math.round(toFull(x)), y: Math.round(toFull(y)) }, line);
+    }
+    return;
+  }
+  if (state.tool === "title") {
     const box = d.moved ? dragToBox(d) : (line ? line.bbox.map(Math.round) : null);
     if (box) openLetterModal(state.tool, box, line ? line.key : null);
     else draw();

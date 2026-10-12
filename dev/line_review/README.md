@@ -36,9 +36,14 @@ Editing (fixing only):
   are dense (simplified to within 2.5 px for editing); Option-drag is usually quicker there.
 - **Split (S):** click a line, then click the cut. A plain click cuts vertically, Shift-click
   cuts horizontally.
-- **Initial (I):** drag a box around a drop cap. It joins the upper line on its right and
-  is carved out of any other line it overlaps. Typing the letter is optional but worth it:
-  it's kept on the line (`initial`) in the verified output.
+- **Initials are usually already marked** when a page opens: "initial ? → line_NNN (auto)"
+  in the edit list, found from the ink (`initials.py`). Remove a wrong one with ×.
+- **Initial (I):** **click the capital**: the server finds all of its ink (Ա's two strokes,
+  a drop cap's flag), outlines it, and shows the line it joins (dashed) while you type the
+  letter. Or drag a box around it. Either way it joins the line the capital starts, in
+  its own column, and is carved out of any other line it overlaps; a Paddle box over the
+  capital alone is deleted. Typing the letter is optional but worth it: it's kept on the
+  line (`initial`) in the verified output.
 - **Title (T):** box or click a section-title letter and type it. A title box sitting on the column gutter
   (a taregir letter) also interrupts the reading order there.
 - **Gutter break (B):** click at the height where something interrupts the column gutter
@@ -57,6 +62,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 ```
 materialize.py   baseline + ops -> lines; id minting; verified record (pure)
 page_number.py   finds the printed page number so a fresh review starts with it marked
+initials.py      finds initial capitals: automatic on a fresh review, and the Initial tool's click
 storage.py       paths, review read/write, status transitions, verified output
 lines.py         find a line by verified id or baseline key
 crops.py         line and context crops

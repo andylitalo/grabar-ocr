@@ -33,6 +33,7 @@ def tmp_store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
+    monkeypatch.setattr(storage, "RENDER_DIR", tmp_path / "renders")  # no image: no initials
     # Verifying runs the transcription migration: keep it off the real data.
     from dev.line_review import migrate
     from dev.line_review import transcribe as tr

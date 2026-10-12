@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
 
-from . import crops, lines
+from . import crops, initials, lines
 from . import materialize as mz
 from . import storage
 from . import transcribe as tr
@@ -38,6 +38,12 @@ app = FastAPI(title="Phase 9 line review")
 class OpsRequest(BaseModel):
     ops: list[dict]
     section_titles: list[dict] = []
+
+
+class InitialRequest(BaseModel):
+    x: float | None = None        # a click on the capital
+    y: float | None = None
+    box: list[float] | None = None  # or a hand-drawn box
 
 
 class StatusRequest(BaseModel):
@@ -132,6 +138,30 @@ def put_ops(page: int, req: OpsRequest) -> dict:
     except storage.StateError as e:
         raise HTTPException(status_code=409, detail=str(e))
     return _payload(page, review)
+
+
+@app.post("/api/pages/{page}/initial")
+def post_initial(page: int, req: InitialRequest) -> dict:
+    """Where an initial goes, for the Initial tool: ``{box, line, absorbs}``.
+
+    A click finds the capital's ink (all its pieces) under the pointer; a drawn box keeps
+    the reviewer's box. Either way the line is the one the capital starts, from the
+    page's current lines. Nothing is saved; the UI pushes the ops.
+    """
+    _page_or_404(page)
+    current = storage.materialized(page, storage.load_review(page))
+    if req.box is not None:
+        return {"box": [round(v) for v in req.box],
+                "line": initials.target_for_box(current, req.box), "absorbs": []}
+    if req.x is None or req.y is None:
+        raise HTTPException(status_code=400, detail="give x and y, or a box")
+    image = storage.page_image(page)
+    if image is None:
+        raise HTTPException(status_code=404, detail=f"No render for page {page}")
+    found = initials.at_point(image, current, req.x, req.y)
+    if found is None:
+        raise HTTPException(status_code=404, detail="no ink there")
+    return found
 
 
 @app.post("/api/pages/{page}/status")

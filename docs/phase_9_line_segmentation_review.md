@@ -11,8 +11,9 @@ Surya agrees on and Paddle lacks (`dev/lineseg_survey/paddle-filled/`). Filled l
 `../grabar-ocr-layout`), split from `feat/line-seg-survey` at `de107f0`, so that the OCR
 work (Phases 10–11) stays on `feat/line-seg-survey`. The two branches share
 `dev/line_review/`; pages verified here reach the OCR branch only by merge.
-**Progress:** pp.453–462 verified (10 of 191 pages); next is p.463. Steps 2 (vertex
-add/remove) and 3 (missed-line guard) are deferred; page numbers are now marked automatically.
+**Progress:** pp.453–463 verified (11 of 191 pages); next is p.464. Steps 2 (vertex
+add/remove) and 3 (missed-line guard) are deferred; page numbers and initials are now marked
+automatically.
 
 ## Goal
 
@@ -233,6 +234,35 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   (453–462) are unchanged; a wrong mark is removed with × in the edit list.
   **Out of scope for now (maintainer):** adding/removing vertices (rest of step 2) and the
   missed-line guard (step 3).
+- **2026-10-11: initials found automatically, and a one-click Initial tool.** Initials
+  were most of the reviewer's work: 29 of the 53 edits on pp.453–463. None of the
+  segmenters keeps them: of those 29, kraken's lines hold 5 whole, Paddle's 2, Surya's 0.
+  New `dev/line_review/initials.py` works on ink blobs. A capital is a blob 1.3–6 line
+  heights tall, at least 0.2 as wide as tall, ≥15% ink, plus its other pieces (Ա's two
+  strokes; a drop cap's flag, allowed up to 0.2 of its height away). Its line is the
+  topmost line level with it that starts at its right edge (within 1.5 line heights).
+  A Paddle box over the capital alone is deleted first. It's proposed when ≥10% of its box
+  lies outside the lines.
+  - **Scored on the reviewer's 29:** all 29 found. 2 go to a different line than the
+    reviewer's, and the detector is right: the old Initial tool's "upper line on its
+    right" skipped a line starting 1 px left of the drawn box and took the line in the
+    *other* column (p.460, then repaired by hand with split + delete + reshape). The
+    9 extra proposals are real initials the line already mostly held. The reviewer's own
+    marking isn't consistent at the margin (marked at 11% of the ink outside the line,
+    left at up to 28%), so no threshold separates them. Joining the whole capital is
+    harmless, so they stay.
+  - **Book-wide:** 334 proposals on 191 pages, all applying cleanly. In a random 40 from
+    pp.464–643, 1 was wrong: the page number's `-(` bracket, now excluded by leaving the
+    page-number line out. A scan of oddly shaped proposals found 1 more (a frame-rule
+    segment, p.606), now excluded by the 0.2 width/height floor. Ի/Ե stems whose shoulder
+    is a separate piece are proposed without it when the line already holds the shoulder.
+  - A fresh review starts with these as `initial` ops (and `delete`s) tagged `auto`,
+    after the page number.
+  - **Initial tool (I):** a click finds the capital's ink under the pointer (and all its
+    pieces) and the line by the same rule. A drawn box gets its line from the server
+    too, so the cross-column bug is gone.
+  - **Next, once many pages are reviewed:** a trained initial detector (a YOLO-style
+    single class) on the accumulated `initial` ops, if the rule's misses justify it.
 - **2026-10-03: column-first reading order** (maintainer's rule: columns first while the
   gutter runs unbroken, a horizontal split only where it's interrupted). See "Default
   reading order" above. New `break` op (tool **B**) for interruptions with no line on

@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import materialize as mz
+from . import initials
 from . import page_number as pn
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -90,8 +91,8 @@ def _now() -> str:
 
 
 def new_review(page: int) -> dict:
-    """A page's review before any edit: the detected page number is already marked."""
-    ops = pn.auto_ops(load_baseline(page), str(page - PRINTED_OFFSET))
+    """A page's review before any edit: the page number and initials already marked."""
+    ops = auto_ops(page)
     return {
         "schema": SCHEMA, "page": page, "status": "unreviewed",
         "baseline": {"tool": BASELINE_TOOL, "sha256": baseline_sha256(page)},
@@ -99,6 +100,30 @@ def new_review(page: int) -> dict:
         **mz.empty_id_state(),
         "verified_at": None, "updated_at": None,
     }
+
+
+def page_image(page: int):
+    """The page render as a grayscale array, or None if it isn't there."""
+    path = render_path(page)
+    if not path.exists():
+        return None
+    import numpy as np
+    from PIL import Image
+    return np.array(Image.open(path).convert("L"))
+
+
+def auto_ops(page: int) -> list[dict]:
+    """Ops a fresh review starts with (``"auto": true``): the printed page number, then
+    the initials the lines miss. The page-number line is left out of the initial search
+    (its bracket is capital-sized)."""
+    seg = load_baseline(page)
+    ops = pn.auto_ops(seg, str(page - PRINTED_OFFSET))
+    image = page_image(page)
+    if image is not None:
+        numbered = {op["line"] for op in ops}
+        lines = [l for l in mz.baseline_lines(seg) if l["key"] not in numbered]
+        ops += initials.auto_ops(image, lines)
+    return ops
 
 
 def load_review(page: int) -> dict:
