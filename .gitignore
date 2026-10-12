@@ -84,6 +84,10 @@ runs/
 /data/pages/*
 !/data/pages/blank/
 !/data/pages/blank/*.json
+# Phase 9 verified line geometry (data/verified_lines/page_<N>.json): materialized from
+# paddle-filled + human review ops, committed so later stages read stable line ids.
+!/data/verified_lines/
+!/data/verified_lines/*.json
 *.pdf
 *.tiff
 *.tif

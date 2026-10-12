@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Line Review</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Line review</h1>
+    <button id="prev" title="Previous page (←)">&larr;</button>
+    <select id="page-select"></select>
+    <button id="next" title="Next page (→)">&rarr;</button>
+    <span id="count"></span>
+    <span id="status-badge"></span>
+    <button id="advance" class="primary"></button>
+    <button id="resume" title="Back to fixing (R)">Resume fixing</button>
+    <button id="undo" title="Undo last edit (Cmd+Z)" disabled>&#8630; Undo</button>
+    <span id="progress"></span>
+    <span class="spacer"></span>
+    <span id="saved"></span>
+  </header>
+
+  <div id="toolbar">
+    <span class="tool-label">Tool:</span>
+    <button class="tool active" data-tool="select" title="Click to select (Shift adds); Delete removes, M merges; drag to add a line (V)">Select / add</button>
+    <button class="tool" data-tool="split" title="Click a line, then click the cut: vertical, or horizontal with Shift (S)">Split</button>
+    <button class="tool" data-tool="initial" title="Drag a box around a drop-cap; it joins the upper line on its right (I)">Initial</button>
+    <button class="tool" data-tool="title" title="Box or click a section-title letter and type it (T)">Title</button>
+    <button class="tool" data-tool="break" title="Click where something interrupts the column gutter (an ornament, a new section): the page reads top band first, then the columns below (B)">Gutter break</button>
+    <button id="delete-all" title="Delete every line on the page (blank page)">Delete all</button>
+    <span id="tool-hint" class="tool-hint"></span>
+  </div>
+
+  <div id="banner"></div>
+
+  <main>
+    <div id="canvas-wrap"><canvas id="canvas" width="900" height="1200"></canvas></div>
+    <aside>
+      <h2>Lines</h2>
+      <div class="legend-row"><span class="swatch paddle"></span> Paddle</div>
+      <div class="legend-row"><span class="swatch fill"></span> kraken fill (check it)</div>
+      <div class="legend-row"><span class="swatch edited"></span> edited or added</div>
+      <div class="legend-row"><span class="swatch ghost"></span> deleted</div>
+      <p class="help" id="help"></p>
+      <div id="op-list"></div>
+    </aside>
+  </main>
+
+  <div id="letter-backdrop" class="backdrop">
+    <div class="modal">
+      <h3 id="letter-title">Letter</h3>
+      <p class="hint" id="letter-hint"></p>
+      <input id="letter-input" type="text" autocomplete="off" spellcheck="false" />
+      <div class="modal-actions">
+        <button id="letter-ok">OK</button>
+        <button id="letter-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
