@@ -204,7 +204,9 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   flagged. Typed drop-cap letters and section-title letters now reach the verified
   output too. Fixed: an initial box that doesn't touch its line was joined by a convex
   hull that could cut across the next line; the gap is now bridged inside the shared rows.
-  **Open:** running headers (the text beside the page number): lines or page elements?
+  **Decided 2026-10-11 (maintainer):** the running header `-( <page-number> )-` is part
+  of the page number, not a text line. Goal: mark it as `page_number` automatically,
+  so the reviewer only corrects mis-marks.
 - **2026-10-03: column-first reading order** (maintainer's rule: columns first while the
   gutter runs unbroken, a horizontal split only where it's interrupted). See "Default
   reading order" above. New `break` op (tool **B**) for interruptions with no line on
