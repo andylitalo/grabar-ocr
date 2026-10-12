@@ -7,6 +7,11 @@ baseline segmenter's output for pp.453–643 in the common `segmentation.json` f
 Surya agrees on and Paddle lacks (`dev/lineseg_survey/paddle-filled/`). Filled lines carry
 `"source": "kraken-fill"`.
 **Feeds:** line/page/section enumeration, then OCR (`docs/backlog/README.md`).
+**Branch (2026-10-11):** Phase 9 layout work continues on `feat/layout-review` (worktree
+`../grabar-ocr-layout`), split from `feat/line-seg-survey` at `de107f0`, so that the OCR
+work (Phases 10–11) stays on `feat/line-seg-survey`. The two branches share
+`dev/line_review/`; pages verified here reach the OCR branch only by merge.
+**Progress:** pp.453–462 verified (10 of 191 pages); next is p.463.
 
 ## Goal
 
