@@ -1,23 +1,23 @@
 # Phase 11: ceiling of the Calfa engines, and LLM correction (provisional)
 
-Generated 2026-10-09T15:11:55+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
+Generated 2026-10-12T03:41:53+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
 
 Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 58 of 300 sampled disagreements, 102 of 200 agreements.
 
 | engine | lines | wrong on disagree | wrong on agree | **error-free lines** | 95% interval | ≈ lines per error | broke (agreed & right → wrong) |
 |---|--:|--:|--:|--:|--:|--:|--:|
-| `corr-gemini-3.1-pro-v4+rules` | 160 | 2/58 | 7/102 | **94.4%** | 90.7%–97.5% | 18 | 0 |
-| `corr-gemini-3.1-pro-v5+rules` | 160 | 3/58 | 8/102 | **93.1%** | 89.3%–96.9% | 15 | 1 |
-| `corr-gemini-3.1-pro-v3+rules` | 160 | 4/58 | 7/102 | **93.1%** | 88.8%–96.9% | 15 | 1 |
-| `corr-gemini-3.1-pro+rules` | 160 | 6/58 | 7/102 | **91.9%** | 87.5%–95.6% | 12 | 2 |
-| `corr-gemini-3.1-pro-v4` | 160 | 6/58 | 18/102 | **85.0%** | 79.4%–90.0% | 7 | 0 |
-| `corr-gemini-3.1-pro-v5` | 160 | 7/58 | 18/102 | **84.4%** | 78.1%–89.4% | 6 | 1 |
-| `corr-gemini-3.1-pro-v3` | 160 | 10/58 | 18/102 | **82.5%** | 76.3%–88.1% | 6 | 1 |
-| `corr-gemini-3.1-pro` | 160 | 12/58 | 18/102 | **81.2%** | 75.0%–86.9% | 5 | 2 |
-| `paddle-calfa-tiny+rules` | 160 | 25/58 | 8/102 | **79.3%** | 73.6%–84.9% | 5 | 0 |
-| `paddle-calfa-tiny` | 160 | 28/58 | 19/102 | **70.5%** | 64.3%–76.8% | 3 | – |
-| `tess-calfa-n+rules` | 160 | 44/58 | 8/102 | **67.3%** | 61.6%–72.3% | 3 | 0 |
-| `tess-calfa-n` | 160 | 47/58 | 19/102 | **58.5%** | 52.3%–64.8% | 2 | – |
+| `corr-gemini-3.1-pro-v4+rules` | 160 | 2/58 | 6/102 | **95.0%** | 91.9%–98.1% | 20 | 0 |
+| `corr-gemini-3.1-pro-v5+rules` | 160 | 3/58 | 7/102 | **93.8%** | 90.0%–97.5% | 16 | 1 |
+| `corr-gemini-3.1-pro-v3+rules` | 160 | 4/58 | 6/102 | **93.7%** | 89.4%–96.9% | 16 | 1 |
+| `corr-gemini-3.1-pro+rules` | 160 | 6/58 | 6/102 | **92.5%** | 88.1%–96.2% | 13 | 2 |
+| `corr-gemini-3.1-pro-v4` | 160 | 6/58 | 17/102 | **85.6%** | 80.0%–90.6% | 7 | 0 |
+| `corr-gemini-3.1-pro-v5` | 160 | 7/58 | 17/102 | **85.0%** | 79.4%–90.6% | 7 | 1 |
+| `corr-gemini-3.1-pro-v3` | 160 | 10/58 | 17/102 | **83.1%** | 76.9%–88.7% | 6 | 1 |
+| `corr-gemini-3.1-pro` | 160 | 12/58 | 17/102 | **81.9%** | 75.6%–87.5% | 6 | 2 |
+| `paddle-calfa-tiny+rules` | 160 | 25/58 | 7/102 | **79.9%** | 74.2%–85.5% | 5 | 0 |
+| `paddle-calfa-tiny` | 160 | 28/58 | 18/102 | **71.1%** | 64.9%–78.0% | 3 | – |
+| `tess-calfa-n+rules` | 160 | 44/58 | 7/102 | **67.9%** | 62.9%–72.9% | 3 | 0 |
+| `tess-calfa-n` | 160 | 47/58 | 18/102 | **59.2%** | 52.9%–64.8% | 2 | – |
 
 ## Agreed but wrong (both OCR engines made the same mistake)
 
@@ -39,4 +39,3 @@ Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 58 of
 - `p538~line_036`: ref `կեցցէ ՚ի նոսին։ Ալէ. ՚ի ձայնէն։ Աւե-`, both `կեցցէ ի նոսին։ Ալէ. ի ձայնէն։ Աւե-`
 - `p623~line_041`: ref `Ծննդեան Ս. Կուսին ՚ի յԱննայէ։`, both `Ծննդեան Ս. Կուսին ի յԱննայէ։`
 - `p634~line_012`: ref `Աստուածածնի ՚ի յԱննայէ։`, both `Աստուածածնի ի յԱննայէ։`
-- `p604~line_023`: ref `հարցիցն ասա տես։`, both `հարցիցն աստ տես։`

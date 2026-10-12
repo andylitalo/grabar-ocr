@@ -263,6 +263,20 @@ lines where both engines read the same wrong thing and the model saw no image.
 | comma read as period | 1 | `,` → `.` (p543) | image; the prompt forbids punctuation edits on agreed lines |
 | transcription? | 1 | `ասա` typed, all read `աստ` (p604) | maintainer to check the scan |
 
+#### Decision (maintainer, 2026-10-11): v4 is the correction algorithm
+
+The p604 transcription was a typing slip (`աստ`, as the engines read it). With it fixed, v4 +
+`՚ի` rule is **95.0% error-free (91.9–98.1%)**, 0 broken lines. Pipeline: hye-calfa-n +
+Paddle → Gemini 3.1 Pro with prompt v4 (drift guard, retry) → `՚ի` rule.
+
+Order of work from here:
+1. Finish the layout (Phase 9 review) over the whole book.
+2. Run the OCR and v4 on the verified lines, then test human review of the output.
+3. **v6, a separate later stage:** images for *agreed* lines that match known risk patterns
+   (tone codes and other letter-numerals first). It is scored against v4 on the human
+   corrections, a larger set than the ceiling sample, to tell a general fix from one fitted
+   to the errors seen here. The risk patterns are fixed before that comparison is run.
+
 #### Planned: review buckets (maintainer, 2026-10-09)
 
 Every line will still go to a human for final review. The pipeline sorts lines into
