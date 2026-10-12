@@ -1,0 +1,105 @@
+{
+  "page": 519,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:32:22.129432+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 91,
+  "flags": {
+    "line_091": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_023": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_034": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_049": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_064": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_076": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_085": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        177.0,
+        1195.0,
+        987.0,
+        1275.0
+      ]
+    }
+  ],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u053b",
+      "box": [
+        1031.0,
+        1370.0,
+        1123.0,
+        1492.0
+      ],
+      "target_line_id": "line_064"
+    },
+    {
+      "id": "initial_002",
+      "key": "\u0540",
+      "box": [
+        185.0,
+        1596.0,
+        231.0,
+        1679.0
+      ],
+      "target_line_id": "line_023"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

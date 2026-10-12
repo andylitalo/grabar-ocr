@@ -1,0 +1,130 @@
+{
+  "page": 557,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:22:52.623250+00:00",
+  "tool": "kraken",
+  "model": "blla.mlmodel",
+  "num_lines": 59,
+  "flags": {
+    "line_001": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_002": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_003": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_004": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_005": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    },
+    "line_006": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_007": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_011": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_008": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_012": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    }
+  },
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        604.0,
+        785.0,
+        684.0,
+        885.0
+      ]
+    }
+  ],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0535",
+      "box": [
+        301.0,
+        1499.0,
+        400.0,
+        1671.0
+      ],
+      "target_line_id": "line_011"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": [
+    {
+      "id": "title_001",
+      "key": "\u0531",
+      "box": [
+        985.0,
+        989.0,
+        1090.0,
+        1130.0
+      ],
+      "source_line_id": null
+    }
+  ]
+}

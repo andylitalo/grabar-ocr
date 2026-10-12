@@ -1,0 +1,32 @@
+{
+  "page": 453,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-09-30T22:18:04.438930+00:00",
+  "tool": "surya",
+  "model": "surya detection + fast_layout",
+  "num_lines": 25,
+  "flags": {
+    "line_001": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_024": {
+      "categories": [
+        3
+      ],
+      "labels": [
+        "non-text"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

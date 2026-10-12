@@ -1,7 +1,10 @@
 "use strict";
 
-const CATEGORY_COLORS = { 1: "#e0a64f", 2: "#4c8bf5", 3: "#e0564f" };
-const CATEGORY_LABELS = { 1: "over-segmentation", 2: "under-segmentation", 3: "non-text" };
+const CATEGORY_COLORS = { 1: "#e0a64f", 2: "#4c8bf5", 3: "#e0564f", 4: "#00b8d4", 5: "#8d6e63" };
+const CATEGORY_LABELS = {
+  1: "over-segmentation", 2: "under-segmentation", 3: "non-text",
+  4: "clips ink", 5: "out of reading order",
+};
 const NEUTRAL = "#3fb37f";
 const MISSED_COLOR = "#e05ac4"; // human drag-drawn missed line (matches --missed in CSS)
 // correction-op colors (must match the --initial/--merge/--split/--title vars in CSS)
@@ -25,7 +28,7 @@ const state = {
   pages: [],
   page: null,
   lines: [],        // segmentation lines: {index, id, boundary, baseline, bbox}
-  flags: {},        // line_id -> category number
+  flags: {},        // line_id -> sorted array of category numbers (a line can have several)
   missed: [],       // [{id, box:[x1,y1,x2,y2]}] human-drawn missed-line boxes
   // correction ops layered on kraken's immutable lines:
   initials: [],       // [{id, key, box, target_line_id}] drop-cap initials
@@ -33,6 +36,8 @@ const state = {
   splits: [],         // [{id, line_id, at_x}] vertical cuts
   sectionTitles: [],  // [{id, key, box, source_line_id}] titular letters
   tool: "flag",
+  status: "in_progress",  // "reviewed" = page locked (read-only) until Resume editing
+  reviewed: new Set(),    // pages whose saved review is "reviewed" (page-select checkmarks)
   selection: [],      // merge tool: selected line ids
   splitLineId: null,  // split tool: line awaiting a cut-x click
   history: [],        // per-page undo stack: snapshots of the editable state
@@ -49,6 +54,8 @@ const state = {
 let drag = null;
 // Pending box + context awaiting a letter (Initial / Title tools).
 let pendingLetter = null;   // {tool, box, hitLineId}
+
+const isLocked = () => state.status === "reviewed";
 
 // ---- coordinate helpers (full-res page px <-> display px) ----
 const toDisp = (v) => v / state.scale;
@@ -161,7 +168,8 @@ function draw() {
   }
   const selected = new Set(state.selection);
   for (const line of state.lines) {
-    const cat = state.flags[line.id];
+    const cats = state.flags[line.id] || [];
+    const cat = cats[0];
     const color = cat ? CATEGORY_COLORS[cat] : NEUTRAL;
     const hover = line.id === state.hoverLineId;
     drawLinePath(line.boundary, line.bbox);
@@ -178,7 +186,8 @@ function draw() {
     if (line.bbox) {
       ctx.fillStyle = color;
       ctx.font = "12px sans-serif";
-      ctx.fillText(String(line.index), toDisp(line.bbox[0]) + 2, toDisp(line.bbox[1]) + 12);
+      const tag = cats.length ? `${line.index} [${cats.join(",")}]` : String(line.index);
+      ctx.fillText(tag, toDisp(line.bbox[0]) + 2, toDisp(line.bbox[1]) + 12);
     }
   }
 
@@ -343,9 +352,9 @@ function renderFlagList() {
   let html = `<h2>Flags (${ids.length})</h2>`;
   if (!ids.length) html += "<p>None yet.</p>";
   for (const id of ids) {
-    const cat = state.flags[id];
-    html += `<div class="flag"><span>${id}</span>` +
-      `<span style="color:${CATEGORY_COLORS[cat]}">${cat} ${CATEGORY_LABELS[cat]}</span></div>`;
+    const tags = state.flags[id].map((c) =>
+      `<span style="color:${CATEGORY_COLORS[c]}">${c} ${CATEGORY_LABELS[c]}</span>`).join("<br>");
+    html += `<div class="flag"><span>${id}</span><span>${tags}</span></div>`;
   }
   html += section("Missed lines", state.missed.map((m) =>
     `<span>${m.id.replace("missed_", "M")}</span>` +
@@ -369,19 +378,35 @@ function renderFlagList() {
 function openModal(line) {
   state.modalLineId = line.id;
   $("modal-title").textContent = `Flag ${line.id} (#${line.index})`;
+  renderModalOptions();
   $("modal-backdrop").classList.add("show");
+}
+// highlight the categories the open line already carries
+function renderModalOptions() {
+  const cats = state.flags[state.modalLineId] || [];
+  document.querySelectorAll(".opt").forEach((btn) => {
+    btn.classList.toggle("active", cats.includes(Number(btn.dataset.cat)));
+  });
 }
 function closeModal() {
   state.modalLineId = null;
   $("modal-backdrop").classList.remove("show");
 }
+// Toggle one category on the open line (a line may carry several, e.g. 2 + 4);
+// null clears all of them. The modal stays open so more can be toggled.
 async function applyCategory(cat) {
   const id = state.modalLineId;
   if (!id) return;
   pushHistory();
-  if (cat === null) { delete state.flags[id]; }
-  else { state.flags[id] = cat; }
-  closeModal();
+  if (cat === null) {
+    delete state.flags[id];
+  } else {
+    const cats = new Set(state.flags[id] || []);
+    if (cats.has(cat)) cats.delete(cat); else cats.add(cat);
+    if (cats.size) state.flags[id] = [...cats].sort((a, b) => a - b);
+    else delete state.flags[id];
+  }
+  if (cat === null) closeModal(); else renderModalOptions();
   draw();
   renderFlagList();
   await saveReview();
@@ -512,7 +537,7 @@ async function deleteOp(kind, id) {
 async function markBlank() {
   if (!state.lines.length) return;
   pushHistory();
-  for (const line of state.lines) state.flags[line.id] = 3;
+  for (const line of state.lines) state.flags[line.id] = [3];
   closeModal();
   closeMissedModal();
   draw();
@@ -566,14 +591,17 @@ async function saveReview() {
       merges: state.merges,
       splits: state.splits,
       section_titles: state.sectionTitles,
+      status: state.status,
     });
     const s = $("saved");
     s.textContent = "saved";
     s.classList.add("ok");
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => { s.textContent = ""; s.classList.remove("ok"); }, 1500);
+    return true;
   } catch (e) {
     $("saved").textContent = "save failed: " + e.message;
+    return false;
   }
 }
 
@@ -613,12 +641,13 @@ async function loadPage(page) {
   state.imageW = seg.width;
   state.imageH = seg.height;
   state.flags = {};
-  for (const [id, info] of Object.entries(review.flags || {})) state.flags[id] = info.category;
+  for (const [id, info] of Object.entries(review.flags || {})) state.flags[id] = info.categories.slice();
   state.missed = (review.missed_lines || []).map((m) => ({ id: m.id, box: m.box.slice() }));
   state.initials = (review.initials || []).map((x) => ({ ...x, box: x.box.slice() }));
   state.merges = (review.merges || []).map((x) => ({ ...x, line_ids: x.line_ids.slice() }));
   state.splits = (review.splits || []).map((x) => ({ ...x }));
   state.sectionTitles = (review.section_titles || []).map((x) => ({ ...x, box: x.box.slice() }));
+  state.status = review.status || "in_progress";
   state.selection = [];
   state.splitLineId = null;
   state.history = [];   // undo is scoped to the current page
@@ -627,6 +656,7 @@ async function loadPage(page) {
   drag = null;
   updateUndoButton();
   updateMergeButton();
+  renderStatus();
   $("count").textContent = `${state.lines.length} lines`;
   await new Promise((resolve) => {
     pageImg.onload = resolve;
@@ -644,9 +674,35 @@ function step(delta) {
   if (j >= 0 && j < state.pages.length) loadPage(state.pages[j]);
 }
 
+// ---- review status: "Mark reviewed" locks the page, "Resume editing" unlocks it ----
+function renderStatus() {
+  const locked = isLocked();
+  document.body.classList.toggle("locked", locked);
+  $("reviewed").textContent = locked ? "Resume editing" : "Mark reviewed";
+  $("status-badge").textContent = locked ? "\u2713 Reviewed" : "";
+  if (locked) state.reviewed.add(state.page); else state.reviewed.delete(state.page);
+  const opt = $("page-select").querySelector(`option[value="${state.page}"]`);
+  if (opt) opt.textContent = pageLabel(state.page);
+  $("progress").textContent = `${state.reviewed.size}/${state.pages.length} reviewed`;
+}
+
+function pageLabel(p) { return `${state.reviewed.has(p) ? "\u2713 " : ""}page ${p}`; }
+
+async function toggleReviewed() {
+  const prev = state.status;
+  state.status = isLocked() ? "in_progress" : "reviewed";
+  if (isLocked()) {
+    state.selection = []; state.splitLineId = null; updateMergeButton(); setToolHint("");
+  }
+  const ok = await saveReview();
+  if (!ok) state.status = prev;  // don't show a lock the server didn't record
+  renderStatus();
+  draw();
+}
+
 // ---- canvas interaction ----
 function updateHover(x, y) {
-  if (state.tool !== "flag") return;   // hover highlight only matters for the Flag tool
+  if (state.tool !== "flag" || isLocked()) return;   // hover highlight only matters for the Flag tool
   const m = hitMissed(x, y);
   const line = m ? null : hitTest(x, y);
   const mid = m ? m.id : null;
@@ -660,6 +716,7 @@ function updateHover(x, y) {
 }
 
 canvas.addEventListener("mousedown", (ev) => {
+  if (isLocked()) return;
   const { x, y } = canvasPos(ev);
   drag = { startX: x, startY: y, curX: x, curY: y, moved: false };
 });
@@ -684,6 +741,7 @@ canvas.addEventListener("mouseup", (ev) => {
   const { x, y } = canvasPos(ev);
   const d = drag;
   drag = null;
+  if (isLocked()) return;
   const movedFar = d && (Math.abs(x - d.startX) > DRAG_THRESHOLD || Math.abs(y - d.startY) > DRAG_THRESHOLD);
   const isDrag = d && (d.moved || movedFar);
   const line = hitTest(x, y);
@@ -768,24 +826,25 @@ $("letter-backdrop").addEventListener("click", (ev) => {
 // side-panel delete buttons (event delegation)
 $("flag-list").addEventListener("click", (ev) => {
   const btn = ev.target.closest("button.del");
-  if (btn) deleteOp(btn.dataset.del, btn.dataset.id);
+  if (btn && !isLocked()) deleteOp(btn.dataset.del, btn.dataset.id);
 });
 
 // tool buttons
 document.querySelectorAll(".tool").forEach((btn) => {
   btn.addEventListener("click", () => setTool(btn.dataset.tool));
 });
-$("merge-commit").addEventListener("click", commitMerge);
+$("merge-commit").addEventListener("click", () => { if (!isLocked()) commitMerge(); });
 
 document.addEventListener("keydown", (ev) => {
+  if (isLocked()) return;  // reviewed pages are read-only; use Resume editing
   if ((ev.metaKey || ev.ctrlKey) && !ev.shiftKey && (ev.key === "z" || ev.key === "Z")) {
     ev.preventDefault();
     undo();
     return;
   }
   if (state.modalLineId) {
-    if (ev.key === "Escape") closeModal();
-    else if (ev.key === "1" || ev.key === "2" || ev.key === "3") applyCategory(Number(ev.key));
+    if (ev.key === "Escape" || ev.key === "Enter") { ev.preventDefault(); closeModal(); }
+    else if (CATEGORY_LABELS[ev.key]) applyCategory(Number(ev.key));
     return;
   }
   if (state.missedModalId) {
@@ -808,15 +867,19 @@ document.addEventListener("keydown", (ev) => {
 
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
-$("blank").addEventListener("click", markBlank);
-$("undo").addEventListener("click", undo);
+$("blank").addEventListener("click", () => { if (!isLocked()) markBlank(); });
+$("reviewed").addEventListener("click", toggleReviewed);
+$("undo").addEventListener("click", () => { if (!isLocked()) undo(); });
 $("page-select").addEventListener("change", (ev) => loadPage(Number(ev.target.value)));
 
 async function init() {
-  const { pages } = await api("GET", "/api/pages");
+  const { pages, tool, reviewed } = await api("GET", "/api/pages");
   state.pages = pages;
+  state.reviewed = new Set(reviewed || []);
+  if (tool) document.title = `Line-seg review · ${tool}`;
+  if (tool && $("tool-name")) $("tool-name").textContent = tool;
   const sel = $("page-select");
-  sel.innerHTML = pages.map((p) => `<option value="${p}">page ${p}</option>`).join("");
+  sel.innerHTML = pages.map((p) => `<option value="${p}">${pageLabel(p)}</option>`).join("");
   if (pages.length) loadPage(pages[0]);
   else $("count").textContent = "No segmented pages found. Run dev/kraken_segment.py first.";
 }

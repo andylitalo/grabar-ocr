@@ -1,0 +1,98 @@
+{
+  "page": 641,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:37:11.783168+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 583,
+  "flags": {
+    "line_583": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_002": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_001": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_003": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_005": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_007": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    }
+  },
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        396.0,
+        608.0,
+        447.0,
+        681.0
+      ]
+    },
+    {
+      "id": "missed_002",
+      "box": [
+        758.0,
+        2871.0,
+        797.0,
+        2922.0
+      ]
+    }
+  ],
+  "initials": [],
+  "merges": [
+    {
+      "id": "merge_001",
+      "line_ids": [
+        "line_001",
+        "line_002"
+      ]
+    },
+    {
+      "id": "merge_002",
+      "line_ids": [
+        "line_003",
+        "line_005"
+      ]
+    }
+  ],
+  "splits": [],
+  "section_titles": []
+}

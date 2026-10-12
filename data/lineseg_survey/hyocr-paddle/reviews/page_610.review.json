@@ -1,0 +1,60 @@
+{
+  "page": 610,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:36:04.386154+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 75,
+  "flags": {
+    "line_075": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_002": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    },
+    "line_003": {
+      "categories": [
+        1
+      ],
+      "labels": [
+        "over-segmentation"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [],
+  "merges": [
+    {
+      "id": "merge_001",
+      "line_ids": [
+        "line_002",
+        "line_003"
+      ]
+    }
+  ],
+  "splits": [],
+  "section_titles": [
+    {
+      "id": "title_001",
+      "key": "\u0549",
+      "box": [
+        1086.0,
+        425.0,
+        1223.0,
+        569.0
+      ],
+      "source_line_id": "line_001"
+    }
+  ]
+}

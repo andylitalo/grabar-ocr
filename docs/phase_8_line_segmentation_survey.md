@@ -1,6 +1,6 @@
 # Phase 8 — clean baseline + line-segmentation survey
 
-**Status:** in progress · **Created:** 2026-09-30 · **Owner:** —
+**Status:** complete (gate passed 2026-10-02) · **Created:** 2026-09-30 · **Owner:** —
 **Supersedes:** the broader "citable corpus" plan, now in
 [`docs/backlog/citable_corpus_roadmap.md`](backlog/citable_corpus_roadmap.md). The deferred
 items and what blocks each one are indexed in [`docs/backlog/README.md`](backlog/README.md).
@@ -156,6 +156,16 @@ That tool becomes Phase 9's baseline. The survey needs a winner, not a leaderboa
 **Optional if time allows:** PaddleOCR's script-agnostic text detector (DB). Calfa's
 `hye-paddle` is recognition-only, so this detector would be its natural partner.
 
+#### Desk-check outcome (2026-09-30)
+
+| Candidate | Line geometry | Reading order | Verdict |
+|---|---|---|---|
+| kraken | polygon + baseline | native (`polygonal_reading_order`) | **run** (geometry already exists) |
+| Surya 0.22.1 | 4-point polygon + confidence, no baseline | none from the detector. The layout/reading-order models are now VLM-based and need vllm or llama.cpp. The non-VLM `fast_layout` (rf-detr) gives ordered blocks, and lines are ordered by block | **run** as `surya` |
+| `hye-open-ocr` | **no line detector of its own**: "the layout stage only finds regions; line and word segmentation is left to the recognizer" (README) | X-Y cut over regions | **run twice**: `hyocr-tess` (DocLayout-YOLO + Tesseract `--psm 4` lines, axis-aligned boxes) and `hyocr-paddle` (PP-DocLayoutV3 + PaddleOCR DB detection, quad polygons). The second covers the optional Paddle detector |
+| LlamaParse | line-level **axis-aligned boxes** in a JSONL sidecar (`granular_bboxes`), PDF points | n/a | **dropped**: closed, paid hosted API with no polygons. Its open sibling LiteParse segments scans with bundled Tesseract, so `hyocr-tess` already covers that behaviour |
+| Projection slicer | full-width boxes per region | region order | **run** as the control, on the shared render (no deskew). A page the detector isn't confident on is recorded as deferred with zero lines |
+
 ### B2. Method
 
 1. **Desk check** (no runs). For each candidate: output shape (polygon? baseline? reading
@@ -190,12 +200,319 @@ That tool becomes Phase 9's baseline. The survey needs a winner, not a leaderboa
 
 ## 4. Open questions for the maintainer
 
-None open. A1, A2 and A6 were approved 2026-09-30. The ERRATA candidate list is out of scope
-from here on.
+1. **Human-scoring scope (§5.1):** score only kraken, Surya and hyocr-paddle, and keep
+   p.641 out of the effort totals?
+
+A1, A2 and A6 were approved 2026-09-30. The ERRATA candidate list is out of scope from here on.
 
 ## 5. Results
 
-_Filled in as the survey runs._
+Tooling: `dev/lineseg_survey/` (see its README). Every tool segments the same kraken
+render, writes the review UI's `segmentation.json` shape, and is scored in its own review
+dir (`python -m dev.kraken_review.app --tool <tool>`). Two flag categories were added for
+the survey: **4 clips ink** and **5 out of reading order**. `score.py` turns the reviews into
+the table below.
+
+### 5.1 Automated triage (2026-09-30, before human scoring)
+
+Lines emitted per page:
+
+| page | content | kraken | surya | hyocr-paddle | hyocr-tess | projection |
+|---:|---|--:|--:|--:|--:|--:|
+| 453 | title page | 26 | 25 | 15 | 24 | 26 |
+| 457 | two-col + header | 69 | 66 | 66 | 50 | 71 |
+| 488 | column debris | 92 | 84 | 91 | 53 | 95 |
+| 519 | Vol I body | 92 | 91 | 91 | 88 | 96 |
+| 530 | illustration | 58 | 13 | 2 | 2 | 1 |
+| 557 | Vol II header + taregir | 59 | 51 | 53 | 49 | 0 (deferred) |
+| 564 | taregir mid-page | 69 | 59 | 67 | 45 | 0 (deferred) |
+| 575 | Vol II laydown | 77 | 77 | 79 | 77 | 79 |
+| 593 | leap-pair taregir | 86 | 85 | 86 | 95 | 86 |
+| 610 | full-width titles | 74 | 73 | 75 | 73 | 0 (deferred) |
+| 641 | Paschal table | 199 | 571 | 583 | 15 | 112 |
+| 642 | colophon | 28 | 28 | 28 | 22 | 29 |
+
+Side-by-side overlays of pp.453, 457, 488, 530, 557, 564 and 641 (`overlay.py`) show:
+
+- **kraken** finds every text line, including display type and the taregir letter on
+  p.557. Its main cost is **non-text boxes on ornaments**: about 56 on p.530's border, and
+  a handful on every decorative header (457, 557).
+- **Surya** is clean on body text and mostly ignores ornaments. But it **missed the
+  taregir letter Ա on p.557**, the letter that keys a Vol II section. It merges adjacent
+  lines in some Vol II rubrics (p.564 top-left) and clips the title on p.453.
+- **hyocr-paddle** is the cleanest on body text and on the illustration page (exactly the
+  2 caption lines on p.530), and it caught the taregir letter on p.557. But it **dropped
+  11 of 26 lines on the title page** (p.453), and missed lines cost the most to fix.
+- **All three** missed the taregir letter Դ on p.564; only hyocr-tess boxed it. Phase 9's
+  section-title tool will be needed whichever tool wins.
+- **hyocr-tess** misses whole lines (p.457 right column; 53 vs ~92 on p.488) and draws
+  boxes across the gutter (p.564).
+- **projection** defers 3 of 12 pages (557, 564, 610), which in production meant a human
+  crop, and boxes the whole of p.530 as one line.
+- **p.641 (Paschal table)** is segmented at cell level by Surya and Paddle, and at a mix of
+  cell and row level by kraken. Line counts there mean little. The table is already
+  transcribed as a CSV (`corpus/STRUCTURE.md`).
+
+**Proposed:** drop `hyocr-tess` and `projection` from human scoring. Both are clearly
+beaten, and scoring them would add ~24 page reviews for no decision value. Score
+**kraken, Surya and hyocr-paddle** on the 11 sample pages other than 641; review 641 on
+its own for whichever tool wins.
+
+### 5.2 Human scoring
+
+Scope approved 2026-09-30: kraken, Surya and hyocr-paddle. **p.641 (Paschal table) is out
+of scoring for every tool** (maintainer, 2026-09-30): kraken's errors there were too many
+to review, no tool segments it as lines, and it is already hand-transcribed as a CSV.
+`score.py` skips it. "Effort" is ops per page
+(`score.py`): each flag category, missed box, initial, merge and split counts 1.
+
+**Surya: reviewed 2026-09-30, all 12 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 25 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 457 | 66 | 0 | 5 | 0 | 20 | 0 | 0 | 4 | 0 | 0 | 29 |
+| 488 | 84 | 0 | 11 | 0 | 8 | 9 | 0 | 4 | 0 | 9 | 41 |
+| 519 | 91 | 0 | 5 | 0 | 28 | 1 | 0 | 7 | 0 | 1 | 42 |
+| 530 | 13 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 10 |
+| 557 | 51 | 0 | 1 | 0 | 18 | 0 | 0 | 1 | 0 | 0 | 20 |
+| 564 | 59 | 0 | 2 | 0 | 15 | 1 | 0 | 1 | 0 | 0 | 19 |
+| 575 | 77 | 0 | 1 | 0 | 20 | 0 | 0 | 1 | 0 | 0 | 22 |
+| 593 | 85 | 0 | 1 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 13 |
+| 610 | 73 | 0 | 2 | 0 | 6 | 0 | 0 | 1 | 0 | 0 | 9 |
+| 642 | 28 | 0 | 1 | 0 | 10 | 0 | 0 | 5 | 0 | 0 | 16 |
+| **11 pages** | **652** | **0** | **29** | **11** | **138** | **11** | **0** | **24** | **0** | **10** | **223** |
+| 641 (table, not scored) | 571 | 2 | 11 | 0 | 0 | 0 | 5 | 0 | 1 | 8 | 27 |
+
+- **Effort: 223 over 11 pages = 20.3 per page.**
+- **Clips ink is 62% of it** (138 of 223), and it is systematic: Surya's boxes are tight
+  rectangles that shave ascenders and descenders. A uniform vertical pad, which is a code
+  fix rather than reviewer work, cures most of it (`clip_padding.py`): 6 px → 102/138,
+  **8 px → 114/138 (83%)**, 10 px → 117/138. With an 8 px pad counted as free, effort
+  drops to **109 over 11 pages ≈ 9.9 per page**. This is an estimate: where lines are too
+  tightly spaced for a blank row between them, the measure can't separate descender
+  from neighbour.
+- **What remains is real:** 29 under-segmentations (11 on p.488), 24 drop-cap initials
+  left outside their lines, 11 reading-order errors (9 on p.488), 10 ornament boxes on
+  p.530, and 10 splits on p.488.
+- No missed lines outside the table, and no over-segmentation.
+
+The same pad will be applied to kraken and hyocr-paddle before comparing.
+
+**kraken: reviewed 2026-09-30, 11 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 26 | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 5 |
+| 457 | 69 | 0 | 1 | 2 | 2 | 1 | 0 | 1 | 0 | 0 | 7 |
+| 488 | 92 | 0 | 2 | 0 | 5 | 2 | 0 | 0 | 0 | 0 | 9 |
+| 519 | 92 | 0 | 2 | 0 | 6 | 1 | 0 | 1 | 0 | 0 | 10 |
+| 530 | 58 | 0 | 0 | 56 | 0 | 0 | 0 | 0 | 0 | 0 | 56 |
+| 557 | 59 | 3 | 1 | 5 | 1 | 0 | 1 | 1 | 0 | 0 | 12 |
+| 564 | 69 | 0 | 2 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 5 |
+| 575 | 77 | 0 | 3 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 7 |
+| 593 | 86 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| 610 | 74 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 642 | 28 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 3 |
+| **11 pages** | **730** | **3** | **15** | **67** | **20** | **5** | **1** | **5** | **0** | **1** | **117** |
+
+- **Effort: 117 over 11 pages = 10.6 per page**, about half of Surya's 20.3.
+- **The 8 px pad helps kraken little:** 7 of 20 clip flags (its polygons already follow
+  the ink). Padded effort is 110, **10.0 per page**, against Surya's ~9.9.
+- **56 of the 117 are ornament boxes on one page (p.530).** In practice that is one
+  "Mark blank" click (every box on the page is non-text). Without p.530, kraken is
+  **61 over 10 pages = 6.1 per page** (padded 5.4), against Surya's 21.3 raw / ~9.9 padded
+  on the same 10 pages.
+- Outside p.530, kraken beats Surya in every category: under-segmentation 15 vs 29,
+  drop-caps left out 5 vs 24, reading order 5 vs 11, splits 1 vs 10, and only 1 missed
+  line. Its weak spot is ornaments on decorative pages (p.557: 5 non-text, 3 over).
+
+**hyocr-paddle: reviewed 2026-09-30, 11 pages.**
+
+| page | lines | over | under | non-text | clips | order | missed | initials | merges | splits | effort |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 453 | 15 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 9 |
+| 457 | 66 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 2 |
+| 488 | 91 | 0 | 1 | 0 | 1 | 0 | 2 | 1 | 0 | 0 | 5 |
+| 519 | 91 | 1 | 1 | 0 | 5 | 0 | 1 | 2 | 0 | 0 | 10 |
+| 530 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 557 | 53 | 2 | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 6 |
+| 564 | 67 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| 575 | 79 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 5 |
+| 593 | 86 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| 610 | 75 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 4 |
+| 642 | 28 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| **11 pages** | **653** | **8** | **7** | **0** | **7** | **0** | **15** | **5** | **3** | **0** | **45** |
+
+- **Effort: 45 over 11 pages = 4.1 per page.** The 8 px pad cures only 2 of its 7 clip
+  flags (padded: 3.9 per page).
+- **Zero non-text boxes and zero reading-order errors.** The layout stage drops figures
+  and ornaments before line detection, which is why p.530 is clean. The X-Y-cut region
+  order held on every page.
+- **Its weakness is missed lines: 15, 9 of them on the title page (p.453).** A missed
+  line is the riskiest error, because text silently disappears if no one draws the box.
+  Outside p.453 it missed 6 lines across 10 pages.
+
+### 5.3 Comparison
+
+| tool | ops / page (raw) | with 8 px pad free | without p.530 |
+|---|--:|--:|--:|
+| **hyocr-paddle** | **4.1** | **3.9** | **4.5** |
+| kraken | 10.6 | 10.0 | 6.1 |
+| Surya | 20.3 | ~9.9 | ~9.9 |
+
+hyocr-paddle needs the fewest corrections under every adjustment. Its missed lines are
+the one error class where it trails kraken (15 vs 1), and they cluster on the display-type
+title page. Phase 9 must make missed lines easy to spot, e.g. by highlighting ink that no
+line covers.
+
+### 5.4 Filling Paddle's missed lines from kraken + Surya (maintainer's proposal)
+
+Rule (`ensemble.py`): add a kraken line when Surya **agrees** on it (bbox IoU ≥ *agree*)
+and **no Paddle line covers it** (Paddle boxes cover < 30% of it). The kraken polygon is
+used because Surya's rectangles clip ink. Scored against the 15 lines the reviewer boxed
+as missed in Paddle's review (p.641 excluded):
+
+| agree ≥ | missed lines recovered | lines added | false adds |
+|--:|--:|--:|--:|
+| 0.3 | 15/15 | 18 | 3 |
+| **0.4** | **15/15** | **17** | **2** |
+| 0.5–0.6 | 14/15 | 15 | 1 |
+| 0.7 | 10/15 | 10 | 0 |
+
+The coverage threshold (0.2–0.5) made no difference. The one line lost at 0.5 is p.575's
+printed page number "571" in the running header: Surya's box there is much wider than
+kraken's. **Chosen: agree ≥ 0.4.** A false add costs one non-text flag; a missed line
+risks silently losing text.
+
+Projected Paddle effort with filling: 45 − 15 missed + 2 false adds = **32 over 11 pages
+≈ 2.9 per page**. Caveat: the threshold was chosen on the same 11 pages it is scored on.
+The plateau from 0.4 to 0.6 suggests it isn't overfit.
+
+Filled lines are slotted into Paddle's reading order after the nearest Paddle line above
+them in the same column, and tagged `"source": "kraken-fill"` so Phase 9 can show them.
+On p.453 all 10 filled title lines came out in correct order. The result is written as
+tool **`paddle-filled`**, the proposed Phase 9 baseline.
+
+Taregir title letters (e.g. Դ on p.564) are missed by all three tools. The reviewer boxes
+them with the section-title tool in Phase 9 regardless, since that box is what marks the
+section.
+
+### 5.5 Non-text filter for filled lines (2026-10-01)
+
+Once hyocr-paddle had run on 104 pages (453–549 plus the sample), the fill rule proposed
+**136 lines on 64 pages**. Checked by eye against the scan (not yet Phase 9-reviewed),
+**123 are real lines and 13 are not.** The real ones are:
+
+- **Lines opening with a large capital** (Զ, Տ, Ս, Պ…), on almost every body page.
+  Paddle's DB detector skips them; the line is inside a layout region.
+- **Runs of a column that no layout region covers**: 12 lines on p.490, 6 on p.491, 9 on
+  p.531. This is a layout-stage miss, which a detector setting or fine-tune would not fix.
+- **Running-header page numbers** ("(482)").
+
+The 13 non-text fills are border/woodcut bands (8 on the illustration pages 456, 482, 496,
+502, 514 ×2, 522, 530; 2 on p.545), the rule ornament on p.453, and 2 speckle-noise boxes in
+p.520's bottom margin.
+
+Box shape doesn't separate them: the bands have title-line aspect ratios (~11) and
+display-type heights (1.9–2.8× the median line). Ink texture does
+(`ensemble.nontext_reason`):
+
+| measure (inside the box) | real lines (123) | non-text (13) | cutoff |
+|---|---|---|---|
+| share of pixel columns with no ink | ≥ 0.11 (median 0.26) | 10 of 13 ≤ 0.03 | drop if < 0.05 (`ornament`) |
+| share of ink blobs < 20 px | ≤ 0.26 | the other 3: 0.65–0.86 | drop if > 0.5 (`speckle`) |
+
+**Result: 13 of 13 non-text fills dropped, 0 of 123 real lines lost.** On the reviewed
+sample: 15/15 missed lines still recovered, false adds 2 → 0, so projected effort is
+**30 over 11 pages ≈ 2.7 per page**. Both cutoffs sit at least 2× from the nearest real
+line, but they were fitted on the pages they're scored on, and Vol II (pp.550–640) hasn't
+been checked yet. The filter only touches fills, never Paddle's own lines. Dropped boxes are
+kept in `segmentation.json` as `filtered_fills` with the reason.
+
+**Full run (2026-10-02, pp.453–643):** 172 lines filled, 15 non-text fills dropped
+(the 13 above plus a vine band and a rule ornament on p.551). The first full run also
+dropped the running-header page numbers on pp.617 and 643: kraken's box there takes in
+the "—(" and ")—" dashes, and a horizontal rule leaves no ink-free column. Fix: remove
+horizontal runs longer than 1.5 box heights before counting blank columns
+(`RULE_LEN`). After the fix, every kept fill has ≥ 0.10 blank columns and every ornament
+≤ 0.03. Six pages have no lines and are blank in the scan (455, 481, 501, 521, 529, 552).
+
+**Agree lowered to 0.3 (maintainer, 2026-10-02).** With the filter in place, the 0.3 row of
+§5.4 no longer costs a false add on the sample: p.530's extra candidate (the INRI plaque
+inside the woodcut) is dropped as an ornament, so the sample still shows 15/15 recovered
+and 0 false adds. Over the book, 0.3 adds 7 lines to the 0.4 run, 6 of them real (three
+page numbers, p.462's large-capital line, p.554's display-title words, p.624's rubric line).
+The seventh is a rule ornament on p.553 that the filter misses. It also drops 6 more
+non-text candidates (ornament bands, a grape cluster, p.530's INRI, speckle on blank
+p.521). The baseline is now **agree ≥ 0.3**: 179 filled lines, 21 dropped.
+
+### 5.6 Lower DB `box_thresh` for large-capital lines? No (2026-10-01)
+
+Tried before the full run: can Paddle's detector find the large-capital lines itself, if
+it keeps lower-scoring boxes? `ARMENIAN_OCR_PADDLE_DET_BOX_THRESH` at 0.5 / 0.4 / 0.3 (the
+PaddleOCR default is 0.6), on pp.453, 457, 488, 519, 557, written as tools
+`hyocr-paddle-bt<X>` (`run_hyocr.py --tool`) and compared with the Paddle reviews:
+
+| box_thresh | body-line misses recovered | other misses (p.453 title, p.557 header) | original lines lost | new unmatched boxes |
+|---:|---:|---:|---:|---:|
+| 0.5 | 3/4 | 0/10 | 0 | 3 |
+| 0.4 | **4/4** | 0/10 | 0 | 4 |
+| 0.3 | 4/4 | 0/10 | 0 | 4 |
+
+- At 0.4 Paddle finds every large-capital line it missed in the sample (457, 488 ×2, 519)
+  and loses nothing.
+- The new unmatched boxes are noise: three slivers 6–21 px tall inside existing lines or on
+  a dot (p.488 ×2, p.519; Paddle's real lines are ≥ 35 px), and a box around p.557's drop
+  cap Ե as its own line.
+- The title-page and header misses don't move: those lines sit outside any layout region,
+  so the detector never sees them.
+
+**Decision: keep the default 0.6.** The kraken+Surya fill already recovers all 4 of these
+lines (§5.4), so on `paddle-filled` lowering the threshold saves nothing and adds about 1
+noise box per page. It becomes the right lever only if the fill's kraken/Surya inputs are
+dropped, e.g. to make the tool Paddle-only for other books. In that case use 0.4 plus a
+minimum line height (≈ 0.5× the page's median).
+
+### 5.7 Is Surya's vote needed? Yes. Agree threshold 0.3 vs 0.4 (2026-10-02)
+
+**Without Surya (`--agree 0`; run on branch `exp/fill-without-surya`).** Every kraken
+line that Paddle doesn't cover becomes a fill, and only the non-text filter (§5.5) screens
+them. On the reviewed sample: still 15/15
+missed lines recovered, but false adds 0 → 9 (8 on the illustration page p.530, plus the
+drop-cap sliver on p.557). The filter dropped another 59. Across the 121 pages that had
+Paddle geometry then, agree=0 kept 186 more fills than agree ≥ 0.4. Checked by eye, 3 were
+real lines:
+
+| where | extra fills | real |
+|---|--:|--:|
+| blank pages (`data/pages/blank/`): speckle, show-through | 127 | 0 |
+| woodcut-frame pages (456, 482, 496, 502, 514, 522, 530) | 42 | 0 |
+| text pages: large-capital slivers, ornaments, title-letter pieces | 14 | 0 |
+| text pages: real missed lines (p.462, page numbers on pp.472, 477) | 3 | 3 |
+
+That is about 1.5 false adds per page. The filter misses these because they are small
+specks and narrow slivers, not textured bands. **Decision: keep Surya.** Revisit only if
+licensing requires dropping it. Then the replacements would be: Paddle's own figure/image
+layout regions (`run_hyocr.py` discards them now, so the layout step needs a re-run),
+skipping blank pages, and a minimum line size for capital slivers.
+
+**agree ≥ 0.3 vs 0.4** (all 190 pages, p.641 excluded, rule-aware filter of §5.5; the
+experiment and its `compare_agree.py` stay on branch `exp/fill-without-surya`):
+179 vs 172 kept fills. 0.3 keeps every 0.4 fill plus 7 more, Surya IoU 0.32–0.39:
+
+| page | fill | verdict |
+|---|---|---|
+| 462 | first body line after a large capital Ա | real |
+| 472 | running-header page number "468" | real |
+| 477 | running-header page number "473" | real |
+| 618 | running-header page number "614" | real |
+| 624 | first line of the right column | real |
+| 553 | rule ornament under the title | non-text |
+| 554 | three letters of the display title (Paddle missed the line) | fragment |
+
+On the sample, 0.3 still gives 15/15 recovered and 0 false adds. So 0.3 trades 2 extra
+deletes for 5 recovered lines over the book.
 
 ## 6. Decision log
 
@@ -209,3 +526,31 @@ _Filled in as the survey runs._
 - **2026-09-30:** Part A done. Merged the three branches, fixed ERRATA E2, appended the
   Phase 2b addendum, and promoted pp.453–643 (additive: only pp.642–643 changed). Deleted the
   stale branches. The ERRATA candidate list is frozen and out of scope. Next: Part B.
+- **2026-09-30:** Part B started on `feat/line-seg-survey`. Desk check dropped LlamaParse
+  (closed API, axis-aligned boxes only). Found that `hye-open-ocr` has no line detector,
+  so it was run as two candidates (Tesseract lines, Paddle DB detection). Built survey
+  runners, a shared geometry format, overlays and a scorer; extended the review UI with
+  `--tool`, flag categories 4–5 and a "Mark reviewed" button. All five candidates run on
+  the 12-page sample. Automated triage proposes human-scoring three of them (§5.1).
+- **2026-09-30: Baseline chosen: `paddle-filled` (agree ≥ 0.4).** hyocr-paddle needed the
+  fewest corrections of the three scored tools (4.1 ops/page vs kraken 10.6, Surya 20.3;
+  §5.3), with zero non-text boxes and zero reading-order errors. Its one weakness, missed
+  lines, is closed by adding kraken lines that Surya agrees on and Paddle lacks (§5.4):
+  15/15 missed lines recovered, 2 false adds, ≈2.9 ops/page projected. The reviewer chose
+  the rule. p.641 is out of scoring (hand-transcribed CSV).
+
+- **2026-10-01: Non-text filter added to the fill** (§5.5). On 104 pages it dropped 13 of
+  13 ornament/speckle fills and no real line; sample projection ≈2.7 ops/page. Lowering
+  Paddle's DB `box_thresh` was tried and rejected for this baseline (§5.6): it finds the
+  same lines the fill already recovers and adds noise. Fine-tuning (Paddle DB, kraken) is
+  kept as a future experiment, not needed for Phase 9.
+- **2026-10-02: Phase 8 gate passed.** `paddle-filled` written for all of pp.453–643 (191
+  pages, 172 filled lines, 15 non-text fills dropped) in the common `segmentation.json`
+  format. The filter now ignores horizontal rules, so page numbers set between dashes
+  aren't dropped (§5.5). Next: Phase 9.
+- **2026-10-02: fill agreement lowered from 0.4 to 0.3** (§5.5). With the non-text filter,
+  0.3 keeps the sample at 15/15 recovered and 0 false adds, and adds 6 real lines (plus 1
+  ornament) over the book.
+- **2026-10-02: Surya's vote stays** (§5.7). With agree=0 the fill kept 183 false lines
+  and only 3 real ones over 121 pages. agree ≥ 0.3 vs 0.4 over all pages: 5 more real
+  lines, 1 title fragment and 1 ornament.

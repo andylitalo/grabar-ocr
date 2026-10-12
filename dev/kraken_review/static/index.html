@@ -8,12 +8,15 @@
 </head>
 <body>
   <header>
-    <h1>Kraken Line-Segmentation Review</h1>
+    <h1>Line-Segmentation Review</h1>
     <button id="prev">&larr; Prev</button>
     <select id="page-select"></select>
     <button id="next">Next &rarr;</button>
     <span id="count"></span>
     <button id="blank" title="Mark page blank (flag every line non-text)">Mark blank</button>
+    <button id="reviewed" title="Lock this page as reviewed (also when nothing needed fixing); click again to resume editing">Mark reviewed</button>
+    <span id="status-badge"></span>
+    <span id="progress"></span>
     <button id="undo" title="Undo last change (Cmd+Z)" disabled>&#8630; Undo</button>
     <span class="spacer"></span>
     <span id="saved"></span>
@@ -36,17 +39,19 @@
       <canvas id="canvas" width="900" height="1200"></canvas>
     </div>
     <aside>
-      <h2>Legend</h2>
+      <h2>Legend <small id="tool-name"></small></h2>
       <div class="legend-row"><span class="swatch none"></span> unflagged (looks correct)</div>
       <div class="legend-row"><span class="swatch cat1"></span> 1 &middot; over-segmentation</div>
       <div class="legend-row"><span class="swatch cat2"></span> 2 &middot; under-segmentation</div>
       <div class="legend-row"><span class="swatch cat3"></span> 3 &middot; non-text</div>
+      <div class="legend-row"><span class="swatch cat4"></span> 4 &middot; clips ink</div>
+      <div class="legend-row"><span class="swatch cat5"></span> 5 &middot; out of reading order</div>
       <div class="legend-row"><span class="swatch missed"></span> missed line (drag-drawn)</div>
       <div class="legend-row"><span class="swatch initial"></span> initial &rarr; assigned line</div>
       <div class="legend-row"><span class="swatch merge"></span> merge group</div>
       <div class="legend-row"><span class="swatch split"></span> split cut</div>
       <div class="legend-row"><span class="swatch title"></span> section-title letter</div>
-      <p style="margin-top:1rem"><strong>Flag</strong> tool: click a line to flag it (1/2/3);
+      <p style="margin-top:1rem"><strong>Flag</strong> tool: click a line to flag it (1&ndash;5);
       drag to mark a missed line. Switch tools above to correct geometry.</p>
       <div id="flag-list"></div>
     </aside>
@@ -55,13 +60,15 @@
   <div id="modal-backdrop" class="backdrop">
     <div class="modal">
       <h3 id="modal-title">Flag line</h3>
-      <p class="hint">Click an option or press its number. Esc to cancel.</p>
+      <p class="hint">Click an option or press its number to toggle it; a line can carry several. Enter or Esc when done.</p>
       <button class="opt" data-cat="1"><span class="num">1</span> Over-segmentation</button>
       <button class="opt" data-cat="2"><span class="num">2</span> Under-segmentation</button>
       <button class="opt" data-cat="3"><span class="num">3</span> Non-text</button>
+      <button class="opt" data-cat="4"><span class="num">4</span> Clips ink</button>
+      <button class="opt" data-cat="5"><span class="num">5</span> Out of reading order</button>
       <div class="modal-actions">
-        <button id="opt-clear">Clear flag</button>
-        <button id="opt-cancel">Cancel</button>
+        <button id="opt-clear">Clear all</button>
+        <button id="opt-cancel">Done</button>
       </div>
     </div>
   </div>

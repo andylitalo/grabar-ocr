@@ -1,0 +1,366 @@
+{
+  "page": 519,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T05:56:20.824153+00:00",
+  "tool": "surya",
+  "model": "surya detection + fast_layout",
+  "num_lines": 91,
+  "flags": {
+    "line_001": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_017": {
+      "categories": [
+        2,
+        5
+      ],
+      "labels": [
+        "under-segmentation",
+        "out of reading order"
+      ]
+    },
+    "line_018": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_005": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_007": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_012": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_014": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_016": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_035": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_036": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_053": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_057": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_075": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_076": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_079": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_091": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_020": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_022": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_024": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_026": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_027": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_034": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_043": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_047": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_069": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_070": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_072": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_085": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_041": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_064": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_074": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_080": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    },
+    "line_054": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0549",
+      "box": [
+        175.0,
+        1197.0,
+        238.0,
+        1273.0
+      ],
+      "target_line_id": "line_032"
+    },
+    {
+      "id": "initial_002",
+      "key": "\u0540",
+      "box": [
+        173.0,
+        1590.0,
+        229.0,
+        1678.0
+      ],
+      "target_line_id": "line_054"
+    },
+    {
+      "id": "initial_003",
+      "key": "\u0548",
+      "box": [
+        177.0,
+        2219.0,
+        229.0,
+        2291.0
+      ],
+      "target_line_id": "line_066"
+    },
+    {
+      "id": "initial_004",
+      "key": "\u053b",
+      "box": [
+        1031.0,
+        526.0,
+        1084.0,
+        609.0
+      ],
+      "target_line_id": null
+    },
+    {
+      "id": "initial_005",
+      "key": "\u053b",
+      "box": [
+        1038.0,
+        1363.0,
+        1104.0,
+        1496.0
+      ],
+      "target_line_id": "line_041"
+    },
+    {
+      "id": "initial_006",
+      "key": "\u0535",
+      "box": [
+        1038.0,
+        2060.0,
+        1089.0,
+        2141.0
+      ],
+      "target_line_id": "line_064"
+    },
+    {
+      "id": "initial_007",
+      "key": "\u0535",
+      "box": [
+        1033.0,
+        2567.0,
+        1092.0,
+        2650.0
+      ],
+      "target_line_id": "line_080"
+    }
+  ],
+  "merges": [],
+  "splits": [
+    {
+      "id": "split_001",
+      "line_id": "line_017",
+      "at_x": 1004.0
+    }
+  ],
+  "section_titles": []
+}
