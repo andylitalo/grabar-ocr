@@ -25,6 +25,9 @@ Editing (fixing only):
   - **Option-drag** a rectangle to add missed ink to the selected line (it's carved out of
     any neighbour it overlaps);
   - **Delete** removes it; Shift-click selects more lines, and **M** merges them.
+  - The printed page number (the `-( N )-` header) is usually **already marked** when a
+    page opens: "page number N (auto)" in the edit list. If it's on the wrong box, remove
+    that edit with × and mark the right one with **P**.
   - **P** marks it as the printed page number: confirm the pre-filled number (PDF page − 4)
     with Enter. It leaves the lines and the reading order and is stored as a page element.
     If Paddle missed the number, drag a box over it first.
@@ -53,6 +56,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 
 ```
 materialize.py   baseline + ops -> lines; id minting; verified record (pure)
+page_number.py   finds the printed page number so a fresh review starts with it marked
 storage.py       paths, review read/write, status transitions, verified output
 lines.py         find a line by verified id or baseline key
 crops.py         line and context crops

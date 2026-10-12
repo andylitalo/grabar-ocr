@@ -11,7 +11,8 @@ Surya agrees on and Paddle lacks (`dev/lineseg_survey/paddle-filled/`). Filled l
 `../grabar-ocr-layout`), split from `feat/line-seg-survey` at `de107f0`, so that the OCR
 work (Phases 10–11) stays on `feat/line-seg-survey`. The two branches share
 `dev/line_review/`; pages verified here reach the OCR branch only by merge.
-**Progress:** pp.453–462 verified (10 of 191 pages); next is p.463.
+**Progress:** pp.453–462 verified (10 of 191 pages); next is p.463. Steps 2 (vertex
+add/remove) and 3 (missed-line guard) are deferred; page numbers are now marked automatically.
 
 ## Goal
 
@@ -219,6 +220,19 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   **Decided 2026-10-11 (maintainer):** the running header `-( <page-number> )-` is part
   of the page number, not a text line. Goal: mark it as `page_number` automatically,
   so the reviewer only corrects mis-marks.
+- **2026-10-11: automatic page-number marking.** A fresh review starts with a
+  `page_number` op (tagged `"auto": true`) on the detected line, valued PDF − 4
+  (`dev/line_review/page_number.py`). The rule, set from a survey of every page's top
+  line: the topmost line, centred (0.40–0.60 of the width), 80–380 px wide, 60–130 px tall,
+  top edge above y = 300; a Paddle line must also read a digit or a bracket. Paddle's
+  digits are often misread (p.459 reads "458"), so the value never comes from its text.
+  Over pp.453–643 it marks exactly the 164 numbered pages: 152 by Paddle's box, 12 by a
+  kraken fill over the digits where Paddle missed the number. It leaves the 27 title,
+  section-opening and blank pages alone (a book-wide test pins this). Those boxes sometimes
+  leave out the `-(` `)-` dashes, which don't matter. Already-reviewed pages
+  (453–462) are unchanged; a wrong mark is removed with × in the edit list.
+  **Out of scope for now (maintainer):** adding/removing vertices (rest of step 2) and the
+  missed-line guard (step 3).
 - **2026-10-03: column-first reading order** (maintainer's rule: columns first while the
   gutter runs unbroken, a horizontal split only where it's interrupted). See "Default
   reading order" above. New `break` op (tool **B**) for interruptions with no line on

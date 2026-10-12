@@ -340,7 +340,7 @@ function opLabel(op) {
     case "merge": return `merge ${op.lines.join(" + ")}`;
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
     case "grow": return `grow ${op.line}`;
-    case "page_number": return `page number ${op.value}`;
+    case "page_number": return `page number ${op.value}${op.auto ? " (auto)" : ""}`;
     case "break": return `gutter break at y ${op.y}`;
     case "order": return "reading order";
     case "dismiss_ink": return "dismiss ink";

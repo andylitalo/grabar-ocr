@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import materialize as mz
+from . import page_number as pn
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RENDER_DIR = REPO_ROOT / "dev" / "kraken_review" / "data"
@@ -89,10 +90,12 @@ def _now() -> str:
 
 
 def new_review(page: int) -> dict:
+    """A page's review before any edit: the detected page number is already marked."""
+    ops = pn.auto_ops(load_baseline(page), str(page - PRINTED_OFFSET))
     return {
         "schema": SCHEMA, "page": page, "status": "unreviewed",
         "baseline": {"tool": BASELINE_TOOL, "sha256": baseline_sha256(page)},
-        "ops": [], "section_titles": [],
+        "ops": ops, "section_titles": [],
         **mz.empty_id_state(),
         "verified_at": None, "updated_at": None,
     }
