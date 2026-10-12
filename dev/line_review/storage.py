@@ -173,7 +173,12 @@ def set_status(page: int, status: str) -> dict:
         review.update(mz.mint_ids(page, lines, review))
         review["verified_at"] = _now()
         record = mz.verified_record(seg, review, baseline_sha256=baseline_sha256(page))
+        from . import migrate  # data keyed to the old line keys follows the new ids
+        previous = (json.loads(verified_path(page).read_text(encoding="utf-8"))
+                    if verified_path(page).exists() else None)
+        before = migrate.before_shapes(page, previous)
         VERIFIED_DIR.mkdir(parents=True, exist_ok=True)
         verified_path(page).write_text(mz.dumps(record), encoding="utf-8")
+        migrate.after_verify(page, lines, review["ids"], before)
     review["status"] = status
     return _write_review(review)
