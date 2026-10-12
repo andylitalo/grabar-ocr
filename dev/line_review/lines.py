@@ -32,9 +32,15 @@ def page_lines(page: int) -> list[dict]:
 
 
 def find(key: str) -> tuple[dict, list[dict]]:
-    """(the line, all lines of its page); KeyError if absent."""
-    lines = page_lines(page_of(key))
-    for line in lines:
-        if line["key"] == key:
-            return line, lines
+    """(the line, all lines of its page); KeyError if absent. A verified id also resolves
+    while its page is back under review (from the last verified output)."""
+    page = page_of(key)
+    candidates = [page_lines(page)]
+    if not is_baseline_key(key) and storage.verified_path(page).exists():
+        rec = json.loads(storage.verified_path(page).read_text(encoding="utf-8"))
+        candidates.append([{**l, "key": l["id"]} for l in rec["lines"]])
+    for lines in candidates:
+        for line in lines:
+            if line["key"] == key:
+                return line, lines
     raise KeyError(key)

@@ -54,6 +54,10 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 ```
 materialize.py   baseline + ops -> lines; id minting; verified record (pure)
 storage.py       paths, review read/write, status transitions, verified output
+lines.py         find a line by verified id or baseline key
+crops.py         line and context crops
+transcribe.py    transcriptions per task, the test-set sample
+migrate.py       on verify: transcriptions, picks, predictions follow the new ids
 app.py           FastAPI endpoints
 static/          canvas UI
 ```

@@ -291,7 +291,50 @@ attention where the machine is least sure. Candidate signals:
   cap, bad crop).
 
 Each bucket's actual error rate is measured on the typed ceiling lines before the
-thresholds are trusted. Not built yet.
+thresholds are trusted. Not built yet. When the OCR + v4 run happens, log each line's
+signals (engines agree?, which reading v4 chose, v4 changed an agreed line?, risk pattern
+hit?) so buckets can be assigned and measured without re-running anything.
+
+#### v6 risk patterns, fixed in advance (2026-10-11)
+
+v6 = v4 + a second, separate stage: the image of each *agreed* line that matches a risk
+pattern, sent to the corrector with the page text, which is allowed to fix the flagged line
+from the image. The patterns are fixed here, before the human corrections they'll be
+tested on exist, so the v4-vs-v6 comparison can't be tuned to them. They match the
+**Paddle reading** of the line (the agreed text):
+
+| pattern | regex | agreed lines in the book |
+|---|---|--:|
+| **tone code** (primary) | `(^\|[\s.,։])[ԱԲԳԴաբգդ][ՁԿՉԶձկչզյ3)]\.(?=\s\|$)` | 1,383 |
+| **weekday code** (primary) | `(^\|[\s.,։])[ԲԳԴԵբգդե][շչ]\.(?=\s\|$)` | 337 |
+| other letter-numeral (secondary arm) | `(^\|[\s.,։])[ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔ]{1,3}\.(?=\s\|$)` | 2,272 |
+
+The tone and weekday codes come from mining the engines' disagreements over the whole book
+(v3's rules 1–2), not from v4's errors. The tone-code pattern flags 3 of v4's 6
+agreed-line errors (p494, p457, p638), and 32 of the 102 typed agreed lines. The secondary
+arm adds no error caught on the ceiling sample, at ~2× the images; it is tested only as a
+second arm. Expected cost of the primary arm: ~1,700 extra images over the book (~9 a
+page), about +30% on v4's cost.
+
+**Test** (after human review of the v4 output): v4 vs v6 on the human-corrected lines plus
+the ceiling sample, error-free lines and lines broken. The question is whether v6 fixes
+flagged lines across the book or only the three it was inspired by.
+
+#### Where this stands (pick-up note, 2026-10-11)
+
+- **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
+  `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
+- **Ceiling sample**: 58 + 102 typed (plus 3 bad crop/illegible), 474 of 500 picks still keyed
+  to the baseline (`p<N>~line_…`). Verifying a page now carries its transcriptions, sample
+  picks and ceiling predictions over to the new ids (`dev/line_review/migrate.py`, Phase 9
+  build log); lines whose shape changed are set aside under `stale/` and come back untyped.
+- **Next (maintainer's order):** finish the layout review for the whole book → OCR (both
+  engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
+  the bucket signals → human review of the output → v6 vs v4.
+- **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
+  text can prefill them); their stratum (agree/disagree) should be recomputed after the
+  OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
+  test); Gemini 4 isn't available to this key.
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 

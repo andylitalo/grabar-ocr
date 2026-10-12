@@ -175,5 +175,7 @@ def set_status(page: int, status: str) -> dict:
         record = mz.verified_record(seg, review, baseline_sha256=baseline_sha256(page))
         VERIFIED_DIR.mkdir(parents=True, exist_ok=True)
         verified_path(page).write_text(mz.dumps(record), encoding="utf-8")
+        from . import migrate  # transcriptions typed on this page follow the new ids
+        migrate.after_verify(page, lines, review["ids"])
     review["status"] = status
     return _write_review(review)

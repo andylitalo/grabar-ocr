@@ -4,13 +4,15 @@
   "status": "done",
   "at": "2026-10-09T04:56:13+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "d2330af8ff50fa4d"
  },
  "p622~line_064": {
   "text": "Մարտ",
   "status": "done",
   "at": "2026-10-09T05:12:15+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "ead7d850a845ea92"
  }
 }

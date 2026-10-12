@@ -4,13 +4,15 @@
   "status": "done",
   "at": "2026-10-09T14:09:08+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "9f61af18af647f4f"
  },
  "p505~line_090": {
   "text": "Ճաշու ժամամուտ, Վասն որոյ եւ մեք։",
   "status": "done",
   "at": "2026-10-09T14:07:46+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "8b570884cd78d662"
  }
 }

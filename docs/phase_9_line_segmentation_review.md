@@ -184,6 +184,18 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
   simplification within 2.5 px (median 37 points; coarser tolerances change the area by up
   to 18%), so **Option-drag** adds a rectangle of missed ink to the selected line (new
   `grow` op). Remaining for step 2: adding and removing vertices.
+- **2026-10-11, transcriptions follow verification.** Phase 11's ceiling sample was typed
+  on unverified pages under baseline keys (`p520~line_013`), which stop resolving once a
+  page is verified. `set_status(…, "verified")` now calls `dev/line_review/migrate.py`:
+  every transcription records the shape it was typed against (`geometry`, a fingerprint
+  of the boundary; the 165 existing records were backfilled with
+  `python -m dev.line_review.migrate backfill`). On verify, a line with the same shape
+  takes its transcription, sample pick, OCR predictions and crop to its new id. A reshaped,
+  split, merged or deleted line's transcription moves to `data/transcriptions/<task>/stale/`
+  and the line shows untyped. A page-level corrector's (`corr-*`) whole page is dropped if
+  any of its lines changed, to be re-corrected. The same check covers re-verifying a page
+  whose test-set lines were reshaped. `lines.find` also resolves a verified id while its
+  page is back under review. Tests: `tests/test_line_review_migrate.py`.
 
 ## Gate
 

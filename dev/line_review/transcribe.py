@@ -3,7 +3,7 @@
 Two parts, both general beyond the test set:
 
 - **Transcriptions** live per *task* in ``data/transcriptions/<task>/page_<N>.json``:
-  ``{line_id: {text, status, at, by, prefill, recheck?}}``. The test set is task
+  ``{line_id: {text, status, at, by, prefill, geometry, recheck?}}``. The test set is task
   ``testset`` and is typed blank (``prefill`` None). A later task where contributors
   correct OCR predictions uses the same records with ``prefill = {engine, text}``.
 - **The test-set sample**: a stratified, append-only pick of verified lines
@@ -164,14 +164,25 @@ def effective_line(key: str, task: str) -> dict | None:
     return rec
 
 
+def geometry(line: dict) -> str:
+    """Fingerprint of the line shape a transcription was typed against, so a later edit
+    of the shape can be detected (``dev/line_review/migrate.py``)."""
+    pts = [[round(x), round(y)] for x, y in line["boundary"]]
+    return hashlib.sha256(json.dumps(pts).encode()).hexdigest()[:16]
+
+
 def save_line(line_id: str, *, text: str, status: str, task: str = TESTSET,
-              by: str = "maintainer", prefill: dict | None = None) -> dict:
-    """Store one line's transcription (replacing an earlier one, keeping its recheck)."""
+              by: str = "maintainer", prefill: dict | None = None,
+              geometry: str | None = None) -> dict:
+    """Store one line's transcription (replacing an earlier one, keeping its recheck).
+    ``geometry``: ``geometry(line)`` of the line as shown when it was typed."""
     if status not in STATUSES:
         raise ValueError(f"unknown status {status!r}; expected one of {STATUSES}")
     page = page_of(line_id)
     records = load_page(page, task)
     rec = {"text": text, "status": status, "at": _now(), "by": by, "prefill": prefill}
+    if geometry is not None:
+        rec["geometry"] = geometry
     if "recheck" in records.get(line_id, {}):
         rec["recheck"] = records[line_id]["recheck"]
     records[line_id] = rec

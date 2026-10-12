@@ -240,9 +240,10 @@ def get_line_context(line_id: str) -> Response:
 
 @app.put("/api/transcribe/lines/{line_id}")
 def put_transcription(line_id: str, req: TranscriptionRequest, set: str = tr.TESTSET) -> dict:  # noqa: A002
-    _line(line_id)
+    line, _ = _line(line_id)
     try:
-        return tr.save_line(line_id, text=req.text, status=req.status, task=_set(set), by=CONTRIBUTOR)
+        return tr.save_line(line_id, text=req.text, status=req.status, task=_set(set), by=CONTRIBUTOR,
+                            geometry=tr.geometry(line))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

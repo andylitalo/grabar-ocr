@@ -33,6 +33,12 @@ def tmp_store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
+    # Verifying runs the transcription migration: keep it off the real data.
+    from dev.line_review import migrate
+    from dev.line_review import transcribe as tr
+    monkeypatch.setattr(tr, "TRANSCRIPTIONS_DIR", tmp_path / "transcriptions")
+    monkeypatch.setattr(migrate, "PREDICTIONS_DIR", tmp_path / "predictions")
+    monkeypatch.setattr(migrate, "CROPS_DIR", tmp_path / "runs")
     return tmp_path
 
 
@@ -104,3 +110,13 @@ def test_changed_baseline_blocks_edits(tmp_store):
         storage.save_ops(500, [], [])
     with pytest.raises(storage.StateError):
         storage.set_status(500, "fixed")
+
+
+def test_verify_moves_a_baseline_keyed_transcription_to_the_new_id(tmp_store):
+    from dev.line_review import transcribe as tr
+    line = storage.materialized(500, storage.load_review(500))[0]
+    tr.save_line(f"p500~{line['key']}", text="Ա", status="done", task="ceiling",
+                 geometry=tr.geometry(line))
+    storage.set_status(500, "fixed")
+    storage.set_status(500, "verified")
+    assert tr.load_page(500, "ceiling")["p500.001"]["text"] == "Ա"

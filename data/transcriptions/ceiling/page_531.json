@@ -4,13 +4,15 @@
   "status": "done",
   "at": "2026-10-09T14:18:38+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "e0998d1f1987cfd4"
  },
  "p531~line_052": {
   "text": "Իսկ յառաջ քան զերեկոյին ժամն դիցեն",
   "status": "done",
   "at": "2026-10-09T14:16:27+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "8afd1c82ff298e46"
  }
 }

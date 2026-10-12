@@ -4,6 +4,7 @@
   "status": "bad-crop",
   "at": "2026-10-09T05:35:12+00:00",
   "by": "maintainer",
-  "prefill": null
+  "prefill": null,
+  "geometry": "5c726c029286f525"
  }
 }

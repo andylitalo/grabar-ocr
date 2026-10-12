@@ -1,6 +1,6 @@
 # Phase 11: ceiling of the Calfa engines, and LLM correction (provisional)
 
-Generated 2026-10-12T03:41:53+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
+Generated 2026-10-12T03:49:16+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
 
 Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 58 of 300 sampled disagreements, 102 of 200 agreements.
 
