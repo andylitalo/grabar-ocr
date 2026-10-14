@@ -34,6 +34,7 @@ let drag = null;           // in-progress press/drag (display px)
 let edit = null;           // {key, kind: "vertex"|"edge"|"move", index, start:[fx,fy], orig, preview}
 const HANDLE_R = 7;        // display px: grab radius for a vertex dot
 const EDGE_R = 5;          // display px: grab distance for an edge
+const MID_MIN = 24;        // display px: edges shorter than this get no add-vertex dot
 let pendingLetter = null;  // {tool, box, lineKey}
 
 const editable = () => state.data && ["unreviewed", "fixing"].includes(state.data.status)
@@ -122,7 +123,20 @@ function segmentDistance(px, py, [ax, ay], [bx, by]) {
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
-// What a press at display (x, y) grabs on the selected line: a vertex, an edge, or the body.
+// Add-vertex dots: the midpoint of each edge long enough to hold one, as
+// [{index (the edge's first vertex), point}] in full-res px.
+function midpoints(pts) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    if (Math.hypot(toDisp(b[0] - a[0]), toDisp(b[1] - a[1])) < MID_MIN) continue;
+    out.push({ index: i, point: [Math.round((a[0] + b[0]) / 2), Math.round((a[1] + b[1]) / 2)] });
+  }
+  return out;
+}
+
+// What a press at display (x, y) grabs on the selected line: a vertex, an add-vertex
+// dot (kind "insert": the new vertex goes after ``index``), an edge, or the body.
 function hitHandle(dispX, dispY) {
   const l = soleSelected();
   if (!l) return null;
@@ -130,6 +144,11 @@ function hitHandle(dispX, dispY) {
   for (let i = 0; i < pts.length; i++) {
     if (Math.hypot(toDisp(pts[i][0]) - dispX, toDisp(pts[i][1]) - dispY) <= HANDLE_R) {
       return { key: l.key, kind: "vertex", index: i };
+    }
+  }
+  for (const m of midpoints(pts)) {
+    if (Math.hypot(toDisp(m.point[0]) - dispX, toDisp(m.point[1]) - dispY) <= HANDLE_R) {
+      return { key: l.key, kind: "insert", index: m.index, point: m.point };
     }
   }
   for (let i = 0; i < pts.length; i++) {
@@ -260,7 +279,17 @@ function draw() {
     ctx.strokeStyle = selected ? COLORS.select : color;
     ctx.stroke();
     if (selected && state.selection.size === 1) {
-      for (const [x, y] of (edit && edit.key === l.key ? edit.preview : handlePoints(l))) {
+      const pts = edit && edit.key === l.key ? edit.preview : handlePoints(l);
+      if (!edit) {
+        for (const { point: [x, y] } of midpoints(pts)) {  // hollow: drag to add a vertex
+          ctx.beginPath();
+          ctx.arc(toDisp(x), toDisp(y), 3.5, 0, 2 * Math.PI);
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = COLORS.select;
+          ctx.stroke();
+        }
+      }
+      for (const [x, y] of pts) {
         ctx.beginPath();
         ctx.arc(toDisp(x), toDisp(y), 4, 0, 2 * Math.PI);
         ctx.fillStyle = COLORS.select;
@@ -600,6 +629,10 @@ canvas.addEventListener("mousedown", (ev) => {
   if (h) {
     const l = lineByKey(h.key);
     const pts = handlePoints(l);
+    if (h.kind === "insert") {  // a new vertex at the edge's midpoint, dragged from there
+      pts.splice(h.index + 1, 0, h.point);
+      Object.assign(h, { kind: "vertex", index: h.index + 1 });
+    }
     edit = { ...h, start: [toFull(x), toFull(y)], orig: clone(pts), preview: clone(pts) };
   }
 });
@@ -619,7 +652,7 @@ canvas.addEventListener("mousemove", (ev) => {
   }
   if (editable() && state.tool === "select") {
     const h = hitHandle(x, y);
-    canvas.style.cursor = !h ? "crosshair" : h.kind === "move" ? "move" : "grab";
+    canvas.style.cursor = !h ? "crosshair" : h.kind === "move" ? "move" : h.kind === "insert" ? "copy" : "grab";
   }
   const l = hitLine(x, y);
   const key = l ? l.key : null;
@@ -640,6 +673,7 @@ canvas.addEventListener("mouseup", (ev) => {
   const line = hitLine(x, y);
 
   if (e && d.moved) { commitReshape(e.key, e.preview); return; }
+  if (e && e.kind !== "move") { draw(); return; }  // a click on a handle keeps the selection
   if (d.grow && d.moved) {
     const box = dragToBox(d);
     if (box) pushOp({ op: "grow", line: d.grow, box }); else draw();
@@ -690,6 +724,18 @@ canvas.addEventListener("mouseup", (ev) => {
     if (box) openLetterModal(state.tool, box, line ? line.key : null);
     else draw();
   }
+});
+
+// Double-click a vertex of the selected line to remove it (a polygon keeps 3 at least).
+canvas.addEventListener("dblclick", (ev) => {
+  if (!editable() || state.tool !== "select") return;
+  const { x, y } = canvasPos(ev);
+  const h = hitHandle(x, y);
+  if (!h || h.kind !== "vertex") return;
+  const pts = handlePoints(lineByKey(h.key));
+  if (pts.length <= 3) { setHint("A line needs at least 3 vertices."); return; }
+  pts.splice(h.index, 1);
+  commitReshape(h.key, pts);
 });
 
 canvas.addEventListener("mouseleave", () => {

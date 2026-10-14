@@ -22,6 +22,8 @@ Editing (fixing only):
   - drag a **dot** to move that vertex, an **edge** to move that side, or the **inside** to
     move the whole box. Each drag saves on release, and repeated drags of one line count
     as one edit;
+  - drag a **hollow dot** (the middle of each longer edge) to **add a vertex** there;
+    **double-click** a vertex to **remove** it;
   - **Option-drag** a rectangle to add missed ink to the selected line (it's carved out of
     any neighbour it overlaps);
   - **Delete** removes it; Shift-click selects more lines, and **M** merges them.

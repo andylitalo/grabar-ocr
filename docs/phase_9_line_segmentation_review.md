@@ -234,6 +234,10 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   (453–462) are unchanged; a wrong mark is removed with × in the edit list.
   **Out of scope for now (maintainer):** adding/removing vertices (rest of step 2) and the
   missed-line guard (step 3).
+- **2026-10-14: adding and removing vertices (rest of step 2, maintainer asked for it).**
+  A selected line shows a hollow dot at the middle of each edge at least 24 display px
+  long: drag it to add a vertex there. Double-click a vertex to remove it (3 at least).
+  Both save as a `reshape`, like the other drags.
 - **2026-10-11: initials found automatically; the Initial tool picks the right line.** Initials
   were most of the reviewer's work: 29 of the 53 edits on pp.453–463. None of the
   segmenters keeps them: of those 29, kraken's lines hold 5 whole, Paddle's 2, Surya's 0.
