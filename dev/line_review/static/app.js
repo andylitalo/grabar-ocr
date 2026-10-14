@@ -520,7 +520,7 @@ function setTool(tool) {
   setHint({
     select: "", split: "Click a line to split.",
     break: "Click at the height where the gutter is interrupted.",
-    initial: "Click the capital (or drag a box around it).", title: "Drag a box (or click a line) over the title letter.",
+    initial: "Drag a box around the capital (or click Paddle's box over it).", title: "Drag a box (or click a line) over the title letter.",
   }[tool]);
   document.querySelectorAll(".tool").forEach((b) => b.classList.toggle("active", b.dataset.tool === tool));
   draw();
@@ -549,15 +549,14 @@ function closeLetterModal() {
   draw();
 }
 
-// Initial tool: ask the server for the capital under a click (all its pieces) or the
-// line a drawn box joins; it picks the line the capital starts, in the same column.
-async function findInitial(body, fallbackLine) {
+// Initial tool: the server picks the line the capital starts, in the same column, and
+// any line the box swallows (Paddle's box over the capital alone), to delete first.
+async function findInitial(box) {
   try {
-    const r = await api("POST", `/api/pages/${state.page}/initial`, body);
+    const r = await api("POST", `/api/pages/${state.page}/initial`, { box });
     openLetterModal("initial", r.box, r.line, r.absorbs || []);
   } catch (e) {
-    if (fallbackLine) openLetterModal("initial", fallbackLine.bbox.map(Math.round), null);
-    else { setHint(`No capital there (${e.message}). Drag a box around it instead.`); draw(); }
+    openLetterModal("initial", box, null);  // falls back to the old rule on confirm
   }
 }
 
@@ -682,12 +681,8 @@ canvas.addEventListener("mouseup", (ev) => {
     return;
   }
   if (state.tool === "initial") {
-    if (d.moved) {
-      const box = dragToBox(d);
-      if (box) findInitial({ box }); else draw();
-    } else {
-      findInitial({ x: Math.round(toFull(x)), y: Math.round(toFull(y)) }, line);
-    }
+    const box = d.moved ? dragToBox(d) : (line ? line.bbox.map(Math.round) : null);
+    if (box) findInitial(box); else draw();
     return;
   }
   if (state.tool === "title") {

@@ -1,4 +1,4 @@
-"""Find initial capitals the lines miss: automatically on a fresh review, or on a click.
+"""Find initial capitals the lines miss, so a fresh review starts with them attached.
 
 Most Phase 9 corrections were initials (29 of the first 53 edits): a capital at the start
 of a line, taller than the line, that Paddle's box clips or leaves out entirely. Small
@@ -10,7 +10,8 @@ The rule works on ink blobs (connected components of the black-and-white render)
   column rule), plus its other pieces: Ա's two strokes, a drop cap's flag.
 - **Its line** (``target_line``) is the topmost line whose middle is level with the
   capital and that starts right at it, never one further right (in the other column,
-  which the reviewer UI's old rule could pick). Paddle sometimes boxes the capital on
+  which the reviewer UI's old rule could pick). The Initial tool's drawn boxes use the
+  same rule (``target_for_box``). Paddle sometimes boxes the capital on
   its own; that box is not the line, and the caller deletes it (``absorbs``).
 - **Detection** (``detect``) proposes a capital only where at least 10% of its box lies
   outside the lines. Scored against the reviewer's 29 initials on pp.453-463: all 29
@@ -36,7 +37,6 @@ PIECE_GAP_TALL = 0.2             # or this share of its height for a drop cap's 
 MIN_OUTSIDE = 0.10               # share of the capital's box outside every line
 REACH = 1.5                      # its line starts within this distance right of it
 OVERHANG = 0.3                   # ...and not further left of it than this
-CLICK_REACH = 10                 # px from a click to the nearest ink
 PAD = 3
 
 Box = tuple[int, int, int, int]
@@ -52,7 +52,7 @@ class Page:
         self.h = float(np.median([l["bbox"][3] - l["bbox"][1] for l in self.lines])) if self.lines else 50.0
         self.polys = {l["key"]: Polygon(l["boundary"]).buffer(0) for l in self.lines}
         self.covered = unary_union(list(self.polys.values()))
-        _, self.labels, stats, _ = cv2.connectedComponentsWithStats(
+        _, _, stats, _ = cv2.connectedComponentsWithStats(
             (image < INK).astype(np.uint8), connectivity=8)
         self.blobs: dict[int, Box] = {i: (int(x), int(y), int(x + w), int(y + ht))
                                       for i, (x, y, w, ht, _) in enumerate(stats) if i}
@@ -152,40 +152,21 @@ def detect(image: np.ndarray, lines: list[dict]) -> list[dict]:
     return found
 
 
-def at_point(image: np.ndarray, lines: list[dict], x: float, y: float) -> dict | None:
-    """The capital under a click (or within a few px of it) and the line it starts.
+def target_for_box(lines: list[dict], b: list[float]) -> dict:
+    """Where a hand-drawn initial box goes: ``{"line": KEY | None, "absorbs": [KEY, ...]}``.
 
-    Returns ``{"box", "line", "absorbs"}``, with ``line`` None when no line starts at it.
-    No size test: the reviewer is pointing at it.
+    ``absorbs`` are lines the box covers (a Paddle box over the capital alone): they're
+    deleted first, since an initial can't be carved out of a line it swallows whole.
     """
-    page = Page(image, lines)
-    xi, yi = int(round(x)), int(round(y))
-    r = CLICK_REACH
-    y0, x0 = max(0, yi - r), max(0, xi - r)
-    win = page.labels[y0:yi + r + 1, x0:xi + r + 1]
-    hits = np.argwhere(win > 0)
-    if not len(hits):
-        return None
-    d = (hits[:, 0] + y0 - yi) ** 2 + (hits[:, 1] + x0 - xi) ** 2
-    hy, hx = hits[int(np.argmin(d))]
-    g = page.capital(int(win[hy, hx]))
-    own = page.own_boxes(g)
-    line = page.target_line(g, own)
-    x1, y1, x2, y2 = g
-    return {"box": [x1 - PAD, y1 - PAD, x2 + PAD, y2 + PAD],
-            "line": line["key"] if line else None, "absorbs": [l["key"] for l in own]}
-
-
-def target_for_box(lines: list[dict], b: list[float]) -> str | None:
-    """The line a hand-drawn initial box joins (the drag tool)."""
     lines = [l for l in lines if len(l["boundary"]) >= 3]
     if not lines:
-        return None
+        return {"line": None, "absorbs": []}
     page = Page.__new__(Page)  # geometry only: no image needed
     page.lines = lines
     page.h = float(np.median([l["bbox"][3] - l["bbox"][1] for l in lines]))
-    line = page.target_line(tuple(b), [])
-    return line["key"] if line else None
+    own = page.own_boxes(tuple(b))
+    line = page.target_line(tuple(b), own)
+    return {"line": line["key"] if line else None, "absorbs": [l["key"] for l in own]}
 
 
 def auto_ops(image: np.ndarray, lines: list[dict]) -> list[dict]:

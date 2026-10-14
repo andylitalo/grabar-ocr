@@ -234,7 +234,7 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   (453–462) are unchanged; a wrong mark is removed with × in the edit list.
   **Out of scope for now (maintainer):** adding/removing vertices (rest of step 2) and the
   missed-line guard (step 3).
-- **2026-10-11: initials found automatically, and a one-click Initial tool.** Initials
+- **2026-10-11: initials found automatically; the Initial tool picks the right line.** Initials
   were most of the reviewer's work: 29 of the 53 edits on pp.453–463. None of the
   segmenters keeps them: of those 29, kraken's lines hold 5 whole, Paddle's 2, Surya's 0.
   New `dev/line_review/initials.py` works on ink blobs. A capital is a blob 1.3–6 line
@@ -258,9 +258,11 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     is a separate piece are proposed without it when the line already holds the shoulder.
   - A fresh review starts with these as `initial` ops (and `delete`s) tagged `auto`,
     after the page number.
-  - **Initial tool (I):** a click finds the capital's ink under the pointer (and all its
-    pieces) and the line by the same rule. A drawn box gets its line from the server
-    too, so the cross-column bug is gone.
+  - **Initial tool (I):** a drawn box gets its line from the server by the same rule,
+    so the cross-column bug is gone, and a Paddle box it swallows is deleted first.
+    **2026-10-14:** a click-to-find mode (the capital's ink under the pointer) was built
+    and removed (maintainer): it often missed part of the initial and saved little
+    over drawing the box.
   - **Next, once many pages are reviewed:** a trained initial detector (a YOLO-style
     single class) on the accumulated `initial` ops, if the rule's misses justify it.
 - **2026-10-03: column-first reading order** (maintainer's rule: columns first while the

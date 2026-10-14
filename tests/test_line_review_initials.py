@@ -1,6 +1,6 @@
 """
 Tests for initial-capital finding (dev.line_review.initials): automatic proposals on a
-fresh review, and the Initial tool's click and drawn-box lookups.
+fresh review, and the line the Initial tool's drawn box joins.
 
 Synthetic pages: white image, text lines drawn as rows of small ink blocks under a box,
 capitals as tall ink blocks at a line's start. Line height is 50 px.
@@ -117,26 +117,15 @@ def test_the_line_comes_from_the_capitals_own_column():
     ink(img, 319, 216, 373, 290)
     [p] = initials.detect(img, lines)
     assert p["line"] == "left"
-    assert initials.target_for_box(lines, [319, 216, 373, 290]) == "left"
+    assert initials.target_for_box(lines, [319, 216, 373, 290])["line"] == "left"
 
 
-def test_a_click_finds_the_whole_capital():
+def test_a_drawn_box_over_paddles_capital_box_absorbs_it():
     img, lines = two_lines()
-    ink(img, 220, 170, 245, 250)
-    ink(img, 255, 170, 285, 250)
-    found = initials.at_point(img, lines, 230, 200)
-    assert found == {"box": [217, 167, 288, 253], "line": "line_001", "absorbs": []}
-
-
-def test_a_click_near_the_ink_still_finds_it():
-    img, lines = two_lines()
-    ink(img, 240, 170, 290, 250)
-    assert initials.at_point(img, lines, 235, 200)["line"] == "line_001"
-
-
-def test_a_click_on_blank_paper_finds_nothing():
-    img, lines = two_lines()
-    assert initials.at_point(img, lines, 100, 800) is None
+    lines.append({"key": "line_009", "bbox": [238, 168, 292, 210],
+                  "boundary": [[238, 168], [292, 168], [292, 210], [238, 210]]})
+    assert initials.target_for_box(lines, [236, 166, 294, 252]) == {
+        "line": "line_001", "absorbs": ["line_009"]}
 
 
 # --- fresh reviews ---------------------------------------------------------------

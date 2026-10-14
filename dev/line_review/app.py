@@ -41,9 +41,7 @@ class OpsRequest(BaseModel):
 
 
 class InitialRequest(BaseModel):
-    x: float | None = None        # a click on the capital
-    y: float | None = None
-    box: list[float] | None = None  # or a hand-drawn box
+    box: list[float]  # the reviewer's box around the capital
 
 
 class StatusRequest(BaseModel):
@@ -142,26 +140,14 @@ def put_ops(page: int, req: OpsRequest) -> dict:
 
 @app.post("/api/pages/{page}/initial")
 def post_initial(page: int, req: InitialRequest) -> dict:
-    """Where an initial goes, for the Initial tool: ``{box, line, absorbs}``.
+    """Where the Initial tool's box goes: ``{box, line, absorbs}``.
 
-    A click finds the capital's ink (all its pieces) under the pointer; a drawn box keeps
-    the reviewer's box. Either way the line is the one the capital starts, from the
-    page's current lines. Nothing is saved; the UI pushes the ops.
+    The line is the one the capital starts, in its own column, from the page's current
+    lines (``initials.target_for_box``). Nothing is saved; the UI pushes the ops.
     """
     _page_or_404(page)
     current = storage.materialized(page, storage.load_review(page))
-    if req.box is not None:
-        return {"box": [round(v) for v in req.box],
-                "line": initials.target_for_box(current, req.box), "absorbs": []}
-    if req.x is None or req.y is None:
-        raise HTTPException(status_code=400, detail="give x and y, or a box")
-    image = storage.page_image(page)
-    if image is None:
-        raise HTTPException(status_code=404, detail=f"No render for page {page}")
-    found = initials.at_point(image, current, req.x, req.y)
-    if found is None:
-        raise HTTPException(status_code=404, detail="no ink there")
-    return found
+    return {"box": [round(v) for v in req.box], **initials.target_for_box(current, req.box)}
 
 
 @app.post("/api/pages/{page}/status")
