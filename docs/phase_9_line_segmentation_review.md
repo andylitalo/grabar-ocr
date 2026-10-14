@@ -11,9 +11,9 @@ Surya agrees on and Paddle lacks (`dev/lineseg_survey/paddle-filled/`). Filled l
 `../grabar-ocr-layout`), split from `feat/line-seg-survey` at `de107f0`, so that the OCR
 work (Phases 10–11) stays on `feat/line-seg-survey`. The two branches share
 `dev/line_review/`; pages verified here reach the OCR branch only by merge.
-**Progress:** pp.453–463 verified (11 of 191 pages); next is p.464. Steps 2 (vertex
-add/remove) and 3 (missed-line guard) are deferred; page numbers and initials are now marked
-automatically.
+**Progress:** pp.453–463 verified (11 of 191 pages); next is p.464. Step 2 is done
+(vertex add/remove added 2026-10-14); step 3 (missed-line guard) is deferred; page numbers and
+initials are marked automatically.
 
 ## Goal
 
