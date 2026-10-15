@@ -182,13 +182,31 @@ def test_finds_every_initial_the_reviewer_marked():
     assert missed == []
 
 
+
 # --- lines Paddle boxed twice ---------------------------------------------------------
 
-def test_a_line_boxed_twice_keeps_the_larger_copy():
+TWINS = [{"key": "a", "bbox": [1158, 2340, 1972, 2389]},
+         {"key": "b", "bbox": [1160, 2394, 1970, 2443]},
+         {"key": "c", "bbox": [1159, 2341, 1973, 2391]},   # a's twin, slightly larger
+         {"key": "d", "bbox": [1160, 2440, 1970, 2540]}]   # b's neighbour, touching it
+
+
+def test_the_smaller_copy_of_a_line_boxed_twice_is_dropped():
     from dev.line_review import duplicates
-    lines = [{"key": "a", "bbox": [1158, 2340, 1972, 2389]},
-             {"key": "b", "bbox": [1160, 2394, 1970, 2443]},
-             {"key": "c", "bbox": [1159, 2341, 1973, 2391]},   # a's twin, slightly larger
-             {"key": "d", "bbox": [1160, 2340, 1970, 2443]}]   # one box over a and b: not a copy
-    assert duplicates.pairs(lines) == [("c", "a")]
-    assert duplicates.auto_ops(lines) == [{"op": "delete", "line": "a", "auto": True}]
+    assert duplicates.pairs(TWINS) == [("c", "a")]
+    assert [l["key"] for l in duplicates.dedupe(TWINS)] == ["b", "c", "d"]
+
+
+def test_a_pair_the_reviewer_handled_is_left_alone():
+    from dev.line_review import duplicates
+    keys = lambda ops: [l["key"] for l in duplicates.dedupe(TWINS, ops)]
+    assert keys([{"op": "delete", "line": "a"}]) == ["a", "b", "c", "d"]   # p.473
+    assert keys([{"op": "delete", "line": "c"}]) == ["a", "b", "c", "d"]
+    assert keys([{"op": "initial", "line": "c", "box": [0, 0, 1, 1]}]) == ["b", "c", "d"]
+
+
+def test_the_materializer_drops_copies_before_the_ops():
+    lines = lines_for_mz([{**l, "boundary": [[l["bbox"][0], l["bbox"][1]], [l["bbox"][2], l["bbox"][1]],
+                                              [l["bbox"][2], l["bbox"][3]], [l["bbox"][0], l["bbox"][3]]]}
+                          for l in TWINS])
+    assert sorted(l["key"] for l in mz.materialize_page(lines, [])["lines"]) == ["b", "c", "d"]

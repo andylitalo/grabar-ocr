@@ -1890,53 +1890,8 @@
    "initial": null
   },
   {
-   "id": "p463.042",
-   "order": 42,
-   "key": "line_042",
-   "boundary": [
-    [
-     310.0,
-     2557.0
-    ],
-    [
-     901.0,
-     2557.0
-    ],
-    [
-     901.0,
-     2595.0
-    ],
-    [
-     310.0,
-     2595.0
-    ]
-   ],
-   "baseline": [
-    [
-     310.0,
-     2585.5
-    ],
-    [
-     901.0,
-     2585.5
-    ]
-   ],
-   "baseline_source": "synthetic",
-   "bbox": [
-    310.0,
-    2557.0,
-    901.0,
-    2595.0
-   ],
-   "source": "hyocr-paddle",
-   "derived_from": [
-    "line_042"
-   ],
-   "initial": null
-  },
-  {
    "id": "p463.043",
-   "order": 43,
+   "order": 42,
    "key": "line_043",
    "boundary": [
     [
@@ -1981,7 +1936,7 @@
   },
   {
    "id": "p463.044",
-   "order": 44,
+   "order": 43,
    "key": "line_044",
    "boundary": [
     [
@@ -2026,7 +1981,7 @@
   },
   {
    "id": "p463.045",
-   "order": 45,
+   "order": 44,
    "key": "line_045",
    "boundary": [
     [
@@ -2071,7 +2026,7 @@
   },
   {
    "id": "p463.046",
-   "order": 46,
+   "order": 45,
    "key": "line_046",
    "boundary": [
     [
@@ -2116,7 +2071,7 @@
   },
   {
    "id": "p463.047",
-   "order": 47,
+   "order": 46,
    "key": "line_047",
    "boundary": [
     [
@@ -2161,7 +2116,7 @@
   },
   {
    "id": "p463.048",
-   "order": 48,
+   "order": 47,
    "key": "line_048",
    "boundary": [
     [
@@ -2206,7 +2161,7 @@
   },
   {
    "id": "p463.049",
-   "order": 49,
+   "order": 48,
    "key": "line_049",
    "boundary": [
     [
@@ -2251,7 +2206,7 @@
   },
   {
    "id": "p463.050",
-   "order": 50,
+   "order": 49,
    "key": "line_050",
    "boundary": [
     [
@@ -2296,7 +2251,7 @@
   },
   {
    "id": "p463.051",
-   "order": 51,
+   "order": 50,
    "key": "line_051",
    "boundary": [
     [
@@ -2341,7 +2296,7 @@
   },
   {
    "id": "p463.052",
-   "order": 52,
+   "order": 51,
    "key": "line_052",
    "boundary": [
     [
@@ -2386,7 +2341,7 @@
   },
   {
    "id": "p463.053",
-   "order": 53,
+   "order": 52,
    "key": "line_053",
    "boundary": [
     [
@@ -2431,7 +2386,7 @@
   },
   {
    "id": "p463.054",
-   "order": 54,
+   "order": 53,
    "key": "line_054",
    "boundary": [
     [
@@ -2476,7 +2431,7 @@
   },
   {
    "id": "p463.055",
-   "order": 55,
+   "order": 54,
    "key": "line_055",
    "boundary": [
     [
@@ -2521,7 +2476,7 @@
   },
   {
    "id": "p463.056",
-   "order": 56,
+   "order": 55,
    "key": "line_056",
    "boundary": [
     [
@@ -2566,7 +2521,7 @@
   },
   {
    "id": "p463.057",
-   "order": 57,
+   "order": 56,
    "key": "line_057",
    "boundary": [
     [
@@ -2611,7 +2566,7 @@
   },
   {
    "id": "p463.058",
-   "order": 58,
+   "order": 57,
    "key": "line_058",
    "boundary": [
     [
@@ -2656,7 +2611,7 @@
   },
   {
    "id": "p463.059",
-   "order": 59,
+   "order": 58,
    "key": "line_059",
    "boundary": [
     [
@@ -2701,7 +2656,7 @@
   },
   {
    "id": "p463.060",
-   "order": 60,
+   "order": 59,
    "key": "line_060",
    "boundary": [
     [
@@ -2746,7 +2701,7 @@
   },
   {
    "id": "p463.061",
-   "order": 61,
+   "order": 60,
    "key": "line_061",
    "boundary": [
     [
@@ -2791,7 +2746,7 @@
   },
   {
    "id": "p463.062",
-   "order": 62,
+   "order": 61,
    "key": "line_062",
    "boundary": [
     [
@@ -2836,7 +2791,7 @@
   },
   {
    "id": "p463.063",
-   "order": 63,
+   "order": 62,
    "key": "line_063",
    "boundary": [
     [
@@ -2881,7 +2836,7 @@
   },
   {
    "id": "p463.064",
-   "order": 64,
+   "order": 63,
    "key": "line_064",
    "boundary": [
     [
@@ -2926,7 +2881,7 @@
   },
   {
    "id": "p463.065",
-   "order": 65,
+   "order": 64,
    "key": "line_065",
    "boundary": [
     [
@@ -2971,7 +2926,7 @@
   },
   {
    "id": "p463.066",
-   "order": 66,
+   "order": 65,
    "key": "line_066",
    "boundary": [
     [
@@ -3016,7 +2971,7 @@
   },
   {
    "id": "p463.067",
-   "order": 67,
+   "order": 66,
    "key": "line_067",
    "boundary": [
     [
@@ -3061,7 +3016,7 @@
   },
   {
    "id": "p463.068",
-   "order": 68,
+   "order": 67,
    "key": "line_068",
    "boundary": [
     [
@@ -3106,7 +3061,7 @@
   },
   {
    "id": "p463.069",
-   "order": 69,
+   "order": 68,
    "key": "line_069",
    "boundary": [
     [
@@ -3151,7 +3106,7 @@
   },
   {
    "id": "p463.070",
-   "order": 70,
+   "order": 69,
    "key": "line_070",
    "boundary": [
     [
@@ -3196,7 +3151,7 @@
   },
   {
    "id": "p463.071",
-   "order": 71,
+   "order": 70,
    "key": "line_071",
    "boundary": [
     [
@@ -3241,7 +3196,7 @@
   },
   {
    "id": "p463.072",
-   "order": 72,
+   "order": 71,
    "key": "line_072",
    "boundary": [
     [
@@ -3286,7 +3241,7 @@
   },
   {
    "id": "p463.073",
-   "order": 73,
+   "order": 72,
    "key": "line_073",
    "boundary": [
     [
@@ -3331,7 +3286,7 @@
   },
   {
    "id": "p463.074",
-   "order": 74,
+   "order": 73,
    "key": "line_074",
    "boundary": [
     [
@@ -3376,7 +3331,7 @@
   },
   {
    "id": "p463.075",
-   "order": 75,
+   "order": 74,
    "key": "line_075",
    "boundary": [
     [
@@ -3421,7 +3376,7 @@
   },
   {
    "id": "p463.076",
-   "order": 76,
+   "order": 75,
    "key": "line_076",
    "boundary": [
     [
@@ -3466,7 +3421,7 @@
   },
   {
    "id": "p463.077",
-   "order": 77,
+   "order": 76,
    "key": "line_077",
    "boundary": [
     [
@@ -3511,7 +3466,7 @@
   },
   {
    "id": "p463.078",
-   "order": 78,
+   "order": 77,
    "key": "line_078",
    "boundary": [
     [
@@ -3572,7 +3527,7 @@
   },
   {
    "id": "p463.079",
-   "order": 79,
+   "order": 78,
    "key": "line_079",
    "boundary": [
     [
@@ -3617,7 +3572,7 @@
   },
   {
    "id": "p463.080",
-   "order": 80,
+   "order": 79,
    "key": "line_080",
    "boundary": [
     [
@@ -3662,7 +3617,7 @@
   },
   {
    "id": "p463.081",
-   "order": 81,
+   "order": 80,
    "key": "line_081",
    "boundary": [
     [
@@ -3707,7 +3662,7 @@
   },
   {
    "id": "p463.082",
-   "order": 82,
+   "order": 81,
    "key": "line_082",
    "boundary": [
     [
@@ -3752,7 +3707,7 @@
   },
   {
    "id": "p463.083",
-   "order": 83,
+   "order": 82,
    "key": "line_083",
    "boundary": [
     [
@@ -3797,7 +3752,7 @@
   },
   {
    "id": "p463.084",
-   "order": 84,
+   "order": 83,
    "key": "line_084",
    "boundary": [
     [
@@ -3842,7 +3797,7 @@
   },
   {
    "id": "p463.085",
-   "order": 85,
+   "order": 84,
    "key": "line_085",
    "boundary": [
     [
@@ -3887,7 +3842,7 @@
   },
   {
    "id": "p463.086",
-   "order": 86,
+   "order": 85,
    "key": "line_087",
    "boundary": [
     [
@@ -3948,7 +3903,7 @@
   },
   {
    "id": "p463.087",
-   "order": 87,
+   "order": 86,
    "key": "line_088",
    "boundary": [
     [
@@ -3993,7 +3948,7 @@
   },
   {
    "id": "p463.088",
-   "order": 88,
+   "order": 87,
    "key": "line_089",
    "boundary": [
     [
@@ -4038,7 +3993,7 @@
   },
   {
    "id": "p463.089",
-   "order": 89,
+   "order": 88,
    "key": "line_090",
    "boundary": [
     [
@@ -4083,7 +4038,7 @@
   },
   {
    "id": "p463.090",
-   "order": 90,
+   "order": 89,
    "key": "line_091",
    "boundary": [
     [
@@ -4128,7 +4083,7 @@
   },
   {
    "id": "p463.091",
-   "order": 91,
+   "order": 90,
    "key": "line_092",
    "boundary": [
     [
@@ -4173,7 +4128,7 @@
   },
   {
    "id": "p463.092",
-   "order": 92,
+   "order": 91,
    "key": "line_093",
    "boundary": [
     [
@@ -4217,5 +4172,9 @@
    "initial": null
   }
  ],
- "retired": {}
+ "retired": {
+  "p463.042": {
+   "superseded_by": []
+  }
+ }
 }

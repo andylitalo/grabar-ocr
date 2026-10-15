@@ -1,19 +1,25 @@
-"""Find lines Paddle boxed twice, so a fresh review starts with the copy deleted.
+"""Drop lines Paddle boxed twice, before anything else sees the baseline.
 
-Paddle sometimes returns one printed line as two near-identical boxes (same text, a few
-pixels apart). Drawn on top of each other, the second hides the first, and the page's
-numbering looks like it skips (p.476: 85, 87 and 89 sat under their twins). Left in,
-both copies are verified and the line is transcribed twice (pp.463, 474).
+Paddle sometimes returns one printed line as two boxes on top of each other: the same
+text a few pixels apart, or a thin junk box inside the real one. Drawn together, one
+hides the other and the page's numbering seems to skip (p.476: 85, 87 and 89 sat under
+their twins). Left in, the line is verified and transcribed twice (pp.463, 474).
 
-Two lines are copies when their boxes overlap with IoU >= 0.6. Across the whole
-paddle-filled baseline every pair above 0.6 (20 pairs on 15 pages, 0.61-1.0) is the same
-line read twice; a line inside a box merged over two lines scores about 0.5. The larger
-box is kept, since it holds the most ink.
+Lines in one column shouldn't overlap at all, so a low threshold does: two lines are
+copies when their boxes overlap with IoU >= 0.2. Across the whole paddle-filled
+baseline every pair at 0.25 or more is the same line twice (28 pairs on 21 pages); the closest
+real neighbours, a tall heading touching the next line, reach 0.17. The larger box is
+kept, since it holds the most ink.
+
+``materialize_page`` applies ``dedupe`` before the review's ops, so the review UI, the
+verified output and the auto ops all start from the deduplicated lines. A pair is left
+alone when an op names the smaller copy or deletes the larger: the reviewer already
+chose which copy stays (p.473 deleted one by hand), and their ops must keep applying.
 """
 
 from __future__ import annotations
 
-MIN_IOU = 0.6
+MIN_IOU = 0.2
 
 
 def _area(b) -> float:
@@ -41,6 +47,23 @@ def pairs(lines: list[dict]) -> list[tuple[str, str]]:
     return found
 
 
-def auto_ops(lines: list[dict]) -> list[dict]:
-    """A fresh review's ops: delete the smaller copy of each doubled line."""
-    return [{"op": "delete", "line": drop, "auto": True} for _, drop in pairs(lines)]
+def referenced(ops: list[dict]) -> set[str]:
+    """Line keys the ops name."""
+    keys = set()
+    for op in ops:
+        if isinstance(op.get("line"), str):
+            keys.add(op["line"])
+        keys.update(k for k in op.get("lines") or [] if isinstance(k, str))
+    return keys
+
+
+def dedupe(lines: list[dict], ops: list[dict] = ()) -> list[dict]:
+    """``lines`` without the smaller copy of each doubled line.
+
+    A pair is kept whole when an op names the smaller copy, or deletes the larger one:
+    the reviewer chose which copy stays.
+    """
+    named = referenced(ops)
+    deleted = {op.get("line") for op in ops if op.get("op") == "delete"}
+    drop = {d for k, d in pairs(lines) if d not in named and k not in deleted}
+    return [l for l in lines if l["key"] not in drop]

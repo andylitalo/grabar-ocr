@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import materialize as mz
-from . import duplicates
 from . import initials
 from . import page_number as pn
 
@@ -114,16 +113,17 @@ def page_image(page: int):
 
 
 def auto_ops(page: int) -> list[dict]:
-    """Ops a fresh review starts with (``"auto": true``): deletes for lines Paddle boxed
-    twice, the printed page number, then the initials the lines miss. The page-number
-    line is left out of the initial search (its bracket is capital-sized)."""
+    """Ops a fresh review starts with (``"auto": true``): the printed page number, then
+    the initials the lines miss. The page-number line is left out of the initial search
+    (its bracket is capital-sized). Lines Paddle boxed twice are already gone: the
+    materializer drops them (``duplicates``)."""
     seg = load_baseline(page)
-    ops = duplicates.auto_ops(mz.baseline_lines(seg))
-    ops += pn.auto_ops(seg, str(page - PRINTED_OFFSET))
+    ops = pn.auto_ops(seg, str(page - PRINTED_OFFSET))
     image = page_image(page)
     if image is not None:
-        skip = {op["line"] for op in ops}
-        lines = [l for l in mz.baseline_lines(seg) if l["key"] not in skip]
+        numbered = {op["line"] for op in ops}
+        lines = [l for l in mz.materialize_page(mz.baseline_lines(seg), [])["lines"]
+                 if l["key"] not in numbered]
         ops += initials.auto_ops(image, lines)
     return ops
 
