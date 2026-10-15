@@ -140,26 +140,83 @@ def split_nontext(page: int, adds: list[dict]) -> tuple[list[dict], list[dict]]:
     return kept, dropped
 
 
+# Gutter detection: an identical copy of dev/line_review/materialize.py's (Phase 9), which
+# can't be shared until the PR stack merges. Change both together (Phase 8 doc §5.8).
+GUTTER_MARGIN = 15     # px a line must reach past the gutter to count as crossing it
+GUTTER_SPAN = (0.35, 0.65)  # where to look for the gutter, as a share of the text width
+MAX_CROSSING = 0.25    # more lines than this crossing the best gutter = single column
+MIN_PER_COLUMN = 2     # lines needed on each side of a gutter
+
+
+def crosses(line: dict, x: float) -> bool:
+    return line["bbox"][0] < x - GUTTER_MARGIN and line["bbox"][2] > x + GUTTER_MARGIN
+
+
+def find_gutter(lines: list[dict]) -> float | None:
+    """x of the column gutter, or None for a single-column page.
+
+    The x in the middle of the text width that the fewest lines cross, provided each
+    side keeps ``MIN_PER_COLUMN`` lines and few lines cross it.
+    """
+    if len(lines) < 2 * MIN_PER_COLUMN:
+        return None
+    x0 = min(l["bbox"][0] for l in lines)
+    width = max(l["bbox"][2] for l in lines) - x0
+    scores = []
+    for x in range(int(x0 + GUTTER_SPAN[0] * width), int(x0 + GUTTER_SPAN[1] * width), 5):
+        left = sum(l["bbox"][2] <= x + GUTTER_MARGIN for l in lines)
+        right = sum(l["bbox"][0] >= x - GUTTER_MARGIN for l in lines)
+        if left >= MIN_PER_COLUMN and right >= MIN_PER_COLUMN:
+            scores.append((x, sum(crosses(l, x) for l in lines)))
+    if not scores:
+        return None
+    least = min(c for _, c in scores)
+    if least > MAX_CROSSING * len(lines):
+        return None
+    # the middle of the first run of best x's, not its edge
+    run = []
+    for x, c in scores:
+        if c == least:
+            run.append(x)
+        elif run:
+            break
+    return run[len(run) // 2]
+
+
 def insert_in_order(base: list[dict], add: dict) -> int:
     """Index at which ``add`` joins paddle's ordered ``base`` lines.
 
     After the lowest base line that sits above it in the same column (x-overlap), else
     before the highest base line below it in the same column, else by y over all lines.
+
+    Exception: when the line above crosses the page's column gutter and ``add`` does
+    not (a header over two columns), ``add`` goes before the line below instead. After
+    the header would put the top of the right column ahead of the whole left column.
+
+    Known limits (Phase 8 doc §5.8): a fill that itself crosses the gutter joins after
+    the nearest line above in either column, not after the whole band; on a page with
+    no detectable gutter a header still anchors the fill.
     """
     ax1, ay1, ax2, ay2 = add["bbox"]
     acy = (ay1 + ay2) / 2
+    g = find_gutter(base)
 
     def same_col(b: dict) -> bool:
         bx1, _, bx2, _ = b["bbox"]
         return min(ax2, bx2) - max(ax1, bx1) > 0.3 * min(ax2 - ax1, bx2 - bx1)
 
+    def spans_other_column(b: dict) -> bool:
+        return g is not None and crosses(b, g) and not crosses(add, g)
+
     def cy(b: dict) -> float:
         return (b["bbox"][1] + b["bbox"][3]) / 2
 
     above = [i for i, b in enumerate(base) if same_col(b) and cy(b) < acy]
-    if above:
-        return max(above, key=lambda i: cy(base[i])) + 1
     below = [i for i, b in enumerate(base) if same_col(b) and cy(b) >= acy]
+    if above:
+        i = max(above, key=lambda i: cy(base[i]))
+        if not (below and spans_other_column(base[i])):
+            return i + 1
     if below:
         return min(below, key=lambda i: cy(base[i]))
     return sum(1 for b in base if cy(b) < acy)

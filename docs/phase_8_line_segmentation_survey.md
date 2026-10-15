@@ -514,6 +514,66 @@ experiment and its `compare_agree.py` stay on branch `exp/fill-without-surya`):
 On the sample, 0.3 still gives 15/15 recovered and 0 false adds. So 0.3 trades 2 extra
 deletes for 5 recovered lines over the book.
 
+### 5.8 Where a filled line joins the reading order: header fix and known limits (2026-10-14)
+
+**Bug.** `insert_in_order` puts a fill after the lowest line above it in the same column.
+A line that crosses the gutter (a header, a centred running head) counts as "same column"
+for both columns. So when the line above a right-column fill was a header, the fill went
+straight after it, ahead of the whole left column. When Paddle had ordered the header last,
+the fill went to the end of the page. Phase 9's `materialize` uses the same function for
+reviewer-drawn lines.
+
+**Fix.** If the line above crosses the page's gutter and the fill doesn't, the fill goes
+before the nearest line below in its column instead. The gutter comes from `find_gutter`,
+a copy of `dev/line_review/materialize.py`'s, with the same constants (see "Duplication"
+below). A first attempt that tested "the line above overlaps a box the fill doesn't" was
+rejected: a short box beside a line, such as a verse number, counted as another column, and
+it broke the order on pp.551 and 601.
+
+**Effect on the committed baseline (not regenerated).** Rebuilding every page's order from
+Paddle's lines plus its fills reproduces the committed order on 191/191 pages with the old
+function. The fixed function changes 9 pages, each by moving one block of fills, and every
+move is a correction (checked on overlays):
+
+| pages | old placement | fixed placement |
+|---|---|---|
+| 515, 531 | top of the right column, before the left column | after the left column |
+| 490, 528 | top of the right column, at the end of the page (after the page number) | after the left column |
+| 462, 468, 470, 511, 544 | first line of the left column, at the end of the page | first |
+
+`paddle-filled` stays as committed: Phase 9 reviews refer to its line ids, and
+`materialize`'s `reading_order` re-sorts every page unless the review has an `order` op.
+Rerunning all 21 Phase 9 reviews (2026-10-14) with the fix gave identical lines, and all 21
+verified files were reproduced byte for byte. No review has an add or split after an
+`order` op, the only path by which this function's placement reaches verified output.
+
+**Known limits (open; tests in `tests/test_lineseg_ensemble.py`):**
+
+- **Full-width fill below a two-column band (pre-existing, not fixed).** A fill that
+  itself crosses the gutter, such as a title or divider line Paddle missed, joins after
+  the nearest line above it in *either* column. That is usually the left column's last
+  line, so the right column is read after the title instead of before it. Pinned by the
+  strict `xfail` `test_full_width_fill_between_bands`. When it is fixed, that test turns
+  into a failure, which prompts removing the `xfail`. Not seen on the 9 changed pages.
+  `reading_order` already corrects it for Phase 9 pages without an `order` op.
+  **Fix later:** when the fill crosses the gutter, put it after the last line (in either
+  column) whose centre is above it, i.e. after the whole band.
+- **No gutter, old behaviour.** `find_gutter` needs 2 lines on each side of the gutter, and
+  at most 25% of lines crossing it. On a page sparse enough to fail that, a header still
+  anchors the fill (`test_header_over_too_few_lines_for_a_gutter_keeps_old_placement`).
+- **Short box above the fill, off to one side (pre-existing, not fixed).** "Same column"
+  means x-overlap with the fill. A short box above the fill that doesn't overlap it, such as
+  a short line ending at the left while the fill sits at the right, is skipped. The fill
+  then anchors on the full line above that box and is read before it. Pinned by the strict
+  `xfail` `test_short_box_above_off_to_one_side`. Seen in a synthetic case only; not
+  counted on real pages.
+
+**Duplication.** `find_gutter`, `crosses` and the `GUTTER_MARGIN` / `GUTTER_SPAN` /
+`MAX_CROSSING` / `MIN_PER_COLUMN` constants now exist in both `ensemble.py` and
+`materialize.py`, identically. `materialize` can't import the Phase 8 copy until the PR
+stack is merged. After that, one shared geometry module should own them (with `iou`,
+`coverage` and `insert_in_order`). Until then, change both copies together.
+
 ## 6. Decision log
 
 - **2026-09-30:** Cut Phase 8 down from the full citable-corpus plan to clean-up plus a
@@ -554,3 +614,8 @@ deletes for 5 recovered lines over the book.
 - **2026-10-02: Surya's vote stays** (§5.7). With agree=0 the fill kept 183 false lines
   and only 3 real ones over 121 pages. agree ≥ 0.3 vs 0.4 over all pages: 5 more real
   lines, 1 title fragment and 1 ornament.
+- **2026-10-14: `insert_in_order` no longer anchors a fill on a header that crosses the
+  gutter** (§5.8). In the committed baseline this would move one block of fills on each of
+  9 pages, all corrections. The baseline is not regenerated: Phase 9 reviews and verified
+  files are unchanged. Still open: a full-width fill below a two-column band (strict
+  `xfail` test).
