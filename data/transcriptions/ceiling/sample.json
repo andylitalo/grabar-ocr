@@ -25,9 +25,10 @@
    "page": 613
   },
   {
-   "id": "p468~line_020",
+   "id": "p468.021",
    "stratum": "disagree",
-   "page": 468
+   "page": 468,
+   "was": "p468~line_020"
   },
   {
    "id": "p516~line_073",
@@ -35,9 +36,10 @@
    "page": 516
   },
   {
-   "id": "p485~line_059",
+   "id": "p485.057",
    "stratum": "disagree",
-   "page": 485
+   "page": 485,
+   "was": "p485~line_059"
   },
   {
    "id": "p621~line_044",
@@ -80,9 +82,10 @@
    "page": 595
   },
   {
-   "id": "p480~line_023",
+   "id": "p480.023",
    "stratum": "disagree",
-   "page": 480
+   "page": 480,
+   "was": "p480~line_023"
   },
   {
    "id": "p574~line_006",
@@ -115,9 +118,10 @@
    "page": 539
   },
   {
-   "id": "p489~line_078",
+   "id": "p489.078",
    "stratum": "disagree",
-   "page": 489
+   "page": 489,
+   "was": "p489~line_078"
   },
   {
    "id": "p458.033",
@@ -135,9 +139,10 @@
    "page": 543
   },
   {
-   "id": "p466~line_042",
+   "id": "p466.042",
    "stratum": "disagree",
-   "page": 466
+   "page": 466,
+   "was": "p466~line_042"
   },
   {
    "id": "p512~line_070",
@@ -180,9 +185,10 @@
    "page": 585
   },
   {
-   "id": "p491~line_055",
+   "id": "p491.054",
    "stratum": "disagree",
-   "page": 491
+   "page": 491,
+   "was": "p491~line_055"
   },
   {
    "id": "p606~line_039",
@@ -200,9 +206,10 @@
    "page": 629
   },
   {
-   "id": "p489~line_084",
+   "id": "p489.084",
    "stratum": "disagree",
-   "page": 489
+   "page": 489,
+   "was": "p489~line_084"
   },
   {
    "id": "p563~line_008",
@@ -218,11 +225,6 @@
    "id": "p556~line_025",
    "stratum": "disagree",
    "page": 556
-  },
-  {
-   "id": "p490~line_082",
-   "stratum": "disagree",
-   "page": 490
   },
   {
    "id": "p603~line_062",
@@ -260,9 +262,10 @@
    "page": 505
   },
   {
-   "id": "p485~line_046",
+   "id": "p485.045",
    "stratum": "disagree",
-   "page": 485
+   "page": 485,
+   "was": "p485~line_046"
   },
   {
    "id": "p620~line_049",
@@ -270,9 +273,10 @@
    "page": 620
   },
   {
-   "id": "p491~line_034",
+   "id": "p491.034",
    "stratum": "disagree",
-   "page": 491
+   "page": 491,
+   "was": "p491~line_034"
   },
   {
    "id": "p615~line_025",
@@ -295,9 +299,10 @@
    "page": 585
   },
   {
-   "id": "p464~line_075",
+   "id": "p464.075",
    "stratum": "disagree",
-   "page": 464
+   "page": 464,
+   "was": "p464~line_075"
   },
   {
    "id": "p599~line_022",
@@ -310,9 +315,10 @@
    "page": 566
   },
   {
-   "id": "p486~line_057",
+   "id": "p486.055",
    "stratum": "disagree",
-   "page": 486
+   "page": 486,
+   "was": "p486~line_057"
   },
   {
    "id": "p507~line_042",
@@ -1525,9 +1531,10 @@
    "page": 632
   },
   {
-   "id": "p478~line_023",
+   "id": "p478.023",
    "stratum": "agree",
-   "page": 478
+   "page": 478,
+   "was": "p478~line_023"
   },
   {
    "id": "p523~line_034",
@@ -1560,9 +1567,10 @@
    "page": 508
   },
   {
-   "id": "p464~line_052",
+   "id": "p464.052",
    "stratum": "agree",
-   "page": 464
+   "page": 464,
+   "was": "p464~line_052"
   },
   {
    "id": "p622~line_057",
@@ -1590,9 +1598,10 @@
    "page": 581
   },
   {
-   "id": "p480~line_010",
+   "id": "p480.010",
    "stratum": "agree",
-   "page": 480
+   "page": 480,
+   "was": "p480~line_010"
   },
   {
    "id": "p620~line_046",
@@ -1655,9 +1664,10 @@
    "page": 547
   },
   {
-   "id": "p491~line_046",
+   "id": "p491.046",
    "stratum": "agree",
-   "page": 491
+   "page": 491,
+   "was": "p491~line_046"
   },
   {
    "id": "p532~line_052",
@@ -1700,9 +1710,10 @@
    "page": 596
   },
   {
-   "id": "p478~line_091",
+   "id": "p478.091",
    "stratum": "agree",
-   "page": 478
+   "page": 478,
+   "was": "p478~line_091"
   },
   {
    "id": "p627~line_060",
@@ -1725,9 +1736,10 @@
    "page": 462
   },
   {
-   "id": "p486~line_091",
+   "id": "p486.089",
    "stratum": "agree",
-   "page": 486
+   "page": 486,
+   "was": "p486~line_091"
   },
   {
    "id": "p525~line_065",
@@ -1735,14 +1747,16 @@
    "page": 525
   },
   {
-   "id": "p467~line_061",
+   "id": "p467.061",
    "stratum": "agree",
-   "page": 467
+   "page": 467,
+   "was": "p467~line_061"
   },
   {
-   "id": "p483~line_061",
+   "id": "p483.061",
    "stratum": "agree",
-   "page": 483
+   "page": 483,
+   "was": "p483~line_061"
   },
   {
    "id": "p589~line_085",
@@ -1785,9 +1799,10 @@
    "page": 540
   },
   {
-   "id": "p478~line_063",
+   "id": "p478.063",
    "stratum": "agree",
-   "page": 478
+   "page": 478,
+   "was": "p478~line_063"
   },
   {
    "id": "p536~line_072",
@@ -1840,9 +1855,10 @@
    "page": 550
   },
   {
-   "id": "p484~line_046",
+   "id": "p484.046",
    "stratum": "agree",
-   "page": 484
+   "page": 484,
+   "was": "p484~line_046"
   },
   {
    "id": "p536~line_018",
@@ -1855,9 +1871,10 @@
    "page": 638
   },
   {
-   "id": "p465~line_051",
+   "id": "p465.051",
    "stratum": "agree",
-   "page": 465
+   "page": 465,
+   "was": "p465~line_051"
   },
   {
    "id": "p584~line_013",
@@ -1870,9 +1887,10 @@
    "page": 457
   },
   {
-   "id": "p485~line_082",
+   "id": "p485.080",
    "stratum": "agree",
-   "page": 485
+   "page": 485,
+   "was": "p485~line_082"
   },
   {
    "id": "p519~line_037",
@@ -1885,9 +1903,10 @@
    "page": 627
   },
   {
-   "id": "p475~line_020",
+   "id": "p475.019",
    "stratum": "agree",
-   "page": 475
+   "page": 475,
+   "was": "p475~line_020"
   },
   {
    "id": "p504~line_061",
@@ -1915,9 +1934,10 @@
    "page": 558
   },
   {
-   "id": "p475~line_093",
+   "id": "p475.092",
    "stratum": "agree",
-   "page": 475
+   "page": 475,
+   "was": "p475~line_093"
   },
   {
    "id": "p523~line_017",
@@ -1960,9 +1980,10 @@
    "page": 533
   },
   {
-   "id": "p487~line_079",
+   "id": "p487.077",
    "stratum": "agree",
-   "page": 487
+   "page": 487,
+   "was": "p487~line_079"
   },
   {
    "id": "p604~line_023",
@@ -1985,14 +2006,16 @@
    "page": 531
   },
   {
-   "id": "p474~line_015",
+   "id": "p474.015",
    "stratum": "agree",
-   "page": 474
+   "page": 474,
+   "was": "p474~line_015"
   },
   {
-   "id": "p477~line_057",
+   "id": "p477.055",
    "stratum": "agree",
-   "page": 477
+   "page": 477,
+   "was": "p477~line_057"
   },
   {
    "id": "p534~line_087",
@@ -2513,6 +2536,15 @@
    "id": "p524~line_086",
    "stratum": "agree",
    "page": 524
+  }
+ ],
+ "dropped": [
+  {
+   "id": "p490~line_082",
+   "stratum": "disagree",
+   "page": 490,
+   "reason": "line removed",
+   "at": "2026-10-15T04:02:14+00:00"
   }
  ]
 }

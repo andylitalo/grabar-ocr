@@ -1,26 +1,29 @@
 {
- "p485~line_046": {
+ "p485.045": {
   "text": "Ճաշու սաղ. Ժ. Ի տէր յուսացայ. Ապրեցո",
   "status": "done",
   "at": "2026-10-09T14:10:07+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "67585e78dc5bdabe"
+  "geometry": "67585e78dc5bdabe",
+  "migrated_from": "p485~line_046"
  },
- "p485~line_059": {
+ "p485.057": {
   "text": "ցին։ Մեսե. Երգեցէք տեառն. Մտէք ա-",
   "status": "done",
   "at": "2026-10-09T04:56:54+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "96dac4d5206d1422"
+  "geometry": "96dac4d5206d1422",
+  "migrated_from": "p485~line_059"
  },
- "p485~line_082": {
+ "p485.080": {
   "text": "զձեռսն եւ զոտսն։ Մեսե. Եկայք եւ տե-",
   "status": "done",
   "at": "2026-10-09T14:06:59+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "ef0ddaa65bf1deee"
+  "geometry": "ef0ddaa65bf1deee",
+  "migrated_from": "p485~line_082"
  }
 }
