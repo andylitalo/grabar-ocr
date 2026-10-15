@@ -137,3 +137,6 @@ dev/lineseg_survey/overlays/
 !/data/lineseg_survey/*/pages/*/segmentation.json
 !/data/lineseg_survey/*/reviews/
 !/data/lineseg_survey/*/reviews/*.json
+
+# CodeGraph local index (machine-specific)
+.codegraph/
