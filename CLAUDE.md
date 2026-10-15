@@ -12,6 +12,7 @@ All implementation is guided by phase documents in `docs/` (version-controlled �
 This matters because early phases test assumptions (e.g., "does off-the-shelf TrOCR work at all on Bolorgir?"). If an assumption fails, the next phase changes — often significantly. Building ahead of validation wastes effort and obscures where the real problem is.
 
 **Current phase docs** (all phases: `docs/phase_*.md`; `docs/master_blueprint.md` is the original plan):
+- `docs/phase_9_line_segmentation_review.md` — **in progress**: human review of the line layout, page by page (`dev/line_review/`)
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
 
 **Workflow:** read the current phase doc before touching any code. Update the doc with findings before moving on.
@@ -32,8 +33,8 @@ orchestration/      Airflow DAGs and custom GCS operators
 infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
 docs/               Phase planning docs + recorded findings (version-controlled)
 data/               Data, apart from code: committed ground truth and outputs (column boxes,
-                    blank markers, line-seg survey + reviews in data/lineseg_survey/); PDFs,
-                    renders and crops stay ignored
+                    blank markers, line-seg survey + reviews in data/lineseg_survey/, verified
+                    lines); PDFs, renders and crops stay ignored
 ```
 
 > **What actually shipped vs. the original blueprint.** `README.md`/CLAUDE describe an

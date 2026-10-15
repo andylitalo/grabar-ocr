@@ -1,0 +1,151 @@
+:root {
+  --bg: #1e1f24;
+  --panel: #2a2c33;
+  --ink: #e8e8ec;
+  --muted: #9aa0ac;
+  --accent: #4c8bf5;
+  --danger: #e0564f;
+  --ok: #3fb37f;
+  --warn: #e0a64f;
+  --border: #3a3d46;
+  /* line colors (must match COLORS in app.js) */
+  --paddle: #3fb37f;
+  --fill: #4c8bf5;
+  --edited: #e05ac4;
+  --ghost: #9aa0ac;
+  --clean: #ff9f1c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header, #toolbar {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
+}
+header { position: sticky; top: 0; background: var(--bg); z-index: 5; }
+header h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+#toolbar { background: var(--panel); }
+#toolbar .tool-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+#toolbar .tool.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+#toolbar .tool-hint { color: var(--warn); font-size: 0.85rem; }
+#delete-all { border-color: var(--danger); color: var(--danger); }
+
+.spacer { flex: 1; }
+
+button, select {
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.35rem 0.7rem; font-size: 0.9rem; cursor: pointer;
+}
+button:hover, select:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+#saved { font-size: 0.85rem; color: var(--muted); }
+#saved.ok { color: var(--ok); }
+#saved.err { color: var(--danger); }
+#progress { color: var(--muted); font-size: 0.85rem; }
+#status-badge { font-weight: 700; font-size: 0.85rem; padding: 0.15rem 0.5rem; border-radius: 4px; }
+#status-badge.unreviewed { color: var(--muted); }
+#status-badge.fixing { color: var(--warn); }
+#status-badge.fixed { color: var(--clean); }
+#status-badge.verified { color: #fff; background: #2e9d5b; }
+
+#banner:empty { display: none; }
+#banner { padding: 0.5rem 1rem; background: #4a2a24; color: #ffd2c8; font-size: 0.9rem; }
+
+main { padding: 1rem; display: flex; gap: 1rem; align-items: flex-start; }
+#canvas-wrap { line-height: 0; }
+#canvas { border: 1px solid var(--border); border-radius: 4px; cursor: crosshair; }
+
+aside { width: 17rem; flex-shrink: 0; font-size: 0.85rem; color: var(--muted); }
+aside h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0.8rem 0 0.4rem; }
+aside .help { color: var(--ink); line-height: 1.4; }
+.legend-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0; }
+.swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; display: inline-block; border: 2px solid; }
+.swatch.paddle { border-color: var(--paddle); }
+.swatch.fill { border-color: var(--fill); }
+.swatch.edited { border-color: var(--edited); }
+.swatch.ghost { border: 2px dashed var(--ghost); }
+
+#op-list .op {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.4rem;
+  padding: 0.2rem 0; border-bottom: 1px solid var(--border); color: var(--ink);
+}
+#op-list button.del { padding: 0 0.4rem; font-size: 0.9rem; line-height: 1.2; border-color: var(--danger); color: var(--danger); }
+
+/* clean view (fixed / verified): read-only */
+body.clean #toolbar { opacity: 0.35; pointer-events: none; }
+body.clean #op-list button.del { display: none; }
+body.clean #canvas { cursor: default; }
+
+.backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: none; align-items: center; justify-content: center; z-index: 20;
+}
+.backdrop.show { display: flex; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.2rem; width: 22rem; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.modal h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+.modal p.hint { margin: 0 0 0.9rem; color: var(--muted); font-size: 0.85rem; }
+.modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.modal-actions button { flex: 1; }
+#letter-input {
+  width: 100%; font-size: 1.6rem; text-align: center; padding: 0.4rem;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
+}
+#letter-input:focus { outline: none; border-color: var(--accent); }
+
+/* ---- transcription (/transcribe) ---- */
+body.transcribe header h1 small { color: var(--muted); font-weight: 400; }
+a.nav { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+.modes { display: flex; gap: 0.3rem; }
+.mode.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+#strata { display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--muted); }
+#strata b { color: var(--ink); }
+.pill-strip { display: flex; flex-wrap: wrap; gap: 3px; padding: 0.3rem 1rem 0.6rem; }
+.pill { width: 14px; height: 14px; border-radius: 3px; background: #4a4d57; cursor: pointer; border: 2px solid transparent; }
+.pill.done { background: var(--ok); }
+.pill.illegible { background: var(--warn); }
+.pill.bad-crop { background: var(--danger); }
+.pill.rechecked { box-shadow: inset 0 0 0 2px #fff; }
+.pill.current { border-color: #fff; }
+.t-main { display: flex; gap: 1.5rem; align-items: flex-start; }
+.t-line { flex: 1; min-width: 0; }
+.t-meta { margin-bottom: 0.5rem; font-size: 0.9rem; }
+.badge { font-size: 0.8rem; padding: 0.1rem 0.45rem; border-radius: 4px; background: var(--panel); color: var(--muted); }
+.crop-wrap { background: #fff; border-radius: 4px; padding: 6px; overflow-x: auto; line-height: 0; }
+#crop { max-width: 100%; image-rendering: auto; }
+#text {
+  width: 100%; margin-top: 0.8rem; font-size: 1.7rem; line-height: 1.4; padding: 0.4rem 0.6rem;
+  font-family: "Noto Serif Armenian", "Noto Sans Armenian", "Sylfaen", "Arial Unicode MS", sans-serif;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+}
+#text:focus { outline: none; border-color: var(--accent); }
+.palette { display: flex; gap: 0.3rem; margin: 0.5rem 0; flex-wrap: wrap; }
+.palette button { font-size: 1.2rem; min-width: 2.4rem; font-family: "Noto Serif Armenian", "Noto Sans Armenian", "Sylfaen", "Arial Unicode MS", sans-serif; }
+.row { display: flex; gap: 0.5rem; align-items: center; }
+.legend { color: var(--muted); font-size: 0.8rem; }
+button.danger { border-color: var(--danger); color: var(--danger); }
+.t-context { width: 34rem; flex-shrink: 0; }
+.t-context h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 0.4rem; }
+#context { max-width: 100%; background: #fff; border-radius: 4px; }
+body.transcribe.recheck #text { border-color: var(--warn); }
+body.transcribe.recheck #illegible, body.transcribe.recheck #bad-crop { display: none; }
+/* Some Armenian fonts draw ե+ւ as one և glyph though the text holds two characters.
+   Transcription must show exactly what was typed, so ligatures are off, and macOS's
+   Mshtakan is left out of the font lists above: it draws the ligature regardless. */
+#text, .palette button { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0; }
+#char-warning { color: var(--warn); font-size: 0.85rem; min-height: 1.2em; }
+.sets { display: flex; gap: 0.3rem; }
+.set.active { background: var(--ok); border-color: var(--ok); color: #fff; }
+body.set-ceiling .modes, body.set-ceiling #top-up { display: none; }
