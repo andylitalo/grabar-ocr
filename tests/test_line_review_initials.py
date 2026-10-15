@@ -180,3 +180,15 @@ def test_finds_every_initial_the_reviewer_marked():
         found = [p["box"] for p in initials.detect(storage.page_image(page), lines)]
         missed += [(page, b) for b in marked if not any(overlaps(f, b) for f in found)]
     assert missed == []
+
+
+# --- lines Paddle boxed twice ---------------------------------------------------------
+
+def test_a_line_boxed_twice_keeps_the_larger_copy():
+    from dev.line_review import duplicates
+    lines = [{"key": "a", "bbox": [1158, 2340, 1972, 2389]},
+             {"key": "b", "bbox": [1160, 2394, 1970, 2443]},
+             {"key": "c", "bbox": [1159, 2341, 1973, 2391]},   # a's twin, slightly larger
+             {"key": "d", "bbox": [1160, 2340, 1970, 2443]}]   # one box over a and b: not a copy
+    assert duplicates.pairs(lines) == [("c", "a")]
+    assert duplicates.auto_ops(lines) == [{"op": "delete", "line": "a", "auto": True}]

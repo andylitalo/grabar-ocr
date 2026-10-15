@@ -238,6 +238,14 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   A selected line shows a hollow dot at the middle of each edge at least 24 display px
   long: drag it to add a vertex there. Double-click a vertex to remove it (3 at least).
   Both save as a `reshape`, like the other drags.
+- **2026-10-14: lines Paddle boxed twice.** On p.476 the numbering seemed to skip 85, 87
+  and 89: Paddle had returned those three lines twice, and each sat under its twin. The
+  whole baseline has 20 such pairs on 15 pages: two boxes with the same text, IoU 0.61–1.0.
+  A line inside a box merged over two lines scores about 0.5. New
+  `dev/line_review/duplicates.py` treats IoU ≥ 0.6 as a copy. A fresh review deletes the
+  smaller copy (auto op), and a page already under review shows a banner naming both.
+  Two verified pages kept both copies and so hold that line twice: p.463 (line_041/042 →
+  p463.041/.042) and p.474 (line_091/092 → p474.090/.091). p.473's pair was caught by hand.
 - **2026-10-11: initials found automatically; the Initial tool picks the right line.** Initials
   were most of the reviewer's work: 29 of the 53 edits on pp.453–463. None of the
   segmenters keeps them: of those 29, kraken's lines hold 5 whole, Paddle's 2, Surya's 0.

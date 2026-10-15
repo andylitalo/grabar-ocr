@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
 
-from . import crops, initials, lines
+from . import crops, duplicates, initials, lines
 from . import materialize as mz
 from . import storage
 from . import transcribe as tr
@@ -74,6 +74,7 @@ def _payload(page: int, review: dict) -> dict:
     baseline = {l["id"]: l for l in seg["lines"]}
     deleted = {op["line"] for op in review["ops"] if op.get("op") == "delete"}
     ids = review.get("ids", {})
+    order = {l["key"]: n for n, l in enumerate(lines, start=1)}
     return {
         "page": page,
         "width": seg["width"],
@@ -89,6 +90,7 @@ def _payload(page: int, review: dict) -> dict:
              "edited": l["key"] not in baseline or l["boundary"] != baseline[l["key"]]["boundary"]}
             for n, l in enumerate(lines, start=1)
         ],
+        "duplicates": [[order[k], order[d]] for k, d in duplicates.pairs(lines)],
         "ghosts": [{"key": k, "boundary": baseline[k]["boundary"], "bbox": baseline[k]["bbox"]}
                    for k in sorted(deleted) if k in baseline],
         "baseline_changed": storage.baseline_changed(review),
