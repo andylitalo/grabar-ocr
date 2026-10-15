@@ -130,8 +130,8 @@ Opus comparable, with GPT-5.5 over-correcting and strict rules essential.
 `dev/ocr_eval/correct.py` sends each page with **both engines' readings** where they
 disagree (`A: … ‖ B: …`) and one reading where they agree, under Phase 5's v2 rules
 adapted to two readings. Candidates: `claude-opus-5-5`, `gemini-3.1-pro-preview`,
-`gemini-3.8-flash`, `gpt-6.1-sol` (Gemini 4 isn't reachable with this API key yet:
-`gemini-pro-latest` still serves 3.1 Pro). Opus calls carry the server-side refusal
+`gemini-3.8-flash`, `gpt-6.1-sol` (Gemini 4 wasn't reachable with this API key yet:
+`gemini-pro-latest` still serves 3.1 Pro; see "Gemini 4 check" below for the later run). Opus calls carry the server-side refusal
 fallback (`fallbacks: "default"`, sent via `extra_body`: the repo's anthropic SDK 0.107
 predates the parameter).
 
@@ -322,6 +322,36 @@ page), about +30% on v4's cost.
 the ceiling sample, error-free lines and lines broken. The question is whether v6 fixes
 flagged lines across the book or only the three it was inspired by.
 
+#### Gemini 4 check (2026-10-14; an eval, not a decision)
+
+Gemini 4 became reachable on the key as `gemini-4-argon`, the only Gemini 4 id listed
+(`gemini-pro-latest` still serves 3.1 Pro). It ran v4 unchanged (`correct.py --model gemini-4
+--prompt v4`, same thinking budget) on the same 160 typed lines, 102 pages; the price is
+about the same as 3.1 Pro's.
+
+| corrector + `՚ի` rule | wrong (disagree) | wrong (agree) | **error-free** | 95% interval | broke |
+|---|--:|--:|--:|--:|--:|
+| Gemini 4 (`gemini-4-argon`) | 2/58 | 4/102 | **96.3%** | 93.1–98.8% | **1** |
+| Gemini 3.1 Pro | 2/58 | 6/102 | 95.0% | 91.9–98.1% | 0 |
+
+- **Fixed 3 lines 3.1 Pro got wrong**, all agreed lines: `աձ.` (p638, 3.1 Pro `այ.`),
+  `ճըգ-` (p632, 3.1 Pro `ճըդ-`), `զոգի` (p505, 3.1 Pro `զողի`).
+- **Broke 1 line** both engines read right: on p617 the line-end `Ե-` became `Եւ`,
+  content the rules forbid it to add. 3.1 Pro has broken none under v4.
+- **The other 6 errors are the same in both**: `բձ.` → `բկ.` (p494), `դկ.` → `գկ.` (p457),
+  `Թագաւորեաց` lowercased (p533), comma read as period (p543), `եդեալքդ` → `եդեալդ` (p593),
+  the page-number line on p490.
+- 8 fallback lines over the run (drift guard or line missing), against 2 in 3.1 Pro's final
+  run. Speed similar (p615: 20 s vs 14 s).
+
+**Reading (maintainer):** hard to tell apart: +3 / −1 is a net 2 lines of 160 and the
+intervals overlap almost entirely. The broken line is the concerning part: a corrector
+that adds content on agreed lines costs more in review than it saves. **Stay with Gemini
+3.1 Pro**; a data point to revisit, e.g. when v4 vs v6 is scored on the human corrections,
+which will show whether Gemini 4 breaks lines at a rate that matters. Predictions:
+`corr-gemini-4-v4` and `corr-gemini-4-v4+rules` in the ceiling set (not added to
+`reports/phase11_ceiling.md`).
+
 #### Where this stands (pick-up note, 2026-10-11)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
@@ -336,7 +366,8 @@ flagged lines across the book or only the three it was inspired by.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
-  test); Gemini 4 isn't available to this key.
+  test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
+  broken line; staying with 3.1 Pro ("Gemini 4 check" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 

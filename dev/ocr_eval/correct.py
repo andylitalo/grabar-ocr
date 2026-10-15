@@ -49,6 +49,7 @@ MODELS = {
     "opus-5.5": ("anthropic", "claude-opus-5-5"),
     "gemini-3.1-pro": ("gemini", "gemini-3.1-pro-preview"),
     "gemini-3.8-flash": ("gemini", "gemini-3.8-flash"),
+    "gemini-4": ("gemini", "gemini-4-argon"),
     "gpt-6.1": ("openai", "gpt-6.1-sol"),
 }
 MAX_TOKENS = 32_000
