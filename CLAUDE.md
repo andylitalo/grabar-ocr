@@ -11,10 +11,8 @@ All implementation is guided by phase documents in `docs/` (version-controlled �
 
 This matters because early phases test assumptions (e.g., "does off-the-shelf TrOCR work at all on Bolorgir?"). If an assumption fails, the next phase changes — often significantly. Building ahead of validation wastes effort and obscures where the real problem is.
 
-**Current phase docs:**
-- `docs/phase_0_micro_golden_dataset.md` — build a 1-page ground-truth dataset (the prerequisite for everything)
-- `docs/phase_1_baseline_ocr.md` — measure off-the-shelf TrOCR CER before any training
-- `docs/master_blueprint.md` — full architecture blueprint + brief summaries of Phases 2–6
+**Current phase docs** (all phases: `docs/phase_*.md`; `docs/master_blueprint.md` is the original plan):
+- `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
 
 **Workflow:** read the current phase doc before touching any code. Update the doc with findings before moving on.
 
@@ -33,6 +31,9 @@ services/           BentoML OCR API, LLM translation client, DB writer
 orchestration/      Airflow DAGs and custom GCS operators
 infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
 docs/               Phase planning docs + recorded findings (version-controlled)
+data/               Data, apart from code: committed ground truth and outputs (column boxes,
+                    blank markers, line-seg survey + reviews in data/lineseg_survey/); PDFs,
+                    renders and crops stay ignored
 ```
 
 > **What actually shipped vs. the original blueprint.** `README.md`/CLAUDE describe an

@@ -11,8 +11,13 @@ Run from the repo root (no kraken needed; only FastAPI/uvicorn/Pillow):
     uv run python -m dev.kraken_review.app
 
 then open http://127.0.0.1:8090
+
+For the Phase 8 line-segmentation survey, point it at one tool's output:
+
+    uv run python -m dev.kraken_review.app --tool surya --port 8091
 """
 
+import argparse
 from pathlib import Path
 
 import uvicorn
@@ -59,8 +64,8 @@ class SectionTitle(BaseModel):
 
 
 class ReviewRequest(BaseModel):
-    # kraken line id ("line_003") -> category number (1/2/3)
-    flags: dict[str, int] = {}
+    # line id ("line_003") -> category numbers (1-5); a line may carry several
+    flags: dict[str, list[int]] = {}
     # human-drawn boxes for lines kraken missed entirely
     missed: list[MissedLine] = []
     # correction ops layered on kraken's immutable lines
@@ -68,6 +73,8 @@ class ReviewRequest(BaseModel):
     merges: list[Merge] = []
     splits: list[Split] = []
     section_titles: list[SectionTitle] = []
+    # "reviewed" locks the page in the UI; "in_progress" while editing
+    status: str = "in_progress"
 
 
 @app.get("/")
@@ -77,7 +84,11 @@ def index() -> FileResponse:
 
 @app.get("/api/pages")
 def get_pages() -> dict:
-    return {"pages": storage.list_pages()}
+    return {
+        "pages": storage.list_pages(),
+        "reviewed": storage.reviewed_pages(),
+        "tool": storage.TOOL or "kraken",
+    }
 
 
 @app.get("/api/pages/{page}/image.png")
@@ -112,6 +123,7 @@ def post_review(page: int, req: ReviewRequest) -> dict:
             merges=[m.model_dump() for m in req.merges],
             splits=[s.model_dump() for s in req.splits],
             section_titles=[t.model_dump() for t in req.section_titles],
+            status=req.status,
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -123,7 +135,12 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 def main() -> None:
-    uvicorn.run(app, host="127.0.0.1", port=8090)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tool", help="Phase 8 survey tool under dev/lineseg_survey/ (default: kraken review)")
+    ap.add_argument("--port", type=int, default=8090)
+    args = ap.parse_args()
+    storage.configure(args.tool)
+    uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 
 if __name__ == "__main__":

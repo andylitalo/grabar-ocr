@@ -18,15 +18,37 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 REVIEWS_DIR = BASE_DIR / "reviews"
+# Renders are shared: every survey tool segments kraken's 300-DPI render.
+RENDER_DIR = DATA_DIR
+SURVEY_DATA = BASE_DIR.parents[1] / "data" / "lineseg_survey"
+TOOL: str | None = None  # None = the original kraken review (paths above)
+
+
+def configure(tool: str | None) -> None:
+    """Point the UI at one Phase 8 survey tool's geometry and reviews.
+
+    ``data/lineseg_survey/<tool>/{pages,reviews}``; renders still come from
+    ``dev/kraken_review/data``. ``None`` keeps the original kraken review paths.
+    """
+    global DATA_DIR, REVIEWS_DIR, TOOL
+    TOOL = tool
+    if tool:
+        DATA_DIR = SURVEY_DATA / tool / "pages"
+        REVIEWS_DIR = SURVEY_DATA / tool / "reviews"
 
 # category number -> human label; the single source of truth for the taxonomy.
 CATEGORY_LABELS = {
     1: "over-segmentation",
     2: "under-segmentation",
     3: "non-text",
+    4: "clips ink",             # polygon cuts off ascenders/descenders/drop-cap ink
+    5: "out of reading order",  # line sits in the wrong place in the order
 }
 
 _PAGE_DIR_RE = re.compile(r"^page_(\d+)$")
+
+# Page review status. "reviewed" locks the page in the UI and is what score.py counts.
+STATUSES = ("in_progress", "reviewed")
 
 
 def data_dir(page: int) -> Path:
@@ -34,7 +56,7 @@ def data_dir(page: int) -> Path:
 
 
 def render_path(page: int) -> Path:
-    return data_dir(page) / "render.png"
+    return RENDER_DIR / f"page_{page}" / "render.png"
 
 
 def segmentation_path(page: int) -> Path:
@@ -57,6 +79,12 @@ def list_pages() -> list[int]:
     return sorted(pages)
 
 
+def reviewed_pages() -> list[int]:
+    """Pages whose saved review has status "reviewed"."""
+    return [p for p in list_pages()
+            if review_path(p).exists() and load_review(p)["status"] == "reviewed"]
+
+
 def load_segmentation(page: int) -> dict:
     path = segmentation_path(page)
     if not path.exists():
@@ -76,10 +104,15 @@ def load_review(page: int) -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
         data.setdefault("flags", {})
         data.setdefault("missed_lines", [])
+        data.setdefault("status", "in_progress")
+        for info in data["flags"].values():  # pre-multi-flag reviews stored one "category"
+            if "categories" not in info:
+                info["categories"] = [info.pop("category")]
+                info["labels"] = [info.pop("label", CATEGORY_LABELS[info["categories"][0]])]
         for key in _CORRECTION_KEYS:
             data.setdefault(key, [])
         return data
-    skeleton = {"page": page, "flags": {}, "missed_lines": []}
+    skeleton = {"page": page, "status": "in_progress", "flags": {}, "missed_lines": []}
     skeleton.update({key: [] for key in _CORRECTION_KEYS})
     return skeleton
 
@@ -111,12 +144,14 @@ def save_review(
     merges: list[dict] | None = None,
     splits: list[dict] | None = None,
     section_titles: list[dict] | None = None,
+    status: str = "in_progress",
 ) -> dict:
     """Persist a page review.
 
-    ``flags`` maps kraken line id -> category number (1/2/3). A line id absent
-    from ``flags`` is implicitly "correct"; category 3 = non-text (ignore
-    downstream).
+    ``flags`` maps line id -> category numbers (1-5; a line may carry several,
+    e.g. under-segmented *and* clipping ink). A bare int is accepted for one. A
+    line id absent from ``flags`` is implicitly "correct"; category 3 = non-text
+    (ignore downstream).
 
     ``missed`` is a list of human-drawn boxes marking lines kraken missed
     entirely: ``[{"id": "missed_001", "box": [x1, y1, x2, y2]}, ...]`` in
@@ -136,6 +171,8 @@ def save_review(
     - ``section_titles``: titular section letters: ``{"id", "key",
       "box":[x1,y1,x2,y2], "source_line_id"}`` (source null if drawn fresh).
     """
+    if status not in STATUSES:
+        raise ValueError(f"Unknown status {status!r}; expected one of {STATUSES}")
     seg = load_segmentation(page)
     valid_ids = {str(line["id"]) for line in seg.get("lines", []) if "id" in line}
     bbox_by_id = {
@@ -145,13 +182,16 @@ def save_review(
     }
 
     normalized: dict[str, dict] = {}
-    for line_id, category in flags.items():
-        category = int(category)
-        if category not in CATEGORY_LABELS:
-            raise ValueError(f"Unknown category {category!r} for {line_id}")
+    for line_id, cats in flags.items():
+        cats = sorted({int(c) for c in (cats if isinstance(cats, list) else [cats])})
+        for c in cats:
+            if c not in CATEGORY_LABELS:
+                raise ValueError(f"Unknown category {c!r} for {line_id}")
+        if not cats:
+            continue
         normalized[line_id] = {
-            "category": category,
-            "label": CATEGORY_LABELS[category],
+            "categories": cats,
+            "labels": [CATEGORY_LABELS[c] for c in cats],
         }
 
     missed_out: list[dict] = []
@@ -206,8 +246,10 @@ def save_review(
 
     record = {
         "page": page,
+        "status": status,
         "reviewed_by": "human",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "tool": seg.get("tool", "kraken"),
         "model": seg.get("model"),
         "num_lines": len(seg.get("lines", [])),
         "flags": normalized,

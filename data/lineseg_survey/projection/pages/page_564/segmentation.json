@@ -1,0 +1,13 @@
+{
+ "page": 564,
+ "tool": "projection",
+ "model": "projection slicer (data_prep)",
+ "source_image": "dev/kraken_review/data/page_564/render.png",
+ "width": 2188,
+ "height": 3288,
+ "generated_at": "2026-09-30T15:49:43.891273+00:00",
+ "lines": [],
+ "deferred": true,
+ "defer_reason": "full-width content crosses the column gutter (run 0.7\u00d7 line height \u2014 fused header/footer?)",
+ "layout_blocks": []
+}

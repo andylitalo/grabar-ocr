@@ -1,0 +1,63 @@
+{
+  "page": 488,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:31:18.245886+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 91,
+  "flags": {
+    "line_091": {
+      "categories": [
+        2
+      ],
+      "labels": [
+        "under-segmentation"
+      ]
+    },
+    "line_056": {
+      "categories": [
+        4
+      ],
+      "labels": [
+        "clips ink"
+      ]
+    }
+  },
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        333.0,
+        2577.0,
+        1128.0,
+        2662.0
+      ]
+    },
+    {
+      "id": "missed_002",
+      "box": [
+        1174.0,
+        1935.0,
+        1998.0,
+        2020.0
+      ]
+    }
+  ],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0540",
+      "box": [
+        1186.0,
+        943.0,
+        1240.0,
+        1028.0
+      ],
+      "target_line_id": "line_056"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}

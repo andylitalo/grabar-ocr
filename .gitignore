@@ -110,3 +110,30 @@ dev/segmented_lines/
 dev/extracted_lines/
 # Kraken review decisions are human-verified ground truth; negate the global *.json rule.
 !/dev/kraken_review/reviews/*.json
+# Phase 8 line-seg survey: venvs, vendored code and overlays are local (dev/lineseg_survey/).
+dev/lineseg_survey/.venv-*/
+dev/lineseg_survey/vendor/
+dev/lineseg_survey/overlays/
+# Its data lives in data/lineseg_survey/<tool>/{pages,reviews}/. Candidate tools: commit only
+# the 12 survey-sample pages (the reviews reference them); their full runs are regenerable
+# inputs. The Phase 9 baseline (paddle-filled) is committed in full, with its review ops.
+!/data/lineseg_survey/
+!/data/lineseg_survey/*/
+!/data/lineseg_survey/*/pages/
+/data/lineseg_survey/*/pages/*
+!/data/lineseg_survey/*/pages/page_453/
+!/data/lineseg_survey/*/pages/page_457/
+!/data/lineseg_survey/*/pages/page_488/
+!/data/lineseg_survey/*/pages/page_519/
+!/data/lineseg_survey/*/pages/page_530/
+!/data/lineseg_survey/*/pages/page_557/
+!/data/lineseg_survey/*/pages/page_564/
+!/data/lineseg_survey/*/pages/page_575/
+!/data/lineseg_survey/*/pages/page_593/
+!/data/lineseg_survey/*/pages/page_610/
+!/data/lineseg_survey/*/pages/page_641/
+!/data/lineseg_survey/*/pages/page_642/
+!/data/lineseg_survey/paddle-filled/pages/*/
+!/data/lineseg_survey/*/pages/*/segmentation.json
+!/data/lineseg_survey/*/reviews/
+!/data/lineseg_survey/*/reviews/*.json

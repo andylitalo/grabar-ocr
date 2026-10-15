@@ -1,0 +1,37 @@
+{
+  "page": 457,
+  "status": "reviewed",
+  "reviewed_by": "human",
+  "timestamp": "2026-10-01T06:30:23.840951+00:00",
+  "tool": "hyocr-paddle",
+  "model": "hye-open-ocr paddle",
+  "num_lines": 66,
+  "flags": {},
+  "missed_lines": [
+    {
+      "id": "missed_001",
+      "box": [
+        161.0,
+        1363.0,
+        969.0,
+        1441.0
+      ]
+    }
+  ],
+  "initials": [
+    {
+      "id": "initial_001",
+      "key": "\u0531",
+      "box": [
+        166.0,
+        1152.0,
+        295.0,
+        1310.0
+      ],
+      "target_line_id": "line_003"
+    }
+  ],
+  "merges": [],
+  "splits": [],
+  "section_titles": []
+}
