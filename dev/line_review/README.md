@@ -44,21 +44,29 @@ Editing (fixing only):
 - **Cmd+Z** undoes; the × next to an edit in the side panel removes just that edit.
 - **← / →** change page.
 
+**Paddle's junk boxes** never reach the screen (`duplicates.py`): a box at least half
+inside another line (a line boxed twice, or a speck inside a line), and a box smaller
+than one character. If a copy is left (you'd named it in an edit), a banner says which
+line to delete.
+
 A red banner flags a page whose blank marker (`data/pages/blank/`) disagrees with its
 lines, and a page whose baseline changed under its review (edits are then disabled).
 
 ## Files
 
 ```
-materialize.py   baseline + ops -> lines; id minting; verified record (pure)
-storage.py       paths, review read/write, status transitions, verified output
-app.py           FastAPI endpoints
-static/          canvas UI
+materialize.py       baseline + ops -> lines; id minting; verified record (pure)
+duplicates.py        drops boxes inside other lines and boxes smaller than a character, before the ops
+storage.py           paths, review read/write, status transitions, verified output
+baseline_manifest.py checks paddle-filled against baseline_sha256.json (--accept to update)
+rewrite_verified.py  rewrites verified files after a format change (--reopen for content changes)
+app.py               FastAPI endpoints
+static/              canvas UI
 ```
 
 Ops and status: `data/lineseg_survey/paddle-filled/reviews/page_<N>.review.json`.
 Verified output: `data/verified_lines/page_<N>.json`. Both are committed.
 
-Tests: `uv run python -m pytest tests/test_line_review_materialize.py
-tests/test_line_review_storage.py tests/test_verified_lines_reproduce.py`. The last one
-is the gate's reproducibility check.
+Tests: `uv run python -m pytest tests/test_line_review_*.py tests/test_verified_lines_reproduce.py
+tests/test_baseline_manifest.py`. The last two are the gate's reproducibility and baseline
+checks.

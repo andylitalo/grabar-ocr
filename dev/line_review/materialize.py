@@ -29,6 +29,9 @@ Boxes sharing a row (a drop cap and its line, a title in pieces) read left to ri
 The baseline's own order (Paddle's X-Y cut) cut the page horizontally first wherever
 the columns' gaps lined up (p.460).
 
+Before the ops, a line Paddle boxed twice loses its smaller copy, and boxes smaller than a
+character go (``duplicates``), unless an op names them.
+
 A page number is a page element, not text: the op takes its line out of the lines (and
 the reading order) and records ``{value, box}`` for the page. Initial letters stay on
 their line as ``initial``.
@@ -46,6 +49,8 @@ from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon,
 from shapely.ops import split as shapely_split, unary_union
 
 from dev.lineseg_survey.ensemble import insert_in_order
+
+from . import duplicates
 
 
 class OpError(ValueError):
@@ -403,10 +408,11 @@ def materialize_page(lines: list[dict], ops: list[dict],
     """Apply ``ops``; returns ``{"lines": [...], "page_number": {value, box} | None}``.
 
     ``section_titles`` (the review's) only matter for reading order: one sitting on the
-    gutter interrupts it.
+    gutter interrupts it. Lines Paddle boxed twice, and specks, are dropped first
+    (``duplicates.dedupe``).
     """
     check_section_titles(section_titles)
-    lines = [dict(l) for l in lines]
+    lines = [dict(l) for l in duplicates.dedupe(lines, ops)]
     page_number = None
     for n, op in enumerate(ops, start=1):
         kind = op.get("op")

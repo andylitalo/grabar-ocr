@@ -323,3 +323,14 @@ def test_rewrite_skips_a_page_whose_baseline_changed(store, capsys):
     rewrite_verified.main([])
     assert storage.verified_path(PAGE).read_text() == "{}\n"
     assert "baseline changed" in capsys.readouterr().out
+
+
+def test_copy_kept_alive_by_an_op_is_flagged(client):
+    # line_001's twin: dedupe would drop it, but reshaping it keeps it on the page
+    seg = json.loads(storage.baseline_path(PAGE).read_text())
+    seg["lines"].append(seg_line("line_007", [101, 101, 899, 149]))
+    storage.baseline_path(PAGE).write_text(json.dumps(seg))
+    assert client.get(f"/api/pages/{PAGE}").json()["duplicates"] == []
+    d = client.put(f"/api/pages/{PAGE}/ops", json={"ops": [
+        {"op": "reshape", "line": "line_007", "boundary": rect(101, 101, 899, 149)}]}).json()
+    assert d["duplicates"] == [[1, 2]]

@@ -220,3 +220,12 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   takes drop caps); old `grow` ops still materialize. Initial boxes that share no rows
   with their line, or would cut another line in two, are refused (neither happened in
   the 41 reviews).
+- **2026-10-15: Paddle's junk boxes, from `feat/layout-review`.** `duplicates.py` drops,
+  before the ops, the smaller of two boxes when it lies at least half inside the other (a
+  line boxed twice, or a speck inside a line) and boxes smaller than one character; an op
+  that names a box keeps it, and a banner names any copy left. The 10 verified pages here
+  are unchanged. Of the 40 verified on `feat/layout-review`, 39 reproduce under this code;
+  p.490 differs only in `line_083`'s kraken baseline, now cut to its reshaped box (x 1168
+  → 1195), so it needs a re-verify (`rewrite_verified --reopen`) when those reviews come
+  over. Not ported: the layout branch's automatic id retirement in `rewrite_verified`
+  (verified content now changes only through a re-verify) and the fresh-review auto ops.

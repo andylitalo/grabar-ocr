@@ -403,6 +403,9 @@ function renderHeader() {
   if (d.error) warn.push(`Edits failed to apply: ${d.error}`);
   if (d.blank_marker && d.lines.length) warn.push(`This page has a blank marker (data/pages/blank/), but ${d.lines.length} lines remain: delete them, or the marker is wrong.`);
   if (!d.blank_marker && !d.lines.length) warn.push("No lines and no blank marker: is this page really blank?");
+  for (const [keep, drop] of d.duplicates || []) {
+    warn.push(`Lines ${keep} and ${drop} are the same line boxed twice (one hides the other): delete ${drop}.`);
+  }
   if (d.page_number && d.page_number.value !== d.expected_page_number) {
     warn.push(`Printed page number ${d.page_number.value} isn't the expected ${d.expected_page_number} (PDF page \u2212 4): check it.`);
   }

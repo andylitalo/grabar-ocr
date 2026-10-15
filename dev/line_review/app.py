@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import duplicates
 from . import materialize as mz
 from . import storage
 
@@ -51,6 +52,7 @@ def _payload(page: int, review: dict) -> dict:
     baseline = {l["id"]: l for l in seg["lines"]}
     deleted = {op["line"] for op in review["ops"] if op.get("op") == "delete"}
     ids = review.get("ids", {})
+    order = {l["key"]: n for n, l in enumerate(lines, start=1)}
     return {
         "page": page,
         "width": seg["width"],
@@ -67,6 +69,8 @@ def _payload(page: int, review: dict) -> dict:
              "edited": l["key"] not in baseline or l["boundary"] != baseline[l["key"]]["boundary"]}
             for n, l in enumerate(lines, start=1)
         ],
+        # copies an op kept alive (dedupe leaves a pair alone once an op names it)
+        "duplicates": [[order[k], order[d]] for k, d in duplicates.outline_pairs(lines)],
         "ghosts": [{"key": k, "boundary": baseline[k]["boundary"], "bbox": baseline[k]["bbox"]}
                    for k in sorted(deleted) if k in baseline],
         "baseline_changed": storage.baseline_changed(review),
