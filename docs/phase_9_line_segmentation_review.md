@@ -252,6 +252,17 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   that way. Two verified pages had kept both copies: p.463 (`p463.042`) and p.474
   (`p474.091`). `rewrite_verified` retired those two ids (`superseded_by: []`) and
   rewrote the pages; no other id changed.
+- **2026-10-14: specks too; containment instead of IoU.** p.485 had a 20 × 12 px box
+  ("է") inside line 53 that the IoU rule missed: a speck inside a full line has IoU
+  ~0.01. The pair test is now how much of the smaller box lies inside the other
+  (intersection / smaller area) ≥ 0.5. Over the baseline every pair at 0.47 or more is
+  junk or a copy, and real neighbours (a tall heading box over the next line) reach 0.42.
+  A box smaller than one character is also dropped (maintainer): under 0.75 line heights
+  tall *and* 1.25 wide. That is 10 boxes, all junk (specks, ornament pieces, an
+  initial's top boxed alone). A height limit alone would drop real lines Paddle boxed
+  ~20 px thin; p.641's one-letter table cells (36 × 45) stay. No verified page changed:
+  the two specks on verified pages were already deleted (p.463 by hand, p.474 by the
+  auto initial).
 - **2026-10-11: initials found automatically; the Initial tool picks the right line.** Initials
   were most of the reviewer's work: 29 of the 53 edits on pp.453–463. None of the
   segmenters keeps them: of those 29, kraken's lines hold 5 whole, Paddle's 2, Surya's 0.

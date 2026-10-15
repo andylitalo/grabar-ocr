@@ -210,3 +210,23 @@ def test_the_materializer_drops_copies_before_the_ops():
                                               [l["bbox"][2], l["bbox"][3]], [l["bbox"][0], l["bbox"][3]]]}
                           for l in TWINS])
     assert sorted(l["key"] for l in mz.materialize_page(lines, [])["lines"]) == ["b", "c", "d"]
+
+
+def _rows(n=5):
+    return [{"key": f"r{i}", "bbox": [1000, 100 + 60 * i, 1800, 150 + 60 * i]} for i in range(n)]
+
+
+def test_a_speck_inside_a_line_is_dropped():
+    # p.485: "է", 20 x 12 px inside line_054. Its IoU with the line is ~0.01.
+    from dev.line_review import duplicates
+    lines = _rows() + [{"key": "speck", "bbox": [1170, 138, 1190, 150]}]
+    assert [l["key"] for l in duplicates.dedupe(lines)] == [f"r{i}" for i in range(5)]
+
+
+def test_a_box_smaller_than_a_character_is_dropped_but_thin_lines_and_letters_stay():
+    from dev.line_review import duplicates
+    lines = _rows() + [{"key": "speck", "bbox": [500, 500, 530, 525]},        # p.560
+                       {"key": "thin", "bbox": [500, 600, 900, 620]},         # p.490
+                       {"key": "letter", "bbox": [500, 700, 536, 745]}]       # p.641 cell
+    assert duplicates.specks(lines) == ["speck"]
+    assert "speck" in {l["key"] for l in duplicates.dedupe(lines, [{"op": "reshape", "line": "speck"}])}

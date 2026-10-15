@@ -40,9 +40,10 @@ Editing (fixing only):
   cuts horizontally.
 - **Initials are usually already marked** when a page opens: "initial ? → line_NNN (auto)"
   in the edit list, found from the ink (`initials.py`). Remove a wrong one with ×.
-- **Lines Paddle boxed twice** never reach the screen: the materializer drops the smaller
-  copy (boxes overlapping at IoU ≥ 0.2, `duplicates.py`). If one is left (you'd named it
-  in an edit), a banner says which line to delete.
+- **Paddle's junk boxes** never reach the screen (`duplicates.py`): a box at least half
+  inside another line (a line boxed twice, or a speck inside a line), and a box smaller
+  than one character. If a copy is left (you'd named it in an edit), a banner says which
+  line to delete.
 - **Initial (I):** drag a box around the capital (or click Paddle's box over it). The
   line it will join is shown dashed while you type the letter: the line the capital
   starts, in its own column. It's carved out of any other line it overlaps; a Paddle box
@@ -66,7 +67,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 ```
 materialize.py   baseline + ops -> lines; id minting; verified record (pure)
 page_number.py   finds the printed page number so a fresh review starts with it marked
-duplicates.py    drops the smaller copy of a line Paddle boxed twice, before the ops
+duplicates.py    drops boxes inside other lines and boxes smaller than a character, before the ops
 initials.py      finds initial capitals for a fresh review; the line a drawn initial joins
 storage.py       paths, review read/write, status transitions, verified output
 lines.py         find a line by verified id or baseline key
