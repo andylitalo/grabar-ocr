@@ -30,6 +30,7 @@ header, #toolbar {
   padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
 }
 header { position: sticky; top: 0; background: var(--bg); z-index: 5; }
+#top { position: sticky; top: 0; z-index: 5; }  /* header, tools and banner stay in view */
 header h1 { font-size: 1rem; margin: 0; font-weight: 600; }
 #toolbar { background: var(--panel); }
 #toolbar .tool-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }

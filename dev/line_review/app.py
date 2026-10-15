@@ -35,6 +35,15 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="Phase 9 line review")
 
 
+@app.middleware("http")
+async def no_stale_ui(request, call_next):
+    """Make the browser recheck the UI files, so a plain reload picks up changes."""
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 class OpsRequest(BaseModel):
     ops: list[dict]
     section_titles: list[dict] = []
