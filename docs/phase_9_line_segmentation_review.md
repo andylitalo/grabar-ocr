@@ -225,7 +225,10 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   line boxed twice, or a speck inside a line) and boxes smaller than one character; an op
   that names a box keeps it, and a banner names any copy left. The 10 verified pages here
   are unchanged. Of the 40 verified on `feat/layout-review`, 39 reproduce under this code;
-  p.490 differs only in `line_083`'s kraken baseline, now cut to its reshaped box (x 1168
-  → 1195), so it needs a re-verify (`rewrite_verified --reopen`) when those reviews come
-  over. Not ported: the layout branch's automatic id retirement in `rewrite_verified`
+  p.490 differed only in `line_083`'s kraken baseline, now cut to its reshaped box (x 1168
+  → 1195): `rewrite_verified` refused it, `--reopen` sent it back, and it was re-verified
+  (ids unchanged).
+- **2026-10-15: reviews 463-493 brought over from `feat/layout-review`** (moved from
+  `dev/lineseg_survey/` to `data/lineseg_survey/`): 40 pages verified (453-492), p.493
+  still fixing. All 40 verified files reproduce. Not ported: the layout branch's automatic id retirement in `rewrite_verified`
   (verified content now changes only through a re-verify) and the fresh-review auto ops.
