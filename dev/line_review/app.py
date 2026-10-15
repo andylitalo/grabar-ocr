@@ -30,10 +30,12 @@ app = FastAPI(title="Phase 9 line review")
 class OpsRequest(BaseModel):
     ops: list[dict]
     section_titles: list[dict] = []
+    revision: int | None = None  # the review revision these ops were built on
 
 
 class StatusRequest(BaseModel):
     status: str
+    revision: int | None = None
 
 
 def _payload(page: int, review: dict) -> dict:
@@ -54,6 +56,7 @@ def _payload(page: int, review: dict) -> dict:
         "width": seg["width"],
         "height": seg["height"],
         "status": review["status"],
+        "revision": review.get("revision", 0),
         "ops": review["ops"],
         "section_titles": review.get("section_titles", []),
         "page_number": page_number,
@@ -69,6 +72,7 @@ def _payload(page: int, review: dict) -> dict:
         "baseline_changed": storage.baseline_changed(review),
         "blank_marker": storage.blank_marker(page),
         "error": error,
+        "used_add_keys": sorted(storage.used_add_keys(review)),
     }
 
 
@@ -105,7 +109,7 @@ def get_page(page: int) -> dict:
 def put_ops(page: int, req: OpsRequest) -> dict:
     _page_or_404(page)
     try:
-        review, _ = storage.save_ops(page, req.ops, req.section_titles)
+        review, _ = storage.save_ops(page, req.ops, req.section_titles, req.revision)
     except mz.OpError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except storage.StateError as e:
@@ -117,7 +121,7 @@ def put_ops(page: int, req: OpsRequest) -> dict:
 def post_status(page: int, req: StatusRequest) -> dict:
     _page_or_404(page)
     try:
-        review = storage.set_status(page, req.status)
+        review = storage.set_status(page, req.status, req.revision)
     except (storage.StateError, mz.OpError) as e:
         raise HTTPException(status_code=409, detail=str(e))
     return _payload(page, review)

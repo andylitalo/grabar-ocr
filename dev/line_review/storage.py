@@ -5,10 +5,17 @@
   data/lineseg_survey/paddle-filled/reviews/page_<N>.review.json    ops + status + ids
   data/verified_lines/page_<N>.json                               materialized on verify
 
+  data/lineseg_survey/paddle-filled/baseline_sha256.json            sha256 of every baseline page
+
 Page status: ``unreviewed`` (no review file) -> ``fixing`` -> ``fixed`` -> ``verified``.
 Ops can only change while fixing; Resume fixing returns a fixed or verified page to
-fixing. A review records the baseline's sha256: if ``paddle-filled`` is regenerated
-under it, the page refuses edits rather than applying ops to renumbered lines.
+fixing, and marks its verified file ``resumed_at`` (kept, not deleted, until the page is
+verified again and the file is rewritten whole). A review records the baseline's sha256:
+if ``paddle-filled`` is regenerated under it, the page refuses edits rather than applying
+ops to renumbered lines. ``baseline_sha256.json`` covers the pages not reviewed yet.
+
+Every write bumps the review's ``revision``; a save that names an older revision (another
+tab, or a stale client) is refused rather than overwriting newer ops.
 """
 
 from __future__ import annotations
@@ -27,6 +34,7 @@ BASELINE_TOOL = "paddle-filled"
 BASELINE_DIR = REPO_ROOT / "data" / "lineseg_survey" / BASELINE_TOOL / "pages"
 REVIEWS_DIR = REPO_ROOT / "data" / "lineseg_survey" / BASELINE_TOOL / "reviews"
 VERIFIED_DIR = REPO_ROOT / "data" / "verified_lines"
+MANIFEST_PATH = REPO_ROOT / "data" / "lineseg_survey" / BASELINE_TOOL / "baseline_sha256.json"
 BLANK_DIR = REPO_ROOT / "data" / "pages" / "blank"
 
 SCHEMA = 2
@@ -84,6 +92,22 @@ def baseline_sha256(page: int) -> str:
     return hashlib.sha256(baseline_path(page).read_bytes()).hexdigest()
 
 
+def baseline_manifest() -> dict[int, str]:
+    """The committed sha256 of each baseline page (empty if there is no manifest)."""
+    if not MANIFEST_PATH.exists():
+        return {}
+    return {int(k): v for k, v in json.loads(MANIFEST_PATH.read_text(encoding="utf-8")).items()}
+
+
+def current_baseline_hashes() -> dict[int, str]:
+    return {page: baseline_sha256(page) for page in list_pages()}
+
+
+def write_manifest(hashes: dict[int, str]) -> None:
+    MANIFEST_PATH.write_text(json.dumps({str(p): h for p, h in sorted(hashes.items())},
+                                        indent=1) + "\n", encoding="utf-8")
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -113,12 +137,45 @@ def page_statuses() -> dict[int, str]:
     return out
 
 
+def used_add_keys(review: dict) -> dict[str, list | None]:
+    """Every ``add`` key the page has used -> the boundary it was added with (None if
+    only known from minted ids). A key is never handed to a different box."""
+    used: dict[str, list | None] = {k: None for k in [*review.get("ids", {}),
+                                                    *review.get("retired_keys", {})]
+                                    if k.startswith("add_")}
+    used.update(review.get("add_keys", {}))
+    for op in review.get("ops", []):
+        if op.get("op") == "add" and used.get(op["key"]) is None:
+            used[op["key"]] = op.get("boundary")
+    return used
+
+
+def _check_add_keys(review: dict, ops: list[dict]) -> dict[str, list | None]:
+    used = used_add_keys(review)
+    for op in ops:
+        if op.get("op") != "add":
+            continue
+        key = op.get("key")
+        if key in used and used[key] != op.get("boundary"):
+            raise mz.OpError(f"add key {key!r} was already used for another box on this "
+                             "page; added lines need a new key")
+        used[key] = op.get("boundary")
+    return used
+
+
+def _check_revision(review: dict, revision: int | None) -> None:
+    if revision is not None and revision != review.get("revision", 0):
+        raise StateError(f"page {review['page']} was saved elsewhere since this view loaded "
+                         f"(revision {review.get('revision', 0)}, not {revision}); reload it")
+
+
 def baseline_changed(review: dict) -> bool:
     return review["baseline"]["sha256"] != baseline_sha256(review["page"])
 
 
 def _write_review(review: dict) -> dict:
     review["updated_at"] = _now()
+    review["revision"] = review.get("revision", 0) + 1
     REVIEWS_DIR.mkdir(parents=True, exist_ok=True)
     review_path(review["page"]).write_text(
         json.dumps(review, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -137,25 +194,43 @@ def materialized(page: int, review: dict) -> list[dict]:
                                review.get("section_titles", []))["lines"]
 
 
-def save_ops(page: int, ops: list[dict], section_titles: list[dict]) -> tuple[dict, list[dict]]:
-    """Replace the page's ops (validated by materializing them); status -> fixing."""
-    review = load_review(page)
-    _guard_baseline(review)
-    if review["status"] not in ("unreviewed", "fixing"):
-        raise StateError(f"page {page} is {review['status']}: Resume fixing to edit")
-    lines = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
-                                section_titles)["lines"]  # raises OpError
-    review.update(ops=ops, section_titles=section_titles, status="fixing")
-    return _write_review(review), lines
+def save_ops(page: int, ops: list[dict], section_titles: list[dict],
+             revision: int | None = None) -> tuple[dict, list[dict]]:
+    """Replace the page's ops (validated by materializing them); status -> fixing.
 
-
-def set_status(page: int, status: str) -> dict:
-    """Move the page through fixing -> fixed -> verified (or back to fixing).
-
-    ``verified`` mints line ids and writes ``data/verified_lines/page_<N>.json``.
+    ``revision``: the review revision the client's ops were built on (None skips the check).
     """
     review = load_review(page)
     _guard_baseline(review)
+    _check_revision(review, revision)
+    if review["status"] not in ("unreviewed", "fixing"):
+        raise StateError(f"page {page} is {review['status']}: Resume fixing to edit")
+    add_keys = _check_add_keys(review, ops)  # raises OpError
+    lines = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
+                                section_titles)["lines"]  # raises OpError
+    review.update(ops=ops, section_titles=section_titles, status="fixing", add_keys=add_keys)
+    return _write_review(review), lines
+
+
+def _mark_resumed(page: int) -> None:
+    """Flag the page's verified file as out of date without deleting it: readers skip it
+    while the review isn't ``verified``, and the next verify rewrites it whole."""
+    path = verified_path(page)
+    if path.exists():
+        record = json.loads(path.read_text(encoding="utf-8"))
+        record["resumed_at"] = _now()
+        path.write_text(mz.dumps(record), encoding="utf-8")
+
+
+def set_status(page: int, status: str, revision: int | None = None) -> dict:
+    """Move the page through fixing -> fixed -> verified (or back to fixing).
+
+    ``verified`` mints line ids and writes ``data/verified_lines/page_<N>.json``;
+    verified -> fixing marks that file ``resumed_at``.
+    """
+    review = load_review(page)
+    _guard_baseline(review)
+    _check_revision(review, revision)
     current = review["status"]
     allowed = {
         "fixed": ("unreviewed", "fixing"),
@@ -175,5 +250,7 @@ def set_status(page: int, status: str) -> dict:
         record = mz.verified_record(seg, review, baseline_sha256=baseline_sha256(page))
         VERIFIED_DIR.mkdir(parents=True, exist_ok=True)
         verified_path(page).write_text(mz.dumps(record), encoding="utf-8")
+    elif current == "verified":
+        _mark_resumed(page)
     review["status"] = status
     return _write_review(review)

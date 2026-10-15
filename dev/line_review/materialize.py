@@ -9,7 +9,7 @@ a review holds an ordered list of ops applied to it:
     {"op": "split",   "line": KEY, "cut": [[x, y], ...]}      # polyline across the line
     {"op": "merge",   "lines": [KEY, KEY, ...]}
     {"op": "initial", "box": [x1, y1, x2, y2], "line": KEY, "letter": "Ա"}
-    {"op": "grow",    "box": [x1, y1, x2, y2], "line": KEY}   # take in missed ink
+    {"op": "grow",    "box": [x1, y1, x2, y2], "line": KEY}   # legacy: an initial with no letter
     {"op": "page_number", "line": KEY | "box": [x1, y1, x2, y2], "value": "454"}
     {"op": "break",   "y": Y}                                  # the gutter is interrupted here
     {"op": "order",   "lines": [KEY, ...]}                     # full permutation
@@ -40,8 +40,9 @@ Line ids (``p<page>.<NNN>``) are minted from the materialized lines at verificat
 from __future__ import annotations
 
 import json
+import re
 
-from shapely.geometry import LineString, MultiPolygon, Polygon, box as shapely_box
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon, box as shapely_box
 from shapely.ops import split as shapely_split, unary_union
 
 from dev.lineseg_survey.ensemble import insert_in_order
@@ -100,15 +101,33 @@ def _line(key: str, points: list[list[float]], *, baseline=None, baseline_source
             "derived_from": derived_from, "lineage": lineage}
 
 
+def _clip_baseline(baseline: list[list[float]], bbox: list[float]) -> list[list[float]] | None:
+    """``baseline`` cut to the x-range of ``bbox`` (unchanged if it already fits), or None
+    if nothing is left or what's left leaves the box vertically."""
+    x1, y1, x2, y2 = bbox
+    if all(x1 <= x <= x2 for x, _ in baseline):
+        clipped = baseline
+    else:
+        geom = LineString(baseline).intersection(shapely_box(x1, -1e9, x2, 1e9))
+        if isinstance(geom, MultiLineString):
+            geom = max(geom.geoms, key=lambda g: g.length)
+        if not isinstance(geom, LineString) or geom.length == 0:
+            return None
+        clipped = [[round(x, 2), round(y, 2)] for x, y in geom.coords]
+    return clipped if all(y1 <= y <= y2 for _, y in clipped) else None
+
+
 def _with_boundary(line: dict, points: list[list[float]]) -> dict:
-    """``line`` with a new polygon. A kraken baseline survives while it still lies
-    inside the new box vertically; otherwise the baseline becomes synthetic."""
+    """``line`` with a new polygon. A kraken baseline survives, cut to the new box's
+    x-range, while it still lies inside the box vertically; otherwise it becomes
+    synthetic."""
     bbox = _bbox(points)
-    keep = line["baseline_source"] == "kraken" and all(
-        bbox[1] <= y <= bbox[3] for _, y in line["baseline"])
     out = {**line, "boundary": points, "bbox": bbox}
-    if not keep:
+    clipped = _clip_baseline(line["baseline"], bbox) if line["baseline_source"] == "kraken" else None
+    if clipped is None:
         out["baseline"], out["baseline_source"] = _synthetic_baseline(bbox), "synthetic"
+    else:
+        out["baseline"] = clipped
     return out
 
 
@@ -164,14 +183,41 @@ def _split(lines: list[dict], op: dict, ctx: str) -> None:
         _insert(lines, new)
 
 
+def _merged_polygon(lines: list[dict], idx: list[int], ctx: str) -> Polygon:
+    """One polygon for the lines at ``idx``.
+
+    Touching members are just their union. Members with a gap between them are joined
+    by their convex hull minus every other line in it, so the merge never takes in
+    another line's ink. It is refused if other lines cut across the gap (alone or
+    together), or if one lies wholly inside the merge.
+    """
+    members = unary_union([_polygon(lines[i]["boundary"], ctx) for i in idx])
+    if isinstance(members, Polygon):
+        return members
+    hull = members.convex_hull
+    others = [l for i, l in enumerate(lines) if i not in idx]
+    blockers = [l for l in others if hull.intersection(_polygon(l["boundary"], ctx)).area > 0]
+    if not blockers:
+        return _single(hull, ctx)
+    filled = hull.difference(unary_union([_polygon(l["boundary"], ctx) for l in blockers]))
+    filled = filled.union(members)  # a member keeps any overlap it already had
+    parts = list(filled.geoms) if hasattr(filled, "geoms") else [filled]
+    parts = [p for p in parts if isinstance(p, Polygon) and p.intersection(members).area > 0]
+    names = ", ".join(repr(l["key"]) for l in blockers)
+    if len(parts) != 1:
+        raise OpError(f"{ctx}: can't merge across {names}, which cut(s) between the lines")
+    if parts[0].interiors:
+        raise OpError(f"{ctx}: can't merge around {names}, which would sit inside the merge")
+    return parts[0]
+
+
 def _merge(lines: list[dict], op: dict, ctx: str) -> None:
     keys = op.get("lines") or []
     if len(keys) < 2 or len(set(keys)) != len(keys):
         raise OpError(f"{ctx}: merge needs at least 2 distinct lines")
     idx = sorted(_index(lines, k, ctx) for k in keys)
     members = [lines[i] for i in idx]
-    poly = _single(unary_union([_polygon(m["boundary"], ctx) for m in members]), ctx)
-    points = _points(poly)
+    points = _points(_merged_polygon(lines, idx, ctx))
     baseline, bsrc = None, "synthetic"
     if all(m["baseline_source"] == "kraken" for m in members):
         baseline = sorted((p for m in members for p in m["baseline"]), key=lambda p: p[0])
@@ -194,7 +240,11 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
 
     If the box doesn't touch the target (a drop cap drawn with a small gap), the gap is
     bridged by a strip inside the rows they share, never by a hull, which could reach
-    across the next line's text.
+    across the next line's text. Refused: a box sharing no rows with the target, and a box
+    that would cut another line in two (the smaller piece's ink would belong to no line).
+
+    ``grow`` is the same op without a letter. The UI no longer offers it (reshape covers
+    missed ink); it stays so reviews that used it still materialize.
     """
     box = op.get("box") or []
     if len(box) != 4:
@@ -206,9 +256,11 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
         tx1, ty1, tx2, ty2 = target.bounds
         bx1, by1, bx2, by2 = added.bounds
         y1, y2 = max(ty1, by1), min(ty2, by2)
-        if y2 > y1:
-            x1, x2 = sorted((min(tx2, bx2), max(tx1, bx1)))
-            added = added.union(shapely_box(x1, y1, x2, y2))
+        if y2 <= y1:
+            raise OpError(f"{ctx}: the box doesn't touch {lines[t]['key']!r} or share any of "
+                          "its rows; draw it beside the line")
+        x1, x2 = sorted((min(tx2, bx2), max(tx1, bx1)))
+        added = added.union(shapely_box(x1, y1, x2, y2))
     for i, line in enumerate(lines):
         poly = _polygon(line["boundary"], ctx)
         if i == t:
@@ -220,7 +272,8 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
             if rest.is_empty:
                 raise OpError(f"{ctx}: box covers all of {line['key']!r}")
             if isinstance(rest, MultiPolygon):
-                rest = max(rest.geoms, key=lambda g: g.area)
+                raise OpError(f"{ctx}: the box would cut {line['key']!r} in two; draw it so it "
+                              "only trims that line's end")
             lines[i] = _with_boundary(line, _points(rest))
 
 
@@ -321,6 +374,25 @@ def reading_order(lines: list[dict], dividers: list[list[float]] = ()) -> list[d
     return out
 
 
+# A section title is a taregir letter: one to four Armenian letters (Ա-Ֆ, ա-և).
+TITLE_LETTER = re.compile(r"^[\u0531-\u0556\u0561-\u0587]{1,4}$")
+
+
+def check_section_titles(titles: list[dict]) -> None:
+    """Raise ``OpError`` unless every title has a valid ``letter`` and ``box``."""
+    for n, t in enumerate(titles, start=1):
+        ctx = f"section title {n}"
+        letter, box = t.get("letter"), t.get("box")
+        if not isinstance(letter, str) or not TITLE_LETTER.match(letter):
+            raise OpError(f"{ctx}: the letter must be 1 to 4 Armenian letters, "
+                          f"with no spaces or punctuation (got {letter!r})")
+        if (not isinstance(box, list) or len(box) != 4
+                or not all(isinstance(v, (int, float)) for v in box)
+                or not (box[0] < box[2] and box[1] < box[3])):
+            raise OpError(f"{ctx}: the box must be [x1, y1, x2, y2] with x1 < x2 and "
+                          f"y1 < y2 (got {box!r})")
+
+
 def apply_ops(lines: list[dict], ops: list[dict]) -> list[dict]:
     """Apply ``ops`` in order to ``lines`` (from ``baseline_lines``); returns new lines."""
     return materialize_page(lines, ops)["lines"]
@@ -333,6 +405,7 @@ def materialize_page(lines: list[dict], ops: list[dict],
     ``section_titles`` (the review's) only matter for reading order: one sitting on the
     gutter interrupts it.
     """
+    check_section_titles(section_titles)
     lines = [dict(l) for l in lines]
     page_number = None
     for n, op in enumerate(ops, start=1):

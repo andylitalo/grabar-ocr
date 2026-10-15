@@ -205,3 +205,18 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   reading order" above. New `break` op (tool **B**) for interruptions with no line on
   them; section titles on the gutter count too. Image-based detection of breaks in the
   printed gutter rule was tried and dropped: too noisy (107 pages flagged).
+- **2026-10-15: PR #3 review fixes.** Saves and page loads now go one at a time in the
+  UI, and each review carries a `revision` the server checks, so a quick page change or a
+  second tab can't put one page's ops on another or drop an edit. A double Enter
+  registers once. Add keys are never reissued (`add_keys` in the review), so a new box
+  can't inherit a retired line's id. Resume fixing marks the verified file `resumed_at`;
+  re-verifying rewrites it whole. `baseline_sha256.json` records all 191 paddle-filled
+  pages (`python -m dev.line_review.baseline_manifest`). Merges across a gap subtract the
+  other lines in it, and are refused if a line cuts the gap or sits inside it. A kraken
+  baseline is cut to a trimmed line's width. Section titles must be 1-4 Armenian letters.
+  `rewrite_verified` only rewrites format changes; a change to verified ids, order or
+  geometry is refused unless `--reopen` sends the page back for review. **Option-drag
+  (`grow`) is removed** (never needed in 41 pages; reshape takes in clipped ink, initial
+  takes drop caps); old `grow` ops still materialize. Initial boxes that share no rows
+  with their line, or would cut another line in two, are refused (neither happened in
+  the 41 reviews).

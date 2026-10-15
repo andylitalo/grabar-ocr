@@ -405,3 +405,145 @@ def test_a_section_title_inside_one_column_is_not_a_break():
     titles = [{"letter": "Դ", "box": [400, 280, 460, 370]}]
     page = mz.materialize_page(_page(TWO_BLOCKS), [], section_titles=titles)
     assert keys(page["lines"]) == ["a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4"]
+
+
+# --- merge across a gap ----------------------------------------------------------------
+
+
+def lines_of(*boxes: tuple[str, list[float]]) -> list[dict]:
+    return mz.baseline_lines({"lines": [seg_line(k, b) for k, b in boxes]})
+
+
+def test_merge_across_a_line_that_cuts_the_gap_is_refused():
+    with pytest.raises(mz.OpError, match="line_002.*cut"):
+        run([{"op": "merge", "lines": ["line_001", "line_003"]}])
+
+
+def test_merge_takes_the_gap_but_not_a_line_poking_into_it():
+    lines = lines_of(("a", [100, 100, 500, 150]), ("b", [700, 300, 900, 350]),
+                     ("c", [520, 0, 650, 160]))
+    out = mz.apply_ops(lines, [{"op": "merge", "lines": ["a", "b"]}])
+    merged = Polygon(next(l for l in out if l["key"] == "a+b")["boundary"])
+    assert merged.intersection(Polygon(rect(520, 0, 650, 160))).area == pytest.approx(0, abs=1)
+    for box in ([100, 100, 500, 150], [700, 300, 900, 350]):
+        assert merged.buffer(0.01).covers(Polygon(rect(*box)))
+    assert merged.covers(Point(600, 225))  # the blank gap between them is taken in
+
+
+def test_merge_around_an_enclosed_line_is_refused():
+    lines = lines_of(("a", [100, 100, 500, 150]), ("b", [700, 300, 900, 350]),
+                     ("c", [450, 200, 650, 240]))
+    with pytest.raises(mz.OpError, match="'c'.*inside"):
+        mz.apply_ops(lines, [{"op": "merge", "lines": ["a", "b"]}])
+
+
+def test_merge_across_a_clear_gap_is_the_hull():
+    out = run([{"op": "merge", "lines": ["line_001", "line_002"]}])
+    assert out[0]["key"] == "line_001+line_002"
+    assert out[0]["bbox"] == [100, 100, 900, 250]
+
+
+def test_merge_of_kraken_lines_keeps_a_kraken_baseline():
+    seg = {"lines": [seg_line("a", [100, 100, 500, 150], "kraken-fill"),
+                     seg_line("b", [500, 100, 900, 150], "kraken-fill")]}
+    out = mz.apply_ops(mz.baseline_lines(seg), [{"op": "merge", "lines": ["a", "b"]}])
+    assert out[0]["baseline_source"] == "kraken"
+    assert [p[0] for p in out[0]["baseline"]] == [100, 500, 500, 900]
+
+
+def test_merge_keeps_an_initial_letter():
+    out = run([{"op": "initial", "box": [60, 200, 99, 250], "line": "line_002", "letter": "Ա"},
+               {"op": "merge", "lines": ["line_001", "line_002"]}])
+    assert out[0]["initial"] == "Ա"
+
+
+@pytest.mark.parametrize("keys_", [["line_001"], ["line_001", "line_001"]])
+def test_merge_needs_two_distinct_lines(keys_):
+    with pytest.raises(mz.OpError, match="2 distinct"):
+        run([{"op": "merge", "lines": keys_}])
+
+
+# --- kraken baseline after a reshape ---------------------------------------------------
+
+
+def test_trimmed_kraken_line_keeps_its_baseline_cut_to_the_box():
+    lines = run([{"op": "reshape", "line": "line_003", "boundary": rect(500, 300, 900, 350)}])
+    l3 = next(l for l in lines if l["key"] == "line_003")
+    assert l3["baseline_source"] == "kraken"
+    assert l3["baseline"] == [[500, 337.5], [900, 337.5]]
+
+
+def test_kraken_baseline_inside_the_new_box_is_untouched():
+    lines = run([{"op": "reshape", "line": "line_003", "boundary": rect(50, 290, 950, 360)}])
+    l3 = next(l for l in lines if l["key"] == "line_003")
+    assert l3["baseline"] == SEG["lines"][2]["baseline"]
+
+
+# --- section titles ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("letter", ["Ա", "ժբ", "ԺԲ"])
+def test_armenian_title_letters_are_accepted(letter):
+    mz.materialize_page(mz.baseline_lines(SEG), [], [{"letter": letter, "box": [10, 10, 50, 50]}])
+
+
+@pytest.mark.parametrize("letter", ["", "A", "Ա Բ", "Ա.", "1", "ԱԲԳԴԵ", None])
+def test_malformed_title_letters_are_refused(letter):
+    with pytest.raises(mz.OpError, match="section title 1: the letter"):
+        mz.materialize_page(mz.baseline_lines(SEG), [], [{"letter": letter, "box": [10, 10, 50, 50]}])
+
+
+@pytest.mark.parametrize("box", [None, [10, 10, 50], [50, 10, 10, 50], [10, 10, 50, "x"]])
+def test_malformed_title_boxes_are_refused(box):
+    with pytest.raises(mz.OpError, match="section title 1: the box"):
+        mz.materialize_page(mz.baseline_lines(SEG), [], [{"letter": "Ա", "box": box}])
+
+
+# --- refused ops -------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("op, message", [
+    ({"op": "reshape", "line": "line_001", "boundary": [[0, 0], [10, 10]]}, "at least 3 points"),
+    ({"op": "reshape", "line": "line_001", "boundary": [[0, 0], [10, 10], [10, 0], [0, 10]]},
+     "not valid"),
+    ({"op": "split", "line": "line_001", "cut": [[500, 90]]}, "at least 2 points"),
+    ({"op": "initial", "box": [1, 2, 3], "line": "line_001"}, r"\[x1, y1, x2, y2\]"),
+    ({"op": "initial", "box": [90, 140, 910, 260], "line": "line_001"}, "covers all of 'line_002'"),
+    ({"op": "page_number", "line": "line_001", "value": " "}, "needs a value"),
+    ({"op": "page_number", "value": "454"}, "a line or a box"),
+    ({"op": "break"}, "needs a y"),
+    ({"op": "dismiss_ink", "box": [1, 2]}, r"\[x1, y1, x2, y2\]"),
+    ({"op": "rotate"}, "unknown op"),
+])
+def test_malformed_ops_are_refused(op, message):
+    with pytest.raises(mz.OpError, match=message):
+        run([op])
+
+
+# --- reading order -------------------------------------------------------------------------
+
+
+def test_page_where_most_lines_cross_the_middle_has_no_gutter():
+    lines = lines_of(*[(f"l{i}", [100, 100 * i, 1900, 100 * i + 50]) for i in range(1, 5)],
+                     ("x", [100, 600, 900, 650]), ("y", [1100, 600, 1900, 650]))
+    assert mz.find_gutter(lines) is None
+
+
+def test_empty_page_materializes_to_no_lines():
+    assert mz.materialize_page([], []) == {"lines": [], "page_number": None}
+
+
+def test_initial_box_sharing_no_rows_with_its_line_is_refused():
+    with pytest.raises(mz.OpError, match="doesn't touch 'line_002' or share any of its rows"):
+        run([{"op": "initial", "box": [40, 160, 95, 190], "line": "line_002"}])
+
+
+def test_box_that_would_cut_another_line_in_two_is_refused():
+    # a tall box through the middle of line_002, joined to line_001 above it
+    with pytest.raises(mz.OpError, match="cut 'line_002' in two"):
+        run([{"op": "grow", "box": [400, 120, 500, 260], "line": "line_001"}])
+
+
+def test_legacy_grow_op_still_materializes():
+    lines = run([{"op": "grow", "box": [80, 100, 99, 150], "line": "line_001"}])
+    assert lines[0]["bbox"][0] == 80

@@ -51,6 +51,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 #saved { font-size: 0.85rem; color: var(--muted); }
 #saved.ok { color: var(--ok); }
 #saved.err { color: var(--danger); }
+#letter-hint.error { color: var(--danger); }
 #progress { color: var(--muted); font-size: 0.85rem; }
 #status-badge { font-weight: 700; font-size: 0.85rem; padding: 0.15rem 0.5rem; border-radius: 4px; }
 #status-badge.unreviewed { color: var(--muted); }

@@ -141,3 +141,5 @@ dev/lineseg_survey/overlays/
 !/data/lineseg_survey/*/pages/*/segmentation.json
 !/data/lineseg_survey/*/reviews/
 !/data/lineseg_survey/*/reviews/*.json
+# sha256 of every paddle-filled page (dev/line_review/baseline_manifest.py)
+!/data/lineseg_survey/paddle-filled/baseline_sha256.json

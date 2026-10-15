@@ -186,14 +186,22 @@ function computeTargetLine(box) {
   return nearest[0];
 }
 
+// A new add key, past every one the page has used: in the current ops, and (from the
+// server) in removed ops and minted or retired ids. A reused key would inherit the old
+// line's id on re-verify.
 function nextKey(prefix) {
   let max = 0;
-  for (const op of state.ops) {
-    const m = op.op === "add" && String(op.key).match(new RegExp(`^${prefix}_(\\d+)$`));
+  const used = [...state.ops.filter((op) => op.op === "add").map((op) => op.key),
+    ...(state.data.used_add_keys || [])];
+  for (const key of used) {
+    const m = String(key).match(new RegExp(`^${prefix}_(\\d+)$`));
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
   return `${prefix}_${String(max + 1).padStart(3, "0")}`;
 }
+
+// A section-title letter: 1 to 4 Armenian letters (must match materialize.TITLE_LETTER).
+const TITLE_LETTER = /^[\u0531-\u0556\u0561-\u0587]{1,4}$/;
 
 function nextTitleId() {
   let max = 0;
@@ -224,7 +232,7 @@ function lineColor(l) {
   return l.source === "kraken-fill" ? COLORS.fill : COLORS.paddle;
 }
 
-const SELECT_HINT = "Drag a dot, an edge or the box to reshape it. Option-drag adds missed ink. P = it's the page number.";
+const SELECT_HINT = "Drag a dot, an edge or the box to reshape it. P = it's the page number.";
 
 function draw() {
   if (state.tool === "select" && editable()) {
@@ -321,7 +329,7 @@ function draw() {
 
   if (drag && drag.moved && state.tool !== "split") {
     const x = Math.min(drag.startX, drag.curX), y = Math.min(drag.startY, drag.curY);
-    const c = state.tool === "title" ? COLORS.title : state.tool === "initial" || drag.grow ? COLORS.initial : COLORS.edited;
+    const c = state.tool === "title" ? COLORS.title : state.tool === "initial" ? COLORS.initial : COLORS.edited;
     ctx.setLineDash([5, 3]);
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = c;
@@ -339,7 +347,7 @@ function opLabel(op) {
     case "split": return `split ${op.line}`;
     case "merge": return `merge ${op.lines.join(" + ")}`;
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
-    case "grow": return `grow ${op.line}`;
+    case "grow": return `grow ${op.line} (no longer offered)`;
     case "page_number": return `page number ${op.value}`;
     case "break": return `gutter break at y ${op.y}`;
     case "order": return "reading order";
@@ -419,51 +427,82 @@ function applyPayload(d) {
   if (state.splitKey && !keys.has(state.splitKey)) state.splitKey = null;
 }
 
-// ---- saving edits ----
-async function commit(ops, titles) {
-  if (!editable()) return;
-  const before = { ops: clone(state.ops), titles: clone(state.titles) };
-  try {
-    const d = await api("PUT", `/api/pages/${state.page}/ops`, { ops, section_titles: titles });
-    state.history.push(before);
-    applyPayload(d);
-    flash("saved", "ok");
-  } catch (e) {
-    flash(e.message, "err");
-  }
-  render();
+// ---- one request at a time ----
+// Every page load and save runs through this queue, in order, so a save always builds on
+// the result of the one before it and lands on the page it was made on. A job made on
+// one page that only gets to run after a load of another is dropped, not applied there.
+let queue = Promise.resolve();
+
+function enqueue(job, page) {
+  const run = queue.then(() => {
+    if (page !== undefined && page !== state.page) {
+      flash(`dropped an edit made on page ${page}`, "err");
+      return undefined;
+    }
+    return job();
+  });
+  queue = run.catch((e) => flash(e.message, "err"));
+  return run;
 }
 
-const pushOp = (op) => commit([...state.ops, op], state.titles);
+// ---- saving edits ----
+// ``build`` returns {ops, titles} from the state at save time, after earlier saves landed.
+function commit(build) {
+  return enqueue(async () => {
+    if (!editable()) return;
+    const { ops, titles } = build();
+    const before = { ops: clone(state.ops), titles: clone(state.titles) };
+    try {
+      const d = await api("PUT", `/api/pages/${state.page}/ops`,
+        { ops, section_titles: titles, revision: state.data.revision });
+      state.history.push(before);
+      applyPayload(d);
+      flash("saved", "ok");
+    } catch (e) {
+      flash(e.message, "err");
+    }
+    render();
+  }, state.page);
+}
+
+// ``op`` is an op, or a function making one at save time (e.g. to pick a fresh key).
+const pushOp = (op) => commit(() => ({
+  ops: [...state.ops, typeof op === "function" ? op() : op], titles: state.titles,
+}));
 
 // Save a reshape. Back-to-back reshapes of the same line collapse into one op, so a
 // box adjusted in several drags is still one edit (undo steps back drag by drag).
 function commitReshape(key, boundary) {
-  const last = state.ops[state.ops.length - 1];
-  const op = { op: "reshape", line: key, boundary };
-  const ops = last && last.op === "reshape" && last.line === key
-    ? [...state.ops.slice(0, -1), op] : [...state.ops, op];
-  commit(ops, state.titles);
+  commit(() => {
+    const last = state.ops[state.ops.length - 1];
+    const op = { op: "reshape", line: key, boundary };
+    const ops = last && last.op === "reshape" && last.line === key
+      ? [...state.ops.slice(0, -1), op] : [...state.ops, op];
+    return { ops, titles: state.titles };
+  });
 }
 
-async function undo() {
-  if (!editable() || !state.history.length) return;
-  const prev = state.history.pop();
-  try {
-    applyPayload(await api("PUT", `/api/pages/${state.page}/ops`, { ops: prev.ops, section_titles: prev.titles }));
-    flash("undone", "ok");
-  } catch (e) {
-    state.history.push(prev);
-    flash(e.message, "err");
-  }
-  render();
+function undo() {
+  enqueue(async () => {
+    if (!editable() || !state.history.length) return;
+    const prev = state.history.pop();
+    try {
+      applyPayload(await api("PUT", `/api/pages/${state.page}/ops`,
+        { ops: prev.ops, section_titles: prev.titles, revision: state.data.revision }));
+      flash("undone", "ok");
+    } catch (e) {
+      state.history.push(prev);
+      flash(e.message, "err");
+    }
+    render();
+  }, state.page);
 }
 
 function deleteSelected() {
   if (!state.selection.size) return;
-  const ops = [...state.ops, ...[...state.selection].map((k) => ({ op: "delete", line: k }))];
+  const keys = [...state.selection];
   state.selection.clear();
-  commit(ops, state.titles);
+  commit(() => ({ ops: [...state.ops, ...keys.map((k) => ({ op: "delete", line: k }))], titles: state.titles }));
 }
 
 function mergeSelected() {
@@ -475,30 +514,41 @@ function mergeSelected() {
 
 function deleteAll() {
   if (!state.data.lines.length) return;
-  commit([...state.ops, ...state.data.lines.map((l) => ({ op: "delete", line: l.key }))], state.titles);
+  commit(() => ({ ops: [...state.ops, ...state.data.lines.map((l) => ({ op: "delete", line: l.key }))],
+    titles: state.titles }));
 }
 
 // ---- status ----
-async function setStatus(status) {
-  try {
-    applyPayload(await api("POST", `/api/pages/${state.page}/status`, { status }));
-    state.history = [];
-    state.selection.clear();
-    state.splitKey = null;
-    flash(status, "ok");
-  } catch (e) {
-    flash(e.message, "err");
-    return false;
-  }
-  render();
-  return true;
+// Only one status change at a time: a second Enter (or R) while one is in flight is
+// ignored, so a double press can't mark fixed and then verified, or skip a page.
+let statusBusy = false;
+
+function changeStatus(decide) {
+  if (statusBusy) return;
+  statusBusy = true;
+  enqueue(async () => {
+    const status = decide(state.data.status);  // decided at run time, after earlier saves
+    if (!status) return;
+    try {
+      applyPayload(await api("POST", `/api/pages/${state.page}/status`,
+        { status, revision: state.data.revision }));
+      state.history = [];
+      state.selection.clear();
+      state.splitKey = null;
+      flash(status, "ok");
+    } catch (e) {
+      flash(e.message, "err");
+      render();
+      return;
+    }
+    render();
+    if (status === "verified") showStep(1);
+  }, state.page).finally(() => { statusBusy = false; }).catch(() => {});
 }
 
-async function advance() {
-  const s = state.data.status;
-  if (s === "unreviewed" || s === "fixing") await setStatus("fixed");
-  else if (s === "fixed" && await setStatus("verified")) step(1);
-}
+const advance = () => changeStatus((s) =>
+  s === "unreviewed" || s === "fixing" ? "fixed" : s === "fixed" ? "verified" : null);
+const resume = () => changeStatus((s) => (s === "fixed" || s === "verified" ? "fixing" : null));
 
 // ---- tools ----
 function setHint(text) { $("tool-hint").textContent = text; }
@@ -525,6 +575,7 @@ function openLetterModal(tool, box, lineKey) {
     initial: "Type the letter (optional), then Enter. It joins the upper line on its right.",
     page: "The number printed on the page. Pre-filled with PDF page \u2212 4; Enter to confirm.",
   }[tool];
+  $("letter-hint").classList.remove("error");
   $("letter-input").value = tool === "page" ? state.data.expected_page_number : "";
   $("letter-backdrop").classList.add("show");
   setTimeout(() => $("letter-input").focus(), 0);
@@ -546,9 +597,17 @@ function confirmLetter() {
     return;
   }
   if (tool === "title") {
-    if (!letter) { $("letter-input").focus(); return; }
+    if (!TITLE_LETTER.test(letter)) {
+      $("letter-hint").textContent = letter
+        ? `"${letter}" isn't a section letter: type 1 to 4 Armenian letters (e.g. Ա or ԺԲ), with no spaces, digits or punctuation.`
+        : "A section title needs its letter: type 1 to 4 Armenian letters.";
+      $("letter-hint").classList.add("error");
+      $("letter-input").focus();
+      return;
+    }
     closeLetterModal();
-    commit(state.ops, [...state.titles, { id: nextTitleId(), letter, box, source_line: lineKey || null }]);
+    commit(() => ({ ops: state.ops,
+      titles: [...state.titles, { id: nextTitleId(), letter, box, source_line: lineKey || null }] }));
     return;
   }
   closeLetterModal();
@@ -567,8 +626,7 @@ canvas.addEventListener("mousedown", (ev) => {
   if (!editable()) return;
   const { x, y } = canvasPos(ev);
   drag = { startX: x, startY: y, curX: x, curY: y, moved: false };
-  drag.grow = state.tool === "select" && ev.altKey && soleSelected() ? soleSelected().key : null;
-  const h = state.tool === "select" && !ev.shiftKey && !drag.grow ? hitHandle(x, y) : null;
+  const h = state.tool === "select" && !ev.shiftKey ? hitHandle(x, y) : null;
   if (h) {
     const l = lineByKey(h.key);
     const pts = handlePoints(l);
@@ -612,16 +670,11 @@ canvas.addEventListener("mouseup", (ev) => {
   const line = hitLine(x, y);
 
   if (e && d.moved) { commitReshape(e.key, e.preview); return; }
-  if (d.grow && d.moved) {
-    const box = dragToBox(d);
-    if (box) pushOp({ op: "grow", line: d.grow, box }); else draw();
-    return;
-  }
 
   if (state.tool === "select") {
     if (d.moved) {
       const box = dragToBox(d);
-      if (box) pushOp({ op: "add", key: nextKey("add"), boundary: boxPolygon(box) });
+      if (box) pushOp(() => ({ op: "add", key: nextKey("add"), boundary: boxPolygon(box) }));
       else draw();
       return;
     }
@@ -669,13 +722,26 @@ canvas.addEventListener("mouseleave", () => {
 $("op-list").addEventListener("click", (ev) => {
   const btn = ev.target.closest("button.del");
   if (!btn || !editable()) return;
-  if (btn.dataset.op !== undefined) commit(state.ops.filter((_, i) => i !== Number(btn.dataset.op)), state.titles);
-  else commit(state.ops, state.titles.filter((_, i) => i !== Number(btn.dataset.title)));
+  // Match by content, not index: an earlier save may still be landing and shift the list.
+  const same = (a) => (b) => JSON.stringify(a) === JSON.stringify(b);
+  if (btn.dataset.op !== undefined) {
+    const target = state.ops[Number(btn.dataset.op)];
+    commit(() => {
+      const i = state.ops.findIndex(same(target));
+      return { ops: i < 0 ? state.ops : state.ops.filter((_, j) => j !== i), titles: state.titles };
+    });
+  } else {
+    const target = state.titles[Number(btn.dataset.title)];
+    commit(() => {
+      const i = state.titles.findIndex(same(target));
+      return { ops: state.ops, titles: i < 0 ? state.titles : state.titles.filter((_, j) => j !== i) };
+    });
+  }
 });
 document.querySelectorAll(".tool").forEach((b) => b.addEventListener("click", () => setTool(b.dataset.tool)));
 $("delete-all").addEventListener("click", deleteAll);
 $("advance").addEventListener("click", advance);
-$("resume").addEventListener("click", () => setStatus("fixing"));
+$("resume").addEventListener("click", resume);
 $("undo").addEventListener("click", undo);
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
@@ -697,7 +763,7 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "ArrowRight") { step(1); return; }
   if (ev.key === "Enter") { ev.preventDefault(); advance(); return; }
   if (!editable()) {
-    if (ev.key === "r" || ev.key === "R") setStatus("fixing");
+    if (ev.key === "r" || ev.key === "R") resume();
     return;
   }
   if (ev.key === "Delete" || ev.key === "Backspace") { ev.preventDefault(); deleteSelected(); return; }
@@ -723,7 +789,10 @@ function fitCanvas() {
   state.scale = state.data.width / w;
 }
 
-async function loadPage(page) {
+// Load a page, after any saves already queued for the current one.
+const loadPage = (page) => enqueue(() => showPage(page));
+
+async function showPage(page) {
   state.page = page;
   $("page-select").value = String(page);
   state.history = [];
@@ -741,9 +810,14 @@ async function loadPage(page) {
   render();
 }
 
-function step(delta) {
+// Move ``delta`` pages from the page current when the step runs (two quick presses
+// move two pages, not one twice).
+const step = (delta) => enqueue(() => showStep(delta));
+
+function showStep(delta) {
   const j = state.pages.indexOf(state.page) + delta;
-  if (j >= 0 && j < state.pages.length) loadPage(state.pages[j]);
+  if (j >= 0 && j < state.pages.length) return showPage(state.pages[j]);
+  return undefined;
 }
 
 async function init() {
