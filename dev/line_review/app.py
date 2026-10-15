@@ -99,7 +99,7 @@ def _payload(page: int, review: dict) -> dict:
              "edited": l["key"] not in baseline or l["boundary"] != baseline[l["key"]]["boundary"]}
             for n, l in enumerate(lines, start=1)
         ],
-        "duplicates": [[order[k], order[d]] for k, d in duplicates.pairs(lines)],
+        "duplicates": [[order[k], order[d]] for k, d in duplicates.outline_pairs(lines)],
         "ghosts": [{"key": k, "boundary": baseline[k]["boundary"], "bbox": baseline[k]["bbox"]}
                    for k in sorted(deleted) if k in baseline],
         "baseline_changed": storage.baseline_changed(review),

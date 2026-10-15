@@ -230,3 +230,14 @@ def test_a_box_smaller_than_a_character_is_dropped_but_thin_lines_and_letters_st
                        {"key": "letter", "bbox": [500, 700, 536, 745]}]       # p.641 cell
     assert duplicates.specks(lines) == ["speck"]
     assert "speck" in {l["key"] for l in duplicates.dedupe(lines, [{"op": "reshape", "line": "speck"}])}
+
+
+def test_an_initials_tall_box_over_the_next_line_is_not_a_copy():
+    # p.492: the drop cap made line 31's box reach down over line 32; the outlines don't meet.
+    from dev.line_review import duplicates
+    upper = {"key": "u", "bbox": [340, 2023, 1130, 2147],
+             "boundary": [[340, 2023], [1130, 2023], [1130, 2110], [447, 2110], [447, 2147], [340, 2147]]}
+    lower = {"key": "l", "bbox": [431, 2115, 1131, 2171],
+             "boundary": [[447, 2115], [1131, 2115], [1131, 2171], [447, 2171]]}
+    assert duplicates.pairs([upper, lower]) == [("u", "l")]
+    assert duplicates.outline_pairs([upper, lower]) == []

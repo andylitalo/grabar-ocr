@@ -56,6 +56,22 @@ def pairs(lines: list[dict]) -> list[tuple[str, str]]:
     return found
 
 
+def outline_pairs(lines: list[dict]) -> list[tuple[str, str]]:
+    """``pairs`` by the lines' outlines rather than their boxes, for edited lines: an
+    initial's line has a tall box but an L-shaped outline that only meets the next line
+    (p.492)."""
+    from shapely.geometry import Polygon
+    polys = {l["key"]: Polygon(l["boundary"]).buffer(0) for l in lines if len(l["boundary"]) >= 3}
+    found = []
+    for k, d in pairs(lines):
+        a, b = polys.get(k), polys.get(d)
+        if a is None or b is None or not b.area:
+            continue
+        if a.intersection(b).area / min(a.area, b.area) >= MIN_INSIDE:
+            found.append((k, d))
+    return found
+
+
 def specks(lines: list[dict]) -> list[str]:
     """Keys of boxes smaller than one character."""
     if not lines:
