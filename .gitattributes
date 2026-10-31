@@ -1,0 +1,28 @@
+# Machine-written data: GitHub collapses these in PR diffs and leaves them out of
+# language stats (linguist-generated). Git still stores and diffs them normally;
+# `git diff` locally is unaffected. Hand-authored data (data/transcriptions/,
+# lineseg_survey reviews, column boxes, blank markers) stays visible on purpose.
+# See "Data storage" in CLAUDE.md.
+
+# OCR engine/correction outputs (Phase 10-11 comparison and ceiling runs)
+data/ocr_predictions/** linguist-generated=true
+
+# Line-segmentation survey: per-engine page outputs (reviews/ are human, left visible)
+data/lineseg_survey/*/pages/** linguist-generated=true
+data/lineseg_survey/paddle-filled/baseline_sha256.json linguist-generated=true
+
+# Verified line layouts: human-reviewed, but serialized by the review UI, not read as diffs
+data/verified_lines/** linguist-generated=true
+
+# Built deliverable (python -m pipeline.promote). Only the generated files: README,
+# STRUCTURE, GLOSSARY, ERRATA, TYPOS and book.*.corrected.md are hand-maintained.
+corpus/book.grabar.md linguist-generated=true
+corpus/book.english.md linguist-generated=true
+corpus/manifest.json linguist-generated=true
+corpus/pages/** linguist-generated=true
+
+# Rendered reports
+reports/*.html linguist-generated=true
+reports/*.csv linguist-generated=true
+
+uv.lock linguist-generated=true
