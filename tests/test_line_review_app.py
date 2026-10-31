@@ -16,7 +16,8 @@ from fastapi.testclient import TestClient
 from dev.line_review import app as app_mod
 from dev.line_review import baseline_manifest as bm
 from dev.line_review import materialize as mz
-from dev.line_review import rewrite_verified, storage
+from dev.line_review import migrate, rewrite_verified, storage
+from dev.line_review import transcribe as tr
 
 PAGE = 500
 
@@ -45,6 +46,10 @@ def store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
     monkeypatch.setattr(storage, "MANIFEST_PATH", tmp_path / "baseline_sha256.json")
+    # verify runs migrate, which rewrites committed transcriptions and predictions
+    monkeypatch.setattr(tr, "TRANSCRIPTIONS_DIR", tmp_path / "transcriptions")
+    monkeypatch.setattr(migrate, "PREDICTIONS_DIR", tmp_path / "predictions")
+    monkeypatch.setattr(migrate, "CROPS_DIR", tmp_path / "runs")
     return tmp_path
 
 
