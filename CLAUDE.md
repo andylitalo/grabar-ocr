@@ -49,3 +49,22 @@ data/               Data, apart from code: committed ground truth and outputs (c
 - Secrets (GCS credentials, API keys, DB passwords) go in Kubernetes Secrets — never in code or git
 - GPU device selection via `CUDA_VISIBLE_DEVICES` env var — no hardcoded device indices
 - All training runs log to Weights & Biases; evaluation reports CER via `jiwer`
+
+## Data storage
+**Rule of thumb:** if a person wrote it, or it's small and stable, it goes in git. If a script
+made it and it's big or will be remade, it goes outside git with a manifest.
+
+- **In git:** ground truth and curated data: transcriptions, column boxes, blank markers,
+  verified lines, survey reviews. Also small derived outputs that are expensive or can't be
+  remade, such as nondeterministic, paid Gemini runs on the test set (`data/ocr_predictions/`,
+  ~9 MB). Summary scores go in `reports/`.
+- **Never in git:** PDFs, page renders, column and line crops (already ignored in
+  `.gitignore`).
+- **Machine-written files that are committed** get a `linguist-generated` entry in
+  `.gitattributes`, so PR diffs stay reviewable. Add a pattern whenever a new committed
+  output directory appears. Commit regenerated data separately from code changes.
+- **Planned: the book-wide OCR run (after the Phase 9 layout review).** Its outputs, the full
+  book times every engine and prompt version, go in GCS and are tracked with DVC (or GCS
+  plus a committed manifest of path, sha256, settings and date), **not** committed to git.
+  Rewriting large files on every iteration is what bloats history, and removing them later
+  means rewriting history. Set this up before that run starts.
