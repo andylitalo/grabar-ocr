@@ -6,22 +6,29 @@ Run from the repo root (needs the repo venv for shapely):
 
 Every edit is saved as an op (``materialize.py``); the server re-materializes on each
 save and the page shows the result. See docs/phase_9_line_segmentation_review.md.
+
+``/transcribe`` is the Phase 10 workflow: type the text of verified lines
+(docs/phase_10_ocr_test_set.md).
 """
 
 from __future__ import annotations
 
 import argparse
+import io
+import json
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from PIL import Image
 from pydantic import BaseModel
 
-from . import duplicates
+from . import crops, duplicates, lines
 from . import materialize as mz
 from . import storage
+from . import transcribe as tr
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -46,6 +53,19 @@ class OpsRequest(BaseModel):
 class StatusRequest(BaseModel):
     status: str
     revision: int | None = None
+
+
+class TranscriptionRequest(BaseModel):
+    text: str
+    status: str = "done"
+
+
+class RecheckRequest(BaseModel):
+    text: str
+
+
+CONTRIBUTOR = "maintainer"  # set by --contributor; stored as ``by`` on each transcription
+SETS = (tr.TESTSET, "ceiling")  # line sets the transcription page can serve
 
 
 def _payload(page: int, review: dict) -> dict:
@@ -143,13 +163,126 @@ def post_status(page: int, req: StatusRequest) -> dict:
 # --- Phase 10: transcription ------------------------------------------------------
 
 
+def _verified_pages() -> list[dict]:
+    """Verified-lines records for pages whose review is currently ``verified``."""
+    out = []
+    for page, status in storage.page_statuses().items():
+        path = storage.verified_path(page)
+        if status == "verified" and path.exists():
+            out.append(json.loads(path.read_text(encoding="utf-8")))
+    return out
+
+
+def _line(key: str) -> tuple[dict, list[dict]]:
+    """(the line, its page's lines), verified id or baseline key; 404 if absent."""
+    try:
+        return lines.find(key)
+    except (KeyError, FileNotFoundError, ValueError):
+        raise HTTPException(status_code=404, detail=f"No line {key}")
+
+
+def _set(name: str) -> str:
+    if name not in SETS:
+        raise HTTPException(status_code=400, detail=f"unknown set {name!r}; expected one of {SETS}")
+    return name
+
+
+def _png(img: Image.Image) -> Response:
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(buf.getvalue(), media_type="image/png")
+
+
+def _transcribe_state(task: str) -> dict:
+    sample = tr.load_sample(task)
+    testset = task == tr.TESTSET
+    pool = tr.candidates(_verified_pages()) if testset else []
+    recheck = set(tr.recheck_ids(sample)) if testset else set()
+    picks = []
+    # Serve in rank order, not pick order: picks are appended stratum by stratum, so pick
+    # order would serve every body line before the first display or drop-cap line.
+    for p in sorted(sample["picks"], key=lambda p: tr.rank(sample["seed"], p["id"])):
+        rec = tr.effective_line(p["id"], task)
+        picks.append({**p, "status": rec["status"] if rec else "pending",
+                      "recheck": p["id"] in recheck,
+                      "rechecked": bool(rec and "recheck" in rec)})
+    population = sample.get("population", {})
+    strata = {name: {"quota": q, "picked": sum(p["stratum"] == name for p in picks),
+                     "done": sum(p["stratum"] == name and p["status"] != "pending" for p in picks),
+                     "pool": sum(c["stratum"] == name for c in pool) if testset else population.get(name, 0)}
+              for name, q in sample["quotas"].items()}
+    return {"set": task, "picks": picks, "strata": strata,
+            "missing": tr.missing_picks(sample, pool) if testset else [],
+            "per_page": sample.get("per_page"), "contributor": CONTRIBUTOR}
+
+
+@app.get("/transcribe")
+def transcribe_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "transcribe.html")
+
+
+@app.get("/api/transcribe/state")
+def transcribe_state(set: str = tr.TESTSET) -> dict:  # noqa: A002 (query parameter name)
+    return _transcribe_state(_set(set))
+
+
+@app.post("/api/transcribe/sample")
+def top_up_sample() -> dict:
+    """Top up the Phase 10 test set (the ceiling sample is made by dev/ocr_eval/ceiling.py)."""
+    tr.save_sample(tr.top_up(tr.load_sample(), tr.candidates(_verified_pages())))
+    return _transcribe_state(tr.TESTSET)
+
+
+@app.get("/api/lines/{line_id}")
+def get_line(line_id: str, set: str = tr.TESTSET) -> dict:  # noqa: A002
+    line, _ = _line(line_id)
+    return {"id": line_id, "page": lines.page_of(line_id), "bbox": line["bbox"],
+            "initial": line.get("initial"), "transcription": tr.effective_line(line_id, _set(set))}
+
+
+@app.get("/api/lines/{line_id}/crop.png")
+def get_line_crop(line_id: str) -> Response:
+    line, _ = _line(line_id)
+    page = Image.open(storage.render_path(lines.page_of(line_id))).convert("L")
+    return _png(crops.line_crop(page, line))
+
+
+@app.get("/api/lines/{line_id}/context.png")
+def get_line_context(line_id: str) -> Response:
+    line, page_lines = _line(line_id)
+    page = Image.open(storage.render_path(lines.page_of(line_id)))
+    return _png(crops.context_crop(page, line, page_lines))
+
+
+@app.put("/api/transcribe/lines/{line_id}")
+def put_transcription(line_id: str, req: TranscriptionRequest, set: str = tr.TESTSET) -> dict:  # noqa: A002
+    line, _ = _line(line_id)
+    try:
+        return tr.save_line(line_id, text=req.text, status=req.status, task=_set(set), by=CONTRIBUTOR,
+                            geometry=tr.geometry(line))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/api/transcribe/lines/{line_id}/recheck")
+def put_recheck(line_id: str, req: RecheckRequest) -> dict:
+    try:
+        return tr.save_recheck(line_id, text=req.text, by=CONTRIBUTOR)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 def main() -> None:
+    global CONTRIBUTOR
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8092)
+    ap.add_argument("--contributor", default="maintainer",
+                    help="name stored as `by` on each transcription")
     args = ap.parse_args()
+    CONTRIBUTOR = args.contributor
     uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 
