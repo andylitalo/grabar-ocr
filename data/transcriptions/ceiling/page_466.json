@@ -1,10 +1,11 @@
 {
- "p466~line_042": {
+ "p466.042": {
   "text": "եւ ապա Հոգւոց. զի ՚ի մեծ պահս Հանգստեան",
   "status": "illegible",
   "at": "2026-10-09T05:20:15+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "530222d7ca03f60c"
+  "geometry": "530222d7ca03f60c",
+  "migrated_from": "p466~line_042"
  }
 }
