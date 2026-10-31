@@ -18,6 +18,8 @@ import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import storage
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TRANSCRIPTIONS_DIR = REPO_ROOT / "data" / "transcriptions"
 TESTSET = "testset"
@@ -127,9 +129,7 @@ def load_sample(task: str = TESTSET) -> dict:
 
 
 def save_sample(sample: dict, task: str = TESTSET) -> None:
-    sample_path(task).parent.mkdir(parents=True, exist_ok=True)
-    sample_path(task).write_text(json.dumps(sample, indent=1, ensure_ascii=False) + "\n",
-                                 encoding="utf-8")
+    storage.write_atomic(sample_path(task), json.dumps(sample, indent=1, ensure_ascii=False) + "\n")
 
 
 # --- transcriptions --------------------------------------------------------------
@@ -145,22 +145,26 @@ def load_page(page: int, task: str = TESTSET) -> dict:
 
 
 def _write_page(page: int, task: str, records: dict) -> None:
-    path = _page_path(page, task)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(dict(sorted(records.items())), indent=1, ensure_ascii=False)
-                    + "\n", encoding="utf-8")
+    storage.write_atomic(_page_path(page, task),
+                         json.dumps(dict(sorted(records.items())), indent=1, ensure_ascii=False) + "\n")
 
 
-def load_line(line_id: str, task: str = TESTSET) -> dict | None:
-    return load_page(page_of(line_id), task).get(line_id)
+def load_line(line_id: str, task: str = TESTSET, cache: dict | None = None) -> dict | None:
+    """``cache``: (page, task) -> records, shared across calls to read each page file once."""
+    where = (page_of(line_id), task)
+    if cache is None:
+        return load_page(*where).get(line_id)
+    if where not in cache:
+        cache[where] = load_page(*where)
+    return cache[where].get(line_id)
 
 
-def effective_line(key: str, task: str) -> dict | None:
+def effective_line(key: str, task: str, cache: dict | None = None) -> dict | None:
     """``key``'s transcription for ``task``: its own, else (for a verified line id) one
     already typed for the test set, so no line is typed twice."""
-    rec = load_line(key, task)
+    rec = load_line(key, task, cache)
     if rec is None and task != TESTSET and "~" not in key:
-        rec = load_line(key, TESTSET)
+        rec = load_line(key, TESTSET, cache)
     return rec
 
 

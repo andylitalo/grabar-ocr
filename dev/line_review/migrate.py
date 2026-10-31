@@ -15,11 +15,23 @@ against (``transcribe.geometry``). On verify, for each task's records on the pag
   shows as untyped so it can be retyped (the stale text can serve as a prefill).
 
 Everything else keyed to the page's old keys follows, typed or not, judged against the
-line's shape before the verify (the baseline's, or the previous verified output's):
-the task's sample picks move to the new id (a split line's to its first part in reading
-order; a deleted line's go to ``dropped``); OCR predictions and crops move, or are dropped
-for a changed line; a page-level corrector's (``corr-*``) whole page is dropped if any of
-its lines changed, since the corrector read the page as a whole.
+line's shape before the verify: the baseline's (crops are exported once per key, so a
+baseline key's crop and predictions are of its baseline shape), the page's current shape
+for keys only its ops made (``add_…``, ``…/1``, ``…+…``), or the previous verified output's
+on a re-verify. The task's sample picks move to the new id (a split or merged line's to
+its first successor in reading order, found through the line's lineage, or through
+``superseded_by`` for a retired id; a pick landing on a line already picked, or on a
+deleted line, goes to ``dropped``); OCR predictions and crops move, or are dropped for a
+changed line; a page-level corrector's (``corr-*``) whole page is dropped if any of its
+lines changed, since the corrector read the page as a whole.
+
+The test set's predictions and crops live in ``data/ocr_predictions/*.json`` and
+``runs/ocr_eval/crops/``; another set's in ``data/ocr_predictions/<set>/`` and
+``runs/ocr_eval/<set>_crops/`` (as ``dev/ocr_eval/common.use_set`` lays them out).
+
+Storage runs this before it writes the verified file and the review, and every step is
+idempotent, so a verify that fails partway can simply be retried. One verify migrates at
+a time (the sample file is shared by every page).
 
     uv run python -m dev.line_review.migrate backfill   # fingerprint existing records
     uv run python -m dev.line_review.migrate repair     # pages verified before this existed
@@ -29,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import threading
 from datetime import datetime, timezone
 
 from . import lines as lines_mod
@@ -37,6 +50,14 @@ from . import transcribe as tr
 
 PREDICTIONS_DIR = storage.REPO_ROOT / "data" / "ocr_predictions"
 CROPS_DIR = storage.REPO_ROOT / "runs" / "ocr_eval"
+_lock = threading.Lock()
+
+
+def _set_dirs(task: str):
+    """(predictions dir, crops dir) of a line set, as dev/ocr_eval/common.use_set has them."""
+    if task == tr.TESTSET:
+        return PREDICTIONS_DIR, CROPS_DIR / "crops"
+    return PREDICTIONS_DIR / task, CROPS_DIR / f"{task}_crops"
 
 
 def _now() -> str:
@@ -53,28 +74,33 @@ def _stale_path(page: int, task: str):
 
 
 def _write_json(path, obj) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    storage.write_atomic(path, json.dumps(obj, indent=1, ensure_ascii=False) + "\n")
 
 
-def before_shapes(page: int, previous_verified: dict | None) -> dict[str, str]:
+def before_shapes(page: int, previous_verified: dict | None,
+                  current_lines: list[dict] = ()) -> dict[str, str]:
     """Old key -> ``geometry`` of every line the page's data may still be keyed by: the
-    baseline's lines (``p<N>~line_…``) and, on a re-verify, the previous verified ids."""
+    baseline's lines (``p<N>~line_…``), lines only the page's ops made (from
+    ``current_lines``, the page materialized before the verify) and, on a re-verify, the
+    previous verified ids."""
     from . import materialize as mz
     shapes = {f"p{page}~{l['key']}": tr.geometry(l)
               for l in mz.baseline_lines(storage.load_baseline(page))}
+    for l in current_lines:
+        shapes.setdefault(f"p{page}~{l['key']}", tr.geometry(l))
     for l in (previous_verified or {}).get("lines", []):
         shapes[l["id"]] = tr.geometry(l)
     return shapes
 
 
 def page_map(page: int, page_lines: list[dict], ids: dict[str, str],
-             before: dict[str, str]) -> tuple[dict, dict, dict]:
+             before: dict[str, str], retired: dict | None = None) -> tuple[dict, dict, dict]:
     """How each old key on the page maps to the verified lines.
 
     Returns (``target``, ``changed``, ``now``): old key -> new id (for a split or merged
     line, the first line made from it; None if deleted); old keys whose line changed
-    shape or is gone, with the reason; new id -> geometry of the verified line."""
+    shape or is gone, with the reason; new id -> geometry of the verified line.
+    ``retired``: the review's retired ids (``superseded_by``), for old verified ids."""
     by_key = {l["key"]: l for l in page_lines}
     by_id = {ids[l["key"]]: l for l in page_lines}
     now = {ids[l["key"]]: tr.geometry(l) for l in page_lines}
@@ -90,26 +116,33 @@ def page_map(page: int, page_lines: list[dict], ids: dict[str, str],
             if tr.geometry(line) != shape:
                 changed[old] = "shape changed"
             continue
-        successors = [ids[l["key"]] for l in page_lines if key and key in l.get("lineage", [])]
+        if key:
+            successors = [ids[l["key"]] for l in page_lines if key in l.get("lineage", [])]
+        else:  # a verified id that was retired: follow superseded_by, in reading order
+            order = {ids[l["key"]]: n for n, l in enumerate(page_lines)}
+            successors = sorted((i for i in (retired or {}).get(old, {}).get("superseded_by", [])
+                                 if i in order), key=order.get)
         target[old] = successors[0] if successors else None
         changed[old] = "line split or merged" if successors else "line removed"
     return target, changed, now
 
 
 def after_verify(page: int, page_lines: list[dict], ids: dict[str, str],
-                 before: dict[str, str] | None = None) -> dict:
+                 before: dict[str, str] | None = None, retired: dict | None = None) -> dict:
     """Re-key every task's transcriptions, sample picks, predictions and crops on ``page``
-    to its verified ids. ``before``: see ``before_shapes`` (computed if None)."""
+    to its verified ids. ``before``: see ``before_shapes`` (computed if None);
+    ``retired``: the review's retired ids after minting."""
     if before is None:
-        before = before_shapes(page, None)
-    target, changed, now = page_map(page, page_lines, ids, before)
+        before = before_shapes(page, None, page_lines)
+    target, changed, now = page_map(page, page_lines, ids, before, retired)
     summary = {}
-    for task in _tasks():
-        moved, stale = _move_records(page, task, target, changed, now)
-        picks = _move_picks(task, target, changed)
-        preds = _move_predictions(task, page, target, changed)
-        if moved or stale or picks or preds:
-            summary[task] = {"moved": moved, "stale": stale, "picks": picks, "predictions": preds}
+    with _lock:
+        for task in _tasks():
+            moved, stale = _move_records(page, task, target, changed, now)
+            picks = _move_picks(task, target, changed)
+            preds = _move_predictions(task, page, target, changed)
+            if moved or stale or picks or preds:
+                summary[task] = {"moved": moved, "stale": stale, "picks": picks, "predictions": preds}
     return summary
 
 
@@ -145,12 +178,19 @@ def _move_picks(task: str, target: dict, changed: dict) -> int:
         return 0
     sample = tr.load_sample(task)
     picks, dropped, n = [], sample.get("dropped", []), 0
+    taken = {p["id"] for p in sample["picks"] if target.get(p["id"], p["id"]) == p["id"]}
     for p in sample["picks"]:
         new = target.get(p["id"], p["id"])
         if new is None:
             dropped.append({**p, "reason": changed[p["id"]], "at": _now()})
             n += 1
             continue
+        if new != p["id"] and new in taken:  # merged into (or split onto) a picked line
+            dropped.append({**p, "reason": f"{changed.get(p['id'], 'moved')}, onto {new}, "
+                                           "already picked", "at": _now()})
+            n += 1
+            continue
+        taken.add(new)
         if new != p["id"]:
             p = {**p, "id": new, "was": p["id"]}
             n += 1
@@ -166,7 +206,7 @@ def _move_picks(task: str, target: dict, changed: dict) -> int:
 def _move_predictions(task: str, page: int, target: dict, changed: dict) -> int:
     """Re-key predictions of unchanged lines; drop those of changed lines, and a page-level
     corrector's (``corr-*``) whole page if any of its lines changed."""
-    pred_dir = PREDICTIONS_DIR / task
+    pred_dir, crops = _set_dirs(task)
     n = 0
     if pred_dir.is_dir():
         prefix = (f"p{page}~", f"p{page}.")
@@ -187,7 +227,6 @@ def _move_predictions(task: str, page: int, target: dict, changed: dict) -> int:
                 rec["lines"] = dict(sorted(new.items()))
                 _write_json(path, rec)
                 n += 1
-    crops = CROPS_DIR / f"{task}_crops"
     if crops.is_dir():
         for old, new in target.items():
             src = crops / f"{old}.png"
@@ -208,7 +247,7 @@ def repair() -> None:
         if review["status"] != "verified":
             continue
         lines = storage.materialized(page, review)
-        summary = after_verify(page, lines, review["ids"])
+        summary = after_verify(page, lines, review["ids"], retired=review.get("retired"))
         if summary:
             print(f"p{page}: {summary}")
 

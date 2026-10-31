@@ -320,15 +320,18 @@ def main() -> None:
         keys = [l["key"] for l in page_lines]
         images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
                   if a.prompt in WITH_IMAGES else [])
+        total = {"in": 0, "out": 0}
         for attempt in (1, 2):  # a page with fallback lines is asked once more
             text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system, images))
+            total["in"] += u["in"]   # every attempt is billed, not just the last
+            total["out"] += u["out"]
             corrected, fallbacks = parse(text, keys, preds)
             if not fallbacks:
                 break
             unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
             print(f"  p{page}: {fallbacks} fallback lines (try {attempt}); "
                   f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
-        return page, corrected, fallbacks, u
+        return page, corrected, fallbacks, {**u, **total}
 
     start = time.time()
     with ThreadPoolExecutor(max_workers=a.workers) as pool:

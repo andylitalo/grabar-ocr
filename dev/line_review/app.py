@@ -163,13 +163,23 @@ def post_status(page: int, req: StatusRequest) -> dict:
 # --- Phase 10: transcription ------------------------------------------------------
 
 
+_verified_cache: dict = {}  # path -> ((mtime_ns, size), record): re-read only on change
+
+
 def _verified_pages() -> list[dict]:
     """Verified-lines records for pages whose review is currently ``verified``."""
     out = []
     for page, status in storage.page_statuses().items():
         path = storage.verified_path(page)
-        if status == "verified" and path.exists():
-            out.append(json.loads(path.read_text(encoding="utf-8")))
+        if status != "verified" or not path.exists():
+            continue
+        st = path.stat()
+        stamp = (st.st_mtime_ns, st.st_size)
+        hit = _verified_cache.get(path)
+        if hit is None or hit[0] != stamp:
+            hit = (stamp, json.loads(path.read_text(encoding="utf-8")))
+            _verified_cache[path] = hit
+        out.append(hit[1])
     return out
 
 
@@ -198,11 +208,11 @@ def _transcribe_state(task: str) -> dict:
     testset = task == tr.TESTSET
     pool = tr.candidates(_verified_pages()) if testset else []
     recheck = set(tr.recheck_ids(sample)) if testset else set()
-    picks = []
+    picks, cache = [], {}  # cache: each transcription page file is read once
     # Serve in rank order, not pick order: picks are appended stratum by stratum, so pick
     # order would serve every body line before the first display or drop-cap line.
     for p in sorted(sample["picks"], key=lambda p: tr.rank(sample["seed"], p["id"])):
-        rec = tr.effective_line(p["id"], task)
+        rec = tr.effective_line(p["id"], task, cache)
         picks.append({**p, "status": rec["status"] if rec else "pending",
                       "recheck": p["id"] in recheck,
                       "rechecked": bool(rec and "recheck" in rec)})

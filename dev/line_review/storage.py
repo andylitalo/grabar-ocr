@@ -318,12 +318,15 @@ def _set_status(page: int, status: str, revision: int | None) -> dict:
         review["verified_at"] = _now()
         record = mz.verified_record(load_baseline(page), review,
                                     baseline_sha256=baseline_sha256(page), page_el=page_el)
-        from . import migrate  # data keyed to the old line keys follows the new ids
+        # Data keyed to the old line keys follows the new ids. This runs before the verified
+        # file and the review are written, and is idempotent: if it fails partway, nothing
+        # here is saved, and a retry (same ids, same previous output) finishes the move.
+        from . import migrate
         previous = (json.loads(verified_path(page).read_text(encoding="utf-8"))
                     if verified_path(page).exists() else None)
-        before = migrate.before_shapes(page, previous)
+        before = migrate.before_shapes(page, previous, page_el["lines"])
+        migrate.after_verify(page, page_el["lines"], review["ids"], before, review["retired"])
         write_atomic(verified_path(page), mz.dumps(record))
-        migrate.after_verify(page, page_el["lines"], review["ids"], before)
     elif current == "verified":
         _mark_resumed(page)
     review["status"] = status

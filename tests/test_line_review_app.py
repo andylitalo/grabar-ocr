@@ -434,3 +434,36 @@ def test_rewrite_refuses_a_page_whose_ops_no_longer_apply(store, monkeypatch, ca
     assert storage.verified_path(PAGE).read_text() == before
     assert rewrite_verified.main(["--reopen"]) == 0
     assert storage.load_review(PAGE)["status"] == "fixing"
+
+
+# --- fixes from the PR #2 review ---------------------------------------------------------
+
+
+def test_a_failed_migration_saves_nothing_and_a_retry_finishes(store, monkeypatch):
+    """Re-verify after a split: the migration fails once; the retry must still find the
+    data on the old id (it would be orphaned if the new verified file were already out)."""
+    tr.save_sample({"picks": [{"id": f"p{PAGE}.002", "stratum": "agree", "page": PAGE}]}, "ceiling")
+    verify()
+    tr.save_sample({"picks": [{"id": f"p{PAGE}.002", "stratum": "agree", "page": PAGE}]}, "ceiling")
+    storage.set_status(PAGE, "fixing")
+    storage.save_ops(PAGE, [{"op": "split", "line": "line_002", "cut": [[500, 190], [500, 260]]}], [])
+    storage.set_status(PAGE, "fixed")
+    before_file = storage.verified_path(PAGE).read_text()
+    real = migrate._move_predictions
+    monkeypatch.setattr(migrate, "_move_predictions", lambda *a: (_ for _ in ()).throw(OSError("disk")))
+    with pytest.raises(OSError):
+        storage.set_status(PAGE, "verified")
+    assert storage.verified_path(PAGE).read_text() == before_file
+    assert storage.load_review(PAGE)["status"] == "fixed"
+    monkeypatch.setattr(migrate, "_move_predictions", real)
+    review = storage.set_status(PAGE, "verified")
+    successor = review["retired"][f"p{PAGE}.002"]["superseded_by"][0]
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [successor]
+
+
+def test_a_page_back_under_review_keeps_serving_its_verified_ids(store):
+    from dev.line_review import lines
+    verify()
+    storage.set_status(PAGE, "fixing")
+    keys = [l["key"] for l in lines.page_lines(PAGE)]
+    assert keys and all(k.startswith(f"p{PAGE}.") for k in keys)

@@ -110,6 +110,10 @@ def score() -> None:
     total = pop["agree"] + pop["disagree"]
     typed = {p["id"]: (p["stratum"], reference(p["id"])) for p in smp["picks"]}
     typed = {k: v for k, v in typed.items() if v[1] is not None}
+    # A typed line whose OCR was dropped (its shape changed on verify) waits for a re-run
+    # of the engines: it can't be compared with the engines' agreement yet.
+    unpredicted = sorted(k for k in typed if not all(k in preds[e] for e in ENGINES))
+    typed = {k: v for k, v in typed.items() if k not in unpredicted}
 
     def wrong(engine: str, key: str) -> bool:
         return edits(normalize(typed[key][1], spaces=False),
@@ -140,7 +144,9 @@ def score() -> None:
            f"Book: {total} lines; the OCR engines disagree on {pop['disagree']} "
            f"({100 * pop['disagree'] / total:.1f}%). Typed so far: {sum(v[0] == 'disagree' for v in typed.values())} "
            f"of {smp['quotas']['disagree']} sampled disagreements, "
-           f"{sum(v[0] == 'agree' for v in typed.values())} of {smp['quotas']['agree']} agreements.", "",
+           f"{sum(v[0] == 'agree' for v in typed.values())} of {smp['quotas']['agree']} agreements"
+           + (f"; {len(unpredicted)} more typed lines wait for the OCR engines to be re-run "
+              f"(their shape changed on verify)" if unpredicted else "") + ".", "",
            "| engine | lines | wrong on disagree | wrong on agree | **error-free lines** | 95% interval | ≈ lines per error | broke (agreed & right → wrong) |",
            "|---|--:|--:|--:|--:|--:|--:|--:|"]
     rng = random.Random(SEED)

@@ -98,3 +98,79 @@ def test_untyped_picks_and_predictions_follow_too(dirs):
     migrate.after_verify(463, lines, {"line_001": "p463.001", "line_002": "p463.002"}, before)
     assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == ["p463.002"]
     assert json.loads((pred_dir / "paddle.json").read_text())["lines"] == {"p463.001": "Ա", "p463.002": "Բ"}
+
+
+# --- fixes from the PR #2 review -----------------------------------------------------------
+
+
+def test_keys_made_by_ops_are_part_of_before(dirs, monkeypatch):
+    """A line only the ops made (an add, a split piece) can be sampled before verify."""
+    from dev.line_review import storage
+    seg = {"page": 520, "lines": [{"id": "line_001", "boundary": mline("x", 100)["boundary"],
+                                   "baseline": [[100, 140], [900, 140]], "bbox": [100, 100, 900, 150]}]}
+    monkeypatch.setattr(storage, "load_baseline", lambda page: seg)
+    added = mline("add_001", 300)
+    before = migrate.before_shapes(520, None, [mline("line_001", 100), added])
+    assert before["p520~add_001"] == tr.geometry(added)
+    tr.save_sample({"picks": [{"id": "p520~add_001", "stratum": "agree", "page": 520}]}, "ceiling")
+    typed("p520~add_001", added, "Ա")
+    migrate.after_verify(520, [mline("line_001", 100), added],
+                         {"line_001": "p520.001", "add_001": "p520.002"}, before)
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == ["p520.002"]
+    assert set(tr.load_page(520, "ceiling")) == {"p520.002"}
+
+
+def test_test_set_predictions_and_crops_follow_their_own_layout(dirs):
+    """The test set lives in data/ocr_predictions/*.json and runs/ocr_eval/crops/."""
+    (dirs / "predictions").mkdir()
+    (dirs / "predictions" / "tess-calfa-n.json").write_text(json.dumps(
+        {"lines": {"p520.001": "Ա", "p520.002": "Բ", "p521.001": "Գ"}}))
+    crops = dirs / "runs" / "crops"
+    crops.mkdir(parents=True)
+    for k in ("p520.001", "p520.002"):
+        (crops / f"{k}.png").write_bytes(b"png")
+    tr.save_sample({"picks": [{"id": "p520.002", "stratum": "vol1-body", "page": 520}]})
+    before = {"p520.001": tr.geometry(mline("line_001", 100)), "p520.002": tr.geometry(mline("line_002", 200))}
+    migrate.after_verify(520, [mline("line_001", 100), mline("line_002", 210)],  # line_002 reshaped
+                         {"line_001": "p520.001", "line_002": "p520.002"}, before)
+    preds = json.loads((dirs / "predictions" / "tess-calfa-n.json").read_text())["lines"]
+    assert preds == {"p520.001": "Ա", "p521.001": "Գ"}
+    assert sorted(p.name for p in crops.iterdir()) == ["p520.001.png"]
+
+
+def test_a_retired_id_hands_its_pick_to_its_successor(dirs):
+    """Re-verify: p520.001 and p520.002 were merged into p520.003."""
+    tr.save_sample({"picks": [{"id": "p520.001", "stratum": "agree", "page": 520}]}, "ceiling")
+    before = {"p520.001": tr.geometry(mline("line_001", 100)), "p520.002": tr.geometry(mline("line_002", 150))}
+    merged = mline("line_001+line_002", 100, ["line_001", "line_002"])
+    migrate.after_verify(520, [merged], {"line_001+line_002": "p520.003"}, before,
+                         retired={"p520.001": {"superseded_by": ["p520.003"]},
+                                  "p520.002": {"superseded_by": ["p520.003"]}})
+    sample = tr.load_sample("ceiling")
+    assert [(p["id"], p["was"]) for p in sample["picks"]] == [("p520.003", "p520.001")]
+    assert "dropped" not in sample
+
+
+def test_two_picks_merged_into_one_line_keep_one_pick(dirs):
+    tr.save_sample({"picks": [{"id": "p520~line_001", "stratum": "agree", "page": 520},
+                              {"id": "p520~line_002", "stratum": "agree", "page": 520}]}, "ceiling")
+    before = {"p520~line_001": tr.geometry(mline("line_001", 100)),
+              "p520~line_002": tr.geometry(mline("line_002", 150))}
+    merged = mline("line_001+line_002", 100, ["line_001", "line_002"])
+    migrate.after_verify(520, [merged], {"line_001+line_002": "p520.001"}, before)
+    sample = tr.load_sample("ceiling")
+    assert [p["id"] for p in sample["picks"]] == ["p520.001"]
+    assert [p["id"] for p in sample["dropped"]] == ["p520~line_002"]
+    assert "already picked" in sample["dropped"][0]["reason"]
+
+
+def test_effective_line_reads_each_page_file_once_with_a_cache(dirs, monkeypatch):
+    for i in (1, 2, 3):
+        tr.save_line(f"p520.00{i}", text="Ա", status="done")
+    reads = []
+    real = tr.load_page
+    monkeypatch.setattr(tr, "load_page", lambda *a: (reads.append(a), real(*a))[1])
+    cache = {}
+    for i in (1, 2, 3):
+        assert tr.effective_line(f"p520.00{i}", "ceiling", cache)["text"] == "Ա"
+    assert len(reads) == 2  # page 520 for ceiling (empty) and for the test set, once each
