@@ -62,7 +62,31 @@ made it and it's big or will be remade, it goes outside git with a manifest.
   `.gitignore`).
 - **Machine-written files that are committed** get a `linguist-generated` entry in
   `.gitattributes`, so PR diffs stay reviewable. Add a pattern whenever a new committed
-  output directory appears. Commit regenerated data separately from code changes.
+  output directory appears.
+- **Separate PRs for code and data.** When a change produces large machine-written data
+  (more than ~1,000 lines or ~1 MB of files marked `linguist-generated`), split it in two:
+  1. **Code PR**, targeting `main`: the scripts, tests, docs and reports (summary scores),
+     plus any small hand-made data. This is the PR that gets a real review.
+  2. **Data PR**, stacked on the code PR: only the regenerated outputs. Its description
+     says how to rebuild them: the exact command, and the code commit (SHA) it was run
+     from. Review it for spot checks and size, not line by line.
+
+  Merge the code PR first. Then retarget the data PR to `main` **before** deleting the
+  code branch, because deleting the base branch closes the stacked PR. If the data is
+  small, or a code change and its outputs only make sense together (for example a test
+  fixture), one PR is fine.
+- **Committed machine-written data is diff-friendly text.** Write one record per line: a
+  short header, then one compact JSON object per line, or nested lists such as polygons
+  written inline instead of one number per line. Never gzip or commit binary formats: git
+  can't store compact deltas between versions of them, and nobody can review them.
+  - **Frozen, hash-pinned data keeps its exact bytes.** That includes the `paddle-filled`
+    baseline (`baseline_sha256.json`) and the frozen Phase 4 sets. Don't reformat or
+    regenerate them, even for a format-only change. The rule applies to new outputs, and
+    to rewrites a reproduce test checks (e.g. `data/verified_lines/` via
+    `rewrite_verified.py` and `test_verified_lines_reproduce`).
+  - **Format changes only.** Rounding coordinates or dropping fields that can be
+    recomputed changes the data itself. Do that only when designing a new format, after
+    checking that nothing downstream reads those fields.
 - **Planned: the book-wide OCR run (after the Phase 9 layout review).** Its outputs, the full
   book times every engine and prompt version, go in GCS and are tracked with DVC (or GCS
   plus a committed manifest of path, sha256, settings and date), **not** committed to git.
