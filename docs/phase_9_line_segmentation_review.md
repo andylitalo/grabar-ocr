@@ -232,3 +232,24 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   `dev/lineseg_survey/` to `data/lineseg_survey/`): 40 pages verified (453-492), p.493
   still fixing. All 40 verified files reproduce. Not ported: the layout branch's automatic id retirement in `rewrite_verified`
   (verified content now changes only through a re-verify) and the fresh-review auto ops.
+- **2026-10-31: fixes from the second PR #3 review** (code and data now in separate PRs):
+  - **Saves are serialized.** Each page has a lock from the revision check to the write.
+    Files are written to a temp file and renamed into place. In the UI, the page after a
+    verify loads inside the queued job.
+  - **A split piece's id follows its cut.** Each line carries the `cuts` that made it, and
+    the review records them per id (`id_cuts`). A `KEY/1` that comes back from a different
+    cut gets a new id, and the old one is retired. Ids minted before this keep theirs.
+  - **Initials in a notch bridge without a hull.** When the boxes overlap in x but the
+    outlines don't touch, the bridge is the hull of the two outlines inside the shared
+    rows. If they still don't join, the op is refused (no convex-hull fallback).
+  - **Merged kraken baselines.** A merge keeps a kraken baseline only for members side by
+    side on one row, cut to the merged box. Otherwise the baseline is synthetic.
+  - **Reshape keeps detail.** A drag moves the handles and bends the full outline between
+    them; the simplified handle ring is no longer saved as the boundary.
+  - **Validation.** An initial is one Armenian letter, and a page number is 1-4 digits.
+    The panel escapes what it shows.
+  - **`rewrite_verified`.** It also treats `initial`, `source` and `derived_from` as
+    verified content, and a page whose ops no longer apply is refused (or reopened), not
+    a crash.
+  - **Less repeated work.** A save or verify materializes once, and reads and hashes the
+    baseline once.

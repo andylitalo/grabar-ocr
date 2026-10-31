@@ -15,14 +15,22 @@ if ``paddle-filled`` is regenerated under it, the page refuses edits rather than
 ops to renumbered lines. ``baseline_sha256.json`` covers the pages not reviewed yet.
 
 Every write bumps the review's ``revision``; a save that names an older revision (another
-tab, or a stale client) is refused rather than overwriting newer ops.
+tab, or a stale client) is refused rather than overwriting newer ops. Saves and status
+changes on a page hold that page's lock from the revision check to the write (the app
+serves requests on a thread pool), and every file is written to a temp file and renamed
+into place, so a crash mid-write leaves the old file, never a truncated one.
 """
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import os
 import re
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -81,15 +89,31 @@ def list_pages() -> list[int]:
     return sorted(pages)
 
 
-def load_baseline(page: int) -> dict:
+# path -> ((mtime_ns, size), bytes, sha256): each request used to read and hash the
+# baseline 3-4 times. Re-read whenever the file changes on disk.
+_baseline_cache: dict[Path, tuple[tuple[int, int], bytes, str]] = {}
+
+
+def _baseline_bytes(page: int) -> tuple[bytes, str]:
     path = baseline_path(page)
     if not path.exists():
         raise FileNotFoundError(f"No baseline for page {page}: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    st = path.stat()
+    stamp = (st.st_mtime_ns, st.st_size)
+    hit = _baseline_cache.get(path)
+    if hit is None or hit[0] != stamp:
+        data = path.read_bytes()
+        hit = (stamp, data, hashlib.sha256(data).hexdigest())
+        _baseline_cache[path] = hit
+    return hit[1], hit[2]
+
+
+def load_baseline(page: int) -> dict:
+    return json.loads(_baseline_bytes(page)[0].decode("utf-8"))
 
 
 def baseline_sha256(page: int) -> str:
-    return hashlib.sha256(baseline_path(page).read_bytes()).hexdigest()
+    return _baseline_bytes(page)[1]
 
 
 def baseline_manifest() -> dict[int, str]:
@@ -104,8 +128,34 @@ def current_baseline_hashes() -> dict[int, str]:
 
 
 def write_manifest(hashes: dict[int, str]) -> None:
-    MANIFEST_PATH.write_text(json.dumps({str(p): h for p, h in sorted(hashes.items())},
-                                        indent=1) + "\n", encoding="utf-8")
+    write_atomic(MANIFEST_PATH, json.dumps({str(p): h for p, h in sorted(hashes.items())},
+                                           indent=1) + "\n")
+
+
+def write_atomic(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` via a temp file and a rename, so readers (and a crash)
+    see the old file or the new one, never a partial one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+_locks: dict[int, threading.Lock] = {}
+_locks_guard = threading.Lock()
+
+
+@contextmanager
+def page_lock(page: int) -> Iterator[None]:
+    """Hold ``page``'s lock: one load-check-write at a time per page."""
+    with _locks_guard:
+        lock = _locks.setdefault(page, threading.Lock())
+    with lock:
+        yield
 
 
 def _now() -> str:
@@ -176,9 +226,7 @@ def baseline_changed(review: dict) -> bool:
 def _write_review(review: dict) -> dict:
     review["updated_at"] = _now()
     review["revision"] = review.get("revision", 0) + 1
-    REVIEWS_DIR.mkdir(parents=True, exist_ok=True)
-    review_path(review["page"]).write_text(
-        json.dumps(review, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_atomic(review_path(review["page"]), json.dumps(review, indent=1, ensure_ascii=False) + "\n")
     return review
 
 
@@ -189,9 +237,26 @@ def _guard_baseline(review: dict) -> None:
             "(its line ids may have moved); the ops can't be applied safely")
 
 
+# (baseline sha256, ops, titles) -> materialized page. A save or verify, and the page it
+# sends back, would otherwise each re-run the shapely ops and the O(n^2) duplicate checks.
+_page_cache: dict[tuple[str, str], dict] = {}
+_PAGE_CACHE_SIZE = 16
+
+
+def materialized_page(page: int, ops: list[dict], section_titles: list[dict]) -> dict:
+    """``mz.materialize_page`` of the page's baseline (a copy; safe to change)."""
+    key = (baseline_sha256(page), json.dumps([ops, section_titles], sort_keys=True))
+    if key not in _page_cache:
+        result = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
+                                     section_titles)  # raises OpError (not cached)
+        if len(_page_cache) >= _PAGE_CACHE_SIZE:
+            _page_cache.pop(next(iter(_page_cache)))
+        _page_cache[key] = result
+    return copy.deepcopy(_page_cache[key])
+
+
 def materialized(page: int, review: dict) -> list[dict]:
-    return mz.materialize_page(mz.baseline_lines(load_baseline(page)), review["ops"],
-                               review.get("section_titles", []))["lines"]
+    return materialized_page(page, review["ops"], review.get("section_titles", []))["lines"]
 
 
 def save_ops(page: int, ops: list[dict], section_titles: list[dict],
@@ -200,16 +265,16 @@ def save_ops(page: int, ops: list[dict], section_titles: list[dict],
 
     ``revision``: the review revision the client's ops were built on (None skips the check).
     """
-    review = load_review(page)
-    _guard_baseline(review)
-    _check_revision(review, revision)
-    if review["status"] not in ("unreviewed", "fixing"):
-        raise StateError(f"page {page} is {review['status']}: Resume fixing to edit")
-    add_keys = _check_add_keys(review, ops)  # raises OpError
-    lines = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
-                                section_titles)["lines"]  # raises OpError
-    review.update(ops=ops, section_titles=section_titles, status="fixing", add_keys=add_keys)
-    return _write_review(review), lines
+    with page_lock(page):
+        review = load_review(page)
+        _guard_baseline(review)
+        _check_revision(review, revision)
+        if review["status"] not in ("unreviewed", "fixing"):
+            raise StateError(f"page {page} is {review['status']}: Resume fixing to edit")
+        add_keys = _check_add_keys(review, ops)  # raises OpError
+        lines = materialized_page(page, ops, section_titles)["lines"]  # raises OpError
+        review.update(ops=ops, section_titles=section_titles, status="fixing", add_keys=add_keys)
+        return _write_review(review), lines
 
 
 def _mark_resumed(page: int) -> None:
@@ -219,7 +284,7 @@ def _mark_resumed(page: int) -> None:
     if path.exists():
         record = json.loads(path.read_text(encoding="utf-8"))
         record["resumed_at"] = _now()
-        path.write_text(mz.dumps(record), encoding="utf-8")
+        write_atomic(path, mz.dumps(record))
 
 
 def set_status(page: int, status: str, revision: int | None = None) -> dict:
@@ -228,6 +293,11 @@ def set_status(page: int, status: str, revision: int | None = None) -> dict:
     ``verified`` mints line ids and writes ``data/verified_lines/page_<N>.json``;
     verified -> fixing marks that file ``resumed_at``.
     """
+    with page_lock(page):
+        return _set_status(page, status, revision)
+
+
+def _set_status(page: int, status: str, revision: int | None) -> dict:
     review = load_review(page)
     _guard_baseline(review)
     _check_revision(review, revision)
@@ -243,13 +313,12 @@ def set_status(page: int, status: str, revision: int | None = None) -> dict:
         raise StateError(f"page {page}: can't go from {current} to {status}")
 
     if status == "verified":
-        seg = load_baseline(page)
-        lines = materialized(page, review)
-        review.update(mz.mint_ids(page, lines, review))
+        page_el = materialized_page(page, review["ops"], review.get("section_titles", []))
+        review.update(mz.mint_ids(page, page_el["lines"], review))
         review["verified_at"] = _now()
-        record = mz.verified_record(seg, review, baseline_sha256=baseline_sha256(page))
-        VERIFIED_DIR.mkdir(parents=True, exist_ok=True)
-        verified_path(page).write_text(mz.dumps(record), encoding="utf-8")
+        record = mz.verified_record(load_baseline(page), review,
+                                    baseline_sha256=baseline_sha256(page), page_el=page_el)
+        write_atomic(verified_path(page), mz.dumps(record))
     elif current == "verified":
         _mark_resumed(page)
     review["status"] = status

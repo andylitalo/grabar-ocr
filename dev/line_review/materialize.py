@@ -37,7 +37,9 @@ the reading order) and records ``{value, box}`` for the page. Initial letters st
 their line as ``initial``.
 
 Line ids (``p<page>.<NNN>``) are minted from the materialized lines at verification
-(``mint_ids``) and never reused; see the design section of the Phase 9 doc.
+(``mint_ids``) and never reused; see the design section of the Phase 9 doc. Split keys
+(``KEY/1``) and merges of them name a piece, not a cut, so each line also carries the
+``cuts`` that made it: a key that comes back from a different cut gets a new id.
 """
 
 from __future__ import annotations
@@ -97,13 +99,15 @@ def _single(geom, ctx: str) -> Polygon:
 
 
 def _line(key: str, points: list[list[float]], *, baseline=None, baseline_source="synthetic",
-          source: str, derived_from: list[str], lineage: list[str]) -> dict:
+          source: str, derived_from: list[str], lineage: list[str],
+          cuts: list | None = None) -> dict:
     bbox = _bbox(points)
+    cuts = cuts or []
     if baseline is None:
         baseline, baseline_source = _synthetic_baseline(bbox), "synthetic"
     return {"key": key, "boundary": points, "baseline": baseline,
             "baseline_source": baseline_source, "bbox": bbox, "source": source,
-            "derived_from": derived_from, "lineage": lineage}
+            "derived_from": derived_from, "lineage": lineage, "cuts": cuts}
 
 
 def _clip_baseline(baseline: list[list[float]], bbox: list[float]) -> list[list[float]] | None:
@@ -148,7 +152,7 @@ def baseline_lines(seg: dict) -> list[dict]:
             "key": l["id"], "boundary": l["boundary"], "baseline": l["baseline"],
             "baseline_source": "kraken" if source == "kraken-fill" else "synthetic",
             "bbox": list(l["bbox"]), "source": source,
-            "derived_from": [l["id"]], "lineage": [],
+            "derived_from": [l["id"]], "lineage": [], "cuts": [],
         })
     return out
 
@@ -182,7 +186,8 @@ def _split(lines: list[dict], op: dict, ctx: str) -> None:
     pieces.sort(key=lambda p: p.centroid.x if vertical else p.centroid.y)
     for n, piece in enumerate(pieces, start=1):
         new = _line(f"{line['key']}/{n}", _points(piece), source=line["source"],
-                    derived_from=line["derived_from"], lineage=line["lineage"] + [line["key"]])
+                    derived_from=line["derived_from"], lineage=line["lineage"] + [line["key"]],
+                    cuts=line.get("cuts", []) + [[line["key"], cut]])
         if n == 1 and "initial" in line:  # the drop cap opens the line
             new["initial"] = line["initial"]
         _insert(lines, new)
@@ -216,6 +221,18 @@ def _merged_polygon(lines: list[dict], idx: list[int], ctx: str) -> Polygon:
     return parts[0]
 
 
+def _side_by_side(members: list[dict]) -> bool:
+    """True if the members sit on one row, each to the right of the one before, so their
+    kraken baselines join into one line instead of zigzagging between rows."""
+    row = sorted(members, key=lambda m: m["bbox"][0])
+    return (all(_same_row(a, b) for a in row for b in row)
+            and all(a["bbox"][2] <= b["bbox"][0] + SIDE_BY_SIDE_SLACK
+                    for a, b in zip(row, row[1:])))
+
+
+SIDE_BY_SIDE_SLACK = 10  # px two neighbours on a row may overlap and still read as one line
+
+
 def _merge(lines: list[dict], op: dict, ctx: str) -> None:
     keys = op.get("lines") or []
     if len(keys) < 2 or len(set(keys)) != len(keys):
@@ -224,11 +241,12 @@ def _merge(lines: list[dict], op: dict, ctx: str) -> None:
     members = [lines[i] for i in idx]
     points = _points(_merged_polygon(lines, idx, ctx))
     baseline, bsrc = None, "synthetic"
-    if all(m["baseline_source"] == "kraken" for m in members):
-        baseline = sorted((p for m in members for p in m["baseline"]), key=lambda p: p[0])
-        bsrc = "kraken"
+    if all(m["baseline_source"] == "kraken" for m in members) and _side_by_side(members):
+        joined = sorted((p for m in members for p in m["baseline"]), key=lambda p: p[0])
+        baseline = _clip_baseline(joined, _bbox(points))
+        bsrc = "kraken" if baseline is not None else "synthetic"
     merged = _line("+".join(m["key"] for m in members), points, baseline=baseline,
-                   baseline_source=bsrc,
+                   baseline_source=bsrc, cuts=[c for m in members for c in m.get("cuts", [])],
                    source=members[0]["source"] if len({m["source"] for m in members}) == 1 else "human",
                    derived_from=[d for m in members for d in m["derived_from"]],
                    lineage=[k for m in members for k in m["lineage"] + [m["key"]]])
@@ -254,6 +272,9 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
     box = op.get("box") or []
     if len(box) != 4:
         raise OpError(f"{ctx}: box must be [x1, y1, x2, y2]")
+    letter = str(op.get("letter") or "").strip()
+    if op.get("op") == "initial" and letter and not INITIAL_LETTER.match(letter):
+        raise OpError(f"{ctx}: an initial is one Armenian letter (got {letter!r})")
     t = _index(lines, op.get("line"), ctx)
     target = _polygon(lines[t]["boundary"], ctx)
     added = shapely_box(*box)
@@ -266,11 +287,21 @@ def _initial(lines: list[dict], op: dict, ctx: str) -> None:
                           "its rows; draw it beside the line")
         x1, x2 = sorted((min(tx2, bx2), max(tx1, bx1)))
         added = added.union(shapely_box(x1, y1, x2, y2))
+        if not isinstance(target.union(added), Polygon):
+            # The boxes overlap in x but the outlines don't touch (a box in an outline's
+            # notch): bridge with the hull of the two outlines inside the shared rows.
+            band = shapely_box(min(tx1, bx1), y1, max(tx2, bx2), y2)
+            bridge = unary_union([target.intersection(band), added.intersection(band)])
+            added = added.union(bridge.convex_hull.intersection(band))
     for i, line in enumerate(lines):
         poly = _polygon(line["boundary"], ctx)
         if i == t:
-            lines[i] = _with_boundary(line, _points(_single(poly.union(added), ctx)))
-            if op.get("op") == "initial" and str(op.get("letter", "")).strip():
+            grown = poly.union(added)
+            if not isinstance(grown, Polygon):
+                raise OpError(f"{ctx}: can't join the box to {line['key']!r}; draw it so it "
+                              "touches the line")
+            lines[i] = _with_boundary(line, _points(grown))
+            if op.get("op") == "initial" and str(op.get("letter") or "").strip():
                 lines[i]["initial"] = str(op["letter"]).strip()
         elif poly.intersection(added).area > 0:
             rest = poly.difference(added)
@@ -381,6 +412,8 @@ def reading_order(lines: list[dict], dividers: list[list[float]] = ()) -> list[d
 
 # A section title is a taregir letter: one to four Armenian letters (Ա-Ֆ, ա-և).
 TITLE_LETTER = re.compile(r"^[\u0531-\u0556\u0561-\u0587]{1,4}$")
+INITIAL_LETTER = re.compile(r"^[\u0531-\u0556\u0561-\u0587]$")  # a drop cap
+PAGE_NUMBER = re.compile(r"^\d{1,4}$")  # printed in Arabic digits throughout the Տօնացոյց
 
 
 def check_section_titles(titles: list[dict]) -> None:
@@ -444,6 +477,8 @@ def materialize_page(lines: list[dict], ops: list[dict],
             value = str(op.get("value", "")).strip()
             if not value:
                 raise OpError(f"{ctx}: page number needs a value")
+            if not PAGE_NUMBER.match(value):
+                raise OpError(f"{ctx}: a page number is 1 to 4 digits (got {value!r})")
             if page_number is not None:
                 raise OpError(f"{ctx}: the page already has a page number")
             if op.get("line") is not None:
@@ -473,8 +508,9 @@ def materialize_page(lines: list[dict], ops: list[dict],
 
 def empty_id_state() -> dict:
     """No ids minted yet. ``retired_keys`` remembers retired keys so a restored line
-    (e.g. a deleted line brought back) gets its old id instead of a new one."""
-    return {"ids": {}, "retired": {}, "retired_keys": {}, "next_seq": 1}
+    (e.g. a deleted line brought back) gets its old id instead of a new one. ``id_cuts``
+    records the split cuts behind each id of a split piece (see ``mint_ids``)."""
+    return {"ids": {}, "retired": {}, "retired_keys": {}, "next_seq": 1, "id_cuts": {}}
 
 
 def mint_ids(page: int, lines: list[dict], state: dict) -> dict:
@@ -483,45 +519,60 @@ def mint_ids(page: int, lines: list[dict], state: dict) -> dict:
     Live keys keep their ids; restored keys get their retired id back; new keys get
     the next unused number, in reading order. Ids whose key disappeared are retired
     with ``superseded_by`` = the ids of the lines derived from them (empty if deleted).
+
+    A split piece's key names its place (``KEY/1``), not its cut, so an id is kept or
+    restored only if the piece comes from the same cuts as when the id was minted;
+    otherwise the key gets a new id and the old one is retired. (Reviews verified before
+    ``id_cuts`` existed have no record, and keep their ids.)
     """
     old_ids = dict(state.get("ids", {}))
     retired = {k: dict(v) for k, v in state.get("retired", {}).items()}
     retired_keys = dict(state.get("retired_keys", {}))
+    id_cuts = {k: v for k, v in state.get("id_cuts", {}).items()}
     seq = state.get("next_seq", 1)
+
+    def same_cuts(lid: str, line: dict) -> bool:
+        return lid not in id_cuts or id_cuts[lid] == line.get("cuts", [])
 
     ids: dict[str, str] = {}
     for line in lines:
         key = line["key"]
-        if key in old_ids:
+        if key in old_ids and same_cuts(old_ids[key], line):
             ids[key] = old_ids[key]
-        elif key in retired_keys:
+        elif key in retired_keys and same_cuts(retired_keys[key], line):
             ids[key] = retired_keys.pop(key)
             retired.pop(ids[key], None)
         else:
             ids[key] = f"p{page}.{seq:03d}"
             seq += 1
+        if line.get("cuts"):
+            id_cuts[ids[key]] = line["cuts"]
 
     for key, lid in old_ids.items():
-        if key in ids:
+        if ids.get(key) == lid:
             continue
-        successors = [ids[l["key"]] for l in lines if key in l["lineage"]]
+        successors = [ids[l["key"]] for l in lines
+                      if key in l["lineage"] or (l["key"] == key and ids[key] != lid)]
         retired[lid] = {"superseded_by": successors}
         retired_keys[key] = lid
 
-    return {"ids": ids, "retired": retired, "retired_keys": retired_keys, "next_seq": seq}
+    return {"ids": ids, "retired": retired, "retired_keys": retired_keys, "next_seq": seq,
+            "id_cuts": id_cuts}
 
 
 # --- verified output --------------------------------------------------------------
 
 
-def verified_record(seg: dict, review: dict, *, baseline_sha256: str) -> dict:
+def verified_record(seg: dict, review: dict, *, baseline_sha256: str,
+                    page_el: dict | None = None) -> dict:
     """The committed ``data/verified_lines/page_<N>.json`` record for a verified review.
 
     Deterministic: everything comes from the baseline and the review (including
-    ``verified_at``), so re-materializing reproduces the file byte for byte.
+    ``verified_at``), so re-materializing reproduces the file byte for byte. ``page_el``:
+    the review's ``materialize_page`` result, if the caller already has it.
     """
-    page = materialize_page(baseline_lines(seg), review.get("ops", []),
-                            review.get("section_titles", []))
+    page = page_el if page_el is not None else materialize_page(
+        baseline_lines(seg), review.get("ops", []), review.get("section_titles", []))
     lines = page["lines"]
     ids = review.get("ids", {})
     missing = [l["key"] for l in lines if l["key"] not in ids]

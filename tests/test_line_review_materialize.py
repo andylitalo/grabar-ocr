@@ -547,3 +547,91 @@ def test_box_that_would_cut_another_line_in_two_is_refused():
 def test_legacy_grow_op_still_materializes():
     lines = run([{"op": "grow", "box": [80, 100, 99, 150], "line": "line_001"}])
     assert lines[0]["bbox"][0] == 80
+
+
+# --- fixes from the PR #3 review -----------------------------------------------------------
+
+
+def split_at(x: float) -> dict:
+    return {"op": "split", "line": "line_001", "cut": [[x, 90], [x, 160]]}
+
+
+def test_a_split_key_from_a_different_cut_gets_a_new_id():
+    first = mz.mint_ids(500, run([split_at(500)]), mz.empty_id_state())
+    halves = {first["ids"]["line_001/1"], first["ids"]["line_001/2"]}
+    same = mz.mint_ids(500, run([split_at(500)]), first)
+    assert same["ids"] == first["ids"]  # re-verified unchanged: same ids
+    moved = mz.mint_ids(500, run([split_at(800)]), first)
+    assert not halves & {moved["ids"]["line_001/1"], moved["ids"]["line_001/2"]}
+    assert set(moved["retired"]) >= halves
+    assert moved["retired"][first["ids"]["line_001/1"]]["superseded_by"] == [moved["ids"]["line_001/1"]]
+    assert moved["ids"]["line_002"] == first["ids"]["line_002"]  # other lines keep theirs
+
+
+def test_a_retired_split_key_is_not_restored_from_a_different_cut():
+    first = mz.mint_ids(500, run([split_at(500)]), mz.empty_id_state())
+    halves = {first["ids"]["line_001/1"], first["ids"]["line_001/2"]}
+    unsplit = mz.mint_ids(500, run([]), first)  # the halves retire
+    resplit = mz.mint_ids(500, run([split_at(800)]), unsplit)
+    assert not halves & {resplit["ids"]["line_001/1"], resplit["ids"]["line_001/2"]}
+    back = mz.mint_ids(500, run([split_at(500)]), unsplit)  # the same cut does come back
+    assert back["ids"]["line_001/1"] == first["ids"]["line_001/1"]
+
+
+def test_ids_minted_before_cuts_were_recorded_are_kept():
+    first = mz.mint_ids(500, run([split_at(500)]), mz.empty_id_state())
+    legacy = {k: v for k, v in first.items() if k != "id_cuts"}
+    again = mz.mint_ids(500, run([split_at(800)]), legacy)
+    assert again["ids"]["line_001/1"] == first["ids"]["line_001/1"]
+
+
+def test_initial_in_an_outline_notch_bridges_without_a_hull():
+    # line_009 is an L: a top bar, and a lower part only from x=300. The box sits in the
+    # notch under the bar, overlapping the line's bbox in x but touching neither part.
+    ell = [[100, 100], [900, 100], [900, 200], [300, 200], [300, 160], [100, 160]]
+    seg = {"page": 501, "lines": [{"id": "line_009", "boundary": ell, "baseline": [[100, 150], [900, 150]],
+                                   "bbox": [100, 100, 900, 200], "source": "kraken-fill"}]}
+    op = {"op": "initial", "box": [120, 175, 200, 198], "line": "line_009", "letter": "Ա"}
+    [line] = mz.apply_ops(mz.baseline_lines(seg), [op])
+    poly = Polygon(line["boundary"])
+    assert poly.is_valid
+    assert poly.contains(Point(160, 185)) and poly.contains(Point(250, 185))  # box + bridge
+    assert not poly.contains(Point(160, 167))  # a hull would fill the notch above the box
+    assert line["initial"] == "Ա"
+
+
+def kraken_seg(boxes: dict[str, list[float]]) -> dict:
+    return {"page": 502, "lines": [seg_line(k, b, source="kraken-fill") for k, b in boxes.items()]}
+
+
+def test_merging_stacked_kraken_lines_gives_a_synthetic_baseline():
+    seg = kraken_seg({"line_001": [100, 100, 900, 150], "line_002": [100, 150, 900, 200]})
+    [line] = mz.apply_ops(mz.baseline_lines(seg), [{"op": "merge", "lines": ["line_001", "line_002"]}])
+    assert line["baseline_source"] == "synthetic"
+    assert len({y for _, y in line["baseline"]}) == 1
+
+
+def test_merging_side_by_side_kraken_lines_keeps_one_baseline_in_the_box():
+    seg = kraken_seg({"line_001": [100, 100, 480, 150], "line_002": [500, 100, 900, 150]})
+    [line] = mz.apply_ops(mz.baseline_lines(seg), [{"op": "merge", "lines": ["line_001", "line_002"]}])
+    assert line["baseline_source"] == "kraken"
+    x1, y1, x2, y2 = line["bbox"]
+    assert all(x1 <= x <= x2 and y1 <= y <= y2 for x, y in line["baseline"])
+
+
+@pytest.mark.parametrize("letter", ["<img src=x onerror=alert(1)>", "A1", "ԱԲ"])
+def test_an_initial_must_be_one_armenian_letter(letter):
+    op = {"op": "initial", "box": [60, 100, 98, 150], "line": "line_001", "letter": letter}
+    with pytest.raises(mz.OpError, match="one Armenian letter"):
+        run([op])
+
+
+def test_an_initial_without_a_letter_is_still_allowed():
+    [first, *_] = run([{"op": "initial", "box": [60, 100, 98, 150], "line": "line_001", "letter": None}])
+    assert "initial" not in first
+
+
+@pytest.mark.parametrize("value", ["45<b>", "four", "12345"])
+def test_a_page_number_must_be_digits(value):
+    with pytest.raises(mz.OpError, match="1 to 4 digits"):
+        run([{"op": "page_number", "box": [10, 10, 50, 40], "value": value}])

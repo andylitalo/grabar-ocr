@@ -334,3 +334,98 @@ def test_copy_kept_alive_by_an_op_is_flagged(client):
     d = client.put(f"/api/pages/{PAGE}/ops", json={"ops": [
         {"op": "reshape", "line": "line_007", "boundary": rect(101, 101, 899, 149)}]}).json()
     assert d["duplicates"] == [[1, 2]]
+
+
+# --- fixes from the PR #3 review --------------------------------------------------------
+
+
+def test_concurrent_saves_on_one_revision_let_only_one_through(store, monkeypatch):
+    """Two tabs saving at once: the second must get a revision conflict, not overwrite."""
+    import threading
+    import time
+    real = storage.materialized_page
+    monkeypatch.setattr(storage, "materialized_page",
+                        lambda *a: (time.sleep(0.05), real(*a))[1])  # widen the race window
+    results = []
+
+    def save(op):
+        try:
+            storage.save_ops(PAGE, [op], [], revision=0)
+            results.append("ok")
+        except storage.StateError:
+            results.append("conflict")
+
+    threads = [threading.Thread(target=save, args=({"op": "delete", "line": k},))
+               for k in ("line_001", "line_002")]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(results) == ["conflict", "ok"]
+    assert storage.load_review(PAGE)["revision"] == 1
+
+
+def test_writes_go_through_a_temp_file(store):
+    """A crash mid-write leaves the old review whole, and no temp file behind."""
+    storage.save_ops(PAGE, [{"op": "delete", "line": "line_001"}], [])
+    before = storage.review_path(PAGE).read_text()
+
+    real_write = type(storage.review_path(PAGE)).write_text
+
+    def crash(self, text, *a, **k):  # interrupted halfway through the write
+        real_write(self, text[: len(text) // 2], *a, **k)
+        raise KeyboardInterrupt
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(type(storage.review_path(PAGE)), "write_text", crash)
+        with pytest.raises(KeyboardInterrupt):
+            storage.save_ops(PAGE, [{"op": "delete", "line": "line_002"}], [])
+    assert storage.review_path(PAGE).read_text() == before
+    assert storage.page_statuses() == {PAGE: "fixing"}
+    assert [p.name for p in storage.REVIEWS_DIR.iterdir()] == [storage.review_path(PAGE).name]
+
+
+def test_a_save_and_its_payload_materialize_once(client, monkeypatch):
+    calls = []
+    real = mz.materialize_page
+    monkeypatch.setattr(mz, "materialize_page", lambda *a, **k: (calls.append(1), real(*a, **k))[1])
+    client.put(f"/api/pages/{PAGE}/ops", json={"ops": [ADD], "revision": 0})
+    client.post(f"/api/pages/{PAGE}/status", json={"status": "fixed"})
+    calls.clear()
+    assert client.post(f"/api/pages/{PAGE}/status", json={"status": "verified"}).status_code == 200
+    assert len(calls) <= 1  # verify + verified record + payload share one materialization
+
+
+def test_initial_letters_and_page_numbers_are_checked_by_the_server(client):
+    bad = {"op": "initial", "box": [60, 100, 98, 150], "line": "line_001",
+           "letter": "<img src=x onerror=alert(1)>"}
+    r = client.put(f"/api/pages/{PAGE}/ops", json={"ops": [bad], "revision": 0})
+    assert r.status_code == 400 and not storage.review_path(PAGE).exists()
+
+
+def test_rewrite_refuses_a_moved_initial(store, capsys):
+    storage.save_ops(PAGE, [{"op": "initial", "box": [60, 100, 98, 150], "line": "line_001",
+                             "letter": "Ա"}], [])
+    verify()
+    old = json.loads(storage.verified_path(PAGE).read_text())
+    old["lines"][0]["initial"], old["lines"][1]["initial"] = None, "Ա"  # as a code change might
+    before = mz.dumps(old)
+    storage.verified_path(PAGE).write_text(before)
+    assert rewrite_verified.main([]) == 1
+    assert "initial moved or changed" in capsys.readouterr().out
+    assert storage.verified_path(PAGE).read_text() == before
+
+
+def test_rewrite_refuses_a_page_whose_ops_no_longer_apply(store, monkeypatch, capsys):
+    verify()
+    before = storage.verified_path(PAGE).read_text()
+
+    def broken(*a, **k):
+        raise mz.OpError("op 1 (delete): no line 'line_404'")
+
+    monkeypatch.setattr(mz, "verified_record", broken)
+    assert rewrite_verified.main([]) == 1
+    assert "ops no longer materialize" in capsys.readouterr().out
+    assert storage.verified_path(PAGE).read_text() == before
+    assert rewrite_verified.main(["--reopen"]) == 0
+    assert storage.load_review(PAGE)["status"] == "fixing"

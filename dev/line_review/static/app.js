@@ -31,7 +31,7 @@ const state = {
 };
 let drag = null;           // in-progress press/drag (display px)
 // In-progress reshape of the one selected line: drag a vertex, an edge, or the body.
-let edit = null;           // {key, kind: "vertex"|"edge"|"move", index, start:[fx,fy], orig, preview}
+let edit = null;           // {key, kind: "vertex"|"edge"|"move", index, start:[fx,fy], ring, idx, preview}
 const HANDLE_R = 7;        // display px: grab radius for a vertex dot
 const EDGE_R = 5;          // display px: grab distance for an edge
 let pendingLetter = null;  // {tool, box, lineKey}
@@ -76,38 +76,46 @@ function pointInPolygon(px, py, poly) {
 }
 
 // kraken polygons carry ~100 points (many duplicates), too dense to drag one by one.
-// Before showing handles, drop duplicates and simplify (Ramer-Douglas-Peucker) to
-// within SIMPLIFY_TOL full-res px of the original; Paddle's 4-point boxes pass through.
+// Handles are a subset of the outline's own points, picked by Ramer-Douglas-Peucker to
+// within SIMPLIFY_TOL full-res px; Paddle's 4-point boxes keep every point. A drag moves
+// the handles and bends the full outline between them (``draggedBoundary``), so the
+// ink-following detail the handles skip is kept, not replaced by the simplified ring.
 const SIMPLIFY_TOL = 2.5;
 const MAX_RAW_POINTS = 12;
 
-// Ramer-Douglas-Peucker on an open path; keeps both endpoints.
-function simplifyPath(path) {
+// Ramer-Douglas-Peucker on ring[lo..hi] (indices taken mod the ring's length); returns
+// the kept indices, both ends included.
+function simplifyIdx(ring, lo, hi) {
+  const at = (i) => ring[i % ring.length];
   let far = -1, farD = 0;
-  for (let i = 1; i < path.length - 1; i++) {
-    const d = segmentDistance(path[i][0], path[i][1], path[0], path[path.length - 1]);
+  for (let i = lo + 1; i < hi; i++) {
+    const d = segmentDistance(at(i)[0], at(i)[1], at(lo), at(hi));
     if (d > farD) { far = i; farD = d; }
   }
-  if (farD <= SIMPLIFY_TOL) return [path[0], path[path.length - 1]];
-  return [...simplifyPath(path.slice(0, far + 1)).slice(0, -1), ...simplifyPath(path.slice(far))];
+  if (farD <= SIMPLIFY_TOL) return [lo, hi];
+  return [...simplifyIdx(ring, lo, far).slice(0, -1), ...simplifyIdx(ring, far, hi)];
 }
 
-function simplifyRing(pts) {
-  const dedup = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
-  if (dedup.length <= MAX_RAW_POINTS) return dedup;
+// {ring: the outline without repeated points, idx: ring indices shown as handles}.
+function outlineHandles(pts) {
+  const ring = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
+  if (ring.length <= MAX_RAW_POINTS) return { ring, idx: ring.map((_, i) => i) };
   // Cut the ring at the point farthest from the first, simplify both halves as paths.
   let split = 1, best = 0;
-  dedup.forEach((p, i) => {
-    const d = Math.hypot(p[0] - dedup[0][0], p[1] - dedup[0][1]);
+  ring.forEach((p, i) => {
+    const d = Math.hypot(p[0] - ring[0][0], p[1] - ring[0][1]);
     if (d > best) { best = d; split = i; }
   });
-  const a = simplifyPath(dedup.slice(0, split + 1));
-  const b = simplifyPath([...dedup.slice(split), dedup[0]]);
-  return [...a, ...b.slice(1, -1)];
+  const a = simplifyIdx(ring, 0, split);
+  const b = simplifyIdx(ring, split, ring.length);
+  return { ring, idx: [...a, ...b.slice(1, -1)] };
 }
 
-// Points shown as handles (and edited) for a line.
-const handlePoints = (l) => simplifyRing(l.boundary);
+// Points shown as handles for a line (used to hit-test them).
+function handlePoints(l) {
+  const { ring, idx } = outlineHandles(l.boundary);
+  return idx.map((i) => ring[i]);
+}
 
 // The single selected line, if exactly one is selected (only then are handles shown).
 function soleSelected() {
@@ -140,15 +148,28 @@ function hitHandle(dispX, dispY) {
   return null;
 }
 
-// The boundary after dragging ``edit`` by (dx, dy) full-res px.
+// The full outline after dragging ``edit`` by (dx, dy) full-res px. Dragged handles move
+// by (dx, dy); every outline point between two handles moves by a share of that, by how
+// far along the outline it lies, so a point between two still handles stays put and a
+// vertex drag pulls its neighbouring stretch with it like a rubber band.
 function draggedBoundary(e, dx, dy) {
-  const pts = clone(e.orig);
-  const n = pts.length;
-  const move = (i) => { pts[i][0] = Math.round(pts[i][0] + dx); pts[i][1] = Math.round(pts[i][1] + dy); };
-  if (e.kind === "vertex") move(e.index);
-  else if (e.kind === "edge") { move(e.index); move((e.index + 1) % n); }
-  else for (let i = 0; i < n; i++) move(i);
-  return pts;
+  const { ring, idx } = e;
+  const h = idx.length;
+  const moves = (j) => e.kind === "move" || j === e.index || (e.kind === "edge" && j === (e.index + 1) % h);
+  const weight = new Array(ring.length).fill(0);
+  for (let j = 0; j < h; j++) {
+    const a = idx[j], b = j + 1 < h ? idx[j + 1] : idx[0] + ring.length;
+    const wa = moves(j) ? 1 : 0, wb = moves((j + 1) % h) ? 1 : 0;
+    const run = [0];  // arc length from ring[a] to each point up to ring[b]
+    for (let i = a + 1; i <= b; i++) {
+      const p = ring[(i - 1) % ring.length], q = ring[i % ring.length];
+      run.push(run[run.length - 1] + Math.hypot(q[0] - p[0], q[1] - p[1]));
+    }
+    const total = run[run.length - 1] || 1;
+    for (let i = a; i < b; i++) weight[i % ring.length] = wa + (wb - wa) * (run[i - a] / total);
+  }
+  return ring.map(([x, y], i) => (weight[i]
+    ? [Math.round(x + weight[i] * dx), Math.round(y + weight[i] * dy)] : [x, y]));
 }
 
 function hitLine(dispX, dispY) {
@@ -268,7 +289,8 @@ function draw() {
     ctx.strokeStyle = selected ? COLORS.select : color;
     ctx.stroke();
     if (selected && state.selection.size === 1) {
-      for (const [x, y] of (edit && edit.key === l.key ? edit.preview : handlePoints(l))) {
+      const handles = edit && edit.key === l.key ? edit.idx.map((i) => edit.preview[i]) : handlePoints(l);
+      for (const [x, y] of handles) {
         ctx.beginPath();
         ctx.arc(toDisp(x), toDisp(y), 4, 0, 2 * Math.PI);
         ctx.fillStyle = COLORS.select;
@@ -339,6 +361,9 @@ function draw() {
 }
 
 // ---- side panel ----
+const escapeHtml = (v) => String(v).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
 function opLabel(op) {
   switch (op.op) {
     case "delete": return `delete ${op.line}`;
@@ -368,13 +393,13 @@ function renderPanel() {
   let html = `<h2>Edits (${state.ops.length})</h2>`;
   if (!state.ops.length) html += "<p>None.</p>";
   state.ops.forEach((op, i) => {
-    html += `<div class="op"><span>${i + 1}. ${opLabel(op)}</span>` +
+    html += `<div class="op"><span>${i + 1}. ${escapeHtml(opLabel(op))}</span>` +
       `<button class="del" data-op="${i}" title="Remove this edit">&times;</button></div>`;
   });
   html += `<h2>Section titles (${state.titles.length})</h2>`;
   if (!state.titles.length) html += "<p>None.</p>";
   state.titles.forEach((t, i) => {
-    html += `<div class="op"><span>${t.letter}</span>` +
+    html += `<div class="op"><span>${escapeHtml(t.letter)}</span>` +
       `<button class="del" data-title="${i}" title="Remove">&times;</button></div>`;
   });
   $("op-list").innerHTML = html;
@@ -545,7 +570,8 @@ function changeStatus(decide) {
       return;
     }
     render();
-    if (status === "verified") showStep(1);
+    // Load the next page inside this job, so it finishes before any queued keypress runs.
+    if (status === "verified") await showStep(1);
   }, state.page).finally(() => { statusBusy = false; }).catch(() => {});
 }
 
@@ -632,8 +658,8 @@ canvas.addEventListener("mousedown", (ev) => {
   const h = state.tool === "select" && !ev.shiftKey ? hitHandle(x, y) : null;
   if (h) {
     const l = lineByKey(h.key);
-    const pts = handlePoints(l);
-    edit = { ...h, start: [toFull(x), toFull(y)], orig: clone(pts), preview: clone(pts) };
+    const { ring, idx } = outlineHandles(l.boundary);
+    edit = { ...h, start: [toFull(x), toFull(y)], ring: clone(ring), idx, preview: clone(ring) };
   }
 });
 
