@@ -1,0 +1,32 @@
+The contents of this data/ocr_predictions/ directory are licensed under the
+Creative Commons Attribution-NonCommercial 4.0 International License
+(CC BY-NC 4.0): https://creativecommons.org/licenses/by-nc/4.0/legalcode
+The full licence text is reproduced in corpus/LICENSE. The source-code license
+in the repository root (Apache 2.0) does not apply to this directory.
+
+Copyright (c) 2026 Andy Ylitalo, for the compilation.
+
+Source. These are machine readings of line images from the Տօնացոյց
+(Tonatsoyts), Jerusalem, 1915, which is in the public domain. This license
+covers the readings, not the 1915 text.
+
+What is here, and the terms of the model that produced each file. The whole
+directory is offered under CC BY-NC 4.0, the most restrictive of these terms:
+
+  - tess-calfa-n*:        Tesseract 5 with Calfa's `hye-calfa-n`
+                          (https://github.com/calfa-co/hye-tesseract), CC BY-NC 4.0
+  - paddle-calfa-tiny*:   PaddleOCR with Calfa's `paddle-calfa-tiny`
+                          (https://github.com/calfa-co/hye-paddle), CC BY-NC 4.0
+  - tess-grabar:          our fine-tune of `hye-calfa-n` (a derivative, so
+                          CC BY-NC 4.0)
+  - trocr-ft:             our fine-tune of Microsoft TrOCR (MIT)
+  - surya:                Surya (Datalab, https://github.com/datalab-to/surya),
+                          weights under a modified AI Pubs Open RAIL-M licence
+  - dots-mocr:            dots.mocr (rednote-hilab), MIT
+  - gemini-*, corr-gemini-*: Google Gemini API output (machine readings and
+                          corrections)
+  - *+rules:              the file above, after a deterministic orthography
+                          rule from this repository
+
+Credit for the Calfa readings: "OCR by Calfa (hye-calfa-n, paddle-calfa-tiny)."
+When reusing this material, credit grabar-ocr (Andy Ylitalo) and Calfa.
