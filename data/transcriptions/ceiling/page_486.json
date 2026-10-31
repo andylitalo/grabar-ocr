@@ -1,18 +1,20 @@
 {
- "p486~line_057": {
+ "p486.055": {
   "text": "Կանոն Աւետեաց",
   "status": "done",
   "at": "2026-10-09T14:18:06+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "163c50f34ffbce2c"
+  "geometry": "163c50f34ffbce2c",
+  "migrated_from": "p486~line_057"
  },
- "p486~line_091": {
+ "p486.089": {
   "text": "զՆորաստեղծեալի երկու տունն ասա։ Իսկ",
   "status": "done",
   "at": "2026-10-09T05:28:33+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "92f22d8a3f2f980c"
+  "geometry": "92f22d8a3f2f980c",
+  "migrated_from": "p486~line_091"
  }
 }

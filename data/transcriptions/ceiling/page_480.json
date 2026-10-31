@@ -1,18 +1,20 @@
 {
- "p480~line_010": {
+ "p480.010": {
   "text": "զսուրբ խաչն եւ զաւետարանն։ Քարոզ,",
   "status": "done",
   "at": "2026-10-09T05:09:36+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "463c05892bbd8e45"
+  "geometry": "463c05892bbd8e45",
+  "migrated_from": "p480~line_010"
  },
- "p480~line_023": {
+ "p480.023": {
   "text": "Սաղ. ՃԺԷ. Այսօր է զոր արար տէր.",
   "status": "done",
   "at": "2026-10-09T05:11:17+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "d777412896ddc470"
+  "geometry": "d777412896ddc470",
+  "migrated_from": "p480~line_023"
  }
 }
