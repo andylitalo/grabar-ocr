@@ -62,7 +62,19 @@ made it and it's big or will be remade, it goes outside git with a manifest.
   `.gitignore`).
 - **Machine-written files that are committed** get a `linguist-generated` entry in
   `.gitattributes`, so PR diffs stay reviewable. Add a pattern whenever a new committed
-  output directory appears. Commit regenerated data separately from code changes.
+  output directory appears.
+- **Separate PRs for code and data.** When a change produces large machine-written data
+  (more than ~1,000 lines or ~1 MB of files marked `linguist-generated`), split it in two:
+  1. **Code PR**, targeting `main`: the scripts, tests, docs and reports (summary scores),
+     plus any small hand-made data. This is the PR that gets a real review.
+  2. **Data PR**, stacked on the code PR: only the regenerated outputs. Its description
+     says how to rebuild them: the exact command, and the code commit (SHA) it was run
+     from. Review it for spot checks and size, not line by line.
+
+  Merge the code PR first. Then retarget the data PR to `main` **before** deleting the
+  code branch, because deleting the base branch closes the stacked PR. If the data is
+  small, or a code change and its outputs only make sense together (for example a test
+  fixture), one PR is fine.
 - **Planned: the book-wide OCR run (after the Phase 9 layout review).** Its outputs, the full
   book times every engine and prompt version, go in GCS and are tracked with DVC (or GCS
   plus a committed manifest of path, sha256, settings and date), **not** committed to git.
