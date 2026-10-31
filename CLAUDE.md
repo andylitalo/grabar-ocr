@@ -75,6 +75,18 @@ made it and it's big or will be remade, it goes outside git with a manifest.
   code branch, because deleting the base branch closes the stacked PR. If the data is
   small, or a code change and its outputs only make sense together (for example a test
   fixture), one PR is fine.
+- **Committed machine-written data is diff-friendly text.** Write one record per line: a
+  short header, then one compact JSON object per line, or nested lists such as polygons
+  written inline instead of one number per line. Never gzip or commit binary formats: git
+  can't store compact deltas between versions of them, and nobody can review them.
+  - **Frozen, hash-pinned data keeps its exact bytes.** That includes the `paddle-filled`
+    baseline (`baseline_sha256.json`) and the frozen Phase 4 sets. Don't reformat or
+    regenerate them, even for a format-only change. The rule applies to new outputs, and
+    to rewrites a reproduce test checks (e.g. `data/verified_lines/` via
+    `rewrite_verified.py` and `test_verified_lines_reproduce`).
+  - **Format changes only.** Rounding coordinates or dropping fields that can be
+    recomputed changes the data itself. Do that only when designing a new format, after
+    checking that nothing downstream reads those fields.
 - **Planned: the book-wide OCR run (after the Phase 9 layout review).** Its outputs, the full
   book times every engine and prompt version, go in GCS and are tracked with DVC (or GCS
   plus a committed manifest of path, sha256, settings and date), **not** committed to git.
