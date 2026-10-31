@@ -19,6 +19,7 @@ dependencies = [
     "openai>=1.50",
     "google-genai>=1.0",
     "python-dotenv>=1.0",
+    "shapely>=2.1.2",
 ]
 
 [project.optional-dependencies]
