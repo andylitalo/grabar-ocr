@@ -597,4 +597,17 @@ def verified_record(seg: dict, review: dict, *, baseline_sha256: str,
 
 
 def dumps(record: dict) -> str:
-    return json.dumps(record, indent=1, ensure_ascii=False) + "\n"
+    """A verified record as diff-friendly JSON: one top-level field per line, and one
+    compact line record per line of text (polygons inline), so a re-verify that changes
+    one line changes one line of the file. See "Data storage" in CLAUDE.md."""
+    def one(v) -> str:
+        return json.dumps(v, ensure_ascii=False)
+
+    fields = []
+    for k, v in record.items():
+        if k == "lines" and isinstance(v, list) and v:
+            body = ",\n".join(f"  {one(l)}" for l in v)
+            fields.append(f'"lines": [\n{body}\n ]')
+        else:
+            fields.append(f"{one(k)}: {one(v)}")
+    return "{\n " + ",\n ".join(fields) + "\n}\n"

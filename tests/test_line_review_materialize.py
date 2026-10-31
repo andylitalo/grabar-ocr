@@ -635,3 +635,15 @@ def test_an_initial_without_a_letter_is_still_allowed():
 def test_a_page_number_must_be_digits(value):
     with pytest.raises(mz.OpError, match="1 to 4 digits"):
         run([{"op": "page_number", "box": [10, 10, 50, 40], "value": value}])
+
+
+def test_dumps_writes_one_line_per_line_record():
+    review = {"page": 500, "status": "verified", "ops": [], "verified_at": "2026-10-02T00:00:00+00:00",
+              **mz.mint_ids(500, run([]), mz.empty_id_state())}
+    record = mz.verified_record(SEG, review, baseline_sha256="abc")
+    text = mz.dumps(record)
+    assert json.loads(text) == record
+    rows = text.splitlines()
+    assert len(rows) == len(record) + 2 + len(record["lines"]) + 1  # braces, lines' brackets
+    assert sum(r.startswith('  {"id": ') for r in rows) == len(record["lines"])
+    assert mz.dumps({"page": 1, "lines": []}) == '{\n "page": 1,\n "lines": []\n}\n'

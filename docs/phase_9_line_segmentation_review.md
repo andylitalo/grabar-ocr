@@ -253,3 +253,7 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     a crash.
   - **Less repeated work.** A save or verify materializes once, and reads and hashes the
     baseline once.
+  - **Verified files are diff-friendly.** `mz.dumps` writes one top-level field per line
+    and one compact record per line of text, with polygons inline (CLAUDE.md "Data
+    storage"). The 40 verified files were rewritten format-only with `rewrite_verified`:
+    162,389 lines down to 3,211, with the same JSON content.
