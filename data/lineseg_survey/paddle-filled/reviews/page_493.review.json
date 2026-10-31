@@ -1,0 +1,89 @@
+{
+ "schema": 2,
+ "page": 493,
+ "status": "fixing",
+ "baseline": {
+  "tool": "paddle-filled",
+  "sha256": "65c1c96d7c086fdbf9b8b1c67c56b8687ee3a5fd54ab11c3512f5deef6910a8b"
+ },
+ "ops": [
+  {
+   "op": "page_number",
+   "line": "line_096",
+   "value": "489",
+   "auto": true
+  },
+  {
+   "op": "initial",
+   "box": [
+    206,
+    311,
+    268,
+    389
+   ],
+   "line": "line_001",
+   "auto": true
+  },
+  {
+   "op": "initial",
+   "box": [
+    1057,
+    1030,
+    1104,
+    1108
+   ],
+   "line": "line_061",
+   "auto": true
+  },
+  {
+   "op": "initial",
+   "box": [
+    199,
+    1420,
+    257,
+    1498
+   ],
+   "line": "line_021",
+   "auto": true
+  },
+  {
+   "op": "initial",
+   "box": [
+    1051,
+    2036,
+    1110,
+    2115
+   ],
+   "line": "line_079",
+   "auto": true
+  },
+  {
+   "op": "initial",
+   "box": [
+    196,
+    2518,
+    251,
+    2610
+   ],
+   "line": "line_041",
+   "auto": true
+  },
+  {
+   "op": "grow",
+   "line": "line_001",
+   "box": [
+    70,
+    381,
+    216,
+    406
+   ]
+  }
+ ],
+ "section_titles": [],
+ "ids": {},
+ "retired": {},
+ "retired_keys": {},
+ "next_seq": 1,
+ "verified_at": null,
+ "updated_at": "2026-10-15T14:44:56+00:00"
+}

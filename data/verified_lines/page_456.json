@@ -1,0 +1,13 @@
+{
+ "page": 456,
+ "baseline": {"tool": "paddle-filled", "sha256": "ddba41eb2d69896c0db86fbfe58b7d2ef76e91295ad511290235f3e066ad4af6"},
+ "verified_at": "2026-10-03T06:11:15+00:00",
+ "page_number": null,
+ "section_titles": [],
+ "lines": [
+  {"id": "p456.001", "order": 1, "key": "line_001", "boundary": [[805.0, 1949.0], [1536.0, 1952.0], [1536.0, 2002.0], [805.0, 1999.0]], "baseline": [[805.0, 1988.75], [1536.0, 1988.75]], "baseline_source": "synthetic", "bbox": [805.0, 1949.0, 1536.0, 2002.0], "source": "hyocr-paddle", "derived_from": ["line_001"], "initial": null},
+  {"id": "p456.002", "order": 2, "key": "line_002", "boundary": [[918.0, 2008.0], [1424.0, 2006.0], [1425.0, 2054.0], [919.0, 2056.0]], "baseline": [[918.0, 2043.5], [1425.0, 2043.5]], "baseline_source": "synthetic", "bbox": [918.0, 2006.0, 1425.0, 2056.0], "source": "hyocr-paddle", "derived_from": ["line_002"], "initial": null},
+  {"id": "p456.003", "order": 3, "key": "line_003", "boundary": [[902.0, 2060.0], [1442.0, 2058.0], [1442.0, 2109.0], [902.0, 2111.0]], "baseline": [[902.0, 2097.75], [1442.0, 2097.75]], "baseline_source": "synthetic", "bbox": [902.0, 2058.0, 1442.0, 2111.0], "source": "hyocr-paddle", "derived_from": ["line_003"], "initial": null}
+ ],
+ "retired": {}
+}
