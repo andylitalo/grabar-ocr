@@ -53,12 +53,21 @@
 >   content.
 > - §6 "Do first, today" is superseded by the staged order above.
 
-> ## Licensing — settled (2026-09-30); rules for the future review service in §4.6.1
+> ## Licensing — settled (2026-09-30, follow-ups 2026-10-31); rules in §4.6.1
 >
-> **Every Armenian OCR model in the Calfa chain is CC BY-NC 4.0; `armenian-lectionary` is
-> Apache-2.0; `grabar-ocr` has no licence declared.** This is a pre-existing condition,
-> not something this plan introduces — the shipped corpus was already produced with
-> `hye-calfa-n`.
+> **In place:** `grabar-ocr` code is **Apache-2.0** (`LICENSE`) and `corpus/` is
+> **CC BY-NC 4.0** (`corpus/LICENSE`, Calfa credited), both since `b0062db`.
+> `armenian-lectionary` is Apache-2.0. Every Armenian OCR model in the Calfa chain
+> (`hye-calfa-n`, `paddle-calfa-tiny`, `hye-open-ocr`) is CC BY-NC 4.0, and our text
+> carries the same licence. That was already true before this plan: the shipped corpus
+> was produced with `hye-calfa-n`.
+>
+> **Everything we publish from the corpus is CC BY-NC 4.0** — the machine layer, the
+> human-verified layer, and the apparatus alike. A single licence is the safe default,
+> and it can be loosened later but not tightened. The same holds for committed engine
+> outputs and transcriptions under `data/`, `armenian-lectionary`'s `docs/sources/`
+> (which quotes the corpus), and volunteer contributions through the hosted labeler.
+> §4.6.1 has the rules.
 >
 > **Settled:** the maintainer's use is **non-commercial**. Neither project will ever
 > receive money, and both are free scholarly/ecclesial publications of a public-domain
@@ -73,9 +82,11 @@
 > served transcription is **CC BY-NC 4.0** with Calfa attributed; code stays Apache-2.0.
 > Rules in **§4.6.1**.
 >
-> **Optional:** a courtesy note to Calfa describing the project. The Apache-2.0 NC-free
-> chain — **kraken** (§4.7) or **Surya** (§4.3) + **PP-OCRv6-for-kraken** (§4.4) —
-> remains the fallback, at the cost of Classical-Armenian accuracy and a rebuild.
+> **Not needed:** asking Calfa for permission. Our use already complies (non-commercial,
+> attributed), and a broader grant would only matter for relicensing, which we don't
+> plan to do. The Apache-2.0 NC-free chain — **kraken** (§4.7) or **Surya** (§4.3) +
+> **PP-OCRv6-for-kraken** (§4.4) — remains the fallback, at the cost of
+> Classical-Armenian accuracy and a rebuild.
 
 ---
 
@@ -436,7 +447,7 @@ design — just the rules to build it under:
 | Service code | Apache-2.0 | Same as the other repos. |
 | Grabar OCR transcription (`ocr_raw` and corrected) | **CC BY-NC 4.0** | Produced with Calfa's CC BY-NC models. Licensing it CC BY-NC is the conservative match to Calfa's terms, whether or not model output is legally a derivative. Applies to `corpus/` in this repo too. |
 | English translation (Gemini) | Label as **machine translation**; ship under the same CC BY-NC notice for simplicity | Gemini API terms permit publishing output; likely not copyrightable in the US absent human authorship, so the licence is a notice, not a strong claim. Human-corrected overlays (`*.corrected.md`) are ours and are covered. |
-| Page images | 1915 book is public domain; scans used with **full permission from the person who scanned them**, no contract terms | Record that permission (who, when) in provenance. Faithful scans of a public-domain page are generally not copyrightable (*Bridgeman v. Corel*; EU DSM Directive Art. 14). |
+| Page images | 1915 book is public domain; scans used with **full permission from the person who scanned them**, no contract terms | Keep a private record that permission was given (who, when). The scanner need not be named in public provenance; "used with the scanner's permission" is enough. Faithful scans of a public-domain page are generally not copyrightable (*Bridgeman v. Corel*; EU DSM Directive Art. 14). |
 
 **Build rules:**
 
@@ -449,12 +460,23 @@ design — just the rules to build it under:
 3. **Publish a licence notice with the data**: "Transcription produced with Calfa OCR
    models (CC BY-NC 4.0); this transcription is licensed CC BY-NC 4.0." Researchers will
    copy lines; the notice tells them their terms.
-4. **Add `corpus/LICENSE` (CC BY-NC 4.0) and a repo `LICENSE` (Apache-2.0) for code**
-   before the service launches — today `grabar-ocr` declares neither.
+4. **Licence files — done.** `corpus/LICENSE` (CC BY-NC 4.0) and a repo `LICENSE`
+   (Apache-2.0) for code, since `b0062db`. Committed engine outputs and transcriptions
+   under `data/` carry their own CC BY-NC 4.0 notice. **Keep `corpus/LICENSE`'s list of
+   producing models current:** every model that writes corpus text or geometry is named
+   there with its terms, and the per-page `source` block is authoritative.
 5. **Serve stored results only.** The AGPL-3.0 build tools (DocLayout-YOLO, PyMuPDF, §4.6
    table) matter only if OCR runs inside the served app; don't run them there.
 6. **If the chain changes** (e.g. the Apache-2.0 kraken path), lines produced by a
    non-Calfa model carry that model's terms — hence per-line model provenance.
+7. **Volunteer labelers license their contributions CC BY-NC 4.0** (the same licence in
+   as out). The hosted labeler needs a click-through at sign-up saying so; without it a
+   volunteer's corrections are unlicensed and can't be published.
+8. **`armenian-lectionary`'s `docs/sources/` is CC BY-NC 4.0**, by a directory-level
+   `LICENSE`, because its rubric docs quote corpus Grabar and Gemini English. The
+   engine itself still cites the corpus by reference only. The wheel and sdist exclude
+   `docs/`, so the package stays Apache-2.0. Per-day derivation docs (W6) go in that
+   directory or another one with the same notice.
 
 ### 4.7 kraken — the segmentation option already in hand
 
@@ -746,6 +768,14 @@ behind a perfect corpus.
   pages, transcription and translation: **served transcription (and `corpus/`) is
   CC BY-NC 4.0 with Calfa attributed; code is Apache-2.0**. Page scans are used with full
   permission from the scanner, no contract terms. Rules recorded in §4.6.1.
+- **2026-10-31:** Licensing follow-ups. **CC BY-NC 4.0 everywhere corpus content is
+  published**, the human-verified layer included (safe default; it can be loosened later).
+  ShareAlike not added. Volunteer labelers license their contributions CC BY-NC 4.0
+  (rule 7). `armenian-lectionary/docs/sources/` gets a CC BY-NC directory notice because
+  it quotes corpus text (rule 8). Committed engine outputs and transcriptions under
+  `data/` (PR #9) get a CC BY-NC notice, and `corpus/LICENSE` names the Phase 11 chain
+  (PR #2). Asking Calfa: not needed. The scanner can stay unnamed publicly; keep a
+  private record of the permission.
 
 ## 9. See also
 
