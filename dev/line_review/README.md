@@ -60,6 +60,10 @@ duplicates.py        drops boxes inside other lines and boxes smaller than a cha
 storage.py           paths, review read/write, status transitions, verified output
 baseline_manifest.py checks paddle-filled against baseline_sha256.json (--accept to update)
 rewrite_verified.py  rewrites verified files after a format change (--reopen for content changes)
+lines.py             find a line by verified id or baseline key
+crops.py             line and context crops
+transcribe.py        transcriptions per task, the test-set sample
+migrate.py           on verify: transcriptions, picks, predictions follow the new ids
 app.py               FastAPI endpoints
 static/              canvas UI
 ```
@@ -70,3 +74,13 @@ Verified output: `data/verified_lines/page_<N>.json`. Both are committed.
 Tests: `uv run python -m pytest tests/test_line_review_*.py tests/test_verified_lines_reproduce.py
 tests/test_baseline_manifest.py`. The last two are the gate's reproducibility and baseline
 checks.
+
+## Transcription (Phase 10)
+
+`/transcribe` (or **Transcribe →** in the header): type the text of sampled verified
+lines for the OCR test set (`docs/phase_10_ocr_test_set.md`). **Top up sample** adds lines
+from newly verified pages; **Enter** submits and moves on; **Alt+I** illegible; **Alt+B**
+bad crop (the box is wrong). The palette inserts characters a standard Armenian
+keyboard makes awkward (՟ ֊ ։ ՝ ՛ ․ « » և). **Blind recheck** retypes about 1 line in 10
+without showing the first pass. Pass `--contributor NAME` to record who typed. Output:
+`data/transcriptions/testset/` (committed).
