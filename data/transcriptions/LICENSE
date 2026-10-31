@@ -1,0 +1,16 @@
+The contents of this data/transcriptions/ directory are licensed under the
+Creative Commons Attribution-NonCommercial 4.0 International License
+(CC BY-NC 4.0): https://creativecommons.org/licenses/by-nc/4.0/legalcode
+The full licence text is reproduced in corpus/LICENSE. The source-code license
+in the repository root (Apache 2.0) does not apply to this directory.
+
+Copyright (c) 2026 Andy Ylitalo.
+
+These are hand-typed transcriptions (ground truth) of line images from the
+Տօնացոյց (Tonatsoyts), Jerusalem, 1915, which is in the public domain. This
+license covers the transcriptions, not the 1915 text. Lines were picked for
+typing using machine readings from Calfa's models (see
+data/ocr_predictions/LICENSE); the same terms are used here for consistency
+with the rest of the project's published text.
+
+When reusing this material, credit grabar-ocr (Andy Ylitalo).
