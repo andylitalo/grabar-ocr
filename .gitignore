@@ -91,6 +91,7 @@ runs/
 # Phase 10 transcriptions keyed by verified line id (data/transcriptions/<task>/...).
 !/data/transcriptions/
 /data/transcriptions/*
+!/data/transcriptions/LICENSE
 !/data/transcriptions/*/
 !/data/transcriptions/*/*.json
 # Transcriptions set aside when their line was edited (dev/line_review/migrate.py).
