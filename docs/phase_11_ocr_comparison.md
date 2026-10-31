@@ -271,6 +271,16 @@ The p604 transcription was a typing slip (`աստ`, as the engines read it). Wit
 `՚ի` rule is **95.0% error-free (91.9–98.1%)**, 0 broken lines. Pipeline: hye-calfa-n +
 Paddle → Gemini 3.1 Pro with prompt v4 (drift guard, retry) → `՚ի` rule.
 
+**Re-scored 2026-10-31, after the move to verified ids.** Pages 463–492 were verified
+(PR #7), so the ceiling data was moved to their line ids (`migrate repair`). Lines the
+review reshaped or deleted lost their predictions, and every `corr-*` page with such a
+line was dropped (16 pages). Both engines were re-run on the 139 missing lines and v4 on
+the 14 dropped pages with typed lines. 4 typed lines went stale (3 reshaped, 1 deleted)
+and wait to be retyped. v4 + `՚ի` rule: **94.9% error-free (91.2–98.1%) on 157 typed
+lines, 0 broken**, the same result. The other prompt versions weren't re-run: their rows
+in `reports/phase11_ceiling.md` now cover 133 lines (pages 463–492 missing), and the
+comparison table above stays as measured on 2026-10-11.
+
 Order of work from here:
 1. Finish the layout (Phase 9 review) over the whole book.
 2. Run the OCR and v4 on the verified lines, then test human review of the output.
