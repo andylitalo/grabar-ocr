@@ -12,7 +12,8 @@ Only pages holding typed ceiling lines are corrected (the rest can't be scored);
 ``--all`` for every sampled page. A page is sent again only if some of its lines have no
 correction yet (e.g. lines the layout review reshaped), and then only those lines are
 written: existing corrections are never replaced, so earlier scores don't move. ``--redo``
-corrects every page afresh.
+corrects every page afresh; the corrections it replaces or drops are kept in the file's
+``stale`` section (``common.set_aside``), never deleted.
 
     uv run python -m dev.ocr_eval.correct --model opus-5.5
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro
