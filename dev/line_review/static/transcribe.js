@@ -14,8 +14,10 @@ const PALETTE = [
 const STATUS_LABEL = { pending: "not typed", done: "done", illegible: "illegible", "bad-crop": "bad crop" };
 
 const $ = (id) => document.getElementById(id);
-// Which line set: ?set=ceiling or the default Phase 10 test set.
-const SET = new URLSearchParams(location.search).get("set") || "testset";
+// Which line set: ?set=ceiling or the default Phase 10 test set. ?line=p468.021 opens that
+// sampled line on load (the URL follows the line shown, so a reload stays on it).
+const PARAMS = new URLSearchParams(location.search);
+const SET = PARAMS.get("set") || "testset";
 const SET_NAMES = { testset: "test set", ceiling: "ceiling (where the Calfa engines disagree)" };
 const q = (url) => `${url}${url.includes("?") ? "&" : "?"}set=${SET}`;
 
@@ -89,6 +91,9 @@ async function showLine(i) {
   }
   state.index = Math.max(0, Math.min(i, state.queue.length - 1));
   const id = state.queue[state.index];
+  const url = new URL(location.href);
+  url.searchParams.set("line", id);
+  history.replaceState(null, "", url);
   const line = await api("GET", q(`/api/lines/${id}`));
   state.current = line;
   const p = pickById(id);
@@ -107,6 +112,15 @@ async function showLine(i) {
   $("text").focus();
 }
 
+// Index of ?line= in the queue on first load (else the first open line).
+function startIndex() {
+  const want = PARAMS.get("line");
+  if (!want) return firstOpen();
+  const i = state.queue.indexOf(want);
+  if (i < 0) flash(`${want} isn't in this set's sample${state.mode === "recheck" ? " recheck queue" : ""}`, "err");
+  return i >= 0 ? i : firstOpen();
+}
+
 async function refresh(keepIndex) {
   const s = await api("GET", q("/api/transcribe/state"));
   state.picks = s.picks;
@@ -115,7 +129,7 @@ async function refresh(keepIndex) {
   renderStrata();
   $("banner").textContent = s.missing.length
     ? `${s.missing.length} sampled line(s) no longer exist after re-verification: ${s.missing.join(", ")}.` : "";
-  await showLine(keepIndex ? state.index : firstOpen());
+  await showLine(keepIndex ? state.index : startIndex());
 }
 
 // ---- saving ----
