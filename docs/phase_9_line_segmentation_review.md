@@ -257,3 +257,11 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     and one compact record per line of text, with polygons inline (CLAUDE.md "Data
     storage"). The 40 verified files were rewritten format-only with `rewrite_verified`:
     162,389 lines down to 3,211, with the same JSON content.
+- **2026-11-13: the page number is marked automatically again.** `page_number.py` (from
+  `feat/layout-review`, 8e0acf7) had been left out of PR #3, so p.494, the first page
+  reviewed on `main`, started with no page-number edit and was marked by hand. A fresh
+  review now starts with a `page_number` op (`"auto": true`, value PDF − 4) when the top
+  line is small, centred and high. It agrees with the hand marks on all 42 reviewed pages
+  (453-494; none on 453-457 and 481-483), and book-wide it leaves exactly the 27 known
+  unnumbered pages unmarked. Only pages without a review file are seeded. Automatic
+  initials (`initials.py`) were not ported.
