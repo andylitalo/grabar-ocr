@@ -374,10 +374,12 @@ lines).
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
   `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
 - **Ceiling sample**: 58 + 102 typed (plus 3 bad crop/illegible), 474 of 500 picks still keyed
-  to the baseline (`p<N>~line_…`). Verifying a page now carries its transcriptions, sample
-  picks and ceiling predictions over to the new ids (`dev/line_review/migrate.py`, Phase 9
-  build log); lines whose shape changed are set aside under `stale/` and come back untyped.
-- **Next (maintainer's order):** finish the layout review for the whole book → OCR (both
+  to the baseline (`p<N>~line_…`). They move to line ids once, after the layout review
+  (`python -m dev.line_review.migrate repair`, Phase 9 "After the gate"; since 2026-11-13
+  verify no longer moves them); lines whose shape changed are set aside under `stale/` and
+  come back untyped.
+- **Next (maintainer's order):** finish the layout review for the whole book → `migrate
+  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
   engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
   the bucket signals → human review of the output → v6 vs v4.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale

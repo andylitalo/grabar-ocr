@@ -33,7 +33,7 @@ def tmp_store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
-    # Verifying runs the transcription migration: keep it off the real data.
+    # Keep the transcription migration off the real data, should anything run it.
     from dev.line_review import migrate
     from dev.line_review import transcribe as tr
     monkeypatch.setattr(tr, "TRANSCRIPTIONS_DIR", tmp_path / "transcriptions")
@@ -112,11 +112,15 @@ def test_changed_baseline_blocks_edits(tmp_store):
         storage.set_status(500, "fixed")
 
 
-def test_verify_moves_a_baseline_keyed_transcription_to_the_new_id(tmp_store):
+def test_repair_moves_a_baseline_keyed_transcription_to_the_new_id(tmp_store):
+    """Verify leaves it on its baseline key; `migrate repair`, after the review, moves it."""
+    from dev.line_review import migrate
     from dev.line_review import transcribe as tr
     line = storage.materialized(500, storage.load_review(500))[0]
     tr.save_line(f"p500~{line['key']}", text="Ա", status="done", task="ceiling",
                  geometry=tr.geometry(line))
     storage.set_status(500, "fixed")
     storage.set_status(500, "verified")
+    assert set(tr.load_page(500, "ceiling")) == {f"p500~{line['key']}"}
+    migrate.repair()
     assert tr.load_page(500, "ceiling")["p500.001"]["text"] == "Ա"

@@ -25,8 +25,7 @@ def page_of(key: str) -> int:
 def page_lines(page: int) -> list[dict]:
     """The page's lines with a ``key``: verified ids if the page has been verified, else
     baseline keys. A page back under review (Resume fixing) still serves its last verified
-    output by id: its transcriptions, picks and predictions were moved to those ids, and
-    move again on the next verify (``migrate``)."""
+    output by id, the ids its data is (or will be, after ``migrate repair``) keyed by."""
     if storage.verified_path(page).exists():
         rec = json.loads(storage.verified_path(page).read_text(encoding="utf-8"))
         return [{**l, "key": l["id"]} for l in rec["lines"]]

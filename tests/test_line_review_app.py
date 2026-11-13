@@ -46,7 +46,7 @@ def store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
     monkeypatch.setattr(storage, "MANIFEST_PATH", tmp_path / "baseline_sha256.json")
-    # verify runs migrate, which rewrites committed transcriptions and predictions
+    # migrate (repair) rewrites committed transcriptions and predictions
     monkeypatch.setattr(tr, "TRANSCRIPTIONS_DIR", tmp_path / "transcriptions")
     monkeypatch.setattr(migrate, "PREDICTIONS_DIR", tmp_path / "predictions")
     monkeypatch.setattr(migrate, "CROPS_DIR", tmp_path / "runs")
@@ -439,26 +439,18 @@ def test_rewrite_refuses_a_page_whose_ops_no_longer_apply(store, monkeypatch, ca
 # --- fixes from the PR #2 review ---------------------------------------------------------
 
 
-def test_a_failed_migration_saves_nothing_and_a_retry_finishes(store, monkeypatch):
-    """Re-verify after a split: the migration fails once; the retry must still find the
-    data on the old id (it would be orphaned if the new verified file were already out)."""
-    tr.save_sample({"picks": [{"id": f"p{PAGE}.002", "stratum": "agree", "page": PAGE}]}, "ceiling")
+def test_verify_leaves_data_for_the_repair_after_the_review(store):
+    """Verify doesn't move transcriptions or picks; `migrate repair` does, once, after the
+    layout review. A repair that fails partway is re-run and finishes the move."""
+    from dev.line_review import migrate
+    tr.save_sample({"picks": [{"id": f"p{PAGE}~line_002", "stratum": "agree", "page": PAGE}]}, "ceiling")
     verify()
-    tr.save_sample({"picks": [{"id": f"p{PAGE}.002", "stratum": "agree", "page": PAGE}]}, "ceiling")
-    storage.set_status(PAGE, "fixing")
-    storage.save_ops(PAGE, [{"op": "split", "line": "line_002", "cut": [[500, 190], [500, 260]]}], [])
-    storage.set_status(PAGE, "fixed")
-    before_file = storage.verified_path(PAGE).read_text()
-    real = migrate._move_predictions
-    monkeypatch.setattr(migrate, "_move_predictions", lambda *a: (_ for _ in ()).throw(OSError("disk")))
-    with pytest.raises(OSError):
-        storage.set_status(PAGE, "verified")
-    assert storage.verified_path(PAGE).read_text() == before_file
-    assert storage.load_review(PAGE)["status"] == "fixed"
-    monkeypatch.setattr(migrate, "_move_predictions", real)
-    review = storage.set_status(PAGE, "verified")
-    successor = review["retired"][f"p{PAGE}.002"]["superseded_by"][0]
-    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [successor]
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [f"p{PAGE}~line_002"]
+    migrate.repair()
+    new_id = storage.load_review(PAGE)["ids"]["line_002"]
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [new_id]
+    migrate.repair()  # idempotent
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [new_id]
 
 
 def test_a_page_back_under_review_keeps_serving_its_verified_ids(store):

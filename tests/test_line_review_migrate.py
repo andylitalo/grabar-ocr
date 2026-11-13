@@ -103,21 +103,87 @@ def test_untyped_picks_and_predictions_follow_too(dirs):
 # --- fixes from the PR #2 review -----------------------------------------------------------
 
 
-def test_keys_made_by_ops_are_part_of_before(dirs, monkeypatch):
-    """A line only the ops made (an add, a split piece) can be sampled before verify."""
+def seg_520(monkeypatch):
     from dev.line_review import storage
     seg = {"page": 520, "lines": [{"id": "line_001", "boundary": mline("x", 100)["boundary"],
                                    "baseline": [[100, 140], [900, 140]], "bbox": [100, 100, 900, 150]}]}
     monkeypatch.setattr(storage, "load_baseline", lambda page: seg)
+
+
+def test_a_line_made_by_ops_moves_but_its_ocr_is_redone(dirs, monkeypatch):
+    """An added line's earlier shape isn't known: its pick and (same-shape) record move,
+    its predictions and crop are dropped, since they may be of a shape the review changed."""
+    seg_520(monkeypatch)
     added = mline("add_001", 300)
-    before = migrate.before_shapes(520, None, [mline("line_001", 100), added])
-    assert before["p520~add_001"] == tr.geometry(added)
+    assert "p520~add_001" not in migrate.before_shapes(520)
     tr.save_sample({"picks": [{"id": "p520~add_001", "stratum": "agree", "page": 520}]}, "ceiling")
     typed("p520~add_001", added, "Ա")
+    pred_dir = dirs / "predictions" / "ceiling"
+    pred_dir.mkdir(parents=True)
+    (pred_dir / "paddle.json").write_text(json.dumps({"lines": {"p520~add_001": "old shape's OCR"}}))
+    crops = dirs / "runs" / "ceiling_crops"
+    crops.mkdir(parents=True)
+    (crops / "p520~add_001.png").write_bytes(b"png")
     migrate.after_verify(520, [mline("line_001", 100), added],
-                         {"line_001": "p520.001", "add_001": "p520.002"}, before)
+                         {"line_001": "p520.001", "add_001": "p520.002"}, migrate.before_shapes(520))
     assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == ["p520.002"]
     assert set(tr.load_page(520, "ceiling")) == {"p520.002"}
+    assert json.loads((pred_dir / "paddle.json").read_text())["lines"] == {}
+    assert list(crops.iterdir()) == []
+
+
+def test_a_line_the_ops_made_and_removed_is_not_left_behind(dirs, monkeypatch):
+    """add_001 was typed and picked, then deleted before the verify."""
+    seg_520(monkeypatch)
+    typed("p520~add_001", mline("add_001", 300), "Ա")
+    tr.save_sample({"picks": [{"id": "p520~add_001", "stratum": "agree", "page": 520}]}, "ceiling")
+    summary = migrate.after_verify(520, [mline("line_001", 100)], {"line_001": "p520.001"},
+                                   migrate.before_shapes(520))
+    assert summary["ceiling"]["stale"] == {"p520~add_001": "line removed"}
+    assert tr.load_page(520, "ceiling") == {}
+    sample = tr.load_sample("ceiling")
+    assert sample["picks"] == [] and [p["id"] for p in sample["dropped"]] == ["p520~add_001"]
+
+
+def test_a_retired_id_with_no_earlier_shape_is_followed_too(dirs):
+    """repair has no previous verified output: a test-set record on a retired id still
+    goes stale instead of being skipped."""
+    tr.save_line("p520.001", text="Ա", status="done", geometry=tr.geometry(mline("line_001", 100)))
+    merged = mline("line_001+line_002", 120, ["line_001", "line_002"])
+    summary = migrate.after_verify(520, [merged], {"line_001+line_002": "p520.003"}, {},
+                                   retired={"p520.001": {"superseded_by": ["p520.003"]}})
+    assert summary["testset"]["stale"] == {"p520.001": "line split or merged"}
+
+
+def test_a_retry_does_not_set_a_record_aside_twice(dirs, monkeypatch):
+    lines = [mline("line_001", 100), mline("line_002", 200)]
+    before = {f"p520~{l['key']}": tr.geometry(l) for l in lines}
+    typed("p520~line_001", lines[0], "Ա")
+    typed("p520~line_002", lines[1], "Բ")
+    after = [mline("line_001", 105), mline("line_002", 205)]  # both reshaped
+    ids = {"line_001": "p520.001", "line_002": "p520.002"}
+    real = tr._write_page
+    monkeypatch.setattr(tr, "_write_page", lambda *a: (_ for _ in ()).throw(OSError("disk")))
+    try:
+        migrate.after_verify(520, after, ids, before)
+    except OSError:
+        pass
+    monkeypatch.setattr(tr, "_write_page", real)
+    migrate.after_verify(520, after, ids, before)
+    stale = json.loads((dirs / "transcriptions" / "ceiling" / "stale" / "page_520.json").read_text())
+    assert [s["id"] for s in stale] == ["p520~line_001", "p520~line_002"]
+    assert tr.load_page(520, "ceiling") == {}
+
+
+def test_a_crop_already_under_its_new_id_replaces_the_old_one(dirs):
+    tr.save_sample({"picks": []}, "ceiling")
+    crops = dirs / "runs" / "ceiling_crops"
+    crops.mkdir(parents=True)
+    for k in ("p520~line_001", "p520.001"):
+        (crops / f"{k}.png").write_bytes(b"png")
+    line = mline("line_001", 100)
+    migrate.after_verify(520, [line], {"line_001": "p520.001"}, {"p520~line_001": tr.geometry(line)})
+    assert [p.name for p in crops.iterdir()] == ["p520.001.png"]
 
 
 def test_test_set_predictions_and_crops_follow_their_own_layout(dirs):

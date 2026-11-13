@@ -191,6 +191,18 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
   any of its lines changed, to be re-corrected. The same check covers re-verifying a page
   whose test-set lines were reshaped. `lines.find` also resolves a verified id while its
   page is back under review. Tests: `tests/test_line_review_migrate.py`.
+- **2026-11-13, the migration moves to the end of the review (PR #2 review, maintainer).**
+  No transcription or OCR runs until the layout review is done, so verify no longer calls
+  `migrate`: it mints ids and writes the verified file, as before 2026-10-11. The data is
+  moved once, by `python -m dev.line_review.migrate repair`, after the gate ("After the
+  gate"). Running it inside each verify could leave data on ids that were never saved
+  when it failed partway, and could race an OCR run rewriting the same files. `repair`
+  now maps every key the page's data uses: a line the review added and then removed sends
+  its transcription to `stale/` and its pick to `dropped` instead of leaving them behind;
+  an added line's predictions and crop are dropped (its shape when they were made is
+  unknown); a retry doesn't set a stale record aside twice; and a crop already exported
+  under the new id replaces the old one. Predictions are written atomically. Tests:
+  `tests/test_line_review_migrate.py`.
 
 ## Gate
 
@@ -200,6 +212,23 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
 - No verified page has unresolved uncovered ink.
 - Re-running the materializer from raw output + ops reproduces the verified geometry
   exactly.
+
+## After the gate
+
+Move the Phase 10/11 data (the ceiling sample was typed on baseline keys) to the line ids,
+once, before any new transcription or OCR:
+
+1. `uv run python -m dev.line_review.migrate repair`; run it again until it prints nothing
+   (it is idempotent, so a failure partway is fixed by re-running).
+2. Read the diff of `data/transcriptions/` and `data/ocr_predictions/`: picks moved to ids,
+   records of reshaped lines in `stale/`, predictions of changed lines and the `corr-*`
+   pages that held them dropped. Commit it on its own (data commit).
+3. Re-run the engines on lines that lost their predictions and the corrector on dropped
+   pages with typed lines, retype stale lines, and re-score (as on 2026-10-31,
+   `docs/phase_11_ocr_comparison.md`).
+
+Then the book-wide run starts by moving the data to region keys
+(`docs/backlog/region_keyed_data.md`).
 
 ## Out of scope
 
