@@ -1,25 +1,25 @@
 # Phase 11: ceiling of the Calfa engines, and LLM correction (provisional)
 
-Generated 2026-10-31T07:56:30+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
+Generated 2026-11-13T16:34:31+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
 
-Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 55 of 300 sampled disagreements, 102 of 200 agreements.
+Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 57 of 300 sampled disagreements, 103 of 200 agreements.
 
 | engine | lines | wrong on disagree | wrong on agree | **error-free lines** | 95% interval | ≈ lines per error | broke (agreed & right → wrong) |
 |---|--:|--:|--:|--:|--:|--:|--:|
 | `corr-gemini-4-v4+rules` | 133 | 2/47 | 4/86 | **95.5%** | 91.7%–98.5% | 22 | 1 |
-| `corr-gemini-3.1-pro-v4+rules` | 157 | 2/55 | 6/102 | **94.9%** | 91.2%–98.1% | 20 | 0 |
+| `corr-gemini-3.1-pro-v4+rules` | 158 | 2/56 | 6/102 | **95.0%** | 91.2%–98.1% | 20 | 0 |
 | `corr-gemini-3.1-pro+rules` | 133 | 4/47 | 4/86 | **93.9%** | 89.4%–97.7% | 16 | 0 |
 | `corr-gemini-3.1-pro-v5+rules` | 133 | 3/47 | 6/86 | **93.2%** | 88.7%–97.1% | 15 | 0 |
 | `corr-gemini-3.1-pro-v3+rules` | 133 | 4/47 | 5/86 | **93.2%** | 88.7%–97.0% | 15 | 0 |
 | `corr-gemini-4-v4` | 133 | 5/47 | 13/86 | **86.5%** | 80.5%–91.8% | 7 | 1 |
-| `corr-gemini-3.1-pro-v4` | 157 | 6/55 | 17/102 | **85.4%** | 79.8%–90.6% | 7 | 0 |
+| `corr-gemini-3.1-pro-v4` | 158 | 6/56 | 17/102 | **85.5%** | 79.8%–91.1% | 7 | 0 |
 | `corr-gemini-3.1-pro-v5` | 133 | 6/47 | 15/86 | **84.3%** | 77.6%–89.6% | 6 | 0 |
 | `corr-gemini-3.1-pro` | 133 | 8/47 | 13/86 | **84.2%** | 78.1%–90.2% | 6 | 0 |
 | `corr-gemini-3.1-pro-v3` | 133 | 8/47 | 14/86 | **83.4%** | 77.4%–89.5% | 6 | 0 |
-| `paddle-calfa-tiny+rules` | 157 | 23/55 | 7/102 | **80.3%** | 74.4%–85.7% | 5 | 0 |
-| `paddle-calfa-tiny` | 157 | 26/55 | 18/102 | **71.5%** | 64.5%–78.0% | 4 | – |
-| `tess-calfa-n+rules` | 157 | 44/55 | 7/102 | **66.4%** | 61.3%–71.4% | 3 | 0 |
-| `tess-calfa-n` | 157 | 47/55 | 18/102 | **57.5%** | 51.9%–63.2% | 2 | – |
+| `paddle-calfa-tiny+rules` | 160 | 25/57 | 8/103 | **79.0%** | 73.4%–84.7% | 5 | 0 |
+| `paddle-calfa-tiny` | 160 | 28/57 | 19/103 | **70.3%** | 63.5%–77.2% | 3 | – |
+| `tess-calfa-n+rules` | 160 | 45/57 | 8/103 | **66.2%** | 60.6%–71.2% | 3 | 0 |
+| `tess-calfa-n` | 160 | 48/57 | 19/103 | **57.5%** | 51.8%–63.6% | 2 | – |
 
 ## Agreed but wrong (both OCR engines made the same mistake)
 
@@ -31,6 +31,7 @@ Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 55 of
 - `p491.046`: ref `պարտաւորեսցիս։ Մեսե. Աստուած աս-`, both `պարտաւորեսցիս։ Մեսե. Աոտուած աս-`
 - `p561~line_061`: ref `սուրբ Կուսին ՚ի յԱննայէ։`, both `սուրբ Կուսին ի յԱննայէ։`
 - `p478.091`: ref `վ. 28. հաւատովք ՚ի փրկութիւն։ Երգ՝`, both `վ. 28. հաւատովք ի փրկութիւն։ Երգ՝`
+- `p467.061`: ref `Երկրորդ կիւրակէ մեծի պահոց. ահ.`, both `Երորդ կիւրակ։ մոծի պանց. ահ.`
 - `p494~line_027`: ref `Համբ. բձ. Կանխեցին. Զյարութիւն. և`, both `Համբ. բկ. Կանխեցին. Զյարութիւն. և`
 - `p543~line_013`: ref `և միջոցդ իբրու անշարժք, սակայն ոմանք տօնք շար-`, both `և միջոցդ իբրու անշարժք. սակայն ոմանք տօնք շար-`
 - `p638~line_028`: ref `աձ. Ըզքեզ արդար եւ ուղիղ դա-`, both `այ. Ըզքեզ արդար եւ ուղիղ դա-`
