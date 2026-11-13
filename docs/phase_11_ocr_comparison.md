@@ -278,9 +278,9 @@ line was dropped (16 pages). Both engines were re-run on the 139 missing lines a
 the 14 dropped pages with typed lines. 4 typed lines went stale (3 reshaped, 1 deleted).
 v4 + `՚ի` rule: **94.9% error-free (91.2–98.1%) on 157 typed lines, 0 broken**, the same
 result. On 2026-11-13 the 3 reshaped lines were retyped against their new crops
-(p467.061, the Bad crop before, now reads). That gives 160 typed lines, but v4 covers 158:
-pages 467 and 468 had no typed lines at the re-run, so p467.061 and p468.021 have no v4
-correction yet. v4 + rule: **95.0% (91.2–98.1%) on 158 lines, 0 broken**. The other
+(p467.061, the Bad crop before, now reads), and v4 was run on pages 467–468, the 2
+dropped pages that had no typed lines at the first re-run. v4 + rule on all 160 typed
+lines: **95.0% error-free (91.9–98.1%), 0 broken**, the same as on 2026-10-11. The other
 prompt versions weren't re-run: their rows
 in `reports/phase11_ceiling.md` now cover 133 lines (pages 463–492 missing), and the
 comparison table above stays as measured on 2026-10-11.
