@@ -207,7 +207,7 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
   readings are the corrector's input, so its correction of an unchanged line stays valid
   and moves to the new id like any engine's prediction. No prediction is deleted: a changed
   line's goes to the file's `stale` section (`{old key: [{text, reason, replaced_by, at}]}`),
-  which the scorer doesn't read and rewrites keep. `correct.py` sends a page again only if
+  which the scorer doesn't read and rewrites keep; a rewrite that drops or replaces a line sets the old reading aside there too (`common.set_aside`, 2026-11-13). `correct.py` sends a page again only if
   some of its lines have no correction, and writes only those. A trial `repair` on pages
   493–494 (PR #9's data) left `reports/phase11_ceiling.md` unchanged. Tests:
   `tests/test_line_review_migrate.py`, `tests/test_ocr_eval_ceiling.py`.

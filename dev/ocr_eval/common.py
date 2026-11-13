@@ -80,14 +80,44 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
     # Atomic (temp file + rename): a run killed mid-write must not leave a truncated file,
     # which every later reader (score, migrate) would fail on.
     path = PREDICTIONS_DIR / f"{engine}.json"
-    # Predictions of lines the layout review changed are kept under ``stale`` by
-    # dev/line_review/migrate.py; a rewrite carries them over instead of deleting them.
-    stale = load_predictions(engine).get("stale")
+    stale = set_aside(load_predictions(engine), rec["lines"])
     if stale:
         rec["stale"] = stale
     tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     os.replace(tmp, path)
+
+
+REWRITE_REASONS = ("dropped on rewrite", "replaced on rewrite")
+
+
+def set_aside(old: dict, lines: dict) -> dict:
+    """The ``stale`` section for a rewrite of ``old`` (a predictions file) with ``lines``.
+
+    No prediction is ever deleted: these files hold paid, nondeterministic runs that the
+    committed scores were measured on. A rewrite keeps the old ``stale`` section (lines
+    the layout review changed, set aside by dev/line_review/migrate.py) and adds every old
+    line the new ``lines`` drop or replace (``--redo``, a settings change, a shrunken
+    input), in the same ``{key: [{text, reason, replaced_by, at}]}`` form. An entry set
+    aside on rewrite whose text is the line's current text again is pruned (nothing is
+    lost: it is the line)."""
+    stale = {k: list(v) for k, v in old.get("stale", {}).items()}
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    for key, text in old.get("lines", {}).items():
+        if lines.get(key) == text:
+            continue
+        if any(e["text"] == text for e in stale.get(key, [])):
+            continue
+        dropped = key not in lines
+        stale.setdefault(key, []).append({
+            "text": text, "reason": REWRITE_REASONS[0] if dropped else REWRITE_REASONS[1],
+            "replaced_by": None if dropped else key, "at": now})
+    for key in list(stale):
+        stale[key] = [e for e in stale[key]
+                      if not (e["reason"] in REWRITE_REASONS and lines.get(key) == e["text"])]
+        if not stale[key]:
+            del stale[key]
+    return dict(sorted(stale.items()))
 
 
 def add_set_arg(ap: argparse.ArgumentParser) -> None:

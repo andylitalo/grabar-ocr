@@ -1,21 +1,21 @@
 # Phase 11: ceiling of the Calfa engines, and LLM correction (provisional)
 
-Generated 2026-11-13T16:42:28+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
+Generated 2026-11-13T19:08:28+00:00 by `dev/ocr_eval/ceiling.py`. A line counts as wrong if any character differs after normalization (look-alike punctuation folded, spaces ignored). Rates are weighted back to the whole book from the two strata.
 
 Book: 14388 lines; the OCR engines disagree on 5264 (36.6%). Typed so far: 57 of 300 sampled disagreements, 103 of 200 agreements.
 
 | engine | lines | wrong on disagree | wrong on agree | **error-free lines** | 95% interval | ≈ lines per error | broke (agreed & right → wrong) |
 |---|--:|--:|--:|--:|--:|--:|--:|
-| `corr-gemini-4-v4+rules` | 133 | 2/47 | 4/86 | **95.5%** | 91.7%–98.5% | 22 | 1 |
-| `corr-gemini-3.1-pro-v4+rules` | 160 | 2/57 | 6/103 | **95.0%** | 91.9%–98.1% | 20 | 0 |
-| `corr-gemini-3.1-pro+rules` | 133 | 4/47 | 4/86 | **93.9%** | 89.4%–97.7% | 16 | 0 |
-| `corr-gemini-3.1-pro-v5+rules` | 133 | 3/47 | 6/86 | **93.2%** | 88.7%–97.1% | 15 | 0 |
-| `corr-gemini-3.1-pro-v3+rules` | 133 | 4/47 | 5/86 | **93.2%** | 88.7%–97.0% | 15 | 0 |
-| `corr-gemini-4-v4` | 133 | 5/47 | 13/86 | **86.5%** | 80.5%–91.8% | 7 | 1 |
+| `corr-gemini-4-v4+rules` | 157 | 2/55 | 4/102 | **96.2%** | 93.0%–98.8% | 26 | 1 |
+| `corr-gemini-3.1-pro-v4+rules` | 160 | 2/57 | 6/103 | **95.0%** | 91.3%–98.1% | 20 | 0 |
+| `corr-gemini-3.1-pro-v5+rules` | 157 | 3/55 | 7/102 | **93.7%** | 89.8%–96.9% | 16 | 1 |
+| `corr-gemini-3.1-pro-v3+rules` | 157 | 4/55 | 6/102 | **93.6%** | 89.7%–97.4% | 16 | 1 |
+| `corr-gemini-3.1-pro+rules` | 157 | 6/55 | 6/102 | **92.3%** | 87.8%–96.2% | 13 | 2 |
+| `corr-gemini-4-v4` | 157 | 7/55 | 15/102 | **86.0%** | 80.4%–91.1% | 7 | 1 |
 | `corr-gemini-3.1-pro-v4` | 160 | 6/57 | 17/103 | **85.7%** | 80.1%–90.7% | 7 | 0 |
-| `corr-gemini-3.1-pro-v5` | 133 | 6/47 | 15/86 | **84.3%** | 77.6%–89.6% | 6 | 0 |
-| `corr-gemini-3.1-pro` | 133 | 8/47 | 13/86 | **84.2%** | 78.1%–90.2% | 6 | 0 |
-| `corr-gemini-3.1-pro-v3` | 133 | 8/47 | 14/86 | **83.4%** | 77.4%–89.5% | 6 | 0 |
+| `corr-gemini-3.1-pro-v5` | 157 | 7/55 | 17/102 | **84.8%** | 79.0%–90.4% | 7 | 1 |
+| `corr-gemini-3.1-pro-v3` | 157 | 10/55 | 17/102 | **82.8%** | 76.4%–88.4% | 6 | 1 |
+| `corr-gemini-3.1-pro` | 157 | 12/55 | 17/102 | **81.4%** | 75.1%–87.3% | 5 | 2 |
 | `paddle-calfa-tiny+rules` | 160 | 25/57 | 8/103 | **79.0%** | 73.4%–84.7% | 5 | 0 |
 | `paddle-calfa-tiny` | 160 | 28/57 | 19/103 | **70.3%** | 63.5%–77.2% | 3 | – |
 | `tess-calfa-n+rules` | 160 | 45/57 | 8/103 | **66.2%** | 60.6%–71.2% | 3 | 0 |
