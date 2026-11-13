@@ -191,6 +191,26 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
   any of its lines changed, to be re-corrected. The same check covers re-verifying a page
   whose test-set lines were reshaped. `lines.find` also resolves a verified id while its
   page is back under review. Tests: `tests/test_line_review_migrate.py`.
+- **2026-11-13, the migration moves to the end of the review (PR #2 review, maintainer).**
+  No transcription or OCR runs until the layout review is done, so verify no longer calls
+  `migrate`: it mints ids and writes the verified file, as before 2026-10-11. The data is
+  moved once, by `python -m dev.line_review.migrate repair`, after the gate ("After the
+  gate"). Running it inside each verify could leave data on ids that were never saved
+  when it failed partway, and could race an OCR run rewriting the same files. `repair`
+  now maps every key the page's data uses: a line the review added and then removed sends
+  its transcription to `stale/` and its pick to `dropped` instead of leaving them behind;
+  an added line's predictions and crop are dropped (its shape when they were made is
+  unknown); a retry doesn't set a stale record aside twice; and a crop already exported
+  under the new id replaces the old one. Predictions are written atomically.
+  **Corrector output is kept line by line (maintainer: the scores must not move).** A
+  `corr-*` page is no longer dropped when one of its lines changes: a line's own two
+  readings are the corrector's input, so its correction of an unchanged line stays valid
+  and moves to the new id like any engine's prediction. No prediction is deleted: a changed
+  line's goes to the file's `stale` section (`{old key: [{text, reason, replaced_by, at}]}`),
+  which the scorer doesn't read and rewrites keep. `correct.py` sends a page again only if
+  some of its lines have no correction, and writes only those. A trial `repair` on pages
+  493–494 (PR #9's data) left `reports/phase11_ceiling.md` unchanged. Tests:
+  `tests/test_line_review_migrate.py`, `tests/test_ocr_eval_ceiling.py`.
 
 ## Gate
 
@@ -200,6 +220,24 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
 - No verified page has unresolved uncovered ink.
 - Re-running the materializer from raw output + ops reproduces the verified geometry
   exactly.
+
+## After the gate
+
+Move the Phase 10/11 data (the ceiling sample was typed on baseline keys) to the line ids,
+once, before any new transcription or OCR:
+
+1. `uv run python -m dev.line_review.migrate repair`; run it again until it prints nothing
+   (it is idempotent, so a failure partway is fixed by re-running).
+2. Read the diff of `data/transcriptions/` and `data/ocr_predictions/`: picks moved to ids,
+   records of reshaped lines in `stale/`, predictions of changed lines moved to each file's
+   `stale` section. Re-score: `reports/phase11_ceiling.md` must not change apart from
+   line names (typed lines that were themselves reshaped wait to be retyped). Commit it on
+   its own (data commit).
+3. Retype the stale lines, run the engines on the lines without predictions, then the
+   corrector (it fills only the lines it hasn't corrected), and re-score.
+
+Then the book-wide run starts by moving the data to region keys
+(`docs/backlog/region_keyed_data.md`).
 
 ## Out of scope
 

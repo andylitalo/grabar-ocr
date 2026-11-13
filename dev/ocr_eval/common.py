@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -76,8 +77,17 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
     rec = {"engine": engine, "settings": settings,
            "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
            "lines": dict(sorted(lines.items()))}
-    (PREDICTIONS_DIR / f"{engine}.json").write_text(
-        json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    # Atomic (temp file + rename): a run killed mid-write must not leave a truncated file,
+    # which every later reader (score, migrate) would fail on.
+    path = PREDICTIONS_DIR / f"{engine}.json"
+    # Predictions of lines the layout review changed are kept under ``stale`` by
+    # dev/line_review/migrate.py; a rewrite carries them over instead of deleting them.
+    stale = load_predictions(engine).get("stale")
+    if stale:
+        rec["stale"] = stale
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def add_set_arg(ap: argparse.ArgumentParser) -> None:

@@ -63,7 +63,7 @@ rewrite_verified.py  rewrites verified files after a format change (--reopen for
 lines.py             find a line by verified id or baseline key
 crops.py             line and context crops
 transcribe.py        transcriptions per task, the test-set sample
-migrate.py           on verify: transcriptions, picks, predictions follow the new ids
+migrate.py           after the layout review (`repair`): transcriptions, picks, predictions move to line ids
 app.py               FastAPI endpoints
 static/              canvas UI
 ```

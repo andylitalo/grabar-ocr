@@ -275,9 +275,13 @@ Paddle → Gemini 3.1 Pro with prompt v4 (drift guard, retry) → `՚ի` rule.
 (PR #7), so the ceiling data was moved to their line ids (`migrate repair`). Lines the
 review reshaped or deleted lost their predictions, and every `corr-*` page with such a
 line was dropped (16 pages). Both engines were re-run on the 139 missing lines and v4 on
-the 14 dropped pages with typed lines. 4 typed lines went stale (3 reshaped, 1 deleted)
-and wait to be retyped. v4 + `՚ի` rule: **94.9% error-free (91.2–98.1%) on 157 typed
-lines, 0 broken**, the same result. The other prompt versions weren't re-run: their rows
+the 14 dropped pages with typed lines. 4 typed lines went stale (3 reshaped, 1 deleted).
+v4 + `՚ի` rule: **94.9% error-free (91.2–98.1%) on 157 typed lines, 0 broken**, the same
+result. On 2026-11-13 the 3 reshaped lines were retyped against their new crops
+(p467.061, the Bad crop before, now reads), and v4 was run on pages 467–468, the 2
+dropped pages that had no typed lines at the first re-run. v4 + rule on all 160 typed
+lines: **95.0% error-free (91.9–98.1%), 0 broken**, the same as on 2026-10-11. The other
+prompt versions weren't re-run: their rows
 in `reports/phase11_ceiling.md` now cover 133 lines (pages 463–492 missing), and the
 comparison table above stays as measured on 2026-10-11.
 
@@ -370,10 +374,12 @@ lines).
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
   `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
 - **Ceiling sample**: 58 + 102 typed (plus 3 bad crop/illegible), 474 of 500 picks still keyed
-  to the baseline (`p<N>~line_…`). Verifying a page now carries its transcriptions, sample
-  picks and ceiling predictions over to the new ids (`dev/line_review/migrate.py`, Phase 9
-  build log); lines whose shape changed are set aside under `stale/` and come back untyped.
-- **Next (maintainer's order):** finish the layout review for the whole book → OCR (both
+  to the baseline (`p<N>~line_…`). They move to line ids once, after the layout review
+  (`python -m dev.line_review.migrate repair`, Phase 9 "After the gate"; since 2026-11-13
+  verify no longer moves them); lines whose shape changed are set aside under `stale/` and
+  come back untyped.
+- **Next (maintainer's order):** finish the layout review for the whole book → `migrate
+  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
   engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
   the bucket signals → human review of the output → v6 vs v4.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
