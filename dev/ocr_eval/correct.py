@@ -9,7 +9,10 @@ file in the ceiling set, `data/ocr_predictions/ceiling/corr-<model>.json`, score
 `ceiling.py score` like any engine.
 
 Only pages holding typed ceiling lines are corrected (the rest can't be scored); pass
-``--all`` for every sampled page.
+``--all`` for every sampled page. A page is sent again only if some of its lines have no
+correction yet (e.g. lines the layout review reshaped), and then only those lines are
+written: existing corrections are never replaced, so earlier scores don't move. ``--redo``
+corrects every page afresh.
 
     uv run python -m dev.ocr_eval.correct --model opus-5.5
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro
@@ -288,6 +291,17 @@ def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple
     return out, fallbacks
 
 
+def missing_lines(keys: list[str], out: dict[str, str]) -> list[str]:
+    """The page's lines with no correction yet."""
+    return [k for k in keys if k not in out]
+
+
+def new_lines(corrected: dict[str, str], out: dict[str, str]) -> dict[str, str]:
+    """Of a page's corrections, the lines not corrected before: an existing correction is
+    never replaced (it is what the scores were measured on)."""
+    return {k: v for k, v in corrected.items() if k not in out}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", choices=list(MODELS), required=True)
@@ -310,9 +324,10 @@ def main() -> None:
     engine = f"corr-{a.model}" + ("" if a.prompt == "v2" else f"-{a.prompt}")
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
-    done_pages = {lines.page_of(k) for k in out}
-    todo = [p for p in pages if p not in done_pages]
-    print(f"{engine}: {len(todo)} pages to correct ({len(pages) - len(todo)} done)")
+    missing = {p: missing_lines([l["key"] for l in lines.page_lines(p)], out) for p in pages}
+    todo = [p for p in pages if missing[p]]
+    print(f"{engine}: {len(todo)} pages to correct, {sum(len(missing[p]) for p in todo)} lines "
+          f"({len(pages) - len(todo)} pages done)")
     usage = {"in": 0, "out": 0, "fallback_lines": 0, "pages": 0, "served_by": set()}
 
     def do_page(page: int):
@@ -342,7 +357,7 @@ def main() -> None:
             except Exception as e:  # noqa: BLE001
                 print(f"  page failed: {type(e).__name__}: {str(e)[:160]}", flush=True)
                 continue
-            out.update(corrected)
+            out.update(new_lines(corrected, out))
             usage["in"] += u["in"]
             usage["out"] += u["out"]
             usage["fallback_lines"] += fallbacks

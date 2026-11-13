@@ -64,10 +64,16 @@ def test_verify_moves_same_shape_lines_and_sets_edited_ones_aside(dirs):
     assert [p["id"] for p in sample["picks"]] == ["p520.001", "p520.002", "p520.003"]
     assert [p["id"] for p in sample["dropped"]] == ["p520~line_004"]
 
-    plain = json.loads((pred_dir / "tess-calfa-n.json").read_text())["lines"]
-    assert plain == {"p520.001": "p520~line_001", "p521~line_001": "p521~line_001"}
-    page_level = json.loads((pred_dir / "corr-gemini.json").read_text())["lines"]
-    assert page_level == {"p521~line_001": "p521~line_001"}  # page 520 is re-corrected
+    for engine in ("tess-calfa-n", "corr-gemini"):
+        # A corrector is treated like any engine: its correction of an unchanged line is
+        # kept (the scores don't move); a changed line's is set aside, never deleted.
+        rec = json.loads((pred_dir / f"{engine}.json").read_text())
+        assert rec["lines"] == {"p520.001": "p520~line_001", "p521~line_001": "p521~line_001"}
+        assert {k: [e["reason"] for e in v] for k, v in rec["stale"].items()} == {
+            "p520~line_002": ["shape changed"], "p520~line_003": ["line split or merged"],
+            "p520~line_004": ["line removed"]}
+        assert rec["stale"]["p520~line_003"][0] == {**rec["stale"]["p520~line_003"][0],
+                                                    "text": "p520~line_003", "replaced_by": "p520.003"}
 
 
 def test_reverify_with_unchanged_lines_changes_nothing(dirs):
@@ -240,3 +246,15 @@ def test_effective_line_reads_each_page_file_once_with_a_cache(dirs, monkeypatch
     for i in (1, 2, 3):
         assert tr.effective_line(f"p520.00{i}", "ceiling", cache)["text"] == "Ա"
     assert len(reads) == 2  # page 520 for ceiling (empty) and for the test set, once each
+
+
+def test_a_rerun_of_repair_keeps_the_stale_predictions_once(dirs):
+    tr.save_sample({"picks": []}, "ceiling")
+    pred_dir = dirs / "predictions" / "ceiling"
+    pred_dir.mkdir(parents=True)
+    (pred_dir / "corr-x.json").write_text(json.dumps({"lines": {"p520~line_001": "Ա"}}))
+    before = {"p520~line_001": tr.geometry(mline("line_001", 100))}
+    for _ in range(2):
+        migrate.after_verify(520, [mline("line_001", 110)], {"line_001": "p520.001"}, before)
+    rec = json.loads((pred_dir / "corr-x.json").read_text())
+    assert rec["lines"] == {} and len(rec["stale"]["p520~line_001"]) == 1

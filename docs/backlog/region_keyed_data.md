@@ -41,9 +41,13 @@ transcriptions/<task>/page_520.json {region: {text, status, by, at, typed_as: "p
   region. A line whose shape didn't change keeps its region, and its data is found with
   nothing moved. A reshaped, split or merged line has a new region with no data yet: it
   shows as untyped and un-OCR'd, which is what migrate does today by hand.
-- **Page-level correctors** (`corr-*`) read a whole page, so their output is keyed by the
-  page's region list (the hash of its regions in reading order); any changed line makes the
-  page miss, and it is corrected again.
+- **Correctors** (`corr-*`) read a whole page, but a line's own readings are their input,
+  so their output is keyed by region like any engine's: an unchanged line keeps its
+  correction when a neighbour changes, and a new region is corrected when it has none.
+  Each correction also records the page's region list it was made with (the hash of its
+  regions in reading order), so a later analysis can tell which corrections saw a different
+  page; existing corrections are never replaced or deleted (maintainer, 2026-11-13: the
+  scores must not move).
 - **Nothing is overwritten.** The same line in two shapes is two regions and two crops;
   the same shape under two names (`p520~line_013` and `p520.013`) is one region.
 
@@ -76,8 +80,9 @@ run (Phase 9, "After the gate"), and all data is keyed by line id.
    `review-2026`.
 3. **Convert the data, offline, rename only** (one script, one data commit):
    - **predictions** (`data/ocr_predictions/`, test set and ceiling): id → its line's region.
-     `repair` already dropped predictions of lines whose shape changed, so each remaining
-     one is of its line's current region.
+     `repair` already set aside predictions of lines whose shape changed (each file's
+     `stale` section), so each remaining one is of its line's current region. Stale
+     entries carry no shape, so they convert to `{old key: …}` history and stay unscored.
    - **transcriptions**: each record is keyed by its own `geometry`, not by the line's
      current one, and keeps the id as `typed_as`. A record typed on a shape edited since
      keeps its true region, so the current layout doesn't find it; it becomes a prefill

@@ -80,6 +80,11 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
     # Atomic (temp file + rename): a run killed mid-write must not leave a truncated file,
     # which every later reader (score, migrate) would fail on.
     path = PREDICTIONS_DIR / f"{engine}.json"
+    # Predictions of lines the layout review changed are kept under ``stale`` by
+    # dev/line_review/migrate.py; a rewrite carries them over instead of deleting them.
+    stale = load_predictions(engine).get("stale")
+    if stale:
+        rec["stale"] = stale
     tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     os.replace(tmp, path)

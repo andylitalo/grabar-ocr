@@ -30,9 +30,12 @@ transcription to ``stale/`` and its pick to ``dropped`` instead of leaving them 
 The task's sample picks move to the new id (a split or merged line's to
 its first successor in reading order, found through the line's lineage, or through
 ``superseded_by`` for a retired id; a pick landing on a line already picked, or on a
-deleted line, goes to ``dropped``); OCR predictions and crops move, or are dropped for a
-changed line; a page-level corrector's (``corr-*``) whole page is dropped if any of its
-lines changed, since the corrector read the page as a whole.
+deleted line, goes to ``dropped``). OCR and corrector predictions of an unchanged line
+move to its new id; a changed line's are never deleted, only set aside in the file's
+``stale`` section (``{old key: [{text, reason, replaced_by, at}]}``), which the scorer
+doesn't read. A corrector (``corr-*``) reads the whole page, but a line's own readings are
+its input, so its correction of an unchanged line stays valid when a neighbour changes and
+is kept: the scores don't move. Crops (free to remake) of changed lines are deleted.
 
 The test set's predictions and crops live in ``data/ocr_predictions/*.json`` and
 ``runs/ocr_eval/crops/``; another set's in ``data/ocr_predictions/<set>/`` and
@@ -245,27 +248,33 @@ def _move_picks(task: str, target: dict, changed: dict) -> int:
 
 
 def _move_predictions(task: str, page: int, target: dict, changed: dict) -> int:
-    """Re-key predictions of unchanged lines; drop those of changed lines, and a page-level
-    corrector's (``corr-*``) whole page if any of its lines changed."""
+    """Re-key predictions of unchanged lines; set those of changed lines aside under
+    ``stale`` (never deleted)."""
     pred_dir, crops = _set_dirs(task)
     n = 0
     if pred_dir.is_dir():
-        prefix = (f"p{page}~", f"p{page}.")
         for path in sorted(pred_dir.glob("*.json")):
             rec = json.loads(path.read_text(encoding="utf-8"))
             preds = rec.get("lines", {})
-            on_page = [k for k in preds if k.startswith(prefix)]
-            if path.stem.startswith("corr-") and any(k in changed for k in on_page):
-                new = {k: v for k, v in preds.items() if not k.startswith(prefix)}
-            else:
-                new = {}
-                for k, v in preds.items():
-                    if k in changed:
-                        continue
-                    nk = target.get(k, k)
-                    new[nk if nk is not None else k] = v
+            stale = {k: list(v) for k, v in rec.get("stale", {}).items()}
+            new, aside = {}, []
+            # keys already in place first, so a moved prediction never overwrites one
+            for k, v in sorted(preds.items(), key=lambda kv: target.get(kv[0], kv[0]) != kv[0]):
+                nk = target.get(k, k)
+                if k in changed or nk is None:
+                    aside.append((k, v, changed.get(k, "line removed"), nk))
+                elif nk in new and new[nk] != v:
+                    aside.append((k, v, f"{nk} already predicted", nk))
+                else:
+                    new[nk] = v
+            for k, v, why, nk in aside:
+                if not any(e["text"] == v for e in stale.get(k, [])):
+                    stale.setdefault(k, []).append({"text": v, "reason": why, "replaced_by": nk,
+                                                    "at": _now()})
             if new != preds:
                 rec["lines"] = dict(sorted(new.items()))
+                if stale:
+                    rec["stale"] = dict(sorted(stale.items()))
                 _write_json(path, rec)
                 n += 1
     if crops.is_dir():
