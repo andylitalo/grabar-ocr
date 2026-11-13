@@ -77,7 +77,8 @@ checks.
 
 ## Transcription (Phase 10)
 
-`/transcribe` (or **Transcribe →** in the header): type the text of sampled verified
+`/transcribe` (or **Transcribe →** in the header; `?set=ceiling` for the ceiling sample,
+`?line=p468.021` to open one sampled line): type the text of sampled verified
 lines for the OCR test set (`docs/phase_10_ocr_test_set.md`). **Top up sample** adds lines
 from newly verified pages; **Enter** submits and moves on; **Alt+I** illegible; **Alt+B**
 bad crop (the box is wrong). The palette inserts characters a standard Armenian
