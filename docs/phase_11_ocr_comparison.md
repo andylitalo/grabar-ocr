@@ -359,8 +359,11 @@ intervals overlap almost entirely. The broken line is the concerning part: a cor
 that adds content on agreed lines costs more in review than it saves. **Stay with Gemini
 3.1 Pro**; a data point to revisit, e.g. when v4 vs v6 is scored on the human corrections,
 which will show whether Gemini 4 breaks lines at a rate that matters. Predictions:
-`corr-gemini-4-v4` and `corr-gemini-4-v4+rules` in the ceiling set (not added to
-`reports/phase11_ceiling.md`).
+`corr-gemini-4-v4` and `corr-gemini-4-v4+rules` in the ceiling set. `ceiling score` scores
+every predictions file in the set, so since the 2026-10-31 re-score they're also in
+`reports/phase11_ceiling.md`. They weren't re-run after the move to verified ids, so that
+row covers 133 lines (95.5%, 1 broken) and can't be compared with the re-scored v4 (157
+lines).
 
 #### Where this stands (pick-up note, 2026-10-11)
 
@@ -427,3 +430,7 @@ display and drop-cap strata, which the ceiling sample under-covers.
 ## Out of scope
 
 Fine-tuning on the Տօնացոյց and the book-wide re-OCR itself (next, after the layout review).
+
+The later Gemini 4 models (argon, hydrogen): this phase has only the one `gemini-4-argon`
+run on v4 from 2026-10-14 ("Gemini 4 check"). Evaluating the later models is left to a
+future PR.
