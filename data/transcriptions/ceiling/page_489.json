@@ -1,0 +1,19 @@
+{
+ "p489.078": {
+  "text": "Երեքշաբաթ ահ. աձ Երգեսցուք։ Հարց",
+  "status": "done",
+  "at": "2026-11-13T16:28:02+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "80b8e746b0389d15"
+ },
+ "p489.084": {
+  "text": "էր ՚ի կեսարիա վ. 23. եկին ընդ նմա։",
+  "status": "done",
+  "at": "2026-10-09T05:35:55+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "3bf951f075b16257",
+  "migrated_from": "p489~line_084"
+ }
+}

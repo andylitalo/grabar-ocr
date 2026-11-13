@@ -1,0 +1,177 @@
+{
+ "seed": "phase10-2026-10-04",
+ "quotas": {
+  "vol1-body": 110,
+  "vol2-body": 110,
+  "display": 50,
+  "drop-cap": 30
+ },
+ "per_page": {
+  "vol1-body": 2,
+  "vol2-body": 2,
+  "display": 1,
+  "drop-cap": 1
+ },
+ "picks": [
+  {
+   "id": "p461.035",
+   "stratum": "vol1-body",
+   "page": 461
+  },
+  {
+   "id": "p453.006",
+   "stratum": "vol1-body",
+   "page": 453
+  },
+  {
+   "id": "p458.056",
+   "stratum": "vol1-body",
+   "page": 458
+  },
+  {
+   "id": "p458.086",
+   "stratum": "vol1-body",
+   "page": 458
+  },
+  {
+   "id": "p457.062",
+   "stratum": "vol1-body",
+   "page": 457
+  },
+  {
+   "id": "p462.079",
+   "stratum": "vol1-body",
+   "page": 462
+  },
+  {
+   "id": "p461.014",
+   "stratum": "vol1-body",
+   "page": 461
+  },
+  {
+   "id": "p462.058",
+   "stratum": "vol1-body",
+   "page": 462
+  },
+  {
+   "id": "p459.009",
+   "stratum": "vol1-body",
+   "page": 459
+  },
+  {
+   "id": "p459.028",
+   "stratum": "vol1-body",
+   "page": 459
+  },
+  {
+   "id": "p460.038",
+   "stratum": "vol1-body",
+   "page": 460
+  },
+  {
+   "id": "p460.071",
+   "stratum": "vol1-body",
+   "page": 460
+  },
+  {
+   "id": "p457.013",
+   "stratum": "vol1-body",
+   "page": 457
+  },
+  {
+   "id": "p454.006",
+   "stratum": "vol1-body",
+   "page": 454
+  },
+  {
+   "id": "p453.007",
+   "stratum": "vol1-body",
+   "page": 453
+  },
+  {
+   "id": "p454.005",
+   "stratum": "vol1-body",
+   "page": 454
+  },
+  {
+   "id": "p456.001",
+   "stratum": "vol1-body",
+   "page": 456
+  },
+  {
+   "id": "p456.002",
+   "stratum": "vol1-body",
+   "page": 456
+  },
+  {
+   "id": "p457.006",
+   "stratum": "display",
+   "page": 457
+  },
+  {
+   "id": "p460.040",
+   "stratum": "display",
+   "page": 460
+  },
+  {
+   "id": "p461.084",
+   "stratum": "display",
+   "page": 461
+  },
+  {
+   "id": "p453.024",
+   "stratum": "display",
+   "page": 453
+  },
+  {
+   "id": "p458.090",
+   "stratum": "display",
+   "page": 458
+  },
+  {
+   "id": "p462.001",
+   "stratum": "display",
+   "page": 462
+  },
+  {
+   "id": "p459.044",
+   "stratum": "display",
+   "page": 459
+  },
+  {
+   "id": "p454.001",
+   "stratum": "display",
+   "page": 454
+  },
+  {
+   "id": "p460.020",
+   "stratum": "drop-cap",
+   "page": 460
+  },
+  {
+   "id": "p458.051",
+   "stratum": "drop-cap",
+   "page": 458
+  },
+  {
+   "id": "p459.020",
+   "stratum": "drop-cap",
+   "page": 459
+  },
+  {
+   "id": "p461.017",
+   "stratum": "drop-cap",
+   "page": 461
+  },
+  {
+   "id": "p457.003",
+   "stratum": "drop-cap",
+   "page": 457
+  },
+  {
+   "id": "p462.052",
+   "stratum": "drop-cap",
+   "page": 462
+  }
+ ]
+}

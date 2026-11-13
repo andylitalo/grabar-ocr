@@ -1,0 +1,16 @@
+[
+ {
+  "id": "p467~line_061",
+  "reason": "shape changed",
+  "replaced_by": "p467.061",
+  "at": "2026-10-31T07:49:11+00:00",
+  "record": {
+   "text": "",
+   "status": "bad-crop",
+   "at": "2026-10-09T05:35:12+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "5c726c029286f525"
+  }
+ }
+]
