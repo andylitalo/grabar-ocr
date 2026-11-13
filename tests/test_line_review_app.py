@@ -16,7 +16,8 @@ from fastapi.testclient import TestClient
 from dev.line_review import app as app_mod
 from dev.line_review import baseline_manifest as bm
 from dev.line_review import materialize as mz
-from dev.line_review import rewrite_verified, storage
+from dev.line_review import migrate, rewrite_verified, storage
+from dev.line_review import transcribe as tr
 
 PAGE = 500
 
@@ -45,6 +46,10 @@ def store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
     monkeypatch.setattr(storage, "MANIFEST_PATH", tmp_path / "baseline_sha256.json")
+    # migrate (repair) rewrites committed transcriptions and predictions
+    monkeypatch.setattr(tr, "TRANSCRIPTIONS_DIR", tmp_path / "transcriptions")
+    monkeypatch.setattr(migrate, "PREDICTIONS_DIR", tmp_path / "predictions")
+    monkeypatch.setattr(migrate, "CROPS_DIR", tmp_path / "runs")
     return tmp_path
 
 
@@ -429,3 +434,28 @@ def test_rewrite_refuses_a_page_whose_ops_no_longer_apply(store, monkeypatch, ca
     assert storage.verified_path(PAGE).read_text() == before
     assert rewrite_verified.main(["--reopen"]) == 0
     assert storage.load_review(PAGE)["status"] == "fixing"
+
+
+# --- fixes from the PR #2 review ---------------------------------------------------------
+
+
+def test_verify_leaves_data_for_the_repair_after_the_review(store):
+    """Verify doesn't move transcriptions or picks; `migrate repair` does, once, after the
+    layout review. A repair that fails partway is re-run and finishes the move."""
+    from dev.line_review import migrate
+    tr.save_sample({"picks": [{"id": f"p{PAGE}~line_002", "stratum": "agree", "page": PAGE}]}, "ceiling")
+    verify()
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [f"p{PAGE}~line_002"]
+    migrate.repair()
+    new_id = storage.load_review(PAGE)["ids"]["line_002"]
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [new_id]
+    migrate.repair()  # idempotent
+    assert [p["id"] for p in tr.load_sample("ceiling")["picks"]] == [new_id]
+
+
+def test_a_page_back_under_review_keeps_serving_its_verified_ids(store):
+    from dev.line_review import lines
+    verify()
+    storage.set_status(PAGE, "fixing")
+    keys = [l["key"] for l in lines.page_lines(PAGE)]
+    assert keys and all(k.startswith(f"p{PAGE}.") for k in keys)

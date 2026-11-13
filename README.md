@@ -118,6 +118,12 @@ helm install airflow apache-airflow/airflow -f airflow-values.yaml
 
 - **Code:** Apache License 2.0 — see [`LICENSE`](LICENSE).
 - **`corpus/`** (the digitized text, corrections and translation): **CC BY-NC 4.0** — see
-  [`corpus/LICENSE`](corpus/LICENSE). The OCR was produced with Calfa's `hye-calfa-n`
-  model (CC BY-NC 4.0); credit Calfa when reusing it. Short OCR excerpts quoted as evidence
-  in `docs/` and `reports/` are under the same terms as the corpus.
+  [`corpus/LICENSE`](corpus/LICENSE). The OCR was produced with Calfa's models
+  (`hye-calfa-n`, and from Phase 11 also `paddle-calfa-tiny` and `hye-open-ocr` line
+  layout), all CC BY-NC 4.0; credit Calfa when reusing it. `corpus/LICENSE` lists every
+  model in the chain.
+- **Committed engine outputs and transcriptions** (`data/ocr_predictions/`,
+  `data/transcriptions/`): **CC BY-NC 4.0**, same terms as the corpus — see the
+  `LICENSE` in each directory.
+- Short OCR excerpts quoted as evidence in `docs/` and `reports/` are under the same
+  terms as the corpus.

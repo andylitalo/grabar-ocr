@@ -88,6 +88,20 @@ runs/
 # paddle-filled + human review ops, committed so later stages read stable line ids.
 !/data/verified_lines/
 !/data/verified_lines/*.json
+# Phase 10 transcriptions keyed by verified line id (data/transcriptions/<task>/...).
+!/data/transcriptions/
+/data/transcriptions/*
+!/data/transcriptions/*/
+!/data/transcriptions/*/*.json
+# Transcriptions set aside when their line was edited (dev/line_review/migrate.py).
+!/data/transcriptions/*/stale/
+!/data/transcriptions/*/stale/*.json
+# Phase 11 OCR predictions per engine, keyed by verified line id.
+!/data/ocr_predictions/
+!/data/ocr_predictions/*.json
+# Ceiling-set predictions, LLM corrections included (paid runs: keep them).
+!/data/ocr_predictions/ceiling/
+!/data/ocr_predictions/ceiling/*.json
 *.pdf
 *.tiff
 *.tif

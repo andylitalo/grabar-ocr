@@ -12,20 +12,43 @@ Jerusalem, 1915, which is in the public domain. This license covers the
 digitization: the transcription, corrections, translation and apparatus, not
 the 1915 text itself.
 
-How the text was produced, and attribution:
+How the text was produced, and attribution. Two pipelines are described
+below. The `source` block of each pages/page_NNNN.lines.json says which one
+produced that page, and is authoritative; per-line provenance records the
+producing model where a page mixes them.
 
+A. Original corpus (pages promoted before the Phase 11 re-run):
+
+  - Line segmentation: horizontal-projection slicer (this repository, Apache
+    2.0) on machine- or human-drawn column crops.
   - Grabar transcription (ocr_raw): Tesseract 5 with the `hye-calfa-n`
     traineddata from Calfa (https://github.com/calfa-co/hye-tesseract),
-    licensed CC BY-NC 4.0. Credit: "OCR by Calfa, hye-calfa-n."
+    licensed CC BY-NC 4.0.
   - Grabar correction (grabar): machine-corrected by Google Gemini
     (gemini-3.1-pro, minimal-edit mode).
   - English: machine translation by Google Gemini (gemini-3.5-flash), not a
     human translation.
 
-The exact models for each page are recorded in the `source` block of
-pages/page_NNNN.lines.json. This notice describes the corpus as generated with
-the models above. A later version regenerated with different models states its
-own terms in this file.
+B. Phase 11 pipeline (pages re-OCR'd from the Phase 9 line review onward):
+
+  - Line segmentation: lines from Calfa's `hye-open-ocr` Paddle layout
+    (https://github.com/calfa-co/hye-open-ocr, CC BY-NC 4.0), plus kraken
+    lines (https://kraken.re, Apache 2.0) where Surya (Datalab,
+    https://github.com/datalab-to/surya; weights under a modified AI Pubs Open
+    RAIL-M licence) agrees and Paddle has none, then corrected by human review.
+    Surya contributes only an agreement vote on line geometry, never text.
+  - Grabar transcription (ocr_raw): two Calfa engines read every line --
+    Tesseract 5 with `hye-calfa-n` and PaddleOCR with `paddle-calfa-tiny`
+    (https://github.com/calfa-co/hye-paddle) -- both licensed CC BY-NC 4.0.
+  - Grabar correction (grabar): Google Gemini (gemini-3.1-pro, prompt v4)
+    reconciles the two readings, followed by a deterministic orthography rule
+    for ՚ի from this repository.
+  - Human verification: lines reviewed against the page image are marked as
+    verified in their provenance.
+  - English: machine translation by Google Gemini, not a human translation.
+    The model is recorded per page.
+
+Credit for the OCR: "OCR by Calfa (hye-calfa-n, paddle-calfa-tiny)."
 
 When reusing this material, credit both this corpus (grabar-ocr, Andy Ylitalo)
 and Calfa for the OCR.

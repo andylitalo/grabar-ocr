@@ -13,6 +13,8 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 
 **Current phase docs** (all phases: `docs/phase_*.md`; `docs/master_blueprint.md` is the original plan):
 - `docs/phase_9_line_segmentation_review.md` — **in progress**: human review of the line layout, page by page (`dev/line_review/`)
+- `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (94.9% error-free, re-scored 2026-10-31); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; the later Gemini 4 models (argon, hydrogen) are still to be tested, in a later PR
+- `docs/phase_10_ocr_test_set.md` — deferred until the layout review is done
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
 
 **Workflow:** read the current phase doc before touching any code. Update the doc with findings before moving on.
@@ -34,7 +36,7 @@ infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
 docs/               Phase planning docs + recorded findings (version-controlled)
 data/               Data, apart from code: committed ground truth and outputs (column boxes,
                     blank markers, line-seg survey + reviews in data/lineseg_survey/, verified
-                    lines); PDFs, renders and crops stay ignored
+                    lines, transcriptions, OCR predictions); PDFs, renders and crops stay ignored
 ```
 
 > **What actually shipped vs. the original blueprint.** `README.md`/CLAUDE describe an
