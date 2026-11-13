@@ -431,6 +431,6 @@ display and drop-cap strata, which the ceiling sample under-covers.
 
 Fine-tuning on the Տօնացոյց and the book-wide re-OCR itself (next, after the layout review).
 
-The later Gemini 4 models (argon, hydrogen): this phase has only the one `gemini-4-argon`
-run on v4 from 2026-10-14 ("Gemini 4 check"). Evaluating the later models is left to a
-future PR.
+The later Gemini 4 models (argon, hydrogen) are out of scope for this PR only: it has
+just the one `gemini-4-argon` run on v4 from 2026-10-14 ("Gemini 4 check"). They're still
+to be tested, in a later PR.
