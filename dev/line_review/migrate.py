@@ -33,7 +33,8 @@ its first successor in reading order, found through the line's lineage, or throu
 deleted line, goes to ``dropped``). OCR and corrector predictions of an unchanged line
 move to its new id; a changed line's are never deleted, only set aside in the file's
 ``stale`` section (``{old key: [{text, reason, replaced_by, at, predicted_before,
-settings?}]}``, the same form as ``common.set_aside``), which the scorer doesn't read. A corrector (``corr-*``) reads the whole page, but a line's own readings are
+settings?}]}``, the same form as ``common.set_aside``), which the scorer doesn't read.
+A corrector (``corr-*``) reads the whole page, but a line's own readings are
 its input, so its correction of an unchanged line stays valid when a neighbour changes and
 is kept: the scores don't move. Crops (free to remake) of changed lines are deleted.
 

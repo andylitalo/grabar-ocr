@@ -103,6 +103,7 @@ def drain(pool, fn, items, handle) -> bool:
     On Ctrl-C (even while submitting) the calls not started yet are cancelled, so they are
     never sent (a paid API bills every call), and the ones already in flight are still
     collected, so what they cost isn't thrown away. The caller saves, then exits."""
+    items = list(items)
     futures, handled = {}, set()
     try:
         for item in items:
@@ -113,7 +114,7 @@ def drain(pool, fn, items, handle) -> bool:
         return False
     except KeyboardInterrupt:
         rest = [f for f in futures if f not in handled]
-        cancelled = sum(f.cancel() for f in rest)
+        cancelled = sum(f.cancel() for f in rest) + len(items) - len(futures)  # + never submitted
         in_flight = [f for f in rest if not f.cancelled()]
         print(f"\ninterrupted: {cancelled} not sent; collecting the {len(in_flight)} in flight "
               "(Ctrl-C again to abandon them)", flush=True)
