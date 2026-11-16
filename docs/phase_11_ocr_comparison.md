@@ -305,10 +305,17 @@ because the bootstrap draws from one random stream across the engines in file or
 more lines in other rows shift it. To stop this happening again, `common._write`, which
 every engine, corrector and `+rules` file goes through, now never deletes a prediction: a
 line that a rewrite drops, or replaces with a different reading (`--redo`, a settings
-change), moves to `stale` (`common.set_aside`), with the run and settings that made it
-(`stale_settings`). A difference only in spacing or Unicode composition isn't a different
-reading (no score sees it) and isn't kept. Ctrl-C during a run or `correct.py` cancels the
-calls not sent yet and still saves the ones in flight.
+change), moves to `stale` (`common.set_aside`). Each entry says when it was last saved
+(`predicted_before`) and, only when that is known, which settings made it (`settings`, an
+id into `stale_settings`): a file marks `uniform_settings` only when every line in it came
+from its `settings`. Files made before this (all of today's) don't, because `correct.py`
+used to keep corrections from earlier runs under the latest run's settings (v2, v3 and v4
+were each built over 3–5 runs on 2026-10-09), so their entries carry no settings rather
+than possibly wrong ones. A difference only in spacing or Unicode composition isn't a
+different reading (no score sees it) and isn't kept. One process writes a predictions file
+at a time (a lock; `migrate repair` takes them all first). Ctrl-C during a run or
+`correct.py` cancels the calls not sent yet and still saves the ones in flight; a second
+Ctrl-C abandons those, with a warning.
 
 Order of work from here:
 1. Finish the layout (Phase 9 review) over the whole book.

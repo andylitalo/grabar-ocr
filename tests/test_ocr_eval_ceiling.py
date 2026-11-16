@@ -115,7 +115,7 @@ def test_a_redo_saved_in_steps_labels_and_records_what_it_replaced(tmp_path, mon
     _crops(tmp_path, monkeypatch, keys)
     old = {k: f"Ա{i}" for i, k in enumerate(keys)}
     (tmp_path / "eng.json").write_text(json.dumps(
-        {"settings": {"v": 1}, "generated_at": "T1", "lines": old}))
+        {"settings": {"v": 1}, "uniform_settings": True, "generated_at": "T1", "lines": old}))
     new = dict(old, **{keys[0]: "Բ0", keys[24]: "Բ24", keys[12]: " Ա12 "})  # 2 changed, 1 only spaced
     common.run("eng", {"v": 2}, lambda png: new[png.stem], only_missing=False)
     rec = json.loads((tmp_path / "eng.json").read_text())
@@ -124,9 +124,24 @@ def test_a_redo_saved_in_steps_labels_and_records_what_it_replaced(tmp_path, mon
     sid = common.settings_id({"v": 1})
     for k in (keys[0], keys[24]):
         [e] = rec["stale"][k]
-        assert (e["text"], e["reason"], e["replaced_by"], e["run"], e["settings"]) == (
+        assert (e["text"], e["reason"], e["replaced_by"], e["predicted_before"], e["settings"]) == (
             old[k], "replaced on rewrite", k, "T1", sid)
     assert rec["stale_settings"] == {sid: {"v": 1}}
+    assert rec["uniform_settings"]  # a redo made every line with {"v": 2}
+
+
+def test_settings_are_recorded_only_when_known(tmp_path, monkeypatch):
+    """A file that doesn't say all its lines came from its settings (made before the
+    flag, or a corrector that kept corrections from a run with other settings) gives its
+    set-aside readings no ``settings``: missing beats misleading."""
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+    (tmp_path / "corr-x.json").write_text(json.dumps(
+        {"settings": {"prompt": "old"}, "generated_at": "T1", "lines": {"a": "Ա", "b": "Բ"}}))
+    common._write("corr-x", {"prompt": "new"}, {"a": "Ա", "b": "Բբ"})  # uniform not claimed
+    rec = json.loads((tmp_path / "corr-x.json").read_text())
+    [e] = rec["stale"]["b"]
+    assert "settings" not in e and e["predicted_before"] == "T1"
+    assert "stale_settings" not in rec and "uniform_settings" not in rec
 
 
 def test_only_a_material_change_is_set_aside():
@@ -149,8 +164,7 @@ def test_drain_cancels_unsent_calls_and_keeps_the_ones_in_flight():
         return i
 
     with ThreadPoolExecutor(max_workers=1) as pool:
-        interrupted = common.drain([pool.submit(call, i) for i in range(20)],
-                                   lambda f: got.append(f.result()))
+        interrupted = common.drain(pool, call, range(20), lambda i, f: got.append(f.result()))
     assert interrupted and calls == [0, 1, 2] and sorted(got) == [0, 1, 2]
 
 
@@ -170,3 +184,55 @@ def test_ctrl_c_during_a_run_saves_what_was_predicted(tmp_path, monkeypatch):
         common.run("eng", {}, recognize, workers=1)
     assert exit_.value.code == 130 and len(calls) == 3
     assert json.loads((tmp_path / "eng.json").read_text())["lines"] == {k: "Ա" for k in calls}
+
+
+def test_a_second_ctrl_c_warns_and_still_saves_what_was_collected(tmp_path, monkeypatch, capsys):
+    keys = [f"p520.{i:03d}" for i in range(1, 21)]
+    _crops(tmp_path, monkeypatch, keys)
+    calls = []
+
+    def recognize(png):
+        calls.append(png.stem)
+        if len(calls) == 3:  # Ctrl-C; then, while this call is still in flight, Ctrl-C again
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+        return "Ա"
+
+    with pytest.raises(KeyboardInterrupt):
+        common.run("eng", {}, recognize, workers=1)
+    out = capsys.readouterr().out
+    assert "17 not sent" in out and "WARNING: abandoned 1 calls in flight" in out
+    assert json.loads((tmp_path / "eng.json").read_text())["lines"] == {k: "Ա" for k in calls[:2]}
+
+
+def test_a_second_process_cannot_write_the_same_file(tmp_path):
+    import subprocess
+    import sys
+    path = tmp_path / "eng.json"
+    probe = ("import sys; from dev.ocr_eval import common\n"
+             "try:\n    common.hold(sys.argv[1])\nexcept common.Busy as e:\n    sys.exit(f'busy: {e}')")
+    with common.lock(path):
+        with common.lock(path):  # re-entrant in the process that holds it
+            pass
+        r = subprocess.run([sys.executable, "-c", probe, str(path)], capture_output=True, text=True)
+        assert r.returncode == 1 and "busy" in r.stderr and f"pid {os.getpid()}" in r.stderr
+    r = subprocess.run([sys.executable, "-c", probe, str(path)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr  # released
+
+
+def test_migrate_sets_aside_in_the_same_form(tmp_path, monkeypatch):
+    from dev.line_review import migrate
+    path = tmp_path / "corr-x.json"
+    path.write_text(json.dumps({"settings": {"v": 1}, "uniform_settings": True,
+                                "generated_at": "T1", "lines": {"p1~line_001": "Ա", "p1~line_002": "Բ"}}))
+    migrate._move_file_predictions(path, {"p1~line_001": "p1.001", "p1~line_002": "p1.002"},
+                                   {"p1~line_002": "shape changed"})
+    rec = json.loads(path.read_text())
+    [e] = rec["stale"]["p1~line_002"]
+    sid = common.settings_id({"v": 1})
+    assert (e["reason"], e["replaced_by"], e["predicted_before"], e["settings"]) == (
+        "shape changed", "p1.002", "T1", sid)
+    assert rec["stale_settings"] == {sid: {"v": 1}} and rec["uniform_settings"]
+    assert rec["lines"] == {"p1.001": "Ա"}

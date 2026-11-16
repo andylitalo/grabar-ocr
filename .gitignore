@@ -102,6 +102,9 @@ runs/
 # Ceiling-set predictions, LLM corrections included (paid runs: keep them).
 !/data/ocr_predictions/ceiling/
 !/data/ocr_predictions/ceiling/*.json
+# A run's lock and half-written save (dev/ocr_eval/common.py): never commit.
+/data/ocr_predictions/**/.*.json.lock
+/data/ocr_predictions/**/.*.json.tmp
 *.pdf
 *.tiff
 *.tif

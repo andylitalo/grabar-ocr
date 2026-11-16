@@ -324,8 +324,17 @@ def main() -> None:
 
     system = PROMPTS[a.prompt]
     engine = f"corr-{a.model}" + ("" if a.prompt == "v2" else f"-{a.prompt}")
+    try:
+        common.hold(common.PREDICTIONS_DIR / f"{engine}.json")  # one writer per file
+    except common.Busy as e:
+        raise SystemExit(str(e))
+    settings = {"model": model, "provider": provider, "prompt_version": a.prompt,
+                "prompt": system, "inputs": list(ENGINES)}
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
+    # Corrections kept from earlier runs were made with these settings only if the old file
+    # says all its lines were and its settings are these; otherwise claim nothing.
+    uniform = not out or (bool(old.get("uniform_settings")) and old.get("settings") == settings)
     missing = {p: missing_lines([l["key"] for l in lines.page_lines(p)], out) for p in pages}
     todo = [p for p in pages if missing[p]]
     print(f"{engine}: {len(todo)} pages to correct, {sum(len(missing[p]) for p in todo)} lines "
@@ -353,7 +362,7 @@ def main() -> None:
     start = time.time()
     finished = 0
 
-    def handle(fut) -> None:
+    def handle(_page: int, fut) -> None:
         nonlocal finished
         finished += 1
         try:
@@ -365,13 +374,20 @@ def main() -> None:
         per_page[page] = (u, fallbacks)
         print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
               f"({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
-        common._write(engine, {"model": model, "provider": provider, "prompt_version": a.prompt,
-                               "prompt": system,
-                               "inputs": list(ENGINES)}, out)
+        common._write(engine, settings, out, uniform=uniform)
 
-    with ThreadPoolExecutor(max_workers=a.workers) as pool:
-        # Ctrl-C: pages not sent yet are cancelled; the ones in flight are still saved
-        interrupted = common.drain([pool.submit(do_page, p) for p in todo], handle)
+    interrupted = True
+    try:
+        with ThreadPoolExecutor(max_workers=a.workers) as pool:
+            # Ctrl-C: pages not sent yet are cancelled; the ones in flight are still saved
+            interrupted = common.drain(pool, do_page, todo, handle)
+    finally:  # every page is saved as it arrives; log what was billed even on a 2nd Ctrl-C
+        _log_usage(engine, per_page, interrupted)
+    if interrupted:
+        raise SystemExit(130)
+
+
+def _log_usage(engine: str, per_page: dict, interrupted: bool) -> None:
     usage = {"in": sum(u["in"] for u, _ in per_page.values()),
              "out": sum(u["out"] for u, _ in per_page.values()),
              "fallback_lines": sum(f for _, f in per_page.values()), "pages": len(per_page),
@@ -381,8 +397,6 @@ def main() -> None:
     runs.append({"engine": engine, "at": datetime.now(timezone.utc).isoformat(timespec="seconds"), **usage})
     log.write_text(json.dumps(runs, indent=1) + "\n")
     print(f"{'interrupted' if interrupted else 'done'}: {usage}")
-    if interrupted:
-        raise SystemExit(130)
 
 
 if __name__ == "__main__":
