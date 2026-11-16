@@ -10,10 +10,12 @@ Pass ``--set ceiling`` to any runner to work on the ceiling set instead
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,18 +60,49 @@ def run(engine: str, settings: dict, recognize, *, only_missing: bool = True,
     todo = [p for p in crop_paths() if p.stem not in keep]
     print(f"{engine}: {len(todo)} to predict, {len(keep)} kept")
     start = time.time()
+    done = 0
+
+    def handle(fut) -> None:
+        nonlocal done
+        done += 1
+        png = futures[fut]
+        try:
+            lines[png.stem] = fut.result()
+        except Exception as e:  # one bad line shouldn't lose the run
+            print(f"  {png.stem}: {type(e).__name__}: {e}", flush=True)
+        if done % 10 == 0 or done == len(todo):
+            print(f"  {done}/{len(todo)} ({(time.time() - start) / done:.1f} s/line)", flush=True)
+            _write(engine, settings, lines)
+
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(recognize, png): png for png in todo}
-        for n, fut in enumerate(as_completed(futures), 1):
-            png = futures[fut]
-            try:
-                lines[png.stem] = fut.result()
-            except Exception as e:  # one bad line shouldn't lose the run
-                print(f"  {png.stem}: {type(e).__name__}: {e}", flush=True)
-            if n % 10 == 0 or n == len(todo):
-                print(f"  {n}/{len(todo)} ({(time.time() - start) / n:.1f} s/line)", flush=True)
-                _write(engine, settings, lines)
+        interrupted = drain(futures, handle)
     _write(engine, settings, lines)
+    if interrupted:
+        sys.exit(130)
+
+
+def drain(futures, handle) -> bool:
+    """Call ``handle(future)`` on each of ``futures`` as it completes; True if interrupted.
+
+    On Ctrl-C the calls not started yet are cancelled, so they are never sent (a paid API
+    bills every call), and the ones already in flight are still collected, so what they
+    cost isn't thrown away. The caller saves, then exits."""
+    handled = set()
+    try:
+        for fut in as_completed(futures):
+            handle(fut)
+            handled.add(fut)
+        return False
+    except KeyboardInterrupt:
+        rest = [f for f in futures if f not in handled]
+        cancelled = sum(f.cancel() for f in rest)
+        in_flight = [f for f in rest if not f.cancelled()]
+        print(f"\ninterrupted: {cancelled} not sent; collecting the {len(in_flight)} in flight",
+              flush=True)
+        for fut in as_completed(in_flight):
+            handle(fut)
+        return True
 
 
 def _write(engine: str, settings: dict, lines: dict) -> None:
@@ -80,9 +113,11 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
     # Atomic (temp file + rename): a run killed mid-write must not leave a truncated file,
     # which every later reader (score, migrate) would fail on.
     path = PREDICTIONS_DIR / f"{engine}.json"
-    stale = set_aside(load_predictions(engine), rec["lines"])
+    stale, stale_settings = set_aside(load_predictions(engine), rec["lines"])
     if stale:
         rec["stale"] = stale
+    if stale_settings:
+        rec["stale_settings"] = stale_settings
     tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -91,33 +126,63 @@ def _write(engine: str, settings: dict, lines: dict) -> None:
 REWRITE_REASONS = ("dropped on rewrite", "replaced on rewrite")
 
 
-def set_aside(old: dict, lines: dict) -> dict:
-    """The ``stale`` section for a rewrite of ``old`` (a predictions file) with ``lines``.
+def reading(text: str) -> str:
+    """A prediction as the strictest score compares it (``score.normalize(fold=False)``,
+    the test set's raw column: NFC, whitespace collapsed). Two texts equal here score the
+    same everywhere, so a rewrite that changes only this much isn't a new reading."""
+    return " ".join(unicodedata.normalize("NFC", text).split())
 
-    No prediction is ever deleted: these files hold paid, nondeterministic runs that the
+
+def settings_id(settings) -> str:
+    return hashlib.sha256(json.dumps(settings, sort_keys=True, ensure_ascii=False)
+                          .encode("utf-8")).hexdigest()[:12]
+
+
+def set_aside(old: dict, lines: dict) -> tuple[dict, dict]:
+    """The ``stale`` and ``stale_settings`` sections for a rewrite of ``old`` (a
+    predictions file) with ``lines``.
+
+    No reading is ever deleted: these files hold paid, nondeterministic runs that the
     committed scores were measured on. A rewrite keeps the old ``stale`` section (lines
-    the layout review changed, set aside by dev/line_review/migrate.py) and adds every old
-    line the new ``lines`` drop or replace (``--redo``, a settings change, a shrunken
-    input), in the same ``{key: [{text, reason, replaced_by, at}]}`` form. An entry set
-    aside on rewrite whose text is the line's current text again is pruned (nothing is
-    lost: it is the line)."""
-    stale = {k: list(v) for k, v in old.get("stale", {}).items()}
+    the layout review changed, set aside by dev/line_review/migrate.py, kept as they are)
+    and adds every old line the new ``lines`` drop, or replace with a materially different
+    text (``reading``), in the same ``{key: [{text, reason, replaced_by, at}]}`` form.
+    Rewrite entries also carry ``run`` (the old file's ``generated_at``) and ``settings``
+    (an id into ``stale_settings``, which holds the settings the file carried then).
+
+    A run saves as it goes, so a line it hasn't reached yet is first set aside as
+    dropped; once the run writes it, the entry becomes "replaced on rewrite", or goes
+    if the new text is the same reading (nothing is lost: it is the line)."""
+    stale = {k: [dict(e) for e in v] for k, v in old.get("stale", {}).items()}
+    known = dict(old.get("stale_settings", {}))
+    sid = settings_id(old.get("settings"))
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for key, text in old.get("lines", {}).items():
-        if lines.get(key) == text:
+        if key in lines and (lines[key] == text or reading(lines[key]) == reading(text)):
             continue
-        if any(e["text"] == text for e in stale.get(key, [])):
+        if any(reading(e["text"]) == reading(text) for e in stale.get(key, [])):
             continue
         dropped = key not in lines
         stale.setdefault(key, []).append({
             "text": text, "reason": REWRITE_REASONS[0] if dropped else REWRITE_REASONS[1],
-            "replaced_by": None if dropped else key, "at": now})
+            "replaced_by": None if dropped else key, "at": now,
+            "run": old.get("generated_at"), "settings": sid})
+        known[sid] = old.get("settings")
     for key in list(stale):
-        stale[key] = [e for e in stale[key]
-                      if not (e["reason"] in REWRITE_REASONS and lines.get(key) == e["text"])]
-        if not stale[key]:
+        kept = []
+        for e in stale[key]:
+            if e["reason"] in REWRITE_REASONS and key in lines:
+                if lines[key] == e["text"] or reading(lines[key]) == reading(e["text"]):
+                    continue
+                if e["reason"] == REWRITE_REASONS[0]:
+                    e = {**e, "reason": REWRITE_REASONS[1], "replaced_by": key}
+            kept.append(e)
+        if kept:
+            stale[key] = kept
+        else:
             del stale[key]
-    return dict(sorted(stale.items()))
+    used = {e.get("settings") for v in stale.values() for e in v}
+    return dict(sorted(stale.items())), {s: v for s, v in sorted(known.items()) if s in used}
 
 
 def add_set_arg(ap: argparse.ArgumentParser) -> None:

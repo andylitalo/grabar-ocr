@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
+import time
+
+import pytest
 
 from dev.line_review import transcribe as tr
 from dev.ocr_eval import ceiling, common
@@ -91,3 +96,77 @@ def test_redo_of_a_runner_sets_the_earlier_run_aside(tmp_path, monkeypatch):
     rec = json.loads((tmp_path / "eng.json").read_text())
     assert rec["lines"] == {"p520.001": "new", "p520.002": "Բ"}
     assert [e["text"] for e in rec["stale"]["p520.001"]] == ["old"] and "p520.002" not in rec["stale"]
+
+
+def _crops(tmp_path, monkeypatch, keys):
+    crops = tmp_path / "crops"
+    crops.mkdir()
+    for k in keys:
+        (crops / f"{k}.png").write_bytes(b"")
+    monkeypatch.setattr(common, "CROPS_DIR", crops)
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+
+
+def test_a_redo_saved_in_steps_labels_and_records_what_it_replaced(tmp_path, monkeypatch):
+    """A redo saves every 10 lines, so lines it hasn't reached are set aside as dropped at
+    first; at the end each old reading is "replaced on rewrite" (or gone, if the new text
+    is the same reading), with the run and settings that made it."""
+    keys = [f"p520.{i:03d}" for i in range(1, 26)]
+    _crops(tmp_path, monkeypatch, keys)
+    old = {k: f"Ա{i}" for i, k in enumerate(keys)}
+    (tmp_path / "eng.json").write_text(json.dumps(
+        {"settings": {"v": 1}, "generated_at": "T1", "lines": old}))
+    new = dict(old, **{keys[0]: "Բ0", keys[24]: "Բ24", keys[12]: " Ա12 "})  # 2 changed, 1 only spaced
+    common.run("eng", {"v": 2}, lambda png: new[png.stem], only_missing=False)
+    rec = json.loads((tmp_path / "eng.json").read_text())
+    assert rec["lines"] == new
+    assert sorted(rec["stale"]) == [keys[0], keys[24]]
+    sid = common.settings_id({"v": 1})
+    for k in (keys[0], keys[24]):
+        [e] = rec["stale"][k]
+        assert (e["text"], e["reason"], e["replaced_by"], e["run"], e["settings"]) == (
+            old[k], "replaced on rewrite", k, "T1", sid)
+    assert rec["stale_settings"] == {sid: {"v": 1}}
+
+
+def test_only_a_material_change_is_set_aside():
+    """Spacing and Unicode composition score the same everywhere; folded punctuation
+    doesn't (the test set's raw column), so it counts."""
+    old = {"settings": {}, "lines": {"a": "Եբր.", "b": "ա  բ", "c": "ե\u0582", "d": "Եբր."}}
+    stale, _ = common.set_aside(old, {"a": "Եբր.", "b": "ա բ", "c": "ե\u0582 ", "d": "Եբր․"})
+    assert list(stale) == ["d"]
+
+
+def test_drain_cancels_unsent_calls_and_keeps_the_ones_in_flight():
+    from concurrent.futures import ThreadPoolExecutor
+    calls, got = [], []
+
+    def call(i):
+        calls.append(i)
+        if i == 2:
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)  # still in flight when the main thread cancels the rest
+        return i
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        interrupted = common.drain([pool.submit(call, i) for i in range(20)],
+                                   lambda f: got.append(f.result()))
+    assert interrupted and calls == [0, 1, 2] and sorted(got) == [0, 1, 2]
+
+
+def test_ctrl_c_during_a_run_saves_what_was_predicted(tmp_path, monkeypatch):
+    keys = [f"p520.{i:03d}" for i in range(1, 21)]
+    _crops(tmp_path, monkeypatch, keys)
+    calls = []
+
+    def recognize(png):
+        calls.append(png.stem)
+        if len(calls) == 3:
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+        return "Ա"
+
+    with pytest.raises(SystemExit) as exit_:
+        common.run("eng", {}, recognize, workers=1)
+    assert exit_.value.code == 130 and len(calls) == 3
+    assert json.loads((tmp_path / "eng.json").read_text())["lines"] == {k: "Ա" for k in calls}

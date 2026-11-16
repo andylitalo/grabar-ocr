@@ -304,8 +304,11 @@ v4's own predictions didn't change. Its interval in the report moved to 91.3–9
 because the bootstrap draws from one random stream across the engines in file order, so
 more lines in other rows shift it. To stop this happening again, `common._write`, which
 every engine, corrector and `+rules` file goes through, now never deletes a prediction: a
-line that a rewrite drops or replaces (`--redo`, a settings change) moves to `stale`
-(`common.set_aside`).
+line that a rewrite drops, or replaces with a different reading (`--redo`, a settings
+change), moves to `stale` (`common.set_aside`), with the run and settings that made it
+(`stale_settings`). A difference only in spacing or Unicode composition isn't a different
+reading (no score sees it) and isn't kept. Ctrl-C during a run or `correct.py` cancels the
+calls not sent yet and still saves the ones in flight.
 
 Order of work from here:
 1. Finish the layout (Phase 9 review) over the whole book.
@@ -390,7 +393,7 @@ every predictions file in the set, so since the 2026-10-31 re-score they're also
 `reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
 that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
-#### Where this stands (pick-up note, 2026-10-11)
+#### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
   `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
@@ -409,7 +412,8 @@ that row covers 157 lines (96.2%, 1 broken), against v4's 160.
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
   test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
-  broken line; staying with 3.1 Pro ("Gemini 4 check" above).
+  broken line (160 lines; 96.2% on 157 in the report since the 2026-11-13 restore);
+  staying with 3.1 Pro ("Gemini 4 check" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
