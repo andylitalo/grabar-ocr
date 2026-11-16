@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
+import time
+
+import pytest
 
 from dev.line_review import transcribe as tr
 from dev.ocr_eval import ceiling, common
@@ -45,3 +50,189 @@ def test_the_corrector_only_fills_lines_without_a_correction():
     out = {"p520.001": "kept", "p520.002": "kept"}
     assert missing_lines(["p520.001", "p520.002", "p520.003"], out) == ["p520.003"]
     assert new_lines({"p520.001": "new", "p520.003": "new"}, out) == {"p520.003": "new"}
+
+
+def test_a_rewrite_never_deletes_a_prediction(tmp_path, monkeypatch):
+    """A rewrite that drops or replaces lines (--redo, a settings change) sets the old
+    readings aside under ``stale``: paid corrector runs must not be lost (PR #9 lost the
+    v2/v3/v5 and Gemini 4 corrections of pages 463-492 that way)."""
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+    migrated = [{"text": "Զ", "reason": "shape changed", "replaced_by": "p520.004", "at": "t"}]
+    (tmp_path / "corr-x.json").write_text(json.dumps({
+        "lines": {"p520.001": "Ա", "p520.002": "Բ", "p520.003": "Գ"},
+        "stale": {"p520~line_004": migrated}}))
+    common._write("corr-x", {}, {"p520.001": "Ա", "p520.002": "Բբ"})
+    rec = json.loads((tmp_path / "corr-x.json").read_text())
+    assert rec["lines"] == {"p520.001": "Ա", "p520.002": "Բբ"}
+    assert rec["stale"]["p520~line_004"] == migrated
+    assert [(e["text"], e["reason"], e["replaced_by"]) for e in rec["stale"]["p520.002"]] == [
+        ("Բ", "replaced on rewrite", "p520.002")]
+    assert [(e["text"], e["reason"], e["replaced_by"]) for e in rec["stale"]["p520.003"]] == [
+        ("Գ", "dropped on rewrite", None)]
+
+    # writing again (e.g. the next incremental save) adds nothing twice
+    common._write("corr-x", {}, {"p520.001": "Ա", "p520.002": "Բբ"})
+    assert json.loads((tmp_path / "corr-x.json").read_text())["stale"] == rec["stale"]
+
+    # a line predicted again with its old text is the line, not a stale copy of it
+    common._write("corr-x", {}, {"p520.001": "Ա", "p520.002": "Բբ", "p520.003": "Գ"})
+    rec = json.loads((tmp_path / "corr-x.json").read_text())
+    assert "p520.003" not in rec["stale"] and rec["lines"]["p520.003"] == "Գ"
+
+
+def test_redo_of_a_runner_sets_the_earlier_run_aside(tmp_path, monkeypatch):
+    """``run(..., only_missing=False)`` saves partial results as it goes; the earlier
+    run's readings survive every save."""
+    crops = tmp_path / "crops"
+    crops.mkdir()
+    for k in ("p520.001", "p520.002"):
+        (crops / f"{k}.png").write_bytes(b"")
+    monkeypatch.setattr(common, "CROPS_DIR", crops)
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+    (tmp_path / "eng.json").write_text(json.dumps({"settings": {"v": 1},
+                                                   "lines": {"p520.001": "old", "p520.002": "Բ"}}))
+    common.run("eng", {"v": 2}, lambda png: {"p520.001": "new", "p520.002": "Բ"}[png.stem],
+               only_missing=False)
+    rec = json.loads((tmp_path / "eng.json").read_text())
+    assert rec["lines"] == {"p520.001": "new", "p520.002": "Բ"}
+    assert [e["text"] for e in rec["stale"]["p520.001"]] == ["old"] and "p520.002" not in rec["stale"]
+
+
+def _crops(tmp_path, monkeypatch, keys):
+    crops = tmp_path / "crops"
+    crops.mkdir()
+    for k in keys:
+        (crops / f"{k}.png").write_bytes(b"")
+    monkeypatch.setattr(common, "CROPS_DIR", crops)
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+
+
+def test_a_redo_saved_in_steps_labels_and_records_what_it_replaced(tmp_path, monkeypatch):
+    """A redo saves every 10 lines, so lines it hasn't reached are set aside as dropped at
+    first; at the end each old reading is "replaced on rewrite" (or gone, if the new text
+    is the same reading), with the run and settings that made it."""
+    keys = [f"p520.{i:03d}" for i in range(1, 26)]
+    _crops(tmp_path, monkeypatch, keys)
+    old = {k: f"Ա{i}" for i, k in enumerate(keys)}
+    (tmp_path / "eng.json").write_text(json.dumps(
+        {"settings": {"v": 1}, "uniform_settings": True, "generated_at": "T1", "lines": old}))
+    new = dict(old, **{keys[0]: "Բ0", keys[24]: "Բ24", keys[12]: " Ա12 "})  # 2 changed, 1 only spaced
+    common.run("eng", {"v": 2}, lambda png: new[png.stem], only_missing=False)
+    rec = json.loads((tmp_path / "eng.json").read_text())
+    assert rec["lines"] == new
+    assert sorted(rec["stale"]) == [keys[0], keys[24]]
+    sid = common.settings_id({"v": 1})
+    for k in (keys[0], keys[24]):
+        [e] = rec["stale"][k]
+        assert (e["text"], e["reason"], e["replaced_by"], e["predicted_before"], e["settings"]) == (
+            old[k], "replaced on rewrite", k, "T1", sid)
+    assert rec["stale_settings"] == {sid: {"v": 1}}
+    assert rec["uniform_settings"]  # a redo made every line with {"v": 2}
+
+
+def test_settings_are_recorded_only_when_known(tmp_path, monkeypatch):
+    """A file that doesn't say all its lines came from its settings (made before the
+    flag, or a corrector that kept corrections from a run with other settings) gives its
+    set-aside readings no ``settings``: missing beats misleading."""
+    monkeypatch.setattr(common, "PREDICTIONS_DIR", tmp_path)
+    (tmp_path / "corr-x.json").write_text(json.dumps(
+        {"settings": {"prompt": "old"}, "generated_at": "T1", "lines": {"a": "Ա", "b": "Բ"}}))
+    common._write("corr-x", {"prompt": "new"}, {"a": "Ա", "b": "Բբ"})  # uniform not claimed
+    rec = json.loads((tmp_path / "corr-x.json").read_text())
+    [e] = rec["stale"]["b"]
+    assert "settings" not in e and e["predicted_before"] == "T1"
+    assert "stale_settings" not in rec and "uniform_settings" not in rec
+
+
+def test_only_a_material_change_is_set_aside():
+    """Spacing and Unicode composition score the same everywhere; folded punctuation
+    doesn't (the test set's raw column), so it counts."""
+    old = {"settings": {}, "lines": {"a": "Եբր.", "b": "ա  բ", "c": "ե\u0582", "d": "Եբր."}}
+    stale, _ = common.set_aside(old, {"a": "Եբր.", "b": "ա բ", "c": "ե\u0582 ", "d": "Եբր․"})
+    assert list(stale) == ["d"]
+
+
+def test_drain_cancels_unsent_calls_and_keeps_the_ones_in_flight():
+    from concurrent.futures import ThreadPoolExecutor
+    calls, got = [], []
+
+    def call(i):
+        calls.append(i)
+        if i == 2:
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)  # still in flight when the main thread cancels the rest
+        return i
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        interrupted = common.drain(pool, call, range(20), lambda i, f: got.append(f.result()))
+    assert interrupted and calls == [0, 1, 2] and sorted(got) == [0, 1, 2]
+
+
+def test_ctrl_c_during_a_run_saves_what_was_predicted(tmp_path, monkeypatch):
+    keys = [f"p520.{i:03d}" for i in range(1, 21)]
+    _crops(tmp_path, monkeypatch, keys)
+    calls = []
+
+    def recognize(png):
+        calls.append(png.stem)
+        if len(calls) == 3:
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+        return "Ա"
+
+    with pytest.raises(SystemExit) as exit_:
+        common.run("eng", {}, recognize, workers=1)
+    assert exit_.value.code == 130 and len(calls) == 3
+    assert json.loads((tmp_path / "eng.json").read_text())["lines"] == {k: "Ա" for k in calls}
+
+
+def test_a_second_ctrl_c_warns_and_still_saves_what_was_collected(tmp_path, monkeypatch, capsys):
+    keys = [f"p520.{i:03d}" for i in range(1, 21)]
+    _crops(tmp_path, monkeypatch, keys)
+    calls = []
+
+    def recognize(png):
+        calls.append(png.stem)
+        if len(calls) == 3:  # Ctrl-C; then, while this call is still in flight, Ctrl-C again
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+            os.kill(os.getpid(), signal.SIGINT)
+            time.sleep(0.3)
+        return "Ա"
+
+    with pytest.raises(KeyboardInterrupt):
+        common.run("eng", {}, recognize, workers=1)
+    out = capsys.readouterr().out
+    assert "17 not sent" in out and "WARNING: abandoned 1 calls in flight" in out
+    assert json.loads((tmp_path / "eng.json").read_text())["lines"] == {k: "Ա" for k in calls[:2]}
+
+
+def test_a_second_process_cannot_write_the_same_file(tmp_path):
+    import subprocess
+    import sys
+    path = tmp_path / "eng.json"
+    probe = ("import sys; from dev.ocr_eval import common\n"
+             "try:\n    common.hold(sys.argv[1])\nexcept common.Busy as e:\n    sys.exit(f'busy: {e}')")
+    with common.lock(path):
+        with common.lock(path):  # re-entrant in the process that holds it
+            pass
+        r = subprocess.run([sys.executable, "-c", probe, str(path)], capture_output=True, text=True)
+        assert r.returncode == 1 and "busy" in r.stderr and f"pid {os.getpid()}" in r.stderr
+    r = subprocess.run([sys.executable, "-c", probe, str(path)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr  # released
+
+
+def test_migrate_sets_aside_in_the_same_form(tmp_path, monkeypatch):
+    from dev.line_review import migrate
+    path = tmp_path / "corr-x.json"
+    path.write_text(json.dumps({"settings": {"v": 1}, "uniform_settings": True,
+                                "generated_at": "T1", "lines": {"p1~line_001": "Ա", "p1~line_002": "Բ"}}))
+    migrate._move_file_predictions(path, {"p1~line_001": "p1.001", "p1~line_002": "p1.002"},
+                                   {"p1~line_002": "shape changed"})
+    rec = json.loads(path.read_text())
+    [e] = rec["stale"]["p1~line_002"]
+    sid = common.settings_id({"v": 1})
+    assert (e["reason"], e["replaced_by"], e["predicted_before"], e["settings"]) == (
+        "shape changed", "p1.002", "T1", sid)
+    assert rec["stale_settings"] == {sid: {"v": 1}} and rec["uniform_settings"]
+    assert rec["lines"] == {"p1.001": "Ա"}

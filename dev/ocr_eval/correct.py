@@ -12,7 +12,9 @@ Only pages holding typed ceiling lines are corrected (the rest can't be scored);
 ``--all`` for every sampled page. A page is sent again only if some of its lines have no
 correction yet (e.g. lines the layout review reshaped), and then only those lines are
 written: existing corrections are never replaced, so earlier scores don't move. ``--redo``
-corrects every page afresh.
+corrects every page afresh; the corrections it drops, or replaces with a different
+reading, are kept in the file's ``stale`` section (``common.set_aside``), never deleted.
+Ctrl-C stops sending pages; the ones in flight are still saved (they're billed).
 
     uv run python -m dev.ocr_eval.correct --model opus-5.5
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro
@@ -37,7 +39,7 @@ import json
 import os
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from dev.line_review import crops, lines, storage
@@ -322,13 +324,22 @@ def main() -> None:
 
     system = PROMPTS[a.prompt]
     engine = f"corr-{a.model}" + ("" if a.prompt == "v2" else f"-{a.prompt}")
+    try:
+        common.hold(common.PREDICTIONS_DIR / f"{engine}.json")  # one writer per file
+    except common.Busy as e:
+        raise SystemExit(str(e))
+    settings = {"model": model, "provider": provider, "prompt_version": a.prompt,
+                "prompt": system, "inputs": list(ENGINES)}
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
+    # Corrections kept from earlier runs were made with these settings only if the old file
+    # says all its lines were and its settings are these; otherwise claim nothing.
+    uniform = not out or (bool(old.get("uniform_settings")) and old.get("settings") == settings)
     missing = {p: missing_lines([l["key"] for l in lines.page_lines(p)], out) for p in pages}
     todo = [p for p in pages if missing[p]]
     print(f"{engine}: {len(todo)} pages to correct, {sum(len(missing[p]) for p in todo)} lines "
           f"({len(pages) - len(todo)} pages done)")
-    usage = {"in": 0, "out": 0, "fallback_lines": 0, "pages": 0, "served_by": set()}
+    per_page = {}  # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once
 
     def do_page(page: int):
         page_lines = lines.page_lines(page)
@@ -349,31 +360,43 @@ def main() -> None:
         return page, corrected, fallbacks, {**u, **total}
 
     start = time.time()
-    with ThreadPoolExecutor(max_workers=a.workers) as pool:
-        futures = [pool.submit(do_page, p) for p in todo]
-        for n, fut in enumerate(as_completed(futures), 1):
-            try:
-                page, corrected, fallbacks, u = fut.result()
-            except Exception as e:  # noqa: BLE001
-                print(f"  page failed: {type(e).__name__}: {str(e)[:160]}", flush=True)
-                continue
-            out.update(new_lines(corrected, out))
-            usage["in"] += u["in"]
-            usage["out"] += u["out"]
-            usage["fallback_lines"] += fallbacks
-            usage["pages"] += 1
-            usage["served_by"].add(u["served_by"])
-            print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
-                  f"({n}/{len(todo)}, {(time.time() - start) / n:.0f} s/page)", flush=True)
-            common._write(engine, {"model": model, "provider": provider, "prompt_version": a.prompt,
-                                   "prompt": system,
-                                   "inputs": list(ENGINES)}, out)
-    usage["served_by"] = sorted(usage["served_by"])
+    finished = 0
+
+    def handle(_page: int, fut) -> None:
+        nonlocal finished
+        finished += 1
+        try:
+            page, corrected, fallbacks, u = fut.result()
+        except Exception as e:  # noqa: BLE001
+            print(f"  page failed: {type(e).__name__}: {str(e)[:160]}", flush=True)
+            return
+        out.update(new_lines(corrected, out))
+        per_page[page] = (u, fallbacks)
+        print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
+              f"({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
+        common._write(engine, settings, out, uniform=uniform)
+
+    interrupted = True
+    try:
+        with ThreadPoolExecutor(max_workers=a.workers) as pool:
+            # Ctrl-C: pages not sent yet are cancelled; the ones in flight are still saved
+            interrupted = common.drain(pool, do_page, todo, handle)
+    finally:  # every page is saved as it arrives; log what was billed even on a 2nd Ctrl-C
+        _log_usage(engine, per_page, interrupted)
+    if interrupted:
+        raise SystemExit(130)
+
+
+def _log_usage(engine: str, per_page: dict, interrupted: bool) -> None:
+    usage = {"in": sum(u["in"] for u, _ in per_page.values()),
+             "out": sum(u["out"] for u, _ in per_page.values()),
+             "fallback_lines": sum(f for _, f in per_page.values()), "pages": len(per_page),
+             "served_by": sorted({u["served_by"] for u, _ in per_page.values()})}
     log = common.REPO_ROOT / "reports" / "phase11_correction_usage.json"
     runs = json.loads(log.read_text()) if log.exists() else []
     runs.append({"engine": engine, "at": datetime.now(timezone.utc).isoformat(timespec="seconds"), **usage})
     log.write_text(json.dumps(runs, indent=1) + "\n")
-    print(f"done: {usage}")
+    print(f"{'interrupted' if interrupted else 'done'}: {usage}")
 
 
 if __name__ == "__main__":
