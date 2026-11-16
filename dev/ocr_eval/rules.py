@@ -37,9 +37,15 @@ def main() -> None:
         rec = common.load_predictions(engine)
         if not rec:
             raise SystemExit(f"no predictions for {engine}")
+        try:
+            common.hold(common.PREDICTIONS_DIR / f"{engine}+rules.json")
+        except common.Busy as e:
+            raise SystemExit(str(e))
         lines = {k: apply_rules(v) for k, v in rec["lines"].items()}
         changed = sum(lines[k] != v for k, v in rec["lines"].items())
-        common._write(f"{engine}+rules", {"from": engine, "rules": ["apostrophe-i"]}, lines)
+        # every line is derived now, from `engine`'s current lines, with these settings
+        common._write(f"{engine}+rules", {"from": engine, "rules": ["apostrophe-i"]}, lines,
+                      uniform=True)
         print(f"{engine}+rules: {changed} of {len(lines)} lines changed")
 
 

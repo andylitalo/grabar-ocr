@@ -281,9 +281,41 @@ result. On 2026-11-13 the 3 reshaped lines were retyped against their new crops
 (p467.061, the Bad crop before, now reads), and v4 was run on pages 467–468, the 2
 dropped pages that had no typed lines at the first re-run. v4 + rule on all 160 typed
 lines: **95.0% error-free (91.9–98.1%), 0 broken**, the same as on 2026-10-11. The other
-prompt versions weren't re-run: their rows
-in `reports/phase11_ceiling.md` now cover 133 lines (pages 463–492 missing), and the
-comparison table above stays as measured on 2026-10-11.
+prompt versions weren't re-run, and the comparison table above stays as measured on
+2026-10-11.
+
+**Restored 2026-11-13 (PR #9 review).** The 2026-10-31 move used the old rule and dropped
+every line of the 16 `corr-*` pages in 463–492 that held a changed line, so v2, v3, v5 and
+Gemini 4 had lost 1,487 lines each (24 of them typed). Their lines were put back from
+`40aa5a8` and moved again with the current `migrate repair` (a correction of an unchanged
+line is kept): 1,378 lines each now sit at their line ids and 109 in the file's `stale`
+section (80 reshaped, 29 removed). No model was called. Their rows in
+`reports/phase11_ceiling.md` now cover 157 typed lines, all but the 3 retyped ones:
+
+| corrector + `՚ի` rule | lines | wrong (disagree) | wrong (agree) | error-free | broke |
+|---|--:|--:|--:|--:|--:|
+| Gemini 4 v4 | 157 | 2/55 | 4/102 | 96.2% | 1 |
+| 3.1 Pro v4 | 160 | 2/57 | 6/103 | 95.0% | 0 |
+| 3.1 Pro v5 | 157 | 3/55 | 7/102 | 93.7% | 1 |
+| 3.1 Pro v3 | 157 | 4/55 | 6/102 | 93.6% | 1 |
+| 3.1 Pro v2 | 157 | 6/55 | 6/102 | 92.3% | 2 |
+
+v4's own predictions didn't change. Its interval in the report moved to 91.3–98.1% only
+because the bootstrap draws from one random stream across the engines in file order, so
+more lines in other rows shift it. To stop this happening again, `common._write`, which
+every engine, corrector and `+rules` file goes through, now never deletes a prediction: a
+line that a rewrite drops, or replaces with a different reading (`--redo`, a settings
+change), moves to `stale` (`common.set_aside`). Each entry says when it was last saved
+(`predicted_before`) and, only when that is known, which settings made it (`settings`, an
+id into `stale_settings`): a file marks `uniform_settings` only when every line in it came
+from its `settings`. Files made before this (all of today's) don't, because `correct.py`
+used to keep corrections from earlier runs under the latest run's settings (v2, v3 and v4
+were each built over 3–5 runs on 2026-10-09), so their entries carry no settings rather
+than possibly wrong ones. A difference only in spacing or Unicode composition isn't a
+different reading (no score sees it) and isn't kept. One process writes a predictions file
+at a time (a lock; `migrate repair` takes them all first). Ctrl-C during a run or
+`correct.py` cancels the calls not sent yet and still saves the ones in flight; a second
+Ctrl-C abandons those, with a warning.
 
 Order of work from here:
 1. Finish the layout (Phase 9 review) over the whole book.
@@ -365,16 +397,17 @@ that adds content on agreed lines costs more in review than it saves. **Stay wit
 which will show whether Gemini 4 breaks lines at a rate that matters. Predictions:
 `corr-gemini-4-v4` and `corr-gemini-4-v4+rules` in the ceiling set. `ceiling score` scores
 every predictions file in the set, so since the 2026-10-31 re-score they're also in
-`reports/phase11_ceiling.md`. They weren't re-run after the move to verified ids, so that
-row covers 133 lines (95.5%, 1 broken) and can't be compared with the re-scored v4 (157
-lines).
+`reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
+that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
-#### Where this stands (pick-up note, 2026-10-11)
+#### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
   `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
-- **Ceiling sample**: 58 + 102 typed (plus 3 bad crop/illegible), 474 of 500 picks still keyed
-  to the baseline (`p<N>~line_…`). They move to line ids once, after the layout review
+- **Ceiling sample** (2026-11-13): 57 disagreements + 103 agreements typed (plus 1 bad crop
+  and 1 illegible), 379 of 499 picks still keyed to the baseline (`p<N>~line_…`). The
+  page-number line on p490 (a disagreement) was deleted in review and its pick dropped;
+  p467.061, a bad crop before, was retyped. They move to line ids once, after the layout review
   (`python -m dev.line_review.migrate repair`, Phase 9 "After the gate"; since 2026-11-13
   verify no longer moves them); lines whose shape changed are set aside under `stale/` and
   come back untyped.
@@ -386,7 +419,8 @@ lines).
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
   test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
-  broken line; staying with 3.1 Pro ("Gemini 4 check" above).
+  broken line (160 lines; 96.2% on 157 in the report since the 2026-11-13 restore);
+  staying with 3.1 Pro ("Gemini 4 check" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 

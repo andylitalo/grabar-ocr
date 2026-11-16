@@ -32,8 +32,9 @@ its first successor in reading order, found through the line's lineage, or throu
 ``superseded_by`` for a retired id; a pick landing on a line already picked, or on a
 deleted line, goes to ``dropped``). OCR and corrector predictions of an unchanged line
 move to its new id; a changed line's are never deleted, only set aside in the file's
-``stale`` section (``{old key: [{text, reason, replaced_by, at}]}``), which the scorer
-doesn't read. A corrector (``corr-*``) reads the whole page, but a line's own readings are
+``stale`` section (``{old key: [{text, reason, replaced_by, at, predicted_before,
+settings?}]}``, the same form as ``common.set_aside``), which the scorer doesn't read.
+A corrector (``corr-*``) reads the whole page, but a line's own readings are
 its input, so its correction of an unchanged line stays valid when a neighbour changes and
 is kept: the scores don't move. Crops (free to remake) of changed lines are deleted.
 
@@ -54,6 +55,8 @@ import argparse
 import json
 import threading
 from datetime import datetime, timezone
+
+from dev.ocr_eval import common as ocr_common
 
 from . import lines as lines_mod
 from . import storage
@@ -254,29 +257,8 @@ def _move_predictions(task: str, page: int, target: dict, changed: dict) -> int:
     n = 0
     if pred_dir.is_dir():
         for path in sorted(pred_dir.glob("*.json")):
-            rec = json.loads(path.read_text(encoding="utf-8"))
-            preds = rec.get("lines", {})
-            stale = {k: list(v) for k, v in rec.get("stale", {}).items()}
-            new, aside = {}, []
-            # keys already in place first, so a moved prediction never overwrites one
-            for k, v in sorted(preds.items(), key=lambda kv: target.get(kv[0], kv[0]) != kv[0]):
-                nk = target.get(k, k)
-                if k in changed or nk is None:
-                    aside.append((k, v, changed.get(k, "line removed"), nk))
-                elif nk in new and new[nk] != v:
-                    aside.append((k, v, f"{nk} already predicted", nk))
-                else:
-                    new[nk] = v
-            for k, v, why, nk in aside:
-                if not any(e["text"] == v for e in stale.get(k, [])):
-                    stale.setdefault(k, []).append({"text": v, "reason": why, "replaced_by": nk,
-                                                    "at": _now()})
-            if new != preds:
-                rec["lines"] = dict(sorted(new.items()))
-                if stale:
-                    rec["stale"] = dict(sorted(stale.items()))
-                _write_json(path, rec)
-                n += 1
+            with ocr_common.lock(path):  # not while a run writes it (repair holds them all)
+                n += _move_file_predictions(path, target, changed)
     if crops.is_dir():
         for old, new in target.items():
             src = crops / f"{old}.png"
@@ -293,10 +275,49 @@ def _move_predictions(task: str, page: int, target: dict, changed: dict) -> int:
     return n
 
 
+def _move_file_predictions(path, target: dict, changed: dict) -> int:
+    rec = json.loads(path.read_text(encoding="utf-8"))
+    preds = rec.get("lines", {})
+    stale = {k: list(v) for k, v in rec.get("stale", {}).items()}
+    known = dict(rec.get("stale_settings", {}))
+    new, aside = {}, []
+    # keys already in place first, so a moved prediction never overwrites one
+    for k, v in sorted(preds.items(), key=lambda kv: target.get(kv[0], kv[0]) != kv[0]):
+        nk = target.get(k, k)
+        if k in changed or nk is None:
+            aside.append((k, v, changed.get(k, "line removed"), nk))
+        elif nk in new and new[nk] != v:
+            aside.append((k, v, f"{nk} already predicted", nk))
+        else:
+            new[nk] = v
+    for k, v, why, nk in aside:
+        if not any(e["text"] == v for e in stale.get(k, [])):
+            # same form as a rewrite's (``predicted_before``; ``settings`` only if known)
+            stale.setdefault(k, []).append(ocr_common.stale_entry(rec, v, why, nk, _now(), known))
+    if new == preds:
+        return 0
+    rec["lines"] = dict(sorted(new.items()))
+    if stale:
+        rec["stale"] = dict(sorted(stale.items()))
+    if known:
+        rec["stale_settings"] = dict(sorted(known.items()))
+    _write_json(path, rec)
+    return 1
+
+
 def repair() -> None:
     """Move every verified page's data from its old keys to its line ids. Run once after
     the whole layout review (before any new transcription or OCR); idempotent, so run it
     again after a failure, until it prints nothing."""
+    # Every predictions file first, so a run in another shell stops repair before it moves
+    # anything (a run keeps its lines in memory and would save them under the old keys).
+    for task in _tasks():
+        pred_dir, _ = _set_dirs(task)
+        for path in sorted(pred_dir.glob("*.json")) if pred_dir.is_dir() else []:
+            try:
+                ocr_common.hold(path)
+            except ocr_common.Busy as e:
+                raise SystemExit(str(e))
     for page in storage.list_pages():
         review = storage.load_review(page)
         if review["status"] != "verified":
