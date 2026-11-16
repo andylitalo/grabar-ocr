@@ -14345,5 +14345,1375 @@
   "p643~line_012": "առնեմք հոգածութեան որոց զկնի մեր գալոց իցեն։",
   "p643~line_013": "ՅԵՐՈՒՍԱՂԷՄ, ԱԹՈՌ ԱՌԱՔԵԼԱԿԱՆ ՍՐԲՈՑ ՅԱԿՈԲԵԱՆՑ",
   "p643~line_014": "1915 ՕԳՈՍՏՈՍ. ՌՅԿԴ."
+ },
+ "stale": {
+  "p463~line_001": [
+   {
+    "text": "Իսկ եթէ ՚ի յառաջաւորի պահոցն հան-",
+    "reason": "shape changed",
+    "replaced_by": "p463.001",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p463~line_042": [
+   {
+    "text": "նըն, վ. 17. քրիստոսի եղեն։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p463~line_078": [
+   {
+    "text": "չորս աւուրսն այս պահոց, Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p463.078",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p463~line_086": [
+   {
+    "text": "Ո",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p463~line_087": [
+   {
+    "text": "11ւրբաթ օրն յիշատակ է Յովնանու",
+    "reason": "shape changed",
+    "replaced_by": "p463.086",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p463~line_094": [
+   {
+    "text": "(9",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p464~line_011": [
+   {
+    "text": "Ծաբաթ սրբոցն՝ Սարգսի զօրավարին,",
+    "reason": "shape changed",
+    "replaced_by": "p464.011",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p464~line_026": [
+   {
+    "text": "իւրակէ։ Հարց, դկ. Անսկիզբն բանդ։",
+    "reason": "shape changed",
+    "replaced_by": "p464.026",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p464~line_074": [
+   {
+    "text": "ՀՉորեքշաբաթ. Հարց Հանդստեան գ3.",
+    "reason": "shape changed",
+    "replaced_by": "p464.074",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p464~line_094": [
+   {
+    "text": "-(460)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_007": [
+   {
+    "text": "Ծաբաթ. սրբոյն Իսահակայ Պարթեւի",
+    "reason": "shape changed",
+    "replaced_by": "p465.007",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_021": [
+   {
+    "text": "իւրակէ. Հարց դկ. Որ յահեղակերպ։",
+    "reason": "shape changed",
+    "replaced_by": "p465.021",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_058": [
+   {
+    "text": "Զորեքշաբաթ. Հարց Հանգստեան գձ.",
+    "reason": "shape changed",
+    "replaced_by": "p465.058",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_065": [
+   {
+    "text": "ինգշաբաթ. սրբոց Վարդանանց զօ-",
+    "reason": "shape changed",
+    "replaced_by": "p465.065",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_081": [
+   {
+    "text": "Ռրբաթ. Հարց Հանգս. դկ. Յաւիտենից",
+    "reason": "shape changed",
+    "replaced_by": "p465.081",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_088": [
+   {
+    "text": "ՅԾաբաթ. սրբոցն Կոստանդնուպոլսոյ",
+    "reason": "shape changed",
+    "replaced_by": "p465.088",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p465~line_095": [
+   {
+    "text": "-(461)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p466~line_016": [
+   {
+    "text": "Բուն բարեկենդանի կիւրակէին՝ փո-",
+    "reason": "shape changed",
+    "replaced_by": "p466.016",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p466~line_081": [
+   {
+    "text": "ռաջին երկուշաբաթ օրն պահոց՝ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p466.081",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p466~line_090": [
+   {
+    "text": "-(462",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_004": [
+   {
+    "text": "Երեքշաբաթ. Հարց ա3. Որ համագոյից։",
+    "reason": "shape changed",
+    "replaced_by": "p467.004",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_009": [
+   {
+    "text": "ԶՉորեքշաբաթ. Հարց աձ. Որ յամենայնի",
+    "reason": "shape changed",
+    "replaced_by": "p467.009",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_028": [
+   {
+    "text": "ինգշաբաթ. Հարց ած. Բարեբանեալ ես։",
+    "reason": "shape changed",
+    "replaced_by": "p467.028",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_032": [
+   {
+    "text": "Արբաթ. Հարց ած. Բարեբանեալ ես ՚ի",
+    "reason": "shape changed",
+    "replaced_by": "p467.032",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_061": [
+   {
+    "text": "րկրորդ կիւրակէ մեծի պահոց. ահ.",
+    "reason": "shape changed",
+    "replaced_by": "p467.061",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_075": [
+   {
+    "text": "Երկուշաբաթ. Հարց ակ. Զանուն քո",
+    "reason": "shape changed",
+    "replaced_by": "p467.075",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p467~line_093": [
+   {
+    "text": "-(463",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_009": [
+   {
+    "text": "ինգշաբաթ. Հարց ակ. Օրհնեալ եւ փա-",
+    "reason": "shape changed",
+    "replaced_by": "p468.010",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_019": [
+   {
+    "text": "ՈԱրբաթ. Հարց ակ. Զանճառ էութիւն։",
+    "reason": "shape changed",
+    "replaced_by": "p468.020",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_044": [
+   {
+    "text": "րրորդ կիւրակէ մեծի պահոց։ ահ.",
+    "reason": "shape changed",
+    "replaced_by": "p468.045",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_062": [
+   {
+    "text": "Երեքշաբաթ. Հարց բձ. Ուղիղ են ճա-",
+    "reason": "shape changed",
+    "replaced_by": "p468.063",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_067": [
+   {
+    "text": "ԶՉորեքշաբաթ. Հարց բկ. Որ հարցն մե-",
+    "reason": "shape changed",
+    "replaced_by": "p468.068",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_080": [
+   {
+    "text": "Ուրբաթ. Հարց բկ. ստե. Աստուած հզօր։",
+    "reason": "shape changed",
+    "replaced_by": "p468.081",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_092": [
+   {
+    "text": "-(464)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p468~line_093": [
+   {
+    "text": "ԶՀՉորեքշաբաթ Հարց ակ. Աստուած հարցն",
+    "reason": "shape changed",
+    "replaced_by": "p468.001",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_016": [
+   {
+    "text": ").",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_017": [
+   {
+    "text": "որրորդ Կիւրակէ մեծի պահոց. ահ.",
+    "reason": "shape changed",
+    "replaced_by": "p469.016",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_030": [
+   {
+    "text": "Երկուշաբաթ. Հարց գ3. Փառաւորեալ։",
+    "reason": "shape changed",
+    "replaced_by": "p469.029",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_035": [
+   {
+    "text": "Երեքշաբաթ. Հարց գ3 Փառաւորեալ է։",
+    "reason": "shape changed",
+    "replaced_by": "p469.034",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_039": [
+   {
+    "text": "Չորեքշաբաթ Հարց 6). Հարցն մերոց",
+    "reason": "shape changed",
+    "replaced_by": "p469.038",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_046": [
+   {
+    "text": "լինգշաբաթ. Հարց է3. Օրհնեալ ես տէր։",
+    "reason": "shape changed",
+    "replaced_by": "p469.045",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_050": [
+   {
+    "text": "Ուրբաթ. Հարց գկ. Աստուած բարձրեալ։",
+    "reason": "shape changed",
+    "replaced_by": "p469.049",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_058": [
+   {
+    "text": "Մաբաթ սրբոց Մանկանցն Քառասնից",
+    "reason": "shape changed",
+    "replaced_by": "p469.057",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_073": [
+   {
+    "text": "ինգերորդ Կիւրակէ մեծի պահոց.",
+    "reason": "shape changed",
+    "replaced_by": "p469.072",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_090": [
+   {
+    "text": "Երբեքշաբաթ, Հարց դ). Հարցն մերոց աս-",
+    "reason": "shape changed",
+    "replaced_by": "p469.089",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p469~line_094": [
+   {
+    "text": "-(465",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_005": [
+   {
+    "text": "ինգշաբաթ Հարց դձ. Ճշմարտապէս։",
+    "reason": "shape changed",
+    "replaced_by": "p470.006",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_011": [
+   {
+    "text": "Աոբաթ. Հարց գ3. Տէր աստուած մեր",
+    "reason": "shape changed",
+    "replaced_by": "p470.012",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_043": [
+   {
+    "text": "եցերորդ կիւրակէ մեծի պահոց. ահ.",
+    "reason": "shape changed",
+    "replaced_by": "p470.044",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_056": [
+   {
+    "text": "Երկուշաբաթ. Հարց դկ. Աստուած հար-",
+    "reason": "shape changed",
+    "replaced_by": "p470.057",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_061": [
+   {
+    "text": "Ծրեքշաբաթ. Հարց դկ. Հարցն մերոց։",
+    "reason": "shape changed",
+    "replaced_by": "p470.062",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_065": [
+   {
+    "text": "Վորեքշաբաթ. Հարց դկ. Օրհնեալ տէր",
+    "reason": "shape changed",
+    "replaced_by": "p470.066",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_072": [
+   {
+    "text": "ւինգշաբաթ. Հարց դկ. Օրհնեալ ես",
+    "reason": "shape changed",
+    "replaced_by": "p470.073",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_078": [
+   {
+    "text": "ՈԸւրբաթ։ Հարց գէ. ստեղէ. Օրհնեալ",
+    "reason": "shape changed",
+    "replaced_by": "p470.079",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_091": [
+   {
+    "text": "-(466)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p470~line_092": [
+   {
+    "text": "Չորեքշաբաթ. Հարց դծ. Որ յամենայնի։",
+    "reason": "shape changed",
+    "replaced_by": "p470.001",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p471~line_041": [
+   {
+    "text": "Օ",
+    "reason": "line split or merged",
+    "replaced_by": "p471.041",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p471~line_042": [
+   {
+    "text": "աղկազարդի Կիւրակէ։ Ի գիշե-",
+    "reason": "line split or merged",
+    "replaced_by": "p471.041",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p471~line_093": [
+   {
+    "text": "-(467",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p472~line_004": [
+   {
+    "text": "հակ յինն ժամուն, ժողովեսցին ՚ի դուռն",
+    "reason": "shape changed",
+    "replaced_by": "p472.004",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p472~line_049": [
+   {
+    "text": "468",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_003": [
+   {
+    "text": "Եւ «ահանան արտաժուսա ասիռև։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_007": [
+   {
+    "text": "խարութեամբ արդարացեալք",
+    "reason": "line split or merged",
+    "replaced_by": "p473.006",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_008": [
+   {
+    "text": "մտանեն",
+    "reason": "line split or merged",
+    "replaced_by": "p473.006",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_060": [
+   {
+    "text": "1 ոգրրուատ։",
+    "reason": "shape changed",
+    "replaced_by": "p473.058",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_079": [
+   {
+    "text": "ւագ Երկուչաբաթ. ահ. բ3. Անեղն",
+    "reason": "shape changed",
+    "replaced_by": "p473.077",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p473~line_097": [
+   {
+    "text": "-(469)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_004": [
+   {
+    "text": "Ոակ յերեկոյին՝ Խոնարհեցո եւ Ապրեցո։",
+    "reason": "shape changed",
+    "replaced_by": "p474.004",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_020": [
+   {
+    "text": "ւադ Երեքշաբաթ. ահ. բկ Իմաստուն",
+    "reason": "shape changed",
+    "replaced_by": "p474.020",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_029": [
+   {
+    "text": "Ոակ յերեկոյին՝ Խոնարհեցո եւ Ապրեցո։",
+    "reason": "shape changed",
+    "replaced_by": "p474.029",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_049": [
+   {
+    "text": "ւագ Չորեքշաբաթ. ահ. գ3. Որ յա-",
+    "reason": "shape changed",
+    "replaced_by": "p474.049",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_050": [
+   {
+    "text": "թոռ փառաց. իւր ստրօքն։ Առա-",
+    "reason": "shape changed",
+    "replaced_by": "p474.050",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_059": [
+   {
+    "text": "0",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_060": [
+   {
+    "text": "ԻՈսկ յերեկոյին՝ Խոնարհեցո եւ Ապրեցո։",
+    "reason": "shape changed",
+    "replaced_by": "p474.059",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_077": [
+   {
+    "text": "ւադ Հինգշաբաթ. ահ. բ3. Վերա-",
+    "reason": "shape changed",
+    "replaced_by": "p474.076",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_078": [
+   {
+    "text": "ձդողն երկ. իւր ստրօքն։ Առաւօտու",
+    "reason": "shape changed",
+    "replaced_by": "p474.077",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_088": [
+   {
+    "text": "ԸԻոկ ՚ի յերրորդում ժամու ժողովեսցին",
+    "reason": "shape changed",
+    "replaced_by": "p474.087",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_092": [
+   {
+    "text": "կարդն կատարել պարտ է։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p474~line_095": [
+   {
+    "text": "-70",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p475~line_004": [
+   {
+    "text": "ատտքՐւաաանեն թեւ՝ ոոռոտւս մես։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p475~line_087": [
+   {
+    "text": "սկ ՚ի վեցերորդ ժամուն ժողովեսցին",
+    "reason": "shape changed",
+    "replaced_by": "p475.086",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p475~line_097": [
+   {
+    "text": "-ԱՂ)Ւ",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_040": [
+   {
+    "text": "սկ յերեկոյին ՚ի տասներորդ ժամուն՝",
+    "reason": "shape changed",
+    "replaced_by": "p476.040",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_085": [
+   {
+    "text": "Եւ ապա զգեցուսցեն զեպիսկոպոսն կամ",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_086": [
+   {
+    "text": "զմի ՚ի պատուաւոր քահանայից, որ ա-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_088": [
+   {
+    "text": "աոսսոսոս սոսք. . 7 .Բեն...- Րևհուև.",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_091": [
+   {
+    "text": "ռեալ զղենջակ նստցի ՚ի ծունկս՝ եւ լուաս-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p476~line_100": [
+   {
+    "text": "-72)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_004": [
+   {
+    "text": "ւադ Ուրբաթ. ՚ի զիշերին հսկումն է",
+    "reason": "shape changed",
+    "replaced_by": "p477.004",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_014": [
+   {
+    "text": "Աւ-շին Սազ. Բ. Ընդէ՞ր խռովեցան",
+    "reason": "shape changed",
+    "replaced_by": "p477.014",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_042": [
+   {
+    "text": "դերձ ծունը դնելով. երեք անգամ։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_049": [
+   {
+    "text": "473)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_060": [
+   {
+    "text": "ԸԸ ։ 1ոո.-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p477~line_083": [
+   {
+    "text": "ըրրսատոս որդը ասաւուսոյ։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p478~line_037": [
+   {
+    "text": "սկ ՚ի վեցերորդ ժամուն ժողովեսցին",
+    "reason": "shape changed",
+    "replaced_by": "p478.037",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p478~line_095": [
+   {
+    "text": "(ղ4)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p479~line_031": [
+   {
+    "text": "սկ ՚ի տասներորդ ժամուն ժողովեալ",
+    "reason": "shape changed",
+    "replaced_by": "p479.031",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p479~line_078": [
+   {
+    "text": "ւագ Շաբաթ. Ի գիշերին վառեսցեն",
+    "reason": "shape changed",
+    "replaced_by": "p479.078",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p479~line_095": [
+   {
+    "text": "-Ա",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p480~line_012": [
+   {
+    "text": "Եւ յերեկոյի Ճրագալուցի սրբոյ Զատկի",
+    "reason": "shape changed",
+    "replaced_by": "p480.012",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p480~line_096": [
+   {
+    "text": "-(476)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p483~line_003": [
+   {
+    "text": "ԱՏԿԻ ԿԻՒՐԱԿԷ. Ի ԳԻՇԵՐԻՆ",
+    "reason": "shape changed",
+    "replaced_by": "p483.003",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p483~line_031": [
+   {
+    "text": "կրնչէին։",
+    "reason": "shape changed",
+    "replaced_by": "p483.031",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p484~line_003": [
+   {
+    "text": "Եւ ապա եդեալ զսուրբ խաչն եւ զաւե-",
+    "reason": "shape changed",
+    "replaced_by": "p484.003",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p484~line_052": [
+   {
+    "text": "1սկ ՚ի տասներորդ ժամուն ժողովեալ",
+    "reason": "shape changed",
+    "replaced_by": "p484.052",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p484~line_083": [
+   {
+    "text": "Երկուշաբաթի մեռելոց է։ Յայս շաբաթիս",
+    "reason": "shape changed",
+    "replaced_by": "p484.083",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p484~line_094": [
+   {
+    "text": "-(480",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_031": [
+   {
+    "text": "կուք. վ. 35. ՚ի բեկանել հացին։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_041": [
+   {
+    "text": "Չորեքշաբաթի. ահ. Բկ. Քո յարու-",
+    "reason": "shape changed",
+    "replaced_by": "p485.040",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_055": [
+   {
+    "text": "և",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_064": [
+   {
+    "text": "ինդշարաթի. ահ. 3. Իւղաբեր եւ",
+    "reason": "shape changed",
+    "replaced_by": "p485.062",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_087": [
+   {
+    "text": "Աւոբաթ. ահ. էկ. Յարեաւ տէրն։ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p485.085",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p485~line_096": [
+   {
+    "text": "8",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p486~line_040": [
+   {
+    "text": "մ. 25. որ թէ գռեալ էին։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p486~line_044": [
+   {
+    "text": "աստուած։ Մինչէ- շՀամբարձումն շաբար",
+    "reason": "shape changed",
+    "replaced_by": "p486.043",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p486~line_049": [
+   {
+    "text": "482)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p486~line_059": [
+   {
+    "text": "ուրբ աստուածածնի Աւետեաց տոնն",
+    "reason": "shape changed",
+    "replaced_by": "p486.057",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_009": [
+   {
+    "text": "Ինակ եթէ ՚ի Ծաղկաղարդի հանդիպիցի,",
+    "reason": "shape changed",
+    "replaced_by": "p487.009",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_042": [
+   {
+    "text": "",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_043": [
+   {
+    "text": "որ Կիւրակէ. որ եւ ասի Կրկնազա-",
+    "reason": "shape changed",
+    "replaced_by": "p487.042",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_069": [
+   {
+    "text": "էր բանն. վ. 17. քրիստոսի եղեն։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_090": [
+   {
+    "text": "Երվուշաբաթի. ահ. -3. Երգեսցուք։",
+    "reason": "shape changed",
+    "replaced_by": "p487.088",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p487~line_095": [
+   {
+    "text": "-(483)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p488~line_021": [
+   {
+    "text": "Երեքշաբաթ. ահ. -4. Երդեցէք տեա-",
+    "reason": "shape changed",
+    "replaced_by": "p488.021",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p488~line_057": [
+   {
+    "text": "Հինգշարաթ. ահ. բկ. Փարաւոն։ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p488.057",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p488~line_075": [
+   {
+    "text": "ՈԱւրբաթ. ահ. 83. Օգնական ընդու։",
+    "reason": "shape changed",
+    "replaced_by": "p488.075",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p488~line_093": [
+   {
+    "text": "-(484)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p489~line_003": [
+   {
+    "text": "Շաբաթ. ահ. 44. Երգեցէք տեառն։",
+    "reason": "shape changed",
+    "replaced_by": "p489.003",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p489~line_022": [
+   {
+    "text": "Նրրորդ Կիւրակէ, որ ասի Աշխարհա-",
+    "reason": "shape changed",
+    "replaced_by": "p489.022",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p489~line_023": [
+   {
+    "text": "1 մատրան. ահ. դ). Օրհնեսցուք զտէր։",
+    "reason": "shape changed",
+    "replaced_by": "p489.023",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p489~line_078": [
+   {
+    "text": "Երեքշաբաթ ահ. աձ Երգեսցուք։ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p489.078",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p489~line_093": [
+   {
+    "text": "-485)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_004": [
+   {
+    "text": "ԶՉորեքշաբաթ. ահ. ակ Երգեցէք տետառն։",
+    "reason": "shape changed",
+    "replaced_by": "p490.004",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_015": [
+   {
+    "text": "մ. 232. եւո ևնոռի։",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_016": [
+   {
+    "text": "զՎ. աս։ ըւը լոսգդըրց։",
+    "reason": "shape changed",
+    "replaced_by": "p490.015",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_023": [
+   {
+    "text": "լինգշաբաթ. ահ. բջ. Օրհնեսցուք ըզ-",
+    "reason": "shape changed",
+    "replaced_by": "p490.022",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_047": [
+   {
+    "text": "(քաբաթ. ահ. գ3. Օղնական։ Հարց բկ.",
+    "reason": "shape changed",
+    "replaced_by": "p490.059",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_065": [
+   {
+    "text": "Օ",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_066": [
+   {
+    "text": "որրորդ Կիւրակէ. ահ. գկ. Երգեցէք",
+    "reason": "shape changed",
+    "replaced_by": "p490.077",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_067": [
+   {
+    "text": "տեառն։ Հարց բկ. Անսկիզբն աս-",
+    "reason": "shape changed",
+    "replaced_by": "p490.078",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_082": [
+   {
+    "text": "-(486)-",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p490~line_083": [
+   {
+    "text": "կտուած։ Գործք. ԺԱ. 27. Ընդ աւուրսն.",
+    "reason": "shape changed",
+    "replaced_by": "p490.046",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p491~line_013": [
+   {
+    "text": "Երկուշաբաթ ահ. գ3. Օրհնեսցուք ըզ-",
+    "reason": "shape changed",
+    "replaced_by": "p491.013",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p491~line_032": [
+   {
+    "text": "Երեքշաբաթ ահ. դկ. Յաղթական։",
+    "reason": "shape changed",
+    "replaced_by": "p491.032",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p491~line_047": [
+   {
+    "text": "487",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p491~line_087": [
+   {
+    "text": "ն",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p491~line_088": [
+   {
+    "text": "1ւրբաթ. ահ. բ). Օրհնեսցուք։ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p491.086",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p492~line_001": [
+   {
+    "text": "Սաղ. ՂԷ. Տեսին։ Կաթ բ. Պետ. Գ.1.",
+    "reason": "shape changed",
+    "replaced_by": "p492.001",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p492~line_013": [
+   {
+    "text": "ՄՇաբաթ. ահ. բկ. Փարաւոն։ Հարց գ3.",
+    "reason": "shape changed",
+    "replaced_by": "p492.013",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p492~line_031": [
+   {
+    "text": "ինգերորդ կիւրակէ. տօն է Երեւ-",
+    "reason": "shape changed",
+    "replaced_by": "p492.031",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p492~line_076": [
+   {
+    "text": "Մրկուշաբաթ. ահ. գկ. Երգեցէք։ Հարց",
+    "reason": "shape changed",
+    "replaced_by": "p492.076",
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ],
+  "p492~line_095": [
+   {
+    "text": "(488)",
+    "reason": "line removed",
+    "replaced_by": null,
+    "at": "2026-11-16T21:58:36+00:00",
+    "predicted_before": "2026-10-09T15:09:33+00:00"
+   }
+  ]
  }
 }
