@@ -5,10 +5,12 @@ keyed by baseline keys (``p520~line_013``). Verifying a page mints permanent ids
 (``p520.013``), and the app then looks the page's lines up by id, so without this step
 those transcriptions would stop matching any line.
 
-**When it runs:** once, after the whole layout review (``repair`` below), not on each
-verify. No transcription or OCR runs while pages are being reviewed, so moving the data
-once, from pages whose ids are already saved, can't race an edit or an OCR run, and a
-repair that fails partway is simply run again (docs/phase_9_line_segmentation_review.md).
+**When it runs:** with each batch's data PR during the layout review, and once more after
+it (``repair`` below), never on a verify (docs/phase_9_line_segmentation_review.md, "After
+the gate"). It moves only pages whose ids are already saved, so it can't race an edit. It
+holds every predictions file, so it can't race an OCR run. Transcription files take no lock
+across processes, so don't type while it runs. A repair that fails partway is simply run
+again.
 
 Each transcription stores ``geometry``, a fingerprint of the line shape it was typed
 against (``transcribe.geometry``). For each task's records on the page:

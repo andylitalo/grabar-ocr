@@ -328,8 +328,8 @@ def _set_status(page: int, status: str, revision: int | None) -> dict:
         record = mz.verified_record(load_baseline(page), review,
                                     baseline_sha256=baseline_sha256(page), page_el=page_el)
         # Transcriptions, picks and predictions keyed to the old line keys are not moved
-        # here: `python -m dev.line_review.migrate repair` moves them once, after the whole
-        # layout review (dev/line_review/migrate.py).
+        # here: `python -m dev.line_review.migrate repair` moves them, with each batch's
+        # data PR and once after the layout review (dev/line_review/migrate.py).
         write_atomic(verified_path(page), mz.dumps(record))
     elif current == "verified":
         _mark_resumed(page)
