@@ -25,7 +25,9 @@ Editing (fixing only):
   - **Delete** removes it; Shift-click selects more lines, and **M** merges them.
   - **P** marks it as the printed page number: confirm the pre-filled number (PDF page − 4)
     with Enter. It leaves the lines and the reading order and is stored as a page element.
-    If Paddle missed the number, drag a box over it first.
+    If Paddle missed the number, drag a box over it first. A fresh page usually starts
+    with the number already marked (`page_number.py`, shown as "(auto)" in the edit list);
+    remove that edit with × if it's wrong, then mark the right box.
 
   Drag on empty page to add a new line. kraken-fill outlines follow the ink, so their dots
   are dense (simplified to within 2.5 px for editing): drag an edge to take in clipped ink.
@@ -57,6 +59,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 ```
 materialize.py       baseline + ops -> lines; id minting; verified record (pure)
 duplicates.py        drops boxes inside other lines and boxes smaller than a character, before the ops
+page_number.py       finds the printed page number so a fresh review starts with it marked
 storage.py           paths, review read/write, status transitions, verified output
 baseline_manifest.py checks paddle-filled against baseline_sha256.json (--accept to update)
 rewrite_verified.py  rewrites verified files after a format change (--reopen for content changes)
