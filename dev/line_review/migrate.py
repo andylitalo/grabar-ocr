@@ -5,10 +5,12 @@ keyed by baseline keys (``p520~line_013``). Verifying a page mints permanent ids
 (``p520.013``), and the app then looks the page's lines up by id, so without this step
 those transcriptions would stop matching any line.
 
-**When it runs:** once, after the whole layout review (``repair`` below), not on each
-verify. No transcription or OCR runs while pages are being reviewed, so moving the data
-once, from pages whose ids are already saved, can't race an edit or an OCR run, and a
-repair that fails partway is simply run again (docs/phase_9_line_segmentation_review.md).
+**When it runs:** with each batch's data PR during the layout review, and once more after
+it (``repair`` below), never on a verify (docs/phase_9_line_segmentation_review.md, "After
+the gate"). It moves only pages whose ids are already saved, so it can't race an edit. It
+holds every predictions file, so it can't race an OCR run. Transcription files take no lock
+across processes, so don't type while it runs. A repair that fails partway is simply run
+again.
 
 Each transcription stores ``geometry``, a fingerprint of the line shape it was typed
 against (``transcribe.geometry``). For each task's records on the page:
@@ -306,9 +308,9 @@ def _move_file_predictions(path, target: dict, changed: dict) -> int:
 
 
 def repair() -> None:
-    """Move every verified page's data from its old keys to its line ids. Run once after
-    the whole layout review (before any new transcription or OCR); idempotent, so run it
-    again after a failure, until it prints nothing."""
+    """Move every verified page's data from its old keys to its line ids. Run with each
+    review batch's data PR and once more after the whole layout review (before any new
+    OCR); idempotent, so run it again after a failure, until it prints nothing."""
     # Every predictions file first, so a run in another shell stops repair before it moves
     # anything (a run keeps its lines in memory and would save them under the old keys).
     for task in _tasks():

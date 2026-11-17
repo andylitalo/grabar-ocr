@@ -404,13 +404,15 @@ that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
   `՚ի` rule. 95.0% error-free on the ceiling sample (160 lines). `correct.py --prompt v4`.
-- **Ceiling sample** (2026-11-13): 57 disagreements + 103 agreements typed (plus 1 bad crop
-  and 1 illegible), 379 of 499 picks still keyed to the baseline (`p<N>~line_…`). The
-  page-number line on p490 (a disagreement) was deleted in review and its pick dropped;
-  p467.061, a bad crop before, was retyped. They move to line ids once, after the layout review
-  (`python -m dev.line_review.migrate repair`, Phase 9 "After the gate"; since 2026-11-13
-  verify no longer moves them); lines whose shape changed are set aside under `stale/` and
-  come back untyped.
+- **Ceiling sample** (2026-11-17, pp.453–516 verified): 57 disagreements + 103 agreements
+  typed (plus 1 bad crop and 1 illegible), 335 of 497 picks still keyed to the baseline
+  (`p<N>~line_…`). Three page-number lines with picks (p490, p500, p511; disagreements,
+  untyped) were deleted in review, and their picks dropped. p467.061, a bad crop before, was
+  retyped. p516.072 was retyped after its shape changed, but has no engine or v4 reading of
+  its new crop yet, so the score covers 159 lines until the after-gate re-run. They move to line ids with each review batch's
+  data PR, and once more after the review (`python -m dev.line_review.migrate repair`,
+  Phase 9 "After the gate"; since 2026-11-13 verify no longer moves them). Lines whose
+  shape changed are set aside under `stale/` and come back untyped, to retype.
 - **Next (maintainer's order):** finish the layout review for the whole book → `migrate
   repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
   engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging

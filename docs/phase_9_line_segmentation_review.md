@@ -223,15 +223,29 @@ Also: a one-off script carries the 11 reviewed sample pages' Paddle fixes over t
 
 ## After the gate
 
-Move the Phase 10/11 data (the ceiling sample was typed on baseline keys) to the line ids,
-once, before any new transcription or OCR:
+**During the review: repair per batch (maintainer, 2026-11-17).** Verify doesn't move the
+Phase 10/11 data. The ceiling sample was typed on baseline keys, and the transcribe page
+can't open a baseline-keyed pick on a verified page. So each batch's data PR also runs
+`uv run python -m dev.line_review.migrate repair` (it only moves verified pages, and a
+second run prints nothing) in its own commit, as #13 and #15 did. The PR description says
+what moved, what went to `stale`, and which typed lines to retype.
+
+Lines set aside to retype can then be retyped right away (`/transcribe?set=ceiling&line=<id>`).
+Don't type in the transcribe page while `repair` runs: transcription files take no lock
+across processes yet. Engine and corrector runs still wait for step 3 below, so the paid
+run happens once.
+
+After the whole review, move the rest before any new OCR:
 
 1. `uv run python -m dev.line_review.migrate repair`; run it again until it prints nothing
-   (it is idempotent, so a failure partway is fixed by re-running).
+   (it is idempotent, so a failure partway is fixed by re-running). After per-batch
+   repairs, this only moves the last batch, if anything.
 2. Read the diff of `data/transcriptions/` and `data/ocr_predictions/`: picks moved to ids,
    records of reshaped lines in `stale/`, predictions of changed lines moved to each file's
    `stale` section. Re-score: `reports/phase11_ceiling.md` must not change apart from
-   line names (typed lines that were themselves reshaped wait to be retyped). Commit it on
+   line names and the typed lines whose shape changed. Those lines are listed in each
+   batch PR; they drop out of the score until step 3 re-runs the engines on them, even
+   after they are retyped. Commit it on
    its own (data commit).
 3. Retype the stale lines, run the engines on the lines without predictions, then the
    corrector (it fills only the lines it hasn't corrected), and re-score.
