@@ -86,7 +86,8 @@ line id.
      `stale` section), so each remaining one is of its line's current region. Stale
      entries carry no shape, so they convert to `{old key: …}` history and stay unscored.
      Every stale entry keeps all its fields (`text`, `reason`, `replaced_by`, `at`,
-     `predicted_before`, `settings`), along with the file's `stale_settings`.
+     `predicted_before`, and `settings` where present), along with the file's
+     `stale_settings`.
    - **transcriptions**: each record is keyed by its own `geometry`, not by the line's
      current one, and keeps the id as `typed_as`. A record typed on a shape edited since
      keeps its true region, so the current layout doesn't find it; it becomes a prefill
@@ -99,8 +100,9 @@ line id.
      to move committed outputs to CLAUDE.md's one-record-per-line text format (today
      each prediction file is indented JSON, and a stale entry or transcription spans
      several lines). Decide before writing the script. If the format changes, change
-     only the layout, not any value, so step 4's checks still compare like with like.
-4. **Check the conversion,** in the same commit, before anything in step 5 changes:
+     only how the files are written, not any value, so step 4's checks still compare like
+     with like.
+4. **Check the conversion** before committing it, and before anything in step 5 changes:
    - **Scores:** re-run the score through the new lookup. Every number in the reference
      report must come out the same (same lines, same results). A difference means the
      conversion is wrong; nothing else changed. Do this with today's scorer: the paired
@@ -120,9 +122,12 @@ line id.
 
 ## Book-wide outputs: GCS and a manifest (set up before the run)
 
-The test-set and ceiling files stay in git, since they are small and their scores are
-committed. The book-wide outputs (about 14k lines × every engine and prompt version) don't
-(CLAUDE.md, "Data storage"). Settle and build these before the first book-wide call:
+Decided (CLAUDE.md, "Data storage"): the test-set and ceiling files stay in git. The
+book-wide outputs (about 14k lines × every engine and prompt version) go to GCS, tracked
+with DVC or with GCS plus a committed manifest of path, sha256, settings and date (step 5
+above adds the layout id). Set this up before the run starts.
+
+The rest of this section is a proposal (2026-11-16), to settle before building it:
 
 - **Tool:** DVC, or a committed manifest written by our own code. A manifest is less
   machinery: one more writer beside `common._write`, and no new dependency. DVC adds
@@ -189,7 +194,9 @@ Step 5 rewrites the OCR tools anyway; these only matter once OCR runs again.
   retries; record repeat failures as `failures: {key: reason}`, and count a missing line
   as wrong (or report coverage) in the score.
 - **Locking:** predictions files are done. Since #12, `common.lock` and `common.hold` allow
-  one writer per file, and `migrate repair` holds them all. Still to do: the same
-  `fcntl.flock` for every writer of transcriptions and samples.
+  one writer per file, and `migrate repair` holds them all, so a run that rewrites its
+  file from memory no longer races another writer. Still to do: transcription and sample
+  writers save atomically but take no lock across processes, so they need the same
+  `fcntl.flock`.
 - **Transcribe page banner:** build its pool from every page with a verified file, so
   picks on a page back under review aren't listed as missing.
