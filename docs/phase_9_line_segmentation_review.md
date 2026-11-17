@@ -280,7 +280,9 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   flagged. Typed drop-cap letters and section-title letters now reach the verified
   output too. Fixed: an initial box that doesn't touch its line was joined by a convex
   hull that could cut across the next line; the gap is now bridged inside the shared rows.
-  **Open:** running headers (the text beside the page number): lines or page elements?
+  **Decided 2026-10-11 (maintainer):** the running header `-( <page-number> )-` is part
+  of the page number, not a text line, so it is marked with the `page_number` op. This
+  is what lets the page number be marked automatically (2026-11-13 below).
 - **2026-10-03: column-first reading order** (maintainer's rule: columns first while the
   gutter runs unbroken, a horizontal split only where it's interrupted). See "Default
   reading order" above. New `break` op (tool **B**) for interruptions with no line on
@@ -344,5 +346,8 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   review now starts with a `page_number` op (`"auto": true`, value PDF − 4) when the top
   line is small, centred and high. It agrees with the hand marks on all 42 reviewed pages
   (453-494; none on 453-457 and 481-483), and book-wide it leaves exactly the 27 known
-  unnumbered pages unmarked. Only pages without a review file are seeded. Automatic
-  initials (`initials.py`) were not ported.
+  unnumbered pages unmarked. Over pp.453–643 it marks the 164 numbered pages: 152 by
+  Paddle's box and 12 by a kraken fill over the digits where Paddle missed the number.
+  The value always comes from the PDF page, never from Paddle's reading of the digits,
+  which is often wrong (p.459 reads "458"). Only pages without a review file are seeded.
+  Automatic initials (`initials.py`) were not ported.
