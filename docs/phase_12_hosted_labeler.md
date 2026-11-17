@@ -294,7 +294,7 @@ The repo is public on GitHub, so anything exported to it is world-readable.
 |---|---|
 | **Database** (live source of truth for all human work) | accounts, claims, every submission, line statuses, gold, plants, practice keys, alerts |
 | **Public git** (`grabar-ocr`) | the layout and regions; the corrections export; `contributors.json`; `certainty.json`. The prefill comes from the book-wide outputs (GCS + manifest, AGENTS.md "Data storage") |
-| **Private git** (`grabar-ocr-private`, a sibling clone) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, alert history. Scripts find it through a configured path |
+| **Private git** (`grabar-ocr-private`, a private GitHub repo cloned beside this one; maintainer, 2026-11-17) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, alert history. Scripts find it through a configured path |
 | **GCS, private** | page images for the app |
 | **Firebase** | emails and passwords (Google's side) |
 
@@ -341,16 +341,16 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - No uptime guarantee; a short outage is fine if no data is lost.
 - Per-user rate limits; an account can be disabled.
 
-## Practice page candidates
+## Practice pages
 
-For the maintainer to choose. Both should have display lines and a drop cap, and no
-answers already in the public repo.
+Both should have display lines and a drop cap, and no answers already in the public repo.
 
-- **Vol I: p497** (64 lines, 3 display lines, 1 drop cap, no ceiling or test-set lines).
-  The alternate is **p503** (64 lines, 3 display, 1 drop cap).
-- **Vol II:** chosen once its pages are verified (only pp.453–516 are verified so far).
-  Pick a page of about 60–90 lines with a commemoration list (`, — և`, tone codes such
-  as `Գշ. ԴԿ.`), display lines and a drop cap.
+- **Vol I: p497** (maintainer, 2026-11-17): 64 lines, 3 display lines, 1 drop cap, no
+  ceiling or test-set lines. Re-check these counts after the bounding-box fix to the
+  layout review lands.
+- **Vol II:** chosen later, once its pages are verified (only pp.453–516 are verified so
+  far). Look for a page of about 60–90 lines with a commemoration list (`, — և`, tone
+  codes such as `Գշ. ԴԿ.`), display lines and a drop cap.
 
 ## Order of work
 
