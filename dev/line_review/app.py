@@ -71,7 +71,7 @@ def _payload(page: int, review: dict) -> dict:
         "ops": review["ops"],
         "section_titles": review.get("section_titles", []),
         "page_number": page_number,
-        "expected_page_number": str(page - storage.PRINTED_OFFSET),
+        "expected_page_number": storage.expected_page_number(page),
         "lines": [
             {"key": l["key"], "order": n, "id": ids.get(l["key"]), "boundary": l["boundary"],
              "bbox": l["bbox"], "source": l["source"], "initial": l.get("initial"),

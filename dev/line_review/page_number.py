@@ -24,7 +24,13 @@ _NUMBER_TEXT = re.compile(r"[0-9()]")
 
 
 def detect(seg: dict) -> str | None:
-    """The key of the line that is the printed page number, or None."""
+    """The key of the line that is the printed page number, or None.
+
+    Only the topmost line is a candidate, on purpose: on a section opening a heading sits
+    above everything, and a number-sized box lower down is not the running header
+    (``test_only_the_topmost_line_is_considered``). A speck above the number would hide
+    it; the book-wide test checks that none does.
+    """
     if not seg["lines"]:
         return None
     top = min(seg["lines"], key=lambda l: l["bbox"][1])

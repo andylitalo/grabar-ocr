@@ -163,10 +163,15 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def expected_page_number(page: int) -> str:
+    """The number printed on PDF page ``page`` (PDF page - PRINTED_OFFSET)."""
+    return str(page - PRINTED_OFFSET)
+
+
 def new_review(page: int) -> dict:
     """A page's review before any edit: the printed page number already marked, when the
     top line looks like one (``page_number.detect``). The reviewer can remove the mark."""
-    ops = pn.auto_ops(load_baseline(page), str(page - PRINTED_OFFSET))
+    ops = pn.auto_ops(load_baseline(page), expected_page_number(page))
     return {
         "schema": SCHEMA, "page": page, "status": "unreviewed",
         "baseline": {"tool": BASELINE_TOOL, "sha256": baseline_sha256(page)},
