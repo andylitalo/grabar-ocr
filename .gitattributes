@@ -2,7 +2,7 @@
 # language stats (linguist-generated). Git still stores and diffs them normally;
 # `git diff` locally is unaffected. Hand-authored data (data/transcriptions/,
 # lineseg_survey reviews, column boxes, blank markers) stays visible on purpose.
-# See "Data storage" in CLAUDE.md.
+# See "Data storage" in AGENTS.md.
 
 # OCR engine/correction outputs (Phase 10-11 comparison and ceiling runs)
 data/ocr_predictions/** linguist-generated=true

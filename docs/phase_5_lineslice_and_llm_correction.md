@@ -86,7 +86,7 @@ image) should recover most of it.
   Classical Armenian; fix confusable letters and spacing; do not paraphrase, translate,
   or add content; preserve abbreviation/numeral notation (։ ՟ · letter-numerals)."
   Output the corrected line only.
-- **Secrets:** Anthropic API key via env / k8s secret — never committed (CLAUDE.md).
+- **Secrets:** Anthropic API key via env / k8s secret — never committed (AGENTS.md).
 
 ### Eval
 - Targets with ground truth: **page_0400** (1.0% baseline) and the **frozen set**
