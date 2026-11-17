@@ -1,0 +1,12 @@
+{
+ "page": 514,
+ "baseline": {"tool": "paddle-filled", "sha256": "34d90b5902cd27f9b977e086e66f05c0ab90da9d6e628dc05f3b020f24c14cb5"},
+ "verified_at": "2026-11-17T19:42:03+00:00",
+ "page_number": null,
+ "section_titles": [],
+ "lines": [
+  {"id": "p514.001", "order": 1, "key": "line_001", "boundary": [[799.0, 2068.0], [1512.0, 2066.0], [1512.0, 2116.0], [799.0, 2118.0]], "baseline": [[799.0, 2105.0], [1512.0, 2105.0]], "baseline_source": "synthetic", "bbox": [799.0, 2066.0, 1512.0, 2118.0], "source": "hyocr-paddle", "derived_from": ["line_001"], "initial": null},
+  {"id": "p514.002", "order": 2, "key": "line_002", "boundary": [[934.0, 2121.0], [1379.0, 2121.0], [1379.0, 2170.0], [934.0, 2170.0]], "baseline": [[934.0, 2157.75], [1379.0, 2157.75]], "baseline_source": "synthetic", "bbox": [934.0, 2121.0, 1379.0, 2170.0], "source": "hyocr-paddle", "derived_from": ["line_002"], "initial": null}
+ ],
+ "retired": {}
+}
