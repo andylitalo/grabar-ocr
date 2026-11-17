@@ -16,6 +16,7 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 - `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (95.0% error-free on 160 typed lines, re-scored 2026-11-13); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; the later Gemini 4 models (argon, hydrogen) are still to be tested, in a later PR
 - `docs/phase_10_ocr_test_set.md` — deferred until the layout review is done
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
+- `docs/phase_12_hosted_labeler.md` — **planned, not built**: contributors correct the book-wide OCR at `ocr.andylitalo.com`; starts after the region-keyed migration and the book-wide run
 
 **Workflow:** read the current phase doc before touching any code. Update the doc with findings before moving on.
 
@@ -95,3 +96,9 @@ made it and it's big or will be remade, it goes outside git with a manifest.
   plus a committed manifest of path, sha256, settings and date), **not** committed to git.
   Rewriting large files on every iteration is what bloats history, and removing them later
   means rewriting history. Set this up before that run starts.
+- **Planned: answers move to a private repo (at the region-keyed migration).** This repo is
+  public, and the hosted labeler (`docs/phase_12_hosted_labeler.md`) reuses typed lines as
+  hidden gold. The ceiling and test-set transcriptions, and later the gold lines and practice
+  keys, move to `grabar-ocr-private` at step 4b of `docs/backlog/region_keyed_data.md`. Until
+  then they stay here: `migrate repair` rewrites them during the layout review. Don't move
+  them earlier. Once moved, never commit answer files to this repo.
