@@ -118,7 +118,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # W&B convention (CLAUDE.md): always report_to wandb, but default to offline so
+    # W&B convention (AGENTS.md): always report_to wandb, but default to offline so
     # runs don't block on login. --wandb (or WANDB_MODE=online) opts into online.
     if args.wandb:
         os.environ["WANDB_MODE"] = "online"

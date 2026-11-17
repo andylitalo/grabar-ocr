@@ -264,7 +264,7 @@ After the whole review, move the rest before any new OCR:
    and commit the report: it is the reference for the region conversion
    (`docs/backlog/region_keyed_data.md`, "Migration", step 1).
 
-Code and the data it writes go in separate PRs when the data is large (CLAUDE.md, "Data
+Code and the data it writes go in separate PRs when the data is large (AGENTS.md, "Data
 storage").
 
 Then the book-wide run starts by moving the data to region keys
@@ -335,7 +335,7 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   - **Less repeated work.** A save or verify materializes once, and reads and hashes the
     baseline once.
   - **Verified files are diff-friendly.** `mz.dumps` writes one top-level field per line
-    and one compact record per line of text, with polygons inline (CLAUDE.md "Data
+    and one compact record per line of text, with polygons inline (AGENTS.md "Data
     storage"). The 40 verified files were rewritten format-only with `rewrite_verified`:
     162,389 lines down to 3,211, with the same JSON content.
 - **2026-11-13: the page number is marked automatically again.** `page_number.py` (from

@@ -599,7 +599,7 @@ def verified_record(seg: dict, review: dict, *, baseline_sha256: str,
 def dumps(record: dict) -> str:
     """A verified record as diff-friendly JSON: one top-level field per line, and one
     compact line record per line of text (polygons inline), so a re-verify that changes
-    one line changes one line of the file. See "Data storage" in CLAUDE.md."""
+    one line changes one line of the file. See "Data storage" in AGENTS.md."""
     def one(v) -> str:
         return json.dumps(v, ensure_ascii=False)
 

@@ -97,7 +97,7 @@ line id.
    - Refuse to finish if any key maps to no region or two keys map to one region with
      different values.
    - **File format.** Every file is rewritten here anyway, so this is the cheapest moment
-     to move committed outputs to CLAUDE.md's one-record-per-line text format (today
+     to move committed outputs to AGENTS.md's one-record-per-line text format (today
      each prediction file is indented JSON, and a stale entry or transcription spans
      several lines). Decide before writing the script. If the format changes, change
      only how the files are written, not any value, so step 4's checks still compare like
@@ -115,14 +115,14 @@ line id.
    `ceiling.py`, `correct.py` and the transcription endpoints look lines up through
    `layout.lines(page)` and read and write by region. The book-wide outputs go to GCS
    with a manifest of path, sha256, layout id, engine settings and date
-   (CLAUDE.md, "Data storage"); set that up first ("Book-wide outputs: GCS and a
+   (AGENTS.md, "Data storage"); set that up first ("Book-wide outputs: GCS and a
    manifest", below).
 6. **Retire the renaming in `migrate.py`.** Keep only the pick follow-up from step 3's
    design and the stale prefill below.
 
 ## Book-wide outputs: GCS and a manifest (set up before the run)
 
-Decided (CLAUDE.md, "Data storage"): the test-set and ceiling files stay in git. The
+Decided (AGENTS.md, "Data storage"): the test-set and ceiling files stay in git. The
 book-wide outputs (about 14k lines × every engine and prompt version) go to GCS, tracked
 with DVC or with GCS plus a committed manifest of path, sha256, settings and date (step 5
 above adds the layout id). Set this up before the run starts.
