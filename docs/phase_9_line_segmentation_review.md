@@ -235,6 +235,23 @@ once, before any new transcription or OCR:
    its own (data commit).
 3. Retype the stale lines, run the engines on the lines without predictions, then the
    corrector (it fills only the lines it hasn't corrected), and re-score.
+4. **Recompute the strata** (`docs/phase_11_ocr_comparison.md`, "Where this stands",
+   "Open"). Two things in `data/transcriptions/ceiling/sample.json` come from the two
+   engines' output at the time the sample was drawn, mostly on baseline lines: the
+   `population` (how many book lines the engines agree and disagree on) and each pick's
+   `stratum`. After step 3, the engines cover every verified line, so recompute both
+   from their current output, comparing as `ceiling.sample` does.
+   - Picks keep their ids. Only the `stratum` values and the `population` change.
+   - Don't re-run `ceiling sample`: it would draw a new sample.
+   - So far one pick has flipped: `p467.061`, drawn as an agreement.
+
+   Recomputing needs a small code change. The population sets each stratum's weight,
+   so every rate moves. Re-score, record in the Phase 11 doc how the numbers moved,
+   and commit the report: it is the reference for the region conversion
+   (`docs/backlog/region_keyed_data.md`, "Migration", step 1).
+
+Code and the data it writes go in separate PRs when the data is large (CLAUDE.md, "Data
+storage").
 
 Then the book-wide run starts by moving the data to region keys
 (`docs/backlog/region_keyed_data.md`).

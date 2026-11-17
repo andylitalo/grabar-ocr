@@ -414,7 +414,10 @@ that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 - **Next (maintainer's order):** finish the layout review for the whole book → `migrate
   repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
   engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
-  the bucket signals → human review of the output → v6 vs v4.
+  the bucket signals → human review of the output → v6 vs v4. The steps up to the
+  book-wide run, in order: Phase 9 "After the gate" (`repair`, retype, re-run, strata);
+  `docs/backlog/region_keyed_data.md` "Migration" (with its deferred fixes); then the same
+  doc's "Book-wide outputs: GCS and a manifest", before the first book-wide call.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke

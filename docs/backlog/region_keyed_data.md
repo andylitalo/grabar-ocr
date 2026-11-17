@@ -68,12 +68,14 @@ Settle before building:
 
 ## Migration (one-time, at the start of the book-wide run)
 
-Starting state: the layout review is done, `python -m dev.line_review.migrate repair` has
-run (Phase 9, "After the gate"), and all data is keyed by line id.
+Starting state: the layout review is done, and every step of Phase 9's "After the gate"
+has run: `migrate repair`, retyping, the re-run, and the strata. All data is keyed by
+line id.
 
 1. **Score first.** `uv run python -m dev.ocr_eval.ceiling score`; keep
    `reports/phase11_ceiling.md` as the reference (v4 + `՚ի` rule: 95.0% on 160 lines as of
-   2026-11-13).
+   2026-11-13; the after-gate re-score replaces that number). Also record every reading in
+   every predictions file, from `lines` and `stale`, as the reading inventory for step 4.
 2. **Give every verified line its region.** A script adds `region` to each line of
    `data/verified_lines/page_*.json` (computed from the boundary; no review), and
    `materialize.verified_record` writes it from then on. These files become layout
@@ -83,6 +85,9 @@ run (Phase 9, "After the gate"), and all data is keyed by line id.
      `repair` already set aside predictions of lines whose shape changed (each file's
      `stale` section), so each remaining one is of its line's current region. Stale
      entries carry no shape, so they convert to `{old key: …}` history and stay unscored.
+     Every stale entry keeps all its fields (`text`, `reason`, `replaced_by`, `at`,
+     `predicted_before`, and `settings` where present), along with the file's
+     `stale_settings`.
    - **transcriptions**: each record is keyed by its own `geometry`, not by the line's
      current one, and keeps the id as `typed_as`. A record typed on a shape edited since
      keeps its true region, so the current layout doesn't find it; it becomes a prefill
@@ -91,16 +96,59 @@ run (Phase 9, "After the gate"), and all data is keyed by line id.
    - **crops**: not converted; re-export them under region names (they cost nothing).
    - Refuse to finish if any key maps to no region or two keys map to one region with
      different values.
-4. **Check the conversion.** Re-run the score through the new lookup: every number in the
-   reference report must come out the same (same lines, same results). A difference means
-   the conversion is wrong; nothing else changed.
+   - **File format.** Every file is rewritten here anyway, so this is the cheapest moment
+     to move committed outputs to CLAUDE.md's one-record-per-line text format (today
+     each prediction file is indented JSON, and a stale entry or transcription spans
+     several lines). Decide before writing the script. If the format changes, change
+     only how the files are written, not any value, so step 4's checks still compare like
+     with like.
+4. **Check the conversion** before committing it, and before anything in step 5 changes:
+   - **Scores:** re-run the score through the new lookup. Every number in the reference
+     report must come out the same (same lines, same results). A difference means the
+     conversion is wrong; nothing else changed. Do this with today's scorer: the paired
+     bootstrap (deferred fixes, below) moves every interval and would hide a conversion
+     error, so it comes after.
+   - **Readings:** every reading in step 1's inventory is still present after the
+     conversion, live or in `stale`, with the same text. Scores don't read `stale`, so
+     only this check covers it.
 5. **Switch the readers and writers.** Runners (`run_*.py`, `common.py`), `score.py`,
    `ceiling.py`, `correct.py` and the transcription endpoints look lines up through
    `layout.lines(page)` and read and write by region. The book-wide outputs go to GCS
    with a manifest of path, sha256, layout id, engine settings and date
-   (CLAUDE.md, "Data storage").
+   (CLAUDE.md, "Data storage"); set that up first ("Book-wide outputs: GCS and a
+   manifest", below).
 6. **Retire the renaming in `migrate.py`.** Keep only the pick follow-up from step 3's
    design and the stale prefill below.
+
+## Book-wide outputs: GCS and a manifest (set up before the run)
+
+Decided (CLAUDE.md, "Data storage"): the test-set and ceiling files stay in git. The
+book-wide outputs (about 14k lines × every engine and prompt version) go to GCS, tracked
+with DVC or with GCS plus a committed manifest of path, sha256, settings and date (step 5
+above adds the layout id). Set this up before the run starts.
+
+The rest of this section is a proposal (2026-11-16), to settle before building it:
+
+- **Tool:** DVC, or a committed manifest written by our own code. A manifest is less
+  machinery: one more writer beside `common._write`, and no new dependency. DVC adds
+  pull/push and caching.
+- **Bucket and paths:** one bucket, with objects at
+  `<layout_id>/<engine>/<settings id>/page_<N>.json` (or per-engine files), so a re-run
+  with other settings writes beside the old one instead of over it. Turn on object
+  versioning, so an overwrite is never a loss.
+- **Manifest** (committed, one record per line): `path, sha256, layout_id, engine,
+  settings id, lines, generated_at`, plus the code commit that wrote it. The engine
+  settings themselves go in a committed table keyed by settings id, like `stale_settings`.
+- **Writers and readers:** a run writes locally, uploads, then appends its manifest
+  record. `score` and `correct` read through the manifest and refuse a file whose sha256
+  doesn't match it.
+- **Same rules as in git:** no reading is ever deleted (a re-run writes a new object; the
+  old one stays, listed as superseded), and the locks in `common.py` still guard the local
+  copy.
+- **Credentials:** a service account for the Mac, never in git. The paid calls keep their
+  usage log.
+- **Check before the run:** a dry run on a few pages uploads, writes the manifest,
+  re-downloads into a clean checkout and scores the same as locally.
 
 ## Later: a new layout model (not built; the design keeps room for it)
 
@@ -145,8 +193,10 @@ Step 5 rewrites the OCR tools anyway; these only matter once OCR runs again.
 - **Empty replies** (`run_gemini.py`): raise instead of storing `""`, so the next run
   retries; record repeat failures as `failures: {key: reason}`, and count a missing line
   as wrong (or report coverage) in the score.
-- **Locking:** a `fcntl.flock` shared by the runners and every writer of transcriptions,
-  samples and predictions (with the in-process lock), and runners that merge their new
-  lines into the file on disk instead of rewriting it from memory.
+- **Locking:** predictions files are done. Since #12, `common.lock` and `common.hold` allow
+  one writer per file, and `migrate repair` holds them all, so a run that rewrites its
+  file from memory no longer races another writer. Still to do: transcription and sample
+  writers save atomically but take no lock across processes, so they need the same
+  `fcntl.flock`.
 - **Transcribe page banner:** build its pool from every page with a verified file, so
   picks on a page back under review aren't listed as missing.
