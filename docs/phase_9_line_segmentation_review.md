@@ -243,7 +243,9 @@ After the whole review, move the rest before any new OCR:
 2. Read the diff of `data/transcriptions/` and `data/ocr_predictions/`: picks moved to ids,
    records of reshaped lines in `stale/`, predictions of changed lines moved to each file's
    `stale` section. Re-score: `reports/phase11_ceiling.md` must not change apart from
-   line names (typed lines that were themselves reshaped wait to be retyped). Commit it on
+   line names and the typed lines whose shape changed. Those lines are listed in each
+   batch PR; they drop out of the score until step 3 re-runs the engines on them, even
+   after they are retyped. Commit it on
    its own (data commit).
 3. Retype the stale lines, run the engines on the lines without predictions, then the
    corrector (it fills only the lines it hasn't corrected), and re-score.

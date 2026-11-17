@@ -308,9 +308,9 @@ def _move_file_predictions(path, target: dict, changed: dict) -> int:
 
 
 def repair() -> None:
-    """Move every verified page's data from its old keys to its line ids. Run once after
-    the whole layout review (before any new transcription or OCR); idempotent, so run it
-    again after a failure, until it prints nothing."""
+    """Move every verified page's data from its old keys to its line ids. Run with each
+    review batch's data PR and once more after the whole layout review (before any new
+    OCR); idempotent, so run it again after a failure, until it prints nothing."""
     # Every predictions file first, so a run in another shell stops repair before it moves
     # anything (a run keeps its lines in memory and would save them under the old keys).
     for task in _tasks():
