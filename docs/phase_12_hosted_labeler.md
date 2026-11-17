@@ -341,6 +341,63 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - No uptime guarantee; a short outage is fine if no data is lost.
 - Per-user rate limits; an account can be disabled.
 
+## Where this stands (pick-up note, 2026-11-17)
+
+- **Planning is done; nothing is built.** Every decision is in this doc. Don't write
+  `labeler_app/` code until the order of work below reaches step 5 and the maintainer says
+  to start.
+- **This doc's branch** (`docs/phase-12-hosted-labeler`) waits for the maintainer's fix to
+  bounding-box generation in the layout review, which merges first. Then: rebase onto
+  `main`; re-check what depends on bounding boxes (p497's line, display and drop-cap
+  counts; whether `line_crop` output changes); push and open the PR when the maintainer
+  says so.
+- **Region ids hash the boundary polygon, not the bbox**, so a bbox-only fix doesn't move
+  regions. A fix that changes boundaries is still safe: the region migration hasn't run.
+- **Can run beside the layout review, if the maintainer wants:**
+  - create the empty private repo (`gh repo create andylitalo/grabar-ocr-private
+    --private`). No data moves before migration step 4b;
+  - draft the contributor agreement and privacy note for the maintainer's review;
+  - later, a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
+    surface domain, certificate and org-policy surprises before the real build.
+- **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
+  (after pilot data); whether pass B runs (after the draft).
+
+## Considered and not chosen
+
+So that later sessions don't reopen them:
+
+- **Cloud Run domain mapping** (still Preview, certificates can stall) → Firebase Hosting.
+- **A load balancer + Cloud Armor now** → later, only on the triggers under "Cloud".
+- **Identity-Aware Proxy** (Google accounts only, needs a load balancer) and **building
+  password handling in the app** → Firebase Auth.
+- **Firestore** → Cloud SQL Postgres (the data is relational; SQL for exports and
+  review).
+- **One labeler per line** → page claims, for context.
+- **Review mode for pass B** → blind pass B (about the same cost, independent).
+- **D (pass B from a different prefill)** → deferred; raw engine output shares v4's
+  agreed-line errors.
+- **One pass + targeted second pass** → can't reach 99.9%: most remaining errors are
+  on lines the engines agree on, which targeting misses.
+- **A strict miss cascade** (miss → redo the page → onboarding → suspension) → teaching
+  on every miss, an extra pass for the page, and alerts to the maintainer. One miss is
+  mostly chance at this plant rate, redoing your own page tests memory, and pass B
+  protects the data.
+- **An accuracy leaderboard** → private stats only.
+- **Planted errors only from typed truth** → plants are scored by whether the planted
+  change was undone, so they need no typed answer.
+- **Retrying on extra practice pages** → the same pages with the plants moved, once;
+  then the maintainer decides.
+- **CC BY-NC-SA, CC BY-NC-ND** → CC BY-NC 4.0, with a grant to relicense within
+  non-commercial terms.
+- **Folding `,` to `՝`** → never: different marks.
+- **One hyphen character for every dash** → two: the line-end word break `֊` and the
+  punctuation dash `—`.
+- **An `apps/` folder** → top-level `layout_app/` and `labeler_app/`, the labeler as a
+  uv workspace member.
+- **Keeping the answers in the public repo** → private repo at migration step 4b.
+- **A private GCS bucket or encrypted files for the answers** → a private GitHub repo
+  (versioned, readable diffs, local scripts).
+
 ## Practice pages
 
 Both should have display lines and a drop cap, and no answers already in the public repo.
