@@ -1,0 +1,22 @@
+{
+ "schema": 2,
+ "page": 502,
+ "status": "verified",
+ "baseline": {
+  "tool": "paddle-filled",
+  "sha256": "128da8e35ec0368127bcc3efd68d39483893a7e1b90cd07cdab8af437d9f3475"
+ },
+ "ops": [],
+ "section_titles": [],
+ "ids": {
+  "line_001": "p502.001",
+  "line_002": "p502.002"
+ },
+ "retired": {},
+ "retired_keys": {},
+ "next_seq": 3,
+ "id_cuts": {},
+ "verified_at": "2026-11-17T04:52:22+00:00",
+ "updated_at": "2026-11-17T04:52:22+00:00",
+ "revision": 2
+}

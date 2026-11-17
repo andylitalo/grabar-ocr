@@ -1,10 +1,11 @@
 {
- "p510~line_025": {
+ "p510.025": {
   "text": "17. արդարութեան։ Մարգարէ Երեմ.",
   "status": "done",
   "at": "2026-10-09T05:19:28+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "3d335c3badde39fb"
+  "geometry": "3d335c3badde39fb",
+  "migrated_from": "p510~line_025"
  }
 }
