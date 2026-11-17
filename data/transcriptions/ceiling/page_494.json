@@ -1,18 +1,20 @@
 {
- "p494~line_010": {
+ "p494.010": {
   "text": "17. Եւ ՚ի մելիտեայ. վ. 38. ՚ի նաւ անդր։",
   "status": "done",
   "at": "2026-10-09T05:13:59+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "462edadd8bfeee11"
+  "geometry": "462edadd8bfeee11",
+  "migrated_from": "p494~line_010"
  },
- "p494~line_027": {
+ "p494.027": {
   "text": "Համբ. բձ. Կանխեցին. Զյարութիւն. և",
   "status": "done",
   "at": "2026-10-09T13:58:48+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "fe69ad995b3d1634"
+  "geometry": "fe69ad995b3d1634",
+  "migrated_from": "p494~line_027"
  }
 }
