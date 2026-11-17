@@ -1,0 +1,29 @@
+{
+ "schema": 2,
+ "page": 495,
+ "status": "verified",
+ "baseline": {
+  "tool": "paddle-filled",
+  "sha256": "6251e103a4e12253ebe0d5c557a0300d89e868417fb42fca8cce942d14e6bf49"
+ },
+ "ops": [
+  {
+   "op": "delete",
+   "line": "line_001"
+  },
+  {
+   "op": "delete",
+   "line": "line_002"
+  }
+ ],
+ "section_titles": [],
+ "ids": {},
+ "retired": {},
+ "retired_keys": {},
+ "next_seq": 1,
+ "id_cuts": {},
+ "verified_at": "2026-11-17T04:48:40+00:00",
+ "updated_at": "2026-11-17T04:48:40+00:00",
+ "add_keys": {},
+ "revision": 4
+}

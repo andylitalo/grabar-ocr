@@ -1,18 +1,20 @@
 {
- "p512~line_021": {
+ "p512.021": {
   "text": "՚ի յԱստուածաշունչն, այլ Յայսմաւուրքէն է ե-",
   "status": "done",
   "at": "2026-10-09T14:41:46+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "94524a93dbac4390"
+  "geometry": "94524a93dbac4390",
+  "migrated_from": "p512~line_021"
  },
- "p512~line_070": {
+ "p512.070": {
   "text": "երկնից։ Յերեկոյին Համբարձի աձ. Սուրբ",
   "status": "done",
   "at": "2026-10-09T05:20:39+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "1249c9f05beec6ec"
+  "geometry": "1249c9f05beec6ec",
+  "migrated_from": "p512~line_070"
  }
 }
