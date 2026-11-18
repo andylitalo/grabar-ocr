@@ -281,6 +281,9 @@ collapsed.
   - The agreement: corrections are licensed **CC BY-NC 4.0**, matching the corpus, and the
     project may relicense them within non-commercial terms (for example to BY-NC-SA later).
     Claude drafts the text; the maintainer reviews it. It isn't legal advice.
+  - Both texts live in `docs/labeler/` and write the contact address as `{contact_email}`.
+    The app fills it in from the `LABELER_CONTACT_EMAIL` environment variable, so the
+    address is shown only to invited contributors, never published in this public repo.
 - **Credit by name** is an opt-in checkbox at sign-up, changeable in settings. Otherwise
   the contributor is credited as an anonymous contributor.
 - **Deleting an account** keeps the corrections, re-attributed to "anonymous contributor",
@@ -354,9 +357,10 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - **Region ids hash the boundary polygon, not the bbox**, so a bbox-only fix doesn't move
   regions. A fix that changes boundaries is still safe: the region migration hasn't run.
 - **Can run beside the layout review, if the maintainer wants:**
-  - create the empty private repo (`gh repo create andylitalo/grabar-ocr-private
-    --private`). No data moves before migration step 4b;
-  - draft the contributor agreement and privacy note for the maintainer's review;
+  - ~~create the empty private repo~~: done 2026-11-17 (`andylitalo/grabar-ocr-private`).
+    No data moves before migration step 4b;
+  - ~~draft the contributor agreement and privacy note~~: done, PR #20, awaiting the
+    maintainer's review;
   - later, a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
     surface domain, certificate and org-policy surprises before the real build.
 - **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
