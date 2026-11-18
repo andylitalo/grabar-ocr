@@ -10,31 +10,33 @@
 
 **Version 1 · 2026-11-18**
 
-Thank you for helping digitize the Տօնացոյց (1915). This page sets out the terms for the
-corrections you make in the labeler. Please read it before you accept.
+Thank you for helping digitize the Տօնացոյց (1915)! Before you start, here's what we're
+asking of you, and what happens to the corrections you make. It's short, so please read it
+through.
 
 ## The project
 
 The grabar-ocr project, maintained by Andy Ylitalo, is turning a public-domain 1915
-printing of the Տօնացոյց into an accurate, searchable text. The project is non-commercial:
-it charges nothing, carries no ads, and makes no profit from the text. It may accept
-donations, which only cover hosting costs.
+printing of the Տօնացոյց into an accurate, searchable text. It's non-commercial: it
+charges nothing, carries no ads, and makes no profit from the text. It may accept
+donations, which only go toward hosting costs.
 
-## What you do
+## What you'll do
 
-- You correct the machine-read text of each line so that it matches **what is printed on
-  the page**, character for character.
-- Type what you see. Don't paste text from other editions, websites or databases, and
-  don't fill lines in with other software. Other digitized texts may be under copyright,
-  and the project's text must come from this book alone.
-- You start with two practice pages. To pass, every line must match and every planted
-  error must be caught. You get one retry; if that doesn't pass either, your access pauses
-  and the maintainer gets in touch about next steps.
+- Correct the machine-read text of each line so it matches **what is printed on the
+  page**, character for character.
+- Please type what you see rather than pasting from other editions, websites or databases,
+  or filling lines in with other software. Other digitized texts may be under copyright,
+  and we want this text to come from this book alone.
+- You'll start with two practice pages. To pass, every line needs to match and every
+  planted error needs to be caught. If the first try doesn't pass, you get a second one;
+  if that doesn't pass either, your access pauses and Andy will get in touch about next
+  steps.
 
-## Your contributions and their licence
+## Your corrections and their licence
 
 - You license your corrections under **Creative Commons Attribution-NonCommercial 4.0
-  International (CC BY-NC 4.0)**: https://creativecommons.org/licenses/by-nc/4.0/. This is
+  International (CC BY-NC 4.0)**: https://creativecommons.org/licenses/by-nc/4.0/. It's
   the same licence as the project's published text.
 - You confirm that your corrections are your own work.
 - You also allow Andy Ylitalo, as maintainer, and anyone he passes the project to, to:
@@ -44,59 +46,59 @@ donations, which only cover hosting costs.
   3. use them to train, test and publish OCR and other models, on non-commercial terms.
 - You agree that crediting "grabar-ocr, Andy Ylitalo, and contributors", together with the
   project's published credits list, is enough attribution for anyone reusing the text.
-- The project will never use your contributions commercially, and doesn't license anyone
+  That way, someone quoting a line doesn't have to name everyone who worked on it.
+- The project will never use your corrections commercially, and doesn't license anyone
   else to.
-- Creative Commons licences can't be withdrawn. Text you have contributed stays in the
-  project after you stop contributing or your account is deleted.
+- Creative Commons licences can't be withdrawn, so your corrections stay in the project
+  even if you stop contributing or your account is deleted.
 
 ## Where the starting text comes from
 
-Each line starts with text produced by OCR. The OCR models are by Calfa and licensed CC BY-NC
-4.0, and the output is corrected by Google's Gemini. The project credits Calfa wherever the
-text is published.
+Each line starts with text produced by OCR. The OCR models are by Calfa and licensed CC
+BY-NC 4.0, and Google's Gemini corrects their output. The project credits Calfa wherever
+the text is published.
 
 ## Credit
 
-- If you choose to be credited, your name, as you gave it, appears in the credits list
-  published with each release of the text. Otherwise you're counted as an anonymous
+- If you'd like to be credited, your name, as you gave it, appears in the credits list
+  published with each release of the text. If not, you're counted as an anonymous
   contributor.
 - Your name is never committed to the project's public code repository, and the credits
   list doesn't link your name to the lines you typed.
-- You can change this choice at any time in settings. Your name is then removed from the
-  next release and from the notes of earlier releases. Copies other people have already
-  made can't be recalled.
+- You can change your mind any time in settings. Your name is then removed from the next
+  release and from the notes of earlier releases. (Copies other people have already made
+  can't be recalled.)
 
 ## Accuracy checks
 
 To measure how accurate the finished text is, some pages contain:
 
 - **planted errors**: small changes made on purpose to the starting text;
-- **reference lines**: lines whose correct text the project already knows.
+- **reference lines**: lines whose correct text we already know.
 
-At the end of each page you'll see whether there was a planted error and whether you
-caught it, with a note on what to look for. Your results go into your own statistics,
-which only you and the maintainer can see. They help the project report its accuracy
-honestly, and help you improve.
+At the end of each page, you'll see whether there was a planted error and whether you
+caught it, with a tip on what to look for. Your results go into your own statistics, which
+only you and Andy can see. They help the project report its accuracy honestly, and help you
+get better at spotting errors.
 
 ## Who can contribute
 
-You must be 18 or older and invited by the maintainer. Contributing is voluntary and
-unpaid. The maintainer may pause or close an account, for example to check in after missed
-errors.
+Contributors must be 18 or older and invited by Andy. Contributing is voluntary and
+unpaid. Andy may pause or close an account, for example to check in after missed errors.
 
 ## Stopping and deleting your account
 
-You can stop at any time. To delete your account, write to the contact below. Your name and
-email are then erased, your name is removed from the credits as described above, and your
-corrections stay in the project, attributed to an anonymous contributor. See the
-[privacy note](privacy_note.md).
+You're free to stop at any time. If you'd like your account deleted, just write to the
+contact below. Your name and email are then erased, your name comes off the credits as
+described above, and your corrections stay in the project under an anonymous contributor.
+The [privacy note](privacy_note.md) has more detail.
 
-## Changes to this agreement
+## If these terms change
 
-If these terms change, you'll be shown the new version the next time you log in. It
-applies to contributions you make after accepting it. Earlier contributions stay under the
-version you accepted when you made them.
+You'll see the new version the next time you log in. It covers what you contribute after
+accepting it; anything you contributed earlier stays under the version you accepted at the
+time.
 
-## Contact
+## Questions
 
 Questions, or a request to delete your account: Andy Ylitalo, {contact_email}.
