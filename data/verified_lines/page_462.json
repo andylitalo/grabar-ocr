@@ -94,5 +94,6 @@
   {"id": "p462.087", "order": 87, "key": "line_086", "boundary": [[1177.0, 2814.0], [1980.0, 2819.0], [1980.0, 2862.0], [1176.0, 2857.0]], "baseline": [[1176.0, 2850.0], [1980.0, 2850.0]], "baseline_source": "synthetic", "bbox": [1176.0, 2814.0, 1980.0, 2862.0], "source": "hyocr-paddle", "derived_from": ["line_086"], "initial": null},
   {"id": "p462.088", "order": 88, "key": "line_087", "boundary": [[1172.0, 2870.0], [1979.0, 2870.0], [1979.0, 2917.0], [1172.0, 2917.0]], "baseline": [[1172.0, 2905.25], [1979.0, 2905.25]], "baseline_source": "synthetic", "bbox": [1172.0, 2870.0, 1979.0, 2917.0], "source": "hyocr-paddle", "derived_from": ["line_087"], "initial": null}
  ],
- "retired": {}
+ "retired": {},
+ "resumed_at": "2026-11-18T19:30:24+00:00"
 }

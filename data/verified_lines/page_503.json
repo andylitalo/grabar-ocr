@@ -70,5 +70,6 @@
   {"id": "p503.063", "order": 63, "key": "line_063", "boundary": [[1046.0, 2815.0], [1851.0, 2820.0], [1851.0, 2864.0], [1046.0, 2859.0]], "baseline": [[1046.0, 2851.75], [1851.0, 2851.75]], "baseline_source": "synthetic", "bbox": [1046.0, 2815.0, 1851.0, 2864.0], "source": "hyocr-paddle", "derived_from": ["line_063"], "initial": null},
   {"id": "p503.064", "order": 64, "key": "line_064", "boundary": [[1041.0, 2869.0], [1846.0, 2870.0], [1846.0, 2915.0], [1041.0, 2914.0]], "baseline": [[1041.0, 2903.5], [1846.0, 2903.5]], "baseline_source": "synthetic", "bbox": [1041.0, 2869.0, 1846.0, 2915.0], "source": "hyocr-paddle", "derived_from": ["line_064"], "initial": null}
  ],
- "retired": {}
+ "retired": {},
+ "resumed_at": "2026-11-18T19:30:49+00:00"
 }
