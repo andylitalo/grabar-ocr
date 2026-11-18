@@ -60,15 +60,19 @@ def _shape(boundary: list[list[float]]) -> Polygon:
     return max(p.geoms, key=lambda g: g.area) if p.geom_type != "Polygon" else p
 
 
-def _mask(poly: Polygon, shape: tuple[int, int]) -> tuple[tuple[slice, slice], np.ndarray]:
-    """The polygon rasterized inside its own bbox (a full-page mask per line is too slow)."""
+def _mask(poly, shape: tuple[int, int]) -> tuple[tuple[slice, slice], np.ndarray]:
+    """The polygon rasterized inside its own bbox (a full-page mask per line is too slow).
+    Shrinking a hand-reshaped box can split it in pieces, or leave nothing."""
+    if poly.is_empty:
+        return (slice(0, 0), slice(0, 0)), np.zeros((0, 0), bool)
     x1, y1, x2, y2 = poly.bounds
     x1, y1 = max(int(x1) - 1, 0), max(int(y1) - 1, 0)
     x2, y2 = min(int(x2) + 2, shape[1]), min(int(y2) + 2, shape[0])
     m = np.zeros((y2 - y1, x2 - x1), np.uint8)
-    if not poly.is_empty:
-        pts = np.round(np.array(poly.exterior.coords) - [x1, y1]).astype(np.int32)
-        cv2.fillPoly(m, [pts], 1)
+    for part in getattr(poly, "geoms", [poly]):
+        if part.geom_type == "Polygon" and not part.is_empty:
+            pts = np.round(np.array(part.exterior.coords) - [x1, y1]).astype(np.int32)
+            cv2.fillPoly(m, [pts], 1)
     return (slice(y1, y2), slice(x1, x2)), m.astype(bool)
 
 

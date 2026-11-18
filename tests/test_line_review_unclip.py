@@ -93,6 +93,20 @@ def test_a_drop_cap_beside_two_lines_is_left_to_review():
     assert unclip.auto_ops([upper, lower], page(*letters, cap)) == []
 
 
+def test_a_box_with_a_narrow_neck_still_works():
+    # A hand-reshaped box (p.453 onwards) can have a neck thinner than 2 * INSET: shrinking
+    # it for the cut test splits it in two, and a drop cap's notch can be that thin.
+    neck = [[40, 100], [300, 100], [300, 160], [180, 160], [180, 157], [176, 157],
+            [176, 160], [40, 160]]
+    lines = [{"key": "line_001", "boundary": neck, "bbox": [40, 100, 300, 160]},
+             line("line_002", 40, 300, 300, 360)]
+    thin = [{"key": "line_001", "boundary": rect(40, 100, 300, 102.5), "bbox": [40, 100, 300, 102.5]}]
+    desc = (200, 110, 215, 168)
+    poly = by_line(unclip.auto_ops(lines, page(*BODY, desc)))["line_001"]
+    assert covers(poly, *desc)
+    unclip.auto_ops(thin, page(*BODY))   # shrinks to nothing: no crash
+
+
 def test_never_enters_another_lines_box():
     upper = line("line_001", 40, 100, 300, 160)
     lower = line("line_002", 40, 172, 300, 232)
