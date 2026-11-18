@@ -28,6 +28,10 @@ Editing (fixing only):
     If Paddle missed the number, drag a box over it first. A fresh page usually starts
     with the number already marked (`page_number.py`, shown as "(auto)" in the edit list);
     remove that edit with × if it's wrong, then mark the right box.
+  - A fresh page also starts with its boxes pushed out over the letters they cut, such as
+    descender tips and the tops of capitals (`unclip.py`). The edit list shows these as
+    one row, "N boxes extended over cut letters (auto)", and its × removes them all.
+    Reshaping one of those lines by hand replaces its automatic edit.
 
   Drag on empty page to add a new line. kraken-fill outlines follow the ink, so their dots
   are dense (simplified to within 2.5 px for editing): drag an edge to take in clipped ink.
@@ -58,6 +62,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 
 ```
 materialize.py       baseline + ops -> lines; id minting; verified record (pure)
+unclip.py            fresh-review reshapes over letters a box cuts (page image -> ops)
 duplicates.py        drops boxes inside other lines and boxes smaller than a character, before the ops
 page_number.py       finds the printed page number so a fresh review starts with it marked
 storage.py           paths, review read/write, status transitions, verified output

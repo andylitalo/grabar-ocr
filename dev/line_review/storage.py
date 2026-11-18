@@ -34,8 +34,11 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+import cv2
+
 from . import materialize as mz
 from . import page_number as pn
+from . import unclip
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RENDER_DIR = REPO_ROOT / "dev" / "kraken_review" / "data"
@@ -168,10 +171,30 @@ def expected_page_number(page: int) -> str:
     return str(page - PRINTED_OFFSET)
 
 
+# (page, baseline sha256, render mtime) -> the unclip ops of a fresh review. They read the
+# page image, and an unreviewed page is loaded on every visit and by the OCR side's
+# page_lines. At most one entry per page (~50 ops), so it isn't bounded.
+_unclip_cache: dict[tuple[int, str, int | None], list[dict]] = {}
+
+
+def _unclip_ops(page: int, ops: list[dict]) -> list[dict]:
+    """``unclip.auto_ops`` on the page as ``ops`` leave it; none without a page render
+    (the review app can't show such a page anyway)."""
+    path = render_path(page)
+    key = (page, baseline_sha256(page), path.stat().st_mtime_ns if path.exists() else None)
+    if key not in _unclip_cache:
+        gray = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE) if path.exists() else None
+        lines = materialized_page(page, ops, [])["lines"] if gray is not None else []
+        _unclip_cache[key] = unclip.auto_ops(lines, gray) if lines else []
+    return copy.deepcopy(_unclip_cache[key])
+
+
 def new_review(page: int) -> dict:
     """A page's review before any edit: the printed page number already marked, when the
-    top line looks like one (``page_number.detect``). The reviewer can remove the mark."""
+    top line looks like one (``page_number.detect``), then every box pushed out over the
+    letters it cuts (``unclip``). The reviewer can remove either."""
     ops = pn.auto_ops(load_baseline(page), expected_page_number(page))
+    ops += _unclip_ops(page, ops)
     return {
         "schema": SCHEMA, "page": page, "status": "unreviewed",
         "baseline": {"tool": BASELINE_TOOL, "sha256": baseline_sha256(page)},
@@ -235,8 +258,19 @@ def baseline_changed(review: dict) -> bool:
 def _write_review(review: dict) -> dict:
     review["updated_at"] = _now()
     review["revision"] = review.get("revision", 0) + 1
-    write_atomic(review_path(review["page"]), json.dumps(review, indent=1, ensure_ascii=False) + "\n")
+    write_atomic(review_path(review["page"]), dumps_review(review))
     return review
+
+
+def dumps_review(review: dict) -> str:
+    """The review as JSON: one op per line (a reshape's polygon inline, so a review stays
+    diff-friendly; see "Data storage" in AGENTS.md), every other field as ``indent=1``."""
+    def field(k, v) -> str:
+        if k == "ops" and v:
+            body = ",\n".join("  " + json.dumps(op, ensure_ascii=False) for op in v)
+            return f'"ops": [\n{body}\n ]'
+        return f"{json.dumps(k)}: " + json.dumps(v, indent=1, ensure_ascii=False).replace("\n", "\n ")
+    return "{\n " + ",\n ".join(field(k, v) for k, v in review.items()) + "\n}\n"
 
 
 def _guard_baseline(review: dict) -> None:

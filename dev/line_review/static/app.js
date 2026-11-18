@@ -364,11 +364,13 @@ function draw() {
 const escapeHtml = (v) => String(v).replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+const isAutoReshape = (op) => op.op === "reshape" && op.auto === true;
+
 function opLabel(op) {
   switch (op.op) {
     case "delete": return `delete ${op.line}`;
     case "add": return `add ${op.key}`;
-    case "reshape": return `reshape ${op.line}`;
+    case "reshape": return `reshape ${op.line}${op.auto ? " (auto)" : ""}`;
     case "split": return `split ${op.line}`;
     case "merge": return `merge ${op.lines.join(" + ")}`;
     case "initial": return `initial ${op.letter || "?"} → ${op.line}`;
@@ -390,9 +392,19 @@ function renderPanel() {
     verified: "Verified and locked. Ids are minted; hover a line to see its id. <b>R</b> = Resume fixing.",
   };
   $("help").innerHTML = help[d.status];
-  let html = `<h2>Edits (${state.ops.length})</h2>`;
+  // The automatic unclip reshapes (dev/line_review/unclip.py), often 50+ a page, show as
+  // one row; its × removes them all. Reshaping such a line by hand replaces its own.
+  const unclipped = state.ops.filter(isAutoReshape);
+  const rows = state.ops.length - unclipped.length + (unclipped.length ? 1 : 0);
+  let html = `<h2>Edits (${rows})</h2>`;
   if (!state.ops.length) html += "<p>None.</p>";
   state.ops.forEach((op, i) => {
+    if (isAutoReshape(op)) {
+      if (op !== unclipped[0]) return;
+      html += `<div class="op"><span>${i + 1}. ${unclipped.length} boxes extended over cut letters (auto)</span>` +
+        `<button class="del" data-auto-reshapes="1" title="Remove all of them">&times;</button></div>`;
+      return;
+    }
     html += `<div class="op"><span>${i + 1}. ${escapeHtml(opLabel(op))}</span>` +
       `<button class="del" data-op="${i}" title="Remove this edit">&times;</button></div>`;
   });
@@ -753,7 +765,9 @@ $("op-list").addEventListener("click", (ev) => {
   if (!btn || !editable()) return;
   // Match by content, not index: an earlier save may still be landing and shift the list.
   const same = (a) => (b) => JSON.stringify(a) === JSON.stringify(b);
-  if (btn.dataset.op !== undefined) {
+  if (btn.dataset.autoReshapes !== undefined) {
+    commit(() => ({ ops: state.ops.filter((op) => !isAutoReshape(op)), titles: state.titles }));
+  } else if (btn.dataset.op !== undefined) {
     const target = state.ops[Number(btn.dataset.op)];
     commit(() => {
       const i = state.ops.findIndex(same(target));

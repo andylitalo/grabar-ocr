@@ -43,6 +43,7 @@ def store(tmp_path, monkeypatch):
     (base / f"page_{PAGE}" / "segmentation.json").write_text(json.dumps(seg))
     monkeypatch.setattr(storage, "BASELINE_DIR", base)
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
+    monkeypatch.setattr(storage, "RENDER_DIR", tmp_path / "renders")  # no auto unclip
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
     monkeypatch.setattr(storage, "MANIFEST_PATH", tmp_path / "baseline_sha256.json")
