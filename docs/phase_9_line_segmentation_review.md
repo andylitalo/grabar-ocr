@@ -378,6 +378,20 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     drop caps. A decorated capital's swash that no box touches isn't attached either
     (stray-blob rules picked the wrong line or junk); review catches it, and a tool for it
     waits until it proves frequent.
+  - **Specks are left out (maintainer, 2026-11-18).** On the sample sheet, a few boxes
+    reached into the gap between lines for a speck or a stray print mark (pp.464, 479,
+    497). Of the 32,237 blobs the rule extended over book-wide, 144 were small (under 150
+    px) and sat entirely above or below their line's text band; looked at one by one,
+    most are real: apostrophes ՚, accents and end-of-word marks above the last letter,
+    and broken letter tips, all 0-5 px from a letter, the same as the specks. Two
+    narrower rules leave out 34 blobs on 30 pages, all specks or print marks in the gap
+    (one, a tilde under p.467's capital Ո, may be a ՟; leaving it out only keeps that line
+    as it was verified): a small blob **below the text** at least 3 px from the line's
+    letters (Grabar has no marks under the line, and a descender is part of its letter's
+    blob), and a small blob **at least as close to another line's letters** as to its
+    own. A speck above the text (p.497) can't be told from an accent this way and is still
+    taken in. Book-wide this leaves 147 letters cut by 3 px or more instead of 120 (the
+    difference is the specks); no other line's letters, no reading-order change.
   - **Review UI and files.** The edit list shows the auto reshapes as one row ("N boxes
     extended over cut letters (auto)"); its × removes them all, and reshaping such a line
     by hand replaces its auto op. Review files now write one op per line (polygons

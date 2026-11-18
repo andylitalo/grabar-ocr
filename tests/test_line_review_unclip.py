@@ -93,6 +93,51 @@ def test_a_drop_cap_beside_two_lines_is_left_to_review():
     assert unclip.auto_ops([upper, lower], page(*letters, cap)) == []
 
 
+# --- specks: small blobs in the gap between lines are not taken in --------------------
+# BODY's letters span y 110-150: that's the line's text band.
+
+def test_a_speck_below_the_text_is_not_taken_in():
+    speck = (200, 157, 208, 165)        # under the text, 20 px from the nearest letter
+    assert unclip.auto_ops([line("line_001", 40, 100, 300, 160)], page(*BODY, speck)) == []
+
+
+def test_a_speck_nearer_another_lines_letters_is_not_taken_in():
+    # Above the lower line's text, but as close to the upper line's descender as to the
+    # lower line's own letters (p.479).
+    upper = line("line_001", 40, 100, 300, 160)
+    lower = line("line_002", 40, 172, 300, 232)
+    lower_letters = [(60, 182, 90, 222), (110, 182, 140, 222), (240, 182, 270, 222)]
+    desc = (200, 110, 215, 157)         # the upper line's letter, inside its box
+    speck = (203, 166, 209, 174)        # 9 px under it; 8+ px from the lower line's letters
+    ops = unclip.auto_ops([upper, lower], page(*BODY, desc, *lower_letters, speck))
+    assert "line_002" not in by_line(ops)
+
+
+def test_a_descender_is_still_taken_in():
+    # A descender belongs to its letter's blob, so it is never a speck, however low.
+    desc = (200, 110, 215, 168)
+    poly = by_line(unclip.auto_ops([line("line_001", 40, 100, 300, 160)], page(*BODY, desc)))["line_001"]
+    assert covers(poly, *desc)
+
+
+@pytest.mark.parametrize("mark", [
+    (183, 96, 188, 106),    # apostrophe ՚ just above a letter, 4 px from it
+    (205, 97, 213, 105),    # accent ՛ above the text, 25 px from the nearest letter
+])
+def test_marks_above_the_text_are_still_taken_in(mark):
+    # Above the text, a small blob can be an accent, ՚ or ՟: taken in even far from a letter
+    # (a speck above the text can't be told from these, so it is kept too).
+    poly = by_line(unclip.auto_ops([line("line_001", 40, 100, 300, 160)], page(*BODY, mark)))["line_001"]
+    assert covers(poly, *mark)
+
+
+def test_a_period_on_the_baseline_is_still_taken_in():
+    # The box sits on the baseline; a period there is in the text band, not a speck.
+    period = (200, 143, 207, 152)
+    poly = by_line(unclip.auto_ops([line("line_001", 40, 100, 300, 150)], page(*BODY, period)))["line_001"]
+    assert covers(poly, *period)
+
+
 def test_a_box_with_a_narrow_neck_still_works():
     # A hand-reshaped box (p.453 onwards) can have a neck thinner than 2 * INSET: shrinking
     # it for the cut test splits it in two, and a drop cap's notch can be that thin.

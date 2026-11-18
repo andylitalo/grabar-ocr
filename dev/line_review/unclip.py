@@ -19,6 +19,8 @@ letters, or pieces of one:
   taller than ``MAX_H`` line heights (rules) are skipped.
 - **Cut.** An owned blob with at least ``MIN_CUT`` px within ``INSET`` px of the edge, or
   outside it.
+- **Specks.** A small blob in the gap between lines is not taken in: below the text and
+  away from the line's letters, or as close to another line's letters (``_strays``).
 - **Extension.** The box takes in each cut letter's bounding box plus ``MARGIN`` px, only
   over that letter's columns, never inside another line's box and never within ``GUARD``
   px of a blob that belongs to another line (or to none). A neighbour's capital often
@@ -48,6 +50,8 @@ MIN_CUT = 3
 INSET = 2
 MARGIN = 2
 GUARD = 2
+STRAY_AREA = 150   # px: a speck or a mark; a letter is about 400-1,200
+STRAY_GAP = 3      # px from the line's nearest letter
 
 
 def _ink(gray: np.ndarray) -> np.ndarray:
@@ -134,6 +138,50 @@ def _keep_out(page: _Page, i: int, window: Polygon) -> list:
     return shapes
 
 
+def _gaps(stats: np.ndarray, c: int, others: np.ndarray) -> np.ndarray:
+    """Distance between blob ``c``'s bbox and each of ``others``' (0 = touching)."""
+    x, y, w, h = stats[c][:4]
+    X, Y, W, H = (stats[others, k] for k in range(4))
+    return np.maximum.reduce([X - (x + w), x - (X + W), Y - (y + h), y - (Y + H),
+                              np.zeros(len(others), int)])
+
+
+def _strays(page: _Page, i: int, owned: np.ndarray, cut: np.ndarray) -> set[int]:
+    """Cut blobs of line ``i`` that are specks in the gap between lines, not text.
+
+    Only small blobs (``STRAY_AREA``) entirely outside the line's text band (its letters'
+    median top to median bottom), and only when the line has 3+ letters to find the band:
+    - **below the text** and at least ``STRAY_GAP`` px from the line's letters: Grabar has
+      no marks under the line, and a descender is part of its letter's blob (p.464);
+    - **at least as close to another line's letters** as to this line's (p.479).
+
+    Above the text, a speck looks like an accent (՛ ՜), ՚ or ՟ by size, place and spacing,
+    so it is taken in (p.497). A blob touching a letter (a broken tip) is never a speck.
+    """
+    letters = np.nonzero(owned & (page.area >= STRAY_AREA))[0]
+    small = [c for c in np.nonzero(cut)[0] if page.area[c] < STRAY_AREA]
+    if len(letters) < 3 or not small:
+        return set()
+    top = np.median(page.stats[letters, cv2.CC_STAT_TOP])
+    bottom = np.median(page.stats[letters, cv2.CC_STAT_TOP] + page.stats[letters, cv2.CC_STAT_HEIGHT])
+    best = page.counts.argmax(axis=0)
+    inked = (page.counts.max(axis=0) > 0) & (page.area >= 2 * MIN_AREA)
+    own_ink = np.nonzero(owned & (page.area >= 2 * MIN_AREA))[0]
+    other_ink = np.nonzero(inked & (best != i))[0]
+    out = set()
+    for c in small:
+        y, h = page.stats[c][cv2.CC_STAT_TOP], page.stats[c][cv2.CC_STAT_HEIGHT]
+        below, above = y >= bottom, y + h <= top
+        if not (below or above):
+            continue
+        mine = own_ink[own_ink != c]
+        g_own = _gaps(page.stats, c, mine).min() if len(mine) else 10 ** 6
+        g_other = _gaps(page.stats, c, other_ink).min() if len(other_ink) else 10 ** 6
+        if (below and g_own >= STRAY_GAP) or (g_own >= 1 and g_other <= g_own):
+            out.add(int(c))
+    return out
+
+
 def _points(poly: Polygon) -> list[list[float]]:
     return [[round(x, 1), round(y, 1)] for x, y in poly.exterior.coords[:-1]]
 
@@ -146,13 +194,19 @@ def unclipped(lines: list[dict], gray: np.ndarray) -> dict[str, list[list[float]
     page = _Page(polys, gray, inset=INSET)
     out = {}
     for i, l in enumerate(lines):
-        cut = page.owned(i, _height(polys[i])) & (page.area - page.inner[i] >= MIN_CUT)
+        owned = page.owned(i, _height(polys[i]))
+        cut = owned & (page.area - page.inner[i] >= MIN_CUT)
         if not cut.any():
             continue
+        strays = _strays(page, i, owned, cut)
         boxes = []
         for c in np.nonzero(cut)[0]:
+            if c in strays:
+                continue
             x, y, w, h = (int(v) for v in page.stats[c][:4])
             boxes.append(shapely_box(x - MARGIN, y - MARGIN, x + w - 1 + MARGIN, y + h - 1 + MARGIN))
+        if not boxes:
+            continue
         add = unary_union(boxes)
         others = [p for j, p in enumerate(polys) if j != i]
         add = add.difference(unary_union(others + _keep_out(page, i, add)))
