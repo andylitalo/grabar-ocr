@@ -1,7 +1,7 @@
 {
  "schema": 2,
  "page": 474,
- "status": "fixed",
+ "status": "verified",
  "baseline": {
   "tool": "paddle-filled",
   "sha256": "942baab9639657176689d671133bc9f97997c25e63632011725ca6aca28e68f4"
@@ -193,8 +193,9 @@
   "line_092": "p474.091"
  },
  "next_seq": 94,
- "verified_at": "2026-10-15T03:14:01+00:00",
- "updated_at": "2026-11-18T19:30:33+00:00",
- "revision": 3,
- "add_keys": {}
+ "verified_at": "2026-11-18T21:30:06+00:00",
+ "updated_at": "2026-11-18T21:30:06+00:00",
+ "revision": 4,
+ "add_keys": {},
+ "id_cuts": {}
 }

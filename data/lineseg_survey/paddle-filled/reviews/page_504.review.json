@@ -1,7 +1,7 @@
 {
  "schema": 2,
  "page": 504,
- "status": "fixed",
+ "status": "verified",
  "baseline": {
   "tool": "paddle-filled",
   "sha256": "1d208195453b2f9d28e80bac442789202e2b702a5de563659a05307fea9cde22"
@@ -186,8 +186,8 @@
  "retired_keys": {},
  "next_seq": 94,
  "id_cuts": {},
- "verified_at": "2026-11-17T04:53:39+00:00",
- "updated_at": "2026-11-18T19:30:50+00:00",
+ "verified_at": "2026-11-18T21:42:37+00:00",
+ "updated_at": "2026-11-18T21:42:37+00:00",
  "add_keys": {},
- "revision": 7
+ "revision": 8
 }
