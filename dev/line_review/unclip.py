@@ -21,14 +21,19 @@ letters, or pieces of one:
   outside it.
 - **Specks.** A small blob in the gap between lines is not taken in: below the text and
   away from the line's letters, or as close to another line's letters (``_strays``).
+- **Carving.** A cut letter's tip inside another line's box (a descender running into the
+  line below) is cut out of that box, plus ``MARGIN`` px, as ``initial`` does for a drop
+  cap; not within ``GUARD`` px of that box's own letters, and never splitting it
+  (``_carves``).
 - **Extension.** The box takes in each cut letter's bounding box plus ``MARGIN`` px, only
-  over that letter's columns, never inside another line's box and never within ``GUARD``
+  over that letter's columns, never inside another line's (carved) box and never within ``GUARD``
   px of a blob that belongs to another line (or to none). A neighbour's capital often
   sticks out of its own box into the gap, right where a descender is extended.
 
 The page's grey anti-aliased edge is 1 px wide, so a 2 px margin covers it plus rounding.
 A larger margin cuts no more letters free and, before the guard, took in more of other
-lines' letters. A decorated capital's swash that no box touches is not attached: it can't
+lines' letters. Boxes are snapped to the 0.1 px the review file stores (``GRID``) while
+they're built, so a notch can't fold into an invalid polygon when saved. A decorated capital's swash that no box touches is not attached: it can't
 be told apart from other stray marks reliably, and review catches it.
 """
 
@@ -36,6 +41,7 @@ from __future__ import annotations
 
 import cv2
 import numpy as np
+from shapely import set_precision
 from shapely.geometry import Polygon
 from shapely.geometry import box as shapely_box
 from shapely.ops import unary_union
@@ -50,6 +56,8 @@ MIN_CUT = 3
 INSET = 2
 MARGIN = 2
 GUARD = 2
+GRID = 0.1         # px: boundaries are saved to 0.1 px, so polygons are snapped to it
+SLIVER = 2.0       # px²: overlap that snapping can leave between neighbouring boxes
 STRAY_AREA = 150   # px: a speck or a mark; a letter is about 400-1,200
 STRAY_GAP = 3      # px from the line's nearest letter
 
@@ -123,19 +131,8 @@ def _keep_out(page: _Page, i: int, window: Polygon) -> list:
     y1, x1 = max(y1, 0), max(x1, 0)
     best = page.counts.argmax(axis=0) if len(page.counts) else np.zeros(page.n, int)
     unowned = page.counts.max(axis=0) == 0 if len(page.counts) else np.ones(page.n, bool)
-    shapes = []
-    for c in np.unique(page.lab[y1:y2 + 1, x1:x2 + 1]):
-        if c == 0 or (best[c] == i and not unowned[c]):
-            continue
-        x, y, w, h = (int(v) for v in page.stats[c][:4])
-        m = (page.lab[y:y + h, x:x + w] == c).astype(np.uint8)
-        m = cv2.copyMakeBorder(m, GUARD, GUARD, GUARD, GUARD, cv2.BORDER_CONSTANT, value=0)
-        m = cv2.dilate(m, np.ones((2 * GUARD + 1, 2 * GUARD + 1), np.uint8))
-        contours, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for cc in contours:
-            if len(cc) >= 3:
-                shapes.append(Polygon(cc[:, 0, :] + [x - GUARD, y - GUARD]).buffer(0.5))
-    return shapes
+    return [_ink_shape(page, c, GUARD) for c in np.unique(page.lab[y1:y2 + 1, x1:x2 + 1])
+            if c and not (best[c] == i and not unowned[c])]
 
 
 def _gaps(stats: np.ndarray, c: int, others: np.ndarray) -> np.ndarray:
@@ -186,43 +183,111 @@ def _points(poly: Polygon) -> list[list[float]]:
     return [[round(x, 1), round(y, 1)] for x, y in poly.exterior.coords[:-1]]
 
 
+def _ink_shape(page: _Page, c: int, d: int):
+    """Blob ``c``'s ink, dilated by ``d`` px, as a polygon."""
+    x, y, w, h = (int(v) for v in page.stats[c][:4])
+    m = (page.lab[y:y + h, x:x + w] == c).astype(np.uint8)
+    m = cv2.copyMakeBorder(m, d, d, d, d, cv2.BORDER_CONSTANT, value=0)
+    if d:
+        m = cv2.dilate(m, np.ones((2 * d + 1, 2 * d + 1), np.uint8))
+    contours, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return unary_union([Polygon(cc[:, 0, :] + [x - d, y - d]).buffer(0.5)
+                        for cc in contours if len(cc) >= 3])
+
+
+def _snapped(g) -> Polygon | None:
+    """``g`` on the ``GRID`` the review file stores, if it is still one valid polygon
+    without holes there (rounding a pixel-staircase notch can fold it otherwise)."""
+    g = set_precision(g.simplify(GRID), GRID)
+    if g.geom_type != "Polygon" or g.interiors or not g.is_valid or g.is_empty:
+        return None
+    return g
+
+
+def _carves(page: _Page, polys: list[Polygon], cuts: dict[int, list[int]]) -> list[Polygon]:
+    """Each box with the tips of other lines' cut letters carved out of it.
+
+    A letter's tip often lies inside the next line's box (a descender running into the
+    line below). The tip, plus ``MARGIN`` px, is cut out of that box, as ``initial`` does
+    for a drop cap. Not when it would come within ``GUARD`` px of that box's own letters
+    (or ink no box owns), or split the box: then the box stays and the tip stays cut.
+    """
+    best = page.counts.argmax(axis=0)
+    unowned = page.counts.max(axis=0) == 0
+    carved = list(polys)
+    for j, pj in enumerate(polys):
+        cuts_j = []
+        for i, cs in cuts.items():
+            if i == j:
+                continue
+            for c in cs:
+                x, y, w, h = (int(v) for v in page.stats[c][:4])
+                if not pj.intersects(shapely_box(x - MARGIN, y - MARGIN, x + w + MARGIN, y + h + MARGIN)):
+                    continue
+                tip = _ink_shape(page, c, MARGIN).intersection(pj)
+                if tip.area < 1:
+                    continue
+                x1, y1, x2, y2 = (int(v) for v in tip.bounds)
+                y1, x1 = max(y1 - GUARD - 1, 0), max(x1 - GUARD - 1, 0)
+                near = [d for d in np.unique(page.lab[y1:y2 + GUARD + 2, x1:x2 + GUARD + 2])
+                        if d and d != c and (best[d] == j or unowned[d])]
+                if any(_ink_shape(page, d, GUARD).intersects(tip) for d in near):
+                    continue
+                cuts_j.append(tip)
+        if not cuts_j:
+            continue
+        g = _snapped(pj.difference(unary_union(cuts_j)))
+        if g is not None and g.area > 0.5 * pj.area:
+            carved[j] = g
+    return carved
+
+
 def unclipped(lines: list[dict], gray: np.ndarray) -> dict[str, list[list[float]]]:
-    """``{line key: new boundary}`` for the lines whose box cuts one of their letters."""
+    """``{line key: new boundary}`` for the lines whose box cuts one of their letters, and
+    for the boxes a neighbour's letter was carved out of."""
     polys = [_shape(l["boundary"]) for l in lines]
     if not polys:
         return {}
     page = _Page(polys, gray, inset=INSET)
-    out = {}
-    for i, l in enumerate(lines):
+    cuts: dict[int, list[int]] = {}
+    for i in range(len(lines)):
         owned = page.owned(i, _height(polys[i]))
         cut = owned & (page.area - page.inner[i] >= MIN_CUT)
-        if not cut.any():
-            continue
-        strays = _strays(page, i, owned, cut)
+        if cut.any():
+            strays = _strays(page, i, owned, cut)
+            cs = [int(c) for c in np.nonzero(cut)[0] if c not in strays]
+            if cs:
+                cuts[i] = cs
+    base = _carves(page, polys, cuts)
+    final = list(base)
+    for i, cs in cuts.items():
         boxes = []
-        for c in np.nonzero(cut)[0]:
-            if c in strays:
-                continue
+        for c in cs:
             x, y, w, h = (int(v) for v in page.stats[c][:4])
             boxes.append(shapely_box(x - MARGIN, y - MARGIN, x + w - 1 + MARGIN, y + h - 1 + MARGIN))
-        if not boxes:
-            continue
         add = unary_union(boxes)
-        others = [p for j, p in enumerate(polys) if j != i]
+        others = [p for j, p in enumerate(base) if j != i]
         add = add.difference(unary_union(others + _keep_out(page, i, add)))
-        grown = unary_union([polys[i], add])
+        grown = unary_union([base[i], add])
         if grown.geom_type != "Polygon":   # a piece cut off by the guard: drop it
-            grown = max(grown.geoms, key=lambda g: g.intersection(polys[i]).area)
-        grown = unary_union([grown.simplify(0.5), polys[i]])
+            grown = max(grown.geoms, key=lambda g: g.intersection(base[i]).area)
+        # No simplifying here: it cut corners into a carved neighbour's notch. _snapped
+        # keeps the vertex count down.
         if grown.geom_type != "Polygon":
             continue
-        grown = Polygon(grown.exterior)   # a hole would be a gap in the line: fill it
-        extra = grown.difference(polys[i])   # a box may already overlap a neighbour
-        if any(extra.intersection(o).area > 1e-6 for o in others):
+        grown = _snapped(Polygon(grown.exterior))   # a hole would be a gap in the line: fill it
+        if grown is None:
             continue
-        if grown.area - polys[i].area < 1:
+        # A box may already overlap a neighbour; what it gains must not, beyond the
+        # slivers that snapping to GRID leaves (under 2 px², below what a crop resolves).
+        extra = grown.difference(polys[i])
+        if any(extra.intersection(o).area > SLIVER for o in others):
             continue
-        out[l["key"]] = _points(grown)
+        final[i] = grown
+    out = {}
+    for l, before, after in zip(lines, polys, final):
+        if after is not before and before.symmetric_difference(after).area >= 1:
+            out[l["key"]] = _points(after)
     return out
 
 

@@ -392,6 +392,20 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     own. A speck above the text (p.497) can't be told from an accent this way and is still
     taken in. Book-wide this leaves 147 letters cut by 3 px or more instead of 120 (the
     difference is the specks); no other line's letters, no reading-order change.
+  - **Tips are carved out of the next box (maintainer, 2026-11-18).** After the speck rules,
+    113 of the 147 letters left cut had a tip (mostly descenders, յ ր կ ք) inside the next
+    line's box, where the rule doesn't extend. Now the tip, plus 2 px, is cut out of that
+    box, as `initial` does for a drop cap, and the letter's own box takes it in. Not
+    within 2 px of that box's own letters, and never splitting it. Book-wide: letters cut
+    by 3 px or more 147 → 48 (28 of them specks left out; 14 tips next to the other
+    line's letter; 2 that would split a box; 4 lose a pixel or two to rounding). Checked
+    by geometry (pixel centres in the polygons), not raster fill: no line loses any of its
+    own letters' ink, other lines' letters gain 7 px in all (at most 2 px a line, the
+    snapping sliver), reading order unchanged. Two fixes on the way: boxes are snapped to
+    the 0.1 px grid of the review file while they're built (notches had folded into
+    self-intersections when rounded, on 42 pages), and the 0.5 px simplify is gone (it
+    cut corners into carved notches, so 57 extensions were refused for the overlap).
+    0.3-0.9 s a fresh page.
   - **Review UI and files.** The edit list shows the auto reshapes as one row ("N boxes
     extended over cut letters (auto)"); its × removes them all, and reshaping such a line
     by hand replaces its auto op. Review files now write one op per line (polygons

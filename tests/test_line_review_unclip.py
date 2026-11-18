@@ -152,13 +152,50 @@ def test_a_box_with_a_narrow_neck_still_works():
     unclip.auto_ops(thin, page(*BODY))   # shrinks to nothing: no crash
 
 
-def test_never_enters_another_lines_box():
-    upper = line("line_001", 40, 100, 300, 160)
-    lower = line("line_002", 40, 172, 300, 232)
-    desc = (200, 110, 215, 180)   # reaches into the lower box
-    ops = unclip.auto_ops([upper, lower], page(*BODY, desc, (60, 182, 90, 222)))
-    poly = by_line(ops)["line_001"]
-    assert poly.intersection(Polygon(lower["boundary"])).area < 1e-6
+# --- carving: a tip inside the next line's box is cut out of that box ----------------
+
+UPPER = line("line_001", 40, 100, 300, 160)
+LOWER = line("line_002", 40, 172, 300, 232)
+LOWER_LETTERS = [(60, 182, 90, 222), (110, 182, 140, 222), (240, 182, 270, 222)]
+
+
+def final(lines, ops):
+    """Each line's polygon after the ops."""
+    polys = by_line(ops)
+    return {l["key"]: polys.get(l["key"], Polygon(l["boundary"])) for l in lines}
+
+
+def test_a_descender_inside_the_next_box_is_carved_out_of_it():
+    desc = (200, 110, 215, 180)         # 8 px into the lower box, away from its letters
+    ops = unclip.auto_ops([UPPER, LOWER], page(*BODY, desc, *LOWER_LETTERS))
+    polys = final([UPPER, LOWER], ops)
+    assert covers(polys["line_001"], *desc)
+    assert polys["line_001"].intersection(polys["line_002"]).area < unclip.SLIVER   # no overlap
+    for letter in LOWER_LETTERS:
+        assert covers(polys["line_002"], *letter)
+    x1, y1, x2, y2 = desc                # the tip's pixels, plus the margin, are out of it
+    assert polys["line_002"].distance(shapely_box(x1, y1, x2 - 1, y2 - 1)) >= unclip.MARGIN - 0.5
+
+
+def test_no_carving_next_to_the_other_lines_letter():
+    # The tip comes within 2 px of the lower line's own letter: carving would cut into the
+    # space around that letter, so neither box changes there and the tip stays cut.
+    desc = (200, 110, 215, 184)
+    near = (217, 182, 247, 222)         # 2 px to the right of the tip
+    ops = unclip.auto_ops([UPPER, LOWER], page(*BODY, desc, near, *LOWER_LETTERS))
+    polys = final([UPPER, LOWER], ops)
+    assert "line_002" not in by_line(ops)
+    assert polys["line_001"].intersection(polys["line_002"]).area < unclip.SLIVER
+
+
+def test_carving_never_splits_the_other_box():
+    # A thin lower box: cutting the tip out would split it in two, so it isn't carved.
+    thin = line("line_002", 40, 172, 300, 178)
+    desc = (200, 110, 215, 182)
+    ops = unclip.auto_ops([UPPER, thin], page(*BODY, desc))
+    polys = final([UPPER, thin], ops)
+    assert "line_002" not in by_line(ops)
+    assert polys["line_001"].intersection(polys["line_002"]).area < unclip.SLIVER
 
 
 def test_keeps_clear_of_a_neighbours_overhanging_letter():
@@ -306,3 +343,16 @@ def test_reopen_skips_pages_not_verified(store):
     storage.save_ops(500, [], [])                 # fixing
     assert unclip_verified.reopen([500]) == {}
     assert storage.load_review(500)["status"] == "fixing"
+
+
+@pytest.mark.parametrize("pg", [460, 506, 516, 539, 564])
+def test_carved_boxes_stay_valid_polygons(pg):
+    # Carved notches follow a letter's pixel outline; rounded to 0.1 px for the review
+    # file they folded into self-intersections on 42 pages, which the materializer refuses.
+    if not (storage.render_path(pg).exists() and storage.baseline_path(pg).exists()):
+        pytest.skip("page render or baseline not present")
+    review = storage.new_review(pg)
+    for op in review["ops"]:
+        if op["op"] == "reshape":
+            assert Polygon(op["boundary"]).is_valid, op["line"]
+    storage.materialized(pg, review)
