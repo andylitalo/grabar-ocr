@@ -284,8 +284,22 @@ collapsed.
   - Both texts live in `docs/labeler/` and write the contact address as `{contact_email}`.
     The app fills it in from the `LABELER_CONTACT_EMAIL` environment variable, so the
     address is shown only to invited contributors, never published in this public repo.
+  - The grant runs to Andy Ylitalo as maintainer, and to anyone he passes the project to,
+    so the relicensing right survives a handover.
+  - **Collective attribution:** contributors agree that crediting "grabar-ocr, Andy
+    Ylitalo, and contributors" (with Calfa for the OCR), plus the published credits list,
+    meets CC BY's attribution requirement. Researchers copying a line can't name every
+    contributor. When volunteer text first lands, `corpus/LICENSE`'s copyright line
+    ("Andy Ylitalo, for the compilation, corrections …") gains "and contributors", and its
+    reuse credit matches this wording.
 - **Credit by name** is an opt-in checkbox at sign-up, changeable in settings. Otherwise
-  the contributor is credited as an anonymous contributor.
+  the contributor is counted as an anonymous contributor.
+- **Names never enter public git.** The credits list (names who opted in, plus a count of
+  anonymous contributors) is published in each release's notes (a GitHub Release), not
+  committed. It isn't keyed by the submission ids, so a name isn't linked to anyone's
+  lines, timings or accuracy. Withdrawing credit or deleting an account removes the name
+  from the next release and from earlier releases' notes; copies others already made
+  can't be recalled.
 - **Deleting an account** keeps the corrections, re-attributed to "anonymous contributor",
   and erases the name and email.
 
@@ -296,8 +310,8 @@ The repo is public on GitHub, so anything exported to it is world-readable.
 | place | what |
 |---|---|
 | **Database** (live source of truth for all human work) | accounts, claims, every submission, line statuses, gold, plants, practice keys, alerts |
-| **Public git** (`grabar-ocr`) | the layout and regions; the corrections export; `contributors.json`; `certainty.json`. The prefill comes from the book-wide outputs (GCS + manifest, AGENTS.md "Data storage") |
-| **Private git** (`grabar-ocr-private`, a private GitHub repo cloned beside this one; maintainer, 2026-11-17) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, alert history. Scripts find it through a configured path |
+| **Public git** (`grabar-ocr`) | the layout and regions; the corrections export (opaque contributor ids, no names); `certainty.json`. The prefill comes from the book-wide outputs (GCS + manifest, AGENTS.md "Data storage") |
+| **Private git** (`grabar-ocr-private`, a private GitHub repo cloned beside this one; maintainer, 2026-11-17) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, alert history, and the opaque id → credit name map. Scripts find it through a configured path |
 | **GCS, private** | page images for the app |
 | **Firebase** | emails and passwords (Google's side) |
 
@@ -328,11 +342,12 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
   - Public: `data/transcriptions/corrections/page_<N>.json`, one record per region:
     `typed_as`, `geometry`, `prefill {engine, text}`, `final {text, status}`, and every
     submission `{contributor, pass, text, raw_text, status, at, seconds}` under an opaque
-    contributor id. Also `contributors.json` (opaque id → credit name or "anonymous"; the
-    README's contributors list is built from it, anonymous ones as a count) and
-    `certainty.json` (the estimate with its interval, and counts per status).
+    contributor id. Also `certainty.json` (the estimate with its interval, and counts per
+    status).
+  - Credits: the release-notes list (names who opted in, anonymous ones as a count), not
+    committed and not keyed by contributor id.
   - Private, to `grabar-ocr-private`: plants (line, type, caught?), gold and practice
-    answers, alert history. Emails are never exported.
+    answers, alert history, the opaque id → credit name map. Emails are never exported.
 
 ### Non-functional
 
@@ -399,6 +414,9 @@ So that later sessions don't reopen them:
 - **An `apps/` folder** → top-level `layout_app/` and `labeler_app/`, the labeler as a
   uv workspace member.
 - **Keeping the answers in the public repo** → private repo at migration step 4b.
+- **A public `contributors.json` mapping submission ids to names** → names in release
+  notes only, unlinked to ids: the mapping would publish each credited person's lines,
+  timings and effective accuracy, and git history can't forget a name.
 - **A private GCS bucket or encrypted files for the answers** → a private GitHub repo
   (versioned, readable diffs, local scripts).
 
