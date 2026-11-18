@@ -418,6 +418,9 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     verified pages (453-516) and p.517 keep their cut letters. For them,
     `python -m dev.line_review.unclip_verified 453-516` adds the same ops to each verified
     review and sends the page back to `fixed`, so it is re-verified by eye (ids are kept);
-    on pp.453-516 it extends 3,390 of 4,708 lines. That is a data step of its own, and it
+    on pp.453-516 it extends 3,390 of 4,708 lines. After re-verifying, run
+    `migrate repair --previous REV`, REV being a commit with the earlier verified output:
+    plain `repair` takes a live verified id as unchanged, so the stored OCR readings of
+    its old, clipped crop would stay; with the earlier shapes they are set aside. That is a data step of its own, and it
     sets aside the stored OCR predictions of the changed lines (Phase 11 is re-scored on
     the new crops; maintainer, 2026-11-17).
