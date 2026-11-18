@@ -230,3 +230,34 @@ def test_flagged_lines_lose_no_ink(pg):
         j = next(n for n, l in enumerate(after) if l["key"] == key)
         assert unclip.ink_outside(before, i, gray) > 0, f"{key} wasn't cut to begin with"
         assert unclip.ink_outside(after, j, gray) == 0, key
+
+
+# --- reopening verified pages with the unclip ops ----------------------------------------
+
+def test_reopen_adds_the_ops_and_keeps_the_ids(store, monkeypatch):
+    from dev.line_review import unclip_verified
+    monkeypatch.setattr(storage, "VERIFIED_DIR", store / "verified")
+    monkeypatch.setattr(storage, "BLANK_DIR", store / "blank")
+    monkeypatch.setattr(storage, "MANIFEST_PATH", store / "baseline_sha256.json")
+    storage.save_ops(500, [], [])                 # reviewed before unclip existed
+    storage.set_status(500, "fixed")
+    storage.set_status(500, "verified")
+    ids = storage.load_review(500)["ids"]
+    write_render(store, page(*BODY, (200, 110, 215, 168)))
+
+    assert unclip_verified.reopen([500]) == {500: 1}
+    review = storage.load_review(500)
+    assert review["status"] == "fixed"
+    assert [(o["op"], o["auto"]) for o in review["ops"]] == [("reshape", True)]
+    storage.set_status(500, "verified")
+    assert storage.load_review(500)["ids"] == ids
+
+    assert unclip_verified.reopen([500]) == {}    # already unclipped: left alone
+
+
+def test_reopen_skips_pages_not_verified(store):
+    from dev.line_review import unclip_verified
+    write_render(store, page(*BODY, (200, 110, 215, 168)))
+    storage.save_ops(500, [], [])                 # fixing
+    assert unclip_verified.reopen([500]) == {}
+    assert storage.load_review(500)["status"] == "fixing"

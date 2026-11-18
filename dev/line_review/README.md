@@ -63,6 +63,7 @@ lines, and a page whose baseline changed under its review (edits are then disabl
 ```
 materialize.py       baseline + ops -> lines; id minting; verified record (pure)
 unclip.py            fresh-review reshapes over letters a box cuts (page image -> ops)
+unclip_verified.py   adds those reshapes to verified pages and sends them back to fixed
 duplicates.py        drops boxes inside other lines and boxes smaller than a character, before the ops
 page_number.py       finds the printed page number so a fresh review starts with it marked
 storage.py           paths, review read/write, status transitions, verified output

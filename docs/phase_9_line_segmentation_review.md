@@ -387,5 +387,9 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     reviewed (519-640) are reshaped, so `migrate repair` sets their text aside as a
     prefill to re-check and their old OCR readings (of the cut crops) as stale
     (maintainer, 2026-11-17). Only pages without a review file are seeded, so the
-    verified pages (453-516) and p.517 keep their cut letters; re-running the rule on
-    them is a separate data step.
+    verified pages (453-516) and p.517 keep their cut letters. For them,
+    `python -m dev.line_review.unclip_verified 453-516` adds the same ops to each verified
+    review and sends the page back to `fixed`, so it is re-verified by eye (ids are kept);
+    on pp.453-516 it extends 3,390 of 4,708 lines. That is a data step of its own, and it
+    sets aside the stored OCR predictions of the changed lines (Phase 11 is re-scored on
+    the new crops; maintainer, 2026-11-17).
