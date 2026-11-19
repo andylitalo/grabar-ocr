@@ -393,7 +393,8 @@ function renderPanel() {
   };
   $("help").innerHTML = help[d.status];
   // The automatic unclip reshapes (dev/line_review/unclip.py), often 50+ a page, show as
-  // one row; its × removes them all. Reshaping such a line by hand replaces its own.
+  // one row; its × removes them all. A hand reshape of such a line is a later op, which
+  // wins; the auto op stays (and × keeps the hand one).
   const unclipped = state.ops.filter(isAutoReshape);
   const rows = state.ops.length - unclipped.length + (unclipped.length ? 1 : 0);
   let html = `<h2>Edits (${rows})</h2>`;

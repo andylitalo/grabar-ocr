@@ -26,6 +26,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import logging
 import os
 import re
 import threading
@@ -175,6 +176,7 @@ def expected_page_number(page: int) -> str:
 # page image, and an unreviewed page is loaded on every visit and by the OCR side's
 # page_lines. At most one entry per page (~50 ops), so it isn't bounded.
 _unclip_cache: dict[tuple[int, str, int | None], list[dict]] = {}
+log = logging.getLogger(__name__)
 
 
 def _unclip_ops(page: int, ops: list[dict]) -> list[dict]:
@@ -183,6 +185,9 @@ def _unclip_ops(page: int, ops: list[dict]) -> list[dict]:
     path = render_path(page)
     key = (page, baseline_sha256(page), path.stat().st_mtime_ns if path.exists() else None)
     if key not in _unclip_cache:
+        if not path.exists():
+            log.warning("p%d: no page render at %s, so its fresh review starts without the "
+                        "unclip reshapes (boxes as Paddle cut them)", page, path)
         gray = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE) if path.exists() else None
         lines = materialized_page(page, ops, [])["lines"] if gray is not None else []
         _unclip_cache[key] = unclip.auto_ops(lines, gray) if lines else []

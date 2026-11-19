@@ -36,6 +36,9 @@ def reopen(pages: list[int]) -> dict[int, int]:
         ops = unclip.auto_ops(storage.materialized(page, review), gray)
         if not ops:
             continue
+        # Materialize first (raises OpError): an op rejected by save_ops after the page
+        # left `verified` would strand it in `fixing` without them, and a re-run skips it.
+        storage.materialized_page(page, review["ops"] + ops, review.get("section_titles", []))
         storage.set_status(page, "fixing")
         storage.save_ops(page, review["ops"] + ops, review.get("section_titles", []))
         storage.set_status(page, "fixed")

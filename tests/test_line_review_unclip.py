@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 from shapely.geometry import Polygon
 from shapely.geometry import box as shapely_box
+from shapely.ops import unary_union
 
 from dev.line_review import materialize as mz
 from dev.line_review import storage, unclip
@@ -198,6 +199,33 @@ def test_carving_never_splits_the_other_box():
     assert polys["line_001"].intersection(polys["line_002"]).area < unclip.SLIVER
 
 
+def test_no_carving_for_a_line_whose_extension_is_refused(monkeypatch):
+    # If the letter's own box can't take the tip in (here: forced), carving it out of the
+    # next box would leave it in neither: the next box stays as it was (p.628 line_044).
+    real = unclip._extended
+
+    def refuse_upper(page_, polys, base, cuts):
+        out = real(page_, polys, base, cuts)
+        out[0] = base[0]
+        return out
+
+    monkeypatch.setattr(unclip, "_extended", refuse_upper)
+    desc = (200, 110, 215, 180)
+    assert unclip.auto_ops([UPPER, LOWER], page(*BODY, desc, *LOWER_LETTERS)) == []
+
+
+def test_a_mark_the_extension_closes_around_is_not_taken_in():
+    # A U-shaped letter cut at the bottom, with a mark no box touches between its legs:
+    # extending over the U would leave the guarded mark as a hole, and filling that hole
+    # would take the mark in.
+    legs = [(200, 110, 210, 168), (250, 110, 260, 168), (200, 110, 260, 120)]
+    mark = (226, 162, 234, 166)
+    ops = unclip.auto_ops([line("line_001", 40, 100, 300, 160)], page(*BODY, *legs, mark))
+    polys = final([line("line_001", 40, 100, 300, 160)], ops)
+    x1, y1, x2, y2 = mark
+    assert not polys["line_001"].intersects(shapely_box(x1, y1, x2 - 1, y2 - 1))
+
+
 def test_keeps_clear_of_a_neighbours_overhanging_letter():
     # The lower line's capital sticks up out of its own box into the gap, right under
     # the upper line's descender: the descender is taken in, the capital is not.
@@ -254,6 +282,7 @@ def store(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "BASELINE_DIR", base)
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
     monkeypatch.setattr(storage, "RENDER_DIR", tmp_path / "renders")
+    monkeypatch.setattr(storage, "_unclip_cache", {})   # page 500 is in every test
     return tmp_path
 
 
@@ -271,6 +300,12 @@ def test_a_fresh_review_starts_with_the_unclip_ops(store):
 
 def test_without_a_render_there_are_no_unclip_ops(store):
     assert storage.load_review(500)["ops"] == []
+
+
+def test_a_missing_render_is_logged(store, caplog):
+    with caplog.at_level("WARNING", logger="dev.line_review.storage"):
+        storage.load_review(500)
+    assert "no page render" in caplog.text
 
 
 def test_a_saved_review_is_not_reseeded(store):
@@ -337,12 +372,52 @@ def test_reopen_adds_the_ops_and_keeps_the_ids(store, monkeypatch):
     assert unclip_verified.reopen([500]) == {}    # already unclipped: left alone
 
 
+def test_reopen_leaves_a_page_verified_if_its_ops_are_rejected(store, monkeypatch):
+    # The ops are checked before the page leaves `verified`: stranded in `fixing` without
+    # them, a re-run would skip it.
+    from dev.line_review import unclip_verified
+    monkeypatch.setattr(storage, "VERIFIED_DIR", store / "verified")
+    monkeypatch.setattr(storage, "BLANK_DIR", store / "blank")
+    monkeypatch.setattr(storage, "MANIFEST_PATH", store / "baseline_sha256.json")
+    storage.save_ops(500, [], [])
+    storage.set_status(500, "fixed")
+    storage.set_status(500, "verified")
+    write_render(store, page(*BODY, (200, 110, 215, 168)))
+    bad = [{"op": "reshape", "line": "line_999", "boundary": rect(0, 0, 10, 10), "auto": True}]
+    monkeypatch.setattr(unclip, "auto_ops", lambda lines, gray: bad)
+    with pytest.raises(mz.OpError):
+        unclip_verified.reopen([500])
+    review = storage.load_review(500)
+    assert review["status"] == "verified" and review["ops"] == []
+    assert "resumed_at" not in json.loads(storage.verified_path(500).read_text())
+
+
 def test_reopen_skips_pages_not_verified(store):
     from dev.line_review import unclip_verified
     write_render(store, page(*BODY, (200, 110, 215, 168)))
     storage.save_ops(500, [], [])                 # fixing
     assert unclip_verified.reopen([500]) == {}
     assert storage.load_review(500)["status"] == "fixing"
+
+
+@pytest.mark.parametrize("pg", [612, 628, 629])
+def test_carved_tips_land_in_another_box(pg):
+    # What a carve takes out of a box must end up in another line's new box; on p.628 a
+    # 639 px² notch was carved out of line_044 for line_043, whose extension was refused.
+    if not (storage.render_path(pg).exists() and storage.baseline_path(pg).exists()):
+        pytest.skip("page render or baseline not present")
+    review = storage.new_review(pg)
+    after = {l["key"]: Polygon(l["boundary"]) for l in storage.materialized(pg, review)}
+    before = {l["key"]: Polygon(l["boundary"]) for l in storage.materialized_page(
+        pg, [o for o in review["ops"] if not o.get("auto")], [])["lines"]}
+    for key, poly in after.items():
+        lost = before[key].difference(poly)
+        if lost.area < 1:
+            continue
+        others = unary_union([p for k, p in after.items() if k != key])
+        # Snapping to GRID shaves hairline wedges off long edges (~0.03 px thick): only
+        # what is at least 1 px thick counts as a notch.
+        assert lost.difference(others).buffer(-0.5).area < unclip.SLIVER, key
 
 
 @pytest.mark.parametrize("pg", [460, 506, 516, 539, 564])

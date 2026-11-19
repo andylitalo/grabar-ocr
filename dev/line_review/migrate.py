@@ -311,11 +311,20 @@ def _move_file_predictions(path, target: dict, changed: dict) -> int:
 
 def previous_verified_at(rev: str):
     """A loader of each page's verified output as committed at git ``rev`` (None where
-    that commit has none), for ``repair(previous=…)``."""
+    that commit has none), for ``repair(previous=…)``. Raises ``SystemExit`` if ``rev``
+    isn't a commit: every page would then load as None, and repair would quietly judge
+    live ids as unchanged, which is what ``--previous`` is for."""
+    checked = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}"],
+                             cwd=storage.REPO_ROOT, capture_output=True, text=True,
+                             encoding="utf-8", check=False)
+    if checked.returncode != 0:
+        raise SystemExit(f"--previous {rev}: not a commit in {storage.REPO_ROOT}")
+    rev = checked.stdout.strip()
+
     def load(page: int) -> dict | None:
         path = storage.verified_path(page).relative_to(storage.REPO_ROOT).as_posix()
         shown = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=storage.REPO_ROOT,
-                               capture_output=True, text=True, check=False)
+                               capture_output=True, text=True, encoding="utf-8", check=False)
         return json.loads(shown.stdout) if shown.returncode == 0 else None
     return load
 

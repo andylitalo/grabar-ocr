@@ -31,7 +31,8 @@ Editing (fixing only):
   - A fresh page also starts with its boxes pushed out over the letters they cut, such as
     descender tips and the tops of capitals (`unclip.py`). The edit list shows these as
     one row, "N boxes extended over cut letters (auto)", and its × removes them all.
-    Reshaping one of those lines by hand replaces its automatic edit.
+    Reshaping one of those lines by hand adds an ordinary reshape after them, which wins;
+    the auto edit stays in the row, and × on the row leaves the hand reshape.
 
   Drag on empty page to add a new line. kraken-fill outlines follow the ink, so their dots
   are dense (simplified to within 2.5 px for editing): drag an edge to take in clipped ink.

@@ -405,10 +405,17 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
     the 0.1 px grid of the review file while they're built (notches had folded into
     self-intersections when rounded, on 42 pages), and the 0.5 px simplify is gone (it
     cut corners into carved notches, so 57 extensions were refused for the overlap).
-    0.3-0.9 s a fresh page.
+    0.3-0.9 s a fresh page. In review (PR #21) two guards were added: a tip is carved only
+    when its letter's own box then takes it in (p.628's line_044 had lost 639 px² for
+    line_043, whose extension was refused over a 3.5 px² sliver, so the tips sat in
+    neither box; 3 boxes on pp.550, 628, 636 keep their shape now), and a hole the
+    extension closes is filled only if it holds no guarded ink or other box (no page
+    changes). The 64 verified pages' ops are identical with both guards, so the
+    re-verified pp.453-516 stand.
   - **Review UI and files.** The edit list shows the auto reshapes as one row ("N boxes
-    extended over cut letters (auto)"); its × removes them all, and reshaping such a line
-    by hand replaces its auto op. Review files now write one op per line (polygons
+    extended over cut letters (auto)"); its × removes them all. Reshaping such a line by
+    hand adds an ordinary reshape after its auto op, which wins; the auto op stays in the
+    row, and × leaves the hand reshape. Review files now write one op per line (polygons
     inline, the rest unchanged `indent=1`), so 50-80 notched polygons stay about 70 lines
     of file; older review files change format the next time they're saved.
   - **Ceiling transcriptions.** 77 of the 107 ceiling lines typed on pages not yet

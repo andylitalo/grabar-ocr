@@ -23,12 +23,14 @@ letters, or pieces of one:
   away from the line's letters, or as close to another line's letters (``_strays``).
 - **Carving.** A cut letter's tip inside another line's box (a descender running into the
   line below) is cut out of that box, plus ``MARGIN`` px, as ``initial`` does for a drop
-  cap; not within ``GUARD`` px of that box's own letters, and never splitting it
+  cap; not within ``GUARD`` px of that box's own letters, never splitting it, and only
+  when the letter's own box then takes the tip in (else it would be in neither box)
   (``_carves``).
 - **Extension.** The box takes in each cut letter's bounding box plus ``MARGIN`` px, only
   over that letter's columns, never inside another line's (carved) box and never within ``GUARD``
   px of a blob that belongs to another line (or to none). A neighbour's capital often
-  sticks out of its own box into the gap, right where a descender is extended.
+  sticks out of its own box into the gap, right where a descender is extended. A hole
+  the extension leaves is filled, unless it holds such a blob or part of another box.
 
 The page's grey anti-aliased edge is 1 px wide, so a 2 px margin covers it plus rounding.
 A larger margin cuts no more letters free and, before the guard, took in more of other
@@ -204,8 +206,10 @@ def _snapped(g) -> Polygon | None:
     return g
 
 
-def _carves(page: _Page, polys: list[Polygon], cuts: dict[int, list[int]]) -> list[Polygon]:
-    """Each box with the tips of other lines' cut letters carved out of it.
+def _carves(page: _Page, polys: list[Polygon],
+            cuts: dict[int, list[int]]) -> tuple[list[Polygon], set[int]]:
+    """Each box with the tips of other lines' cut letters carved out of it, and the lines
+    whose tips were carved.
 
     A letter's tip often lies inside the next line's box (a descender running into the
     line below). The tip, plus ``MARGIN`` px, is cut out of that box, as ``initial`` does
@@ -215,8 +219,9 @@ def _carves(page: _Page, polys: list[Polygon], cuts: dict[int, list[int]]) -> li
     best = page.counts.argmax(axis=0)
     unowned = page.counts.max(axis=0) == 0
     carved = list(polys)
+    carvers: set[int] = set()
     for j, pj in enumerate(polys):
-        cuts_j = []
+        cuts_j, from_j = [], set()
         for i, cs in cuts.items():
             if i == j:
                 continue
@@ -234,12 +239,54 @@ def _carves(page: _Page, polys: list[Polygon], cuts: dict[int, list[int]]) -> li
                 if any(_ink_shape(page, d, GUARD).intersects(tip) for d in near):
                     continue
                 cuts_j.append(tip)
+                from_j.add(i)
         if not cuts_j:
             continue
         g = _snapped(pj.difference(unary_union(cuts_j)))
         if g is not None and g.area > 0.5 * pj.area:
             carved[j] = g
-    return carved
+            carvers |= from_j
+    return carved, carvers
+
+
+def _extended(page: _Page, polys: list[Polygon], base: list[Polygon],
+              cuts: dict[int, list[int]]) -> list[Polygon]:
+    """Each box (``base``: after carving) grown over its cut letters; a box whose
+    extension is refused is left as the very ``base`` object."""
+    final = list(base)
+    for i, cs in cuts.items():
+        boxes = []
+        for c in cs:
+            x, y, w, h = (int(v) for v in page.stats[c][:4])
+            boxes.append(shapely_box(x - MARGIN, y - MARGIN, x + w - 1 + MARGIN, y + h - 1 + MARGIN))
+        add = unary_union(boxes)
+        others = [p for j, p in enumerate(base) if j != i]
+        add = add.difference(unary_union(others + _keep_out(page, i, add)))
+        grown = unary_union([base[i], add])
+        if grown.geom_type != "Polygon":   # a piece cut off by the guard: drop it
+            grown = max(grown.geoms, key=lambda g: g.intersection(base[i]).area)
+        # No simplifying here: it cut corners into a carved neighbour's notch. _snapped
+        # keeps the vertex count down.
+        if grown.geom_type != "Polygon":
+            continue
+        # A hole would be a gap in the line: fill it, unless it holds what the guard kept
+        # out (another line's letter, or a box's notch closed off by the extension).
+        filled = Polygon(grown.exterior)
+        if grown.interiors:
+            holes = filled.difference(grown)
+            if any(holes.intersection(g).area > SLIVER
+                   for g in others + _keep_out(page, i, holes)):
+                continue
+        grown = _snapped(filled)
+        if grown is None:
+            continue
+        # A box may already overlap a neighbour; what it gains must not, beyond the
+        # slivers that snapping to GRID leaves (under 2 px², below what a crop resolves).
+        extra = grown.difference(polys[i])
+        if any(extra.intersection(o).area > SLIVER for o in others):
+            continue
+        final[i] = grown
+    return final
 
 
 def unclipped(lines: list[dict], gray: np.ndarray) -> dict[str, list[list[float]]]:
@@ -258,32 +305,18 @@ def unclipped(lines: list[dict], gray: np.ndarray) -> dict[str, list[list[float]
             cs = [int(c) for c in np.nonzero(cut)[0] if c not in strays]
             if cs:
                 cuts[i] = cs
-    base = _carves(page, polys, cuts)
-    final = list(base)
-    for i, cs in cuts.items():
-        boxes = []
-        for c in cs:
-            x, y, w, h = (int(v) for v in page.stats[c][:4])
-            boxes.append(shapely_box(x - MARGIN, y - MARGIN, x + w - 1 + MARGIN, y + h - 1 + MARGIN))
-        add = unary_union(boxes)
-        others = [p for j, p in enumerate(base) if j != i]
-        add = add.difference(unary_union(others + _keep_out(page, i, add)))
-        grown = unary_union([base[i], add])
-        if grown.geom_type != "Polygon":   # a piece cut off by the guard: drop it
-            grown = max(grown.geoms, key=lambda g: g.intersection(base[i]).area)
-        # No simplifying here: it cut corners into a carved neighbour's notch. _snapped
-        # keeps the vertex count down.
-        if grown.geom_type != "Polygon":
-            continue
-        grown = _snapped(Polygon(grown.exterior))   # a hole would be a gap in the line: fill it
-        if grown is None:
-            continue
-        # A box may already overlap a neighbour; what it gains must not, beyond the
-        # slivers that snapping to GRID leaves (under 2 px², below what a crop resolves).
-        extra = grown.difference(polys[i])
-        if any(extra.intersection(o).area > SLIVER for o in others):
-            continue
-        final[i] = grown
+    # Tips are carved only for lines whose box then takes them in: a carve for a line whose
+    # extension is refused would leave the tip in neither box (p.628 line_044 lost 639 px²
+    # for line_043, refused over a 3.5 px² sliver). Drop those lines from the carving and
+    # redo it; the set only shrinks, so this ends, usually after one pass.
+    allowed = set(cuts)
+    while True:
+        base, carvers = _carves(page, polys, {i: cuts[i] for i in allowed})
+        final = _extended(page, polys, base, cuts)
+        refused = {i for i in carvers if final[i] is base[i]}
+        if not refused:
+            break
+        allowed -= refused
     out = {}
     for l, before, after in zip(lines, polys, final):
         if after is not before and before.symmetric_difference(after).area >= 1:

@@ -301,3 +301,9 @@ def test_repair_without_the_previous_output_takes_a_live_id_as_unchanged(dirs, m
     path = repair_page_520(monkeypatch, dirs, now_y=110)
     migrate.repair()
     assert json.loads(path.read_text())["lines"] == {"p520.001": "Ա"}
+
+
+def test_repair_previous_stops_on_a_revision_that_isnt_a_commit():
+    # Every page would load as None and repair would quietly run as plain repair.
+    with pytest.raises(SystemExit, match="not a commit"):
+        migrate.previous_verified_at("no-such-revision")
