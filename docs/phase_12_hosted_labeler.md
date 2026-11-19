@@ -364,13 +364,11 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - **Planning is done; nothing is built.** Every decision is in this doc. Don't write
   `labeler_app/` code until the order of work below reaches step 5 and the maintainer says
   to start.
-- **This doc's branch** (`docs/phase-12-hosted-labeler`) waits for the maintainer's fix to
-  bounding-box generation in the layout review, which merges first. Then: rebase onto
-  `main`; re-check what depends on bounding boxes (p497's line, display and drop-cap
-  counts; whether `line_crop` output changes); push and open the PR when the maintainer
-  says so.
-- **Region ids hash the boundary polygon, not the bbox**, so a bbox-only fix doesn't move
-  regions. A fix that changes boundaries is still safe: the region migration hasn't run.
+- **The box fix is in** (#21, with its data in #22, 2026-11-19). This doc was rebased
+  onto it and p497 re-checked (see Practice pages).
+- **The fix reshapes line polygons,** so region ids, which hash the boundary polygon, will
+  differ from ids hashed before it. That's harmless: the region migration hasn't run, and
+  it hashes the polygons as they stand when it does.
 - **Can run beside the layout review, if the maintainer wants:**
   - ~~create the empty private repo~~: done 2026-11-17 (`andylitalo/grabar-ocr-private`).
     No data moves before migration step 4b;
@@ -424,9 +422,10 @@ So that later sessions don't reopen them:
 
 Both should have display lines and a drop cap, and no answers already in the public repo.
 
-- **Vol I: p497** (maintainer, 2026-11-17): 64 lines, 3 display lines, 1 drop cap, no
-  ceiling or test-set lines. Re-check these counts after the bounding-box fix to the
-  layout review lands.
+- **Vol I: p497** (maintainer, 2026-11-17): 64 lines, 2 display lines (p497.001–002, by
+  the 1.4× median-height rule in `dev/line_review/transcribe.py`), 1 drop cap (p497.003),
+  no ceiling or test-set lines. Re-checked after the box fix (#21, #22) on 2026-11-19: the
+  same counts and ids. The fix did reshape 41 of its boxes, so its line crops change.
 - **Vol II:** chosen later, once its pages are verified (only pp.453–516 are verified so
   far). Look for a page of about 60–90 lines with a commemoration list (`, — և`, tone
   codes such as `Գշ. ԴԿ.`), display lines and a drop cap.
