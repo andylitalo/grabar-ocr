@@ -111,6 +111,16 @@ line id.
    - **Readings:** every reading in step 1's inventory is still present after the
      conversion, live or in `stale`, with the same text. Scores don't read `stale`, so
      only this check covers it.
+
+   **4b. Move the answers to private storage** (maintainer, 2026-11-17;
+   `docs/phase_12_hosted_labeler.md`, "Where the data lives"). The repo is public, and the
+   hosted labeler reuses these lines as gold. After step 4's checks pass, move the converted
+   `transcriptions/` (ceiling, test set, `stale/`, sample picks) to the private repo
+   `grabar-ocr-private`, cloned beside this one, and make the transcriptions path
+   configurable. Re-run step 4's score from the new path: it must match. Commit the removal
+   from this repo on its own; older commits keep the files (accepted). Not before this step:
+   during the review, `migrate repair` rewrites these files in place. Not much after it: the
+   labeler's seed script refuses to run while answers are still in the public tree.
 5. **Switch the readers and writers.** Runners (`run_*.py`, `common.py`), `score.py`,
    `ceiling.py`, `correct.py` and the transcription endpoints look lines up through
    `layout.lines(page)` and read and write by region. The book-wide outputs go to GCS
@@ -122,7 +132,8 @@ line id.
 
 ## Book-wide outputs: GCS and a manifest (set up before the run)
 
-Decided (AGENTS.md, "Data storage"): the test-set and ceiling files stay in git. The
+Decided (AGENTS.md, "Data storage"): the test-set and ceiling files stay in git (from step
+4b, in the private repo `grabar-ocr-private`). The
 book-wide outputs (about 14k lines × every engine and prompt version) go to GCS, tracked
 with DVC or with GCS plus a committed manifest of path, sha256, settings and date (step 5
 above adds the layout id). Set this up before the run starts.
