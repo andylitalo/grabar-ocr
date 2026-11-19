@@ -1,16 +1,15 @@
 # Privacy note: Grabar OCR labeler
 
-<!-- Draft v1, 2026-11-18, for the maintainer's review. Not legal advice. Shown at sign-up
+<!-- v1, 2026-11-19. Not legal advice. Shown at sign-up
      beside the contributor agreement (docs/labeler/contributor_agreement.md); it must stay
      true to how the labeler is built (docs/phase_12_hosted_labeler.md).
      {contact_email} is filled in by the labeler when it shows this page, from its deploy
      config (the LABELER_CONTACT_EMAIL environment variable), so the address isn't
      published in this public repo. -->
 
-**Version 1 · 2026-11-18**
+**Version 1 · 2026-11-19**
 
-This note says what the labeler records about you, why, and who can see it. It's meant to
-be clear rather than legalistic; ask if anything is unclear.
+This note says what the labeler records about you, why, and who can see it.
 
 ## What we record
 
@@ -72,7 +71,7 @@ your name is never committed to the public code repository.
 - **Your accuracy results and alert history** are kept with the project's records. If your
   account is deleted, they're kept only under the anonymous number.
 - **Backups** of the database are deleted after about a week, and **app logs** after about
-  a month. Logs never contain your email or the text you typed.
+  a month. Logs never contain your email.
 
 ## Your choices
 
