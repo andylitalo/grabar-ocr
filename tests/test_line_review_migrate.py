@@ -258,3 +258,52 @@ def test_a_rerun_of_repair_keeps_the_stale_predictions_once(dirs):
         migrate.after_verify(520, [mline("line_001", 110)], {"line_001": "p520.001"}, before)
     rec = json.loads((pred_dir / "corr-x.json").read_text())
     assert rec["lines"] == {} and len(rec["stale"]["p520~line_001"]) == 1
+
+
+# --- repair after re-verifying already verified pages (unclip, 2026-11-18) -----------------
+
+def repair_page_520(monkeypatch, dirs, now_y: int):
+    """Page 520 verified, line p520.001 now at ``now_y``; an OCR reading stored under its id."""
+    from dev.line_review import storage
+    seg_520(monkeypatch)
+    review = {"status": "verified", "ids": {"line_001": "p520.001"}}
+    monkeypatch.setattr(storage, "list_pages", lambda: [520])
+    monkeypatch.setattr(storage, "load_review", lambda page: review)
+    monkeypatch.setattr(storage, "materialized", lambda page, rv: [mline("line_001", now_y)])
+    tr.save_sample({"picks": []}, "ceiling")
+    pred_dir = dirs / "predictions" / "ceiling"
+    pred_dir.mkdir(parents=True)
+    (pred_dir / "paddle.json").write_text(json.dumps({"lines": {"p520.001": "Ա"}}))
+    return pred_dir / "paddle.json"
+
+
+def previous_at(y: int):
+    line = mline("line_001", y)
+    return lambda page: {"lines": [{"id": "p520.001", "boundary": line["boundary"]}]}
+
+
+def test_repair_with_the_previous_output_sets_aside_readings_of_a_reshaped_line(dirs, monkeypatch):
+    # The line was verified at y=100, read by OCR there, then reshaped and re-verified at
+    # y=110: the reading is of the old crop.
+    path = repair_page_520(monkeypatch, dirs, now_y=110)
+    migrate.repair(previous=previous_at(100))
+    rec = json.loads(path.read_text())
+    assert rec["lines"] == {} and list(rec["stale"]) == ["p520.001"]
+
+
+def test_repair_with_the_previous_output_keeps_readings_of_an_unchanged_line(dirs, monkeypatch):
+    path = repair_page_520(monkeypatch, dirs, now_y=100)
+    migrate.repair(previous=previous_at(100))
+    assert json.loads(path.read_text())["lines"] == {"p520.001": "Ա"}
+
+
+def test_repair_without_the_previous_output_takes_a_live_id_as_unchanged(dirs, monkeypatch):
+    path = repair_page_520(monkeypatch, dirs, now_y=110)
+    migrate.repair()
+    assert json.loads(path.read_text())["lines"] == {"p520.001": "Ա"}
+
+
+def test_repair_previous_stops_on_a_revision_that_isnt_a_commit():
+    # Every page would load as None and repair would quietly run as plain repair.
+    with pytest.raises(SystemExit, match="not a commit"):
+        migrate.previous_verified_at("no-such-revision")

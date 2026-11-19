@@ -31,6 +31,7 @@ def tmp_store(tmp_path, monkeypatch):
     (base / "page_500" / "segmentation.json").write_text(json.dumps(seg))
     monkeypatch.setattr(storage, "BASELINE_DIR", base)
     monkeypatch.setattr(storage, "REVIEWS_DIR", tmp_path / "reviews")
+    monkeypatch.setattr(storage, "RENDER_DIR", tmp_path / "renders")  # no auto unclip
     monkeypatch.setattr(storage, "VERIFIED_DIR", tmp_path / "verified")
     monkeypatch.setattr(storage, "BLANK_DIR", tmp_path / "blank")
     # Keep the transcription migration off the real data, should anything run it.

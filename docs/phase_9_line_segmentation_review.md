@@ -351,3 +351,83 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   The value always comes from the PDF page, never from Paddle's reading of the digits,
   which is often wrong (p.459 reads "458"). Only pages without a review file are seeded.
   Automatic initials (`initials.py`) were not ported.
+- **2026-11-17: boxes start pushed out over the letters they cut (`unclip.py`).** Paddle's
+  boxes often run along the tips of descenders (ր ը զ ց ղ դ ք յ) or just under a capital's
+  top, and a line crop whitens everything outside the box, so a 1-3 px cut can turn ր into
+  ը or ղ into դ. On pp.453-516 the baseline cut 2,257 letters (by 3 px or more) in 1,082
+  of 4,708 lines; the verified output still cuts about 2,000, so review by hand had fixed
+  about one in ten. A fresh review now starts with a `reshape` op (`"auto": true`) for
+  each line that cuts one of its own letters: the box takes in that letter's bounding box
+  + 2 px, only over its columns, never inside another line's box and never within 2 px of
+  another line's letter (a neighbour's capital often sticks out of its own box right
+  there). The rule and its thresholds are in the module docstring.
+  - **Measured.** Book-wide, as fresh reviews: letters cut by 3 px or more 5,511 → 120;
+    184 of 191 pages get ops (median 51 lines a page); no letter of another line newly
+    taken in; reading order unchanged on every page; 0.27 s a page. Padding every box
+    by 8 px instead left 231 of the 2,257 cut but took in 18.9k px of other lines' ink,
+    so it was rejected. The margin is 2 px because the page's grey anti-aliased edge is
+    exactly 1 px wide; 3-6 px freed no more letters and, before the guard, took in more
+    of the neighbours' letters.
+  - **Checked by the maintainer's flags.** All 8 lines flagged on fresh pp.518-519 (the
+    tops of Ո Շ Ե Չ Ի; descenders of Ե, զրկկղիիգ and րպկրկ) end with none of their
+    letters' ink outside the box (`test_flagged_lines_lose_no_ink`), and a sample of
+    unflagged extended lines took nothing from the lines around them.
+  - **Drop caps stay with review.** A blob no other box touches joins a line only up to
+    1.5 line heights. At 2 the rule took p.460's two-line drop cap into one line, raised
+    that box above the line before it and changed the reading order; `initial` attaches
+    drop caps. A decorated capital's swash that no box touches isn't attached either
+    (stray-blob rules picked the wrong line or junk); review catches it, and a tool for it
+    waits until it proves frequent.
+  - **Specks are left out (maintainer, 2026-11-18).** On the sample sheet, a few boxes
+    reached into the gap between lines for a speck or a stray print mark (pp.464, 479,
+    497). Of the 32,237 blobs the rule extended over book-wide, 144 were small (under 150
+    px) and sat entirely above or below their line's text band; looked at one by one,
+    most are real: apostrophes ՚, accents and end-of-word marks above the last letter,
+    and broken letter tips, all 0-5 px from a letter, the same as the specks. Two
+    narrower rules leave out 34 blobs on 30 pages, all specks or print marks in the gap
+    (one, a tilde under p.467's capital Ո, may be a ՟; leaving it out only keeps that line
+    as it was verified): a small blob **below the text** at least 3 px from the line's
+    letters (Grabar has no marks under the line, and a descender is part of its letter's
+    blob), and a small blob **at least as close to another line's letters** as to its
+    own. A speck above the text (p.497) can't be told from an accent this way and is still
+    taken in. Book-wide this leaves 147 letters cut by 3 px or more instead of 120 (the
+    difference is the specks); no other line's letters, no reading-order change.
+  - **Tips are carved out of the next box (maintainer, 2026-11-18).** After the speck rules,
+    113 of the 147 letters left cut had a tip (mostly descenders, յ ր կ ք) inside the next
+    line's box, where the rule doesn't extend. Now the tip, plus 2 px, is cut out of that
+    box, as `initial` does for a drop cap, and the letter's own box takes it in. Not
+    within 2 px of that box's own letters, and never splitting it. Book-wide: letters cut
+    by 3 px or more 147 → 48 (28 of them specks left out; 14 tips next to the other
+    line's letter; 2 that would split a box; 4 lose a pixel or two to rounding). Checked
+    by geometry (pixel centres in the polygons), not raster fill: no line loses any of its
+    own letters' ink, other lines' letters gain 7 px in all (at most 2 px a line, the
+    snapping sliver), reading order unchanged. Two fixes on the way: boxes are snapped to
+    the 0.1 px grid of the review file while they're built (notches had folded into
+    self-intersections when rounded, on 42 pages), and the 0.5 px simplify is gone (it
+    cut corners into carved notches, so 57 extensions were refused for the overlap).
+    0.3-0.9 s a fresh page. In review (PR #21) two guards were added: a tip is carved only
+    when its letter's own box then takes it in (p.628's line_044 had lost 639 px² for
+    line_043, whose extension was refused over a 3.5 px² sliver, so the tips sat in
+    neither box; 3 boxes on pp.550, 628, 636 keep their shape now), and a hole the
+    extension closes is filled only if it holds no guarded ink or other box (no page
+    changes). The 64 verified pages' ops are identical with both guards, so the
+    re-verified pp.453-516 stand.
+  - **Review UI and files.** The edit list shows the auto reshapes as one row ("N boxes
+    extended over cut letters (auto)"); its × removes them all. Reshaping such a line by
+    hand adds an ordinary reshape after its auto op, which wins; the auto op stays in the
+    row, and × leaves the hand reshape. Review files now write one op per line (polygons
+    inline, the rest unchanged `indent=1`), so 50-80 notched polygons stay about 70 lines
+    of file; older review files change format the next time they're saved.
+  - **Ceiling transcriptions.** 77 of the 107 ceiling lines typed on pages not yet
+    reviewed (519-640) are reshaped, so `migrate repair` sets their text aside as a
+    prefill to re-check and their old OCR readings (of the cut crops) as stale
+    (maintainer, 2026-11-17). Only pages without a review file are seeded, so the
+    verified pages (453-516) and p.517 keep their cut letters. For them,
+    `python -m dev.line_review.unclip_verified 453-516` adds the same ops to each verified
+    review and sends the page back to `fixed`, so it is re-verified by eye (ids are kept);
+    on pp.453-516 it extends 3,390 of 4,708 lines. After re-verifying, run
+    `migrate repair --previous REV`, REV being a commit with the earlier verified output:
+    plain `repair` takes a live verified id as unchanged, so the stored OCR readings of
+    its old, clipped crop would stay; with the earlier shapes they are set aside. That is a data step of its own, and it
+    sets aside the stored OCR predictions of the changed lines (Phase 11 is re-scored on
+    the new crops; maintainer, 2026-11-17).

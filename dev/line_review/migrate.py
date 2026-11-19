@@ -49,12 +49,14 @@ Every step is idempotent (a stale record already set aside isn't added again), s
 
     uv run python -m dev.line_review.migrate backfill   # fingerprint existing records
     uv run python -m dev.line_review.migrate repair     # after the layout review: move everything
+    uv run python -m dev.line_review.migrate repair --previous REV   # after re-verifying with new shapes
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import threading
 from datetime import datetime, timezone
 
@@ -307,10 +309,34 @@ def _move_file_predictions(path, target: dict, changed: dict) -> int:
     return 1
 
 
-def repair() -> None:
+def previous_verified_at(rev: str):
+    """A loader of each page's verified output as committed at git ``rev`` (None where
+    that commit has none), for ``repair(previous=…)``. Raises ``SystemExit`` if ``rev``
+    isn't a commit: every page would then load as None, and repair would quietly judge
+    live ids as unchanged, which is what ``--previous`` is for."""
+    checked = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}"],
+                             cwd=storage.REPO_ROOT, capture_output=True, text=True,
+                             encoding="utf-8", check=False)
+    if checked.returncode != 0:
+        raise SystemExit(f"--previous {rev}: not a commit in {storage.REPO_ROOT}")
+    rev = checked.stdout.strip()
+
+    def load(page: int) -> dict | None:
+        path = storage.verified_path(page).relative_to(storage.REPO_ROOT).as_posix()
+        shown = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=storage.REPO_ROOT,
+                               capture_output=True, text=True, encoding="utf-8", check=False)
+        return json.loads(shown.stdout) if shown.returncode == 0 else None
+    return load
+
+
+def repair(previous=None) -> None:
     """Move every verified page's data from its old keys to its line ids. Run with each
     review batch's data PR and once more after the whole layout review (before any new
-    OCR); idempotent, so run it again after a failure, until it prints nothing."""
+    OCR); idempotent, so run it again after a failure, until it prints nothing.
+
+    ``previous``: page -> its earlier verified output (``previous_verified_at``), when
+    verified pages were reopened and re-verified with new shapes (``unclip_verified``).
+    Without it a live id is taken as unchanged, so readings of its old crop would stay."""
     # Every predictions file first, so a run in another shell stops repair before it moves
     # anything (a run keeps its lines in memory and would save them under the old keys).
     for task in _tasks():
@@ -325,7 +351,8 @@ def repair() -> None:
         if review["status"] != "verified":
             continue
         lines = storage.materialized(page, review)
-        summary = after_verify(page, lines, review["ids"], before_shapes(page),
+        summary = after_verify(page, lines, review["ids"],
+                               before_shapes(page, previous(page) if previous else None),
                                retired=review.get("retired"))
         if summary:
             print(f"p{page}: {summary}")
@@ -364,7 +391,14 @@ def backfill() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("step", choices=["backfill", "repair"])
-    {"backfill": backfill, "repair": repair}[ap.parse_args().step]()
+    ap.add_argument("--previous", metavar="REV",
+                    help="repair: judge verified ids against the verified output at this git "
+                         "revision (after re-verifying pages with new shapes)")
+    args = ap.parse_args()
+    if args.step == "repair":
+        repair(previous_verified_at(args.previous) if args.previous else None)
+    else:
+        backfill()
 
 
 if __name__ == "__main__":
