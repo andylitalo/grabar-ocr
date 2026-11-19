@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p459.009",
+  "reason": "shape changed",
+  "replaced_by": "p459.009",
+  "at": "2026-11-18T21:52:24+00:00",
+  "record": {
+   "text": "որ յաթոռ. իւր սարօքն։ Աւետարան",
+   "status": "done",
+   "at": "2026-10-05T06:02:23+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "11c9c38bcf37287b"
+  }
+ },
+ {
+  "id": "p459.028",
+  "reason": "shape changed",
+  "replaced_by": "p459.028",
+  "at": "2026-11-18T21:52:24+00:00",
+  "record": {
+   "text": "նիւքս այսոքիւք։ Ալէ. Եհան զիս. Աւե-",
+   "status": "done",
+   "at": "2026-10-05T06:02:51+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "1d9ea32088d76ba4"
+  }
+ }
+]

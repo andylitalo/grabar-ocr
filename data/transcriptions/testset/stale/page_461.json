@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p461.014",
+  "reason": "shape changed",
+  "replaced_by": "p461.014",
+  "at": "2026-11-18T21:52:24+00:00",
+  "record": {
+   "text": "կատարեսցին։ Ալէ. Երանելիք են այնո-",
+   "status": "done",
+   "at": "2026-10-05T06:01:47+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "cc4746129280f027"
+  }
+ },
+ {
+  "id": "p461.035",
+  "reason": "shape changed",
+  "replaced_by": "p461.035",
+  "at": "2026-11-18T21:52:24+00:00",
+  "record": {
+   "text": "Վարդագոյն։ Ճաշու ժամամուտ, Ի տա-",
+   "status": "done",
+   "at": "2026-10-05T05:47:23+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "ef683a57cca8e4f5"
+  }
+ }
+]

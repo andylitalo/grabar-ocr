@@ -12,5 +12,34 @@
    "prefill": null,
    "geometry": "d90439270398bb84"
   }
+ },
+ {
+  "id": "p516.002",
+  "reason": "shape changed",
+  "replaced_by": "p516.002",
+  "at": "2026-11-18T21:52:42+00:00",
+  "record": {
+   "text": "ցո եւ Ապրեցո։ Մեսեդի Յարութեան,",
+   "status": "done",
+   "at": "2026-10-09T13:58:11+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "3ad3748ff7e6a9b0",
+   "migrated_from": "p516~line_002"
+  }
+ },
+ {
+  "id": "p516.072",
+  "reason": "shape changed",
+  "replaced_by": "p516.072",
+  "at": "2026-11-18T21:52:42+00:00",
+  "record": {
+   "text": "Չորեքշաբաթ. գկ. Հարց ակ. Օրհնեալ",
+   "status": "done",
+   "at": "2026-11-17T20:11:48+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "4f7bcb76d72fbfbe"
+  }
  }
 ]

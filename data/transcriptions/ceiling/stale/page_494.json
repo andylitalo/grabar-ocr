@@ -1,0 +1,32 @@
+[
+ {
+  "id": "p494.010",
+  "reason": "shape changed",
+  "replaced_by": "p494.010",
+  "at": "2026-11-18T21:52:35+00:00",
+  "record": {
+   "text": "17. Եւ ՚ի մելիտեայ. վ. 38. ՚ի նաւ անդր։",
+   "status": "done",
+   "at": "2026-10-09T05:13:59+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "462edadd8bfeee11",
+   "migrated_from": "p494~line_010"
+  }
+ },
+ {
+  "id": "p494.027",
+  "reason": "shape changed",
+  "replaced_by": "p494.027",
+  "at": "2026-11-18T21:52:35+00:00",
+  "record": {
+   "text": "Համբ. բձ. Կանխեցին. Զյարութիւն. և",
+   "status": "done",
+   "at": "2026-10-09T13:58:48+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "fe69ad995b3d1634",
+   "migrated_from": "p494~line_027"
+  }
+ }
+]

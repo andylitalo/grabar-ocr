@@ -12,5 +12,20 @@
    "prefill": null,
    "geometry": "89b57989591ea375"
   }
+ },
+ {
+  "id": "p489.084",
+  "reason": "shape changed",
+  "replaced_by": "p489.084",
+  "at": "2026-11-18T21:52:33+00:00",
+  "record": {
+   "text": "էր ՚ի կեսարիա վ. 23. եկին ընդ նմա։",
+   "status": "done",
+   "at": "2026-10-09T05:35:55+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "3bf951f075b16257",
+   "migrated_from": "p489~line_084"
+  }
  }
 ]
