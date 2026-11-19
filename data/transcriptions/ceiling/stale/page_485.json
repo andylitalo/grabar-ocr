@@ -1,0 +1,32 @@
+[
+ {
+  "id": "p485.045",
+  "reason": "shape changed",
+  "replaced_by": "p485.045",
+  "at": "2026-11-18T21:52:31+00:00",
+  "record": {
+   "text": "Ճաշու սաղ. Ժ. Ի տէր յուսացայ. Ապրեցո",
+   "status": "done",
+   "at": "2026-10-09T14:10:07+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "67585e78dc5bdabe",
+   "migrated_from": "p485~line_046"
+  }
+ },
+ {
+  "id": "p485.080",
+  "reason": "shape changed",
+  "replaced_by": "p485.080",
+  "at": "2026-11-18T21:52:31+00:00",
+  "record": {
+   "text": "զձեռսն եւ զոտսն։ Մեսե. Եկայք եւ տե-",
+   "status": "done",
+   "at": "2026-10-09T14:06:59+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "ef0ddaa65bf1deee",
+   "migrated_from": "p485~line_082"
+  }
+ }
+]

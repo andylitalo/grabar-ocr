@@ -1,0 +1,17 @@
+[
+ {
+  "id": "p510.025",
+  "reason": "shape changed",
+  "replaced_by": "p510.025",
+  "at": "2026-11-18T21:52:40+00:00",
+  "record": {
+   "text": "17. արդարութեան։ Մարգարէ Երեմ.",
+   "status": "done",
+   "at": "2026-10-09T05:19:28+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "3d335c3badde39fb",
+   "migrated_from": "p510~line_025"
+  }
+ }
+]

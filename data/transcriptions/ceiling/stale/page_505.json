@@ -1,0 +1,32 @@
+[
+ {
+  "id": "p505.015",
+  "reason": "shape changed",
+  "replaced_by": "p505.015",
+  "at": "2026-11-18T21:52:38+00:00",
+  "record": {
+   "text": "իւր սարօքն։ Ալէ. սաղ. Առաքես զոգի",
+   "status": "done",
+   "at": "2026-10-09T14:09:08+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "9f61af18af647f4f",
+   "migrated_from": "p505~line_015"
+  }
+ },
+ {
+  "id": "p505.089",
+  "reason": "shape changed",
+  "replaced_by": "p505.089",
+  "at": "2026-11-18T21:52:38+00:00",
+  "record": {
+   "text": "Ճաշու ժամամուտ, Վասն որոյ եւ մեք։",
+   "status": "done",
+   "at": "2026-10-09T14:07:46+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "8b570884cd78d662",
+   "migrated_from": "p505~line_090"
+  }
+ }
+]

@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p462.058",
+  "reason": "shape changed",
+  "replaced_by": "p462.058",
+  "at": "2026-11-18T21:52:25+00:00",
+  "record": {
+   "text": "զԱպրեցո։ Լոյս զուարթ։ Մեսեդի Գալըս-",
+   "status": "done",
+   "at": "2026-10-05T06:02:10+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "25c9be269208ff3f"
+  }
+ },
+ {
+  "id": "p462.079",
+  "reason": "shape changed",
+  "replaced_by": "p462.079",
+  "at": "2026-11-18T21:52:25+00:00",
+  "record": {
+   "text": "օրէնքն դաստիարակք. վ. 29. ըստ աւե-",
+   "status": "done",
+   "at": "2026-10-05T06:01:00+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "ad612ae508bd5ebe"
+  }
+ }
+]

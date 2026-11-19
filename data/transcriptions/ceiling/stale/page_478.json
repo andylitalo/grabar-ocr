@@ -1,0 +1,47 @@
+[
+ {
+  "id": "p478.023",
+  "reason": "shape changed",
+  "replaced_by": "p478.023",
+  "at": "2026-11-18T21:52:29+00:00",
+  "record": {
+   "text": "սուրբ խաչիդ. եւ այլն նոյնպէս։ Փառք",
+   "status": "done",
+   "at": "2026-10-09T04:51:18+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "fbd12871e013b757",
+   "migrated_from": "p478~line_023"
+  }
+ },
+ {
+  "id": "p478.063",
+  "reason": "shape changed",
+  "replaced_by": "p478.063",
+  "at": "2026-11-18T21:52:29+00:00",
+  "record": {
+   "text": "սանել զնան. փոխ, Երանի որ խորհի։",
+   "status": "done",
+   "at": "2026-10-09T13:57:45+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "5c973d228fa7700b",
+   "migrated_from": "p478~line_063"
+  }
+ },
+ {
+  "id": "p478.091",
+  "reason": "shape changed",
+  "replaced_by": "p478.091",
+  "at": "2026-11-18T21:52:29+00:00",
+  "record": {
+   "text": "վ. 28. հաւատովք ՚ի փրկութիւն։ Երգ՝",
+   "status": "done",
+   "at": "2026-10-09T05:21:40+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "9f99a6cfc91e45cf",
+   "migrated_from": "p478~line_091"
+  }
+ }
+]

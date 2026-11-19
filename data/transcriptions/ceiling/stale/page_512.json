@@ -1,0 +1,17 @@
+[
+ {
+  "id": "p512.021",
+  "reason": "shape changed",
+  "replaced_by": "p512.021",
+  "at": "2026-11-18T21:52:41+00:00",
+  "record": {
+   "text": "՚ի յԱստուածաշունչն, այլ Յայսմաւուրքէն է ե-",
+   "status": "done",
+   "at": "2026-10-09T14:41:46+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "94524a93dbac4390",
+   "migrated_from": "p512~line_021"
+  }
+ }
+]
