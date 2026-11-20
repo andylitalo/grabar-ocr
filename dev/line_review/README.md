@@ -50,6 +50,7 @@ Editing (fixing only):
 - **Delete all:** for blank pages.
 - **Cmd+Z** undoes; the × next to an edit in the side panel removes just that edit.
 - **← / →** change page.
+- **O** jumps to the next box that shows another line's letters (below).
 
 **Paddle's junk boxes** never reach the screen (`duplicates.py`): a box at least half
 inside another line (a line boxed twice, or a speck inside a line), and a box smaller
@@ -59,12 +60,23 @@ line to delete.
 A red banner flags a page whose blank marker (`data/pages/blank/`) disagrees with its
 lines, and a page whose baseline changed under its review (edits are then disabled).
 
+**Boxes that show another line's letters** (`overlap.py`): when a line's crop would hold
+10 px or more of a neighbour's letters, its box gets a thick red dashed outline, those
+pixels are painted red (the rest of that letter stays black), and each piece is ringed.
+The banner lists them ("24 (75 px of 23)": line 24 holds 75 px of line 23's letters),
+hovering the line repeats it, **O** steps through them, and the page list shows the count
+(⚠3). It's a warning, not a block: verify a page whose flags are fine as they are.
+Overlap in the blank gap between lines isn't flagged; it costs a crop nothing. A letter
+two boxes share goes to the one holding more of it (an exact tie: one of them, the same
+on every run), so taking in more of a neighbour's letter never clears a flag.
+
 ## Files
 
 ```
 materialize.py       baseline + ops -> lines; id minting; verified record (pure)
 unclip.py            fresh-review reshapes over letters a box cuts (page image -> ops)
 unclip_verified.py   adds those reshapes to verified pages and sends them back to fixed
+overlap.py           flags boxes whose crop shows another line's letters (a review warning)
 duplicates.py        drops boxes inside other lines and boxes smaller than a character, before the ops
 page_number.py       finds the printed page number so a fresh review starts with it marked
 storage.py           paths, review read/write, status transitions, verified output

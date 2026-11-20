@@ -189,7 +189,9 @@ def _unclip_ops(page: int, ops: list[dict]) -> list[dict]:
             log.warning("p%d: no page render at %s, so its fresh review starts without the "
                         "unclip reshapes (boxes as Paddle cut them)", page, path)
         gray = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE) if path.exists() else None
-        lines = materialized_page(page, ops, [])["lines"] if gray is not None else []
+        # Not through the page cache: the result is kept above, and these ops (before the
+        # unclip reshapes) aren't what the reviewer's requests look up.
+        lines = materialized_page(page, ops, [], cache=False)["lines"] if gray is not None else []
         _unclip_cache[key] = unclip.auto_ops(lines, gray) if lines else []
     return copy.deepcopy(_unclip_cache[key])
 
@@ -291,20 +293,30 @@ _page_cache: dict[tuple[str, str], dict] = {}
 _PAGE_CACHE_SIZE = 16
 
 
-def materialized_page(page: int, ops: list[dict], section_titles: list[dict]) -> dict:
-    """``mz.materialize_page`` of the page's baseline (a copy; safe to change)."""
+def materialized_page(page: int, ops: list[dict], section_titles: list[dict],
+                      cache: bool = True) -> dict:
+    """``mz.materialize_page`` of the page's baseline (a copy; safe to change).
+
+    The cache is shared by the request threads and ``overlap.warm``, so each access is one
+    dict operation: the page is looked up once and the thread works from its own reference,
+    and evicting tolerates an entry another thread evicted first. Another thread can then
+    only cost a recompute, never a ``KeyError``. ``cache=False`` neither reads nor fills
+    it (``overlap.warm``, which goes through every page, would push out the reviewer's)."""
     key = (baseline_sha256(page), json.dumps([ops, section_titles], sort_keys=True))
-    if key not in _page_cache:
+    result = _page_cache.get(key) if cache else None
+    if result is None:
         result = mz.materialize_page(mz.baseline_lines(load_baseline(page)), ops,
                                      section_titles)  # raises OpError (not cached)
-        if len(_page_cache) >= _PAGE_CACHE_SIZE:
-            _page_cache.pop(next(iter(_page_cache)))
-        _page_cache[key] = result
-    return copy.deepcopy(_page_cache[key])
+        if cache:
+            if len(_page_cache) >= _PAGE_CACHE_SIZE:
+                _page_cache.pop(next(iter(_page_cache), None), None)
+            _page_cache[key] = result
+    return copy.deepcopy(result)
 
 
-def materialized(page: int, review: dict) -> list[dict]:
-    return materialized_page(page, review["ops"], review.get("section_titles", []))["lines"]
+def materialized(page: int, review: dict, cache: bool = True) -> list[dict]:
+    return materialized_page(page, review["ops"], review.get("section_titles", []),
+                             cache=cache)["lines"]
 
 
 def save_ops(page: int, ops: list[dict], section_titles: list[dict],

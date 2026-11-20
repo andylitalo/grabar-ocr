@@ -6,8 +6,11 @@
 const COLORS = {  // must match the --paddle/--fill/--edited/--ghost/--clean vars in CSS
   paddle: "#3fb37f", fill: "#4c8bf5", edited: "#e05ac4", ghost: "#9aa0ac",
   clean: "#ff9f1c", select: "#ffffff", initial: "#a06cff", title: "#f0b429", split: "#ff5d5d",
-  pageno: "#2fbfbf", brk: "#ff5d5d",
+  pageno: "#2fbfbf", brk: "#ff5d5d", foreign: "#ff2d2d",
 };
+// Another line's ink inside a box (overlap.py): painted over those pixels only, so the
+// rest of the letter, outside the box, stays black and shows whose letter it is.
+const FOREIGN_INK = "rgba(255, 45, 45, 0.7)";
 const STATUS_GLYPH = { unreviewed: "·", fixing: "✎", fixed: "◐", verified: "✓" };
 const DRAG_THRESHOLD = 5;  // display px of movement before a press counts as a drag
 const MIN_BOX = 8;         // ignore full-res boxes smaller than this (stray clicks)
@@ -28,6 +31,8 @@ const state = {
   history: [],          // undo stack of {ops, titles}
   hoverKey: null,
   scale: 1,
+  flagged: {},          // page -> lines whose crop shows another line's letters
+  flagAt: null,         // O: {key, order} of the flagged line jumped to last
 };
 let drag = null;           // in-progress press/drag (display px)
 // In-progress reshape of the one selected line: drag a vertex, an edge, or the body.
@@ -277,6 +282,7 @@ function draw() {
     }
   }
 
+  const flagged = flaggedKeys();
   for (const l of state.data.lines) {
     const color = lineColor(l);
     const hover = l.key === state.hoverKey;
@@ -301,6 +307,14 @@ function draw() {
       }
     }
     if (l.key === state.splitKey) strokeBox(l.bbox, COLORS.split, 3, [4, 3]);
+    if (flagged.has(l.key)) {
+      tracePolygon(boundary);
+      ctx.setLineDash([7, 4]);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = COLORS.foreign;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     // reading-order number at the line's left edge
     ctx.font = clean ? "bold 13px sans-serif" : "11px sans-serif";
     const tag = String(l.order);
@@ -312,6 +326,21 @@ function draw() {
     }
     ctx.fillStyle = color;
     ctx.fillText(tag, tx, ty);
+  }
+
+  // Each intruding piece of a letter is ringed (a 2 px tip is hard to see at page scale)
+  // and its pixels painted.
+  const px = Math.max(1, toDisp(1));
+  ctx.fillStyle = FOREIGN_INK;
+  for (const f of state.data.foreign_ink || []) {
+    for (const [x, y] of f.pixels) ctx.fillRect(toDisp(x), toDisp(y), px, px);
+  }
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = COLORS.foreign;
+  for (const f of state.data.foreign_ink || []) {
+    for (const [x1, y1, x2, y2] of f.spots) {
+      ctx.strokeRect(toDisp(x1) - 3, toDisp(y1) - 3, toDisp(x2 - x1 + 1) + 6, toDisp(y2 - y1 + 1) + 6);
+    }
   }
 
   if (!clean) {
@@ -444,13 +473,61 @@ function renderHeader() {
   for (const [keep, drop] of d.duplicates || []) {
     warn.push(`Lines ${keep} and ${drop} are the same line boxed twice (one hides the other): delete ${drop}.`);
   }
+  if ((d.foreign_ink || []).length) {
+    const each = d.foreign_ink.map((f) => `${f.line} (${f.px} px of ${f.other})`).join(", ");
+    warn.push(`Boxes showing another line's letters, in red: ${each}. O = next.`);
+  }
   if (d.page_number && d.page_number.value !== d.expected_page_number) {
     warn.push(`Printed page number ${d.page_number.value} isn't the expected ${d.expected_page_number} (PDF page \u2212 4): check it.`);
   }
   $("banner").textContent = warn.join("  ");
 }
 
-const pageLabel = (p) => `${STATUS_GLYPH[state.statuses[p] || "unreviewed"]} page ${p}`;
+const pageLabel = (p) => `${STATUS_GLYPH[state.statuses[p] || "unreviewed"]} page ${p}` +
+  (state.flagged[p] ? `  ⚠${state.flagged[p]}` : "");
+
+// Keys of the lines whose crop shows another line's letters (keys, not reading-order
+// numbers: an edit can renumber the lines).
+const flaggedKeys = () => new Set((state.data?.foreign_ink || []).map((f) => f.line_key));
+
+function flagText(order) {
+  return (state.data?.foreign_ink || []).filter((f) => f.line === order)
+    .map((f) => `line ${order}: ${f.px} px of line ${f.other}'s letters`).join("; ");
+}
+
+function refreshPageLabels() {
+  for (const opt of $("page-select").options) opt.textContent = pageLabel(Number(opt.value));
+}
+
+// The page list's flag counts, as far as the server has computed them (overlap.warm).
+async function refreshFlags() {
+  try {
+    const { flagged } = await api("GET", "/api/pages");
+    state.flagged = Object.fromEntries(Object.entries(flagged).map(([p, n]) => [Number(p), n]));
+    if (state.data) state.flagged[state.page] = flaggedKeys().size;
+    refreshPageLabels();
+  } catch (e) { /* the counts are a convenience */ }
+}
+
+// O: select the next flagged line after the one jumped to last (in reading order,
+// wrapping) and scroll it into view. By position, not by index into the list, so fixing
+// a flag doesn't make the next O skip one: the list has shrunk, but the next line after
+// the fixed one is still the next flag.
+function nextFlag() {
+  const keys = flaggedKeys();
+  const flagged = state.data.lines.filter((x) => keys.has(x.key));   // in reading order
+  if (!flagged.length) { setHint("No box on this page shows another line's letters."); return; }
+  const last = state.flagAt &&
+    (state.data.lines.find((x) => x.key === state.flagAt.key)?.order ?? state.flagAt.order);
+  const l = flagged.find((x) => x.order > (last || 0)) || flagged[0];
+  state.flagAt = { key: l.key, order: l.order };
+  if (editable()) { state.selection = new Set([l.key]); }
+  state.hoverKey = l.key;
+  const top = canvas.getBoundingClientRect().top + window.scrollY + toDisp(l.bbox[1]);
+  window.scrollTo(0, Math.max(0, top - window.innerHeight / 3));
+  draw();
+  setHint(flagText(l.order));   // after draw, which sets the select tool's hint
+}
 
 function render() {
   renderHeader();
@@ -463,6 +540,8 @@ function applyPayload(d) {
   state.ops = clone(d.ops);
   state.titles = clone(d.section_titles);
   state.statuses[state.page] = d.status;
+  state.flagged[state.page] = flaggedKeys().size;
+  if ($("page-select").options.length) refreshPageLabels();
   const keys = new Set(d.lines.map((l) => l.key));
   state.selection = new Set([...state.selection].filter((k) => keys.has(k)));
   if (state.splitKey && !keys.has(state.splitKey)) state.splitKey = null;
@@ -697,7 +776,9 @@ canvas.addEventListener("mousemove", (ev) => {
   const key = l ? l.key : null;
   if (key !== state.hoverKey) {
     state.hoverKey = key;
-    if (!editable() && l) setHint(l.id ? `${l.id}  (${l.key})` : l.key);
+    const flag = l ? flagText(l.order) : "";
+    if (!editable() && l) setHint((l.id ? `${l.id}  (${l.key})` : l.key) + (flag ? `  ${flag}` : ""));
+    else if (flag) setHint(flag);
     draw();
   }
 });
@@ -806,6 +887,7 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "ArrowLeft") { step(-1); return; }
   if (ev.key === "ArrowRight") { step(1); return; }
   if (ev.key === "Enter") { ev.preventDefault(); advance(); return; }
+  if (ev.key === "o" || ev.key === "O") { nextFlag(); return; }
   if (!editable()) {
     if (ev.key === "r" || ev.key === "R") resume();
     return;
@@ -843,7 +925,9 @@ async function showPage(page) {
   state.selection.clear();
   state.splitKey = null;
   state.hoverKey = null;
+  state.flagAt = null;
   applyPayload(await api("GET", `/api/pages/${page}`));
+  refreshFlags();
   await new Promise((resolve) => {
     pageImg.onload = resolve;
     pageImg.onerror = resolve;
@@ -865,7 +949,8 @@ function showStep(delta) {
 }
 
 async function init() {
-  const { statuses } = await api("GET", "/api/pages");
+  const { statuses, flagged } = await api("GET", "/api/pages");
+  state.flagged = Object.fromEntries(Object.entries(flagged || {}).map(([p, n]) => [Number(p), n]));
   state.statuses = Object.fromEntries(Object.entries(statuses).map(([p, s]) => [Number(p), s]));
   state.pages = Object.keys(state.statuses).map(Number).sort((a, b) => a - b);
   $("page-select").innerHTML = state.pages.map((p) => `<option value="${p}">${pageLabel(p)}</option>`).join("");

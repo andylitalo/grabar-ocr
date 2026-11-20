@@ -123,7 +123,7 @@ def test_verify_over_the_api_writes_the_verified_file(client):
     assert d["status"] == "verified"
     assert all(l["id"].startswith(f"p{PAGE}.") for l in d["lines"])
     assert storage.verified_path(PAGE).exists()
-    assert client.get("/api/pages").json() == {"statuses": {str(PAGE): "verified"}}
+    assert client.get("/api/pages").json()["statuses"] == {str(PAGE): "verified"}
 
 
 def test_changed_baseline_shows_read_only_and_refuses_saves(client):
