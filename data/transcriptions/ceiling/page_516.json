@@ -1,1 +1,18 @@
-{}
+{
+ "p516.002": {
+  "text": "ցո եւ Ապրեցո։ Մեսեդի Յարութեան,",
+  "status": "done",
+  "at": "2026-11-20T15:10:50+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "40eee6133db28e47"
+ },
+ "p516.072": {
+  "text": "Չորեքշաբաթ. գկ. Հարց ակ. Օրհնեալ",
+  "status": "done",
+  "at": "2026-11-20T15:11:15+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "6cd1c7f76bc068bf"
+ }
+}

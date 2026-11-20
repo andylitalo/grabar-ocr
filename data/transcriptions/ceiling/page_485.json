@@ -1,4 +1,12 @@
 {
+ "p485.045": {
+  "text": "Ճաշու սաղ. Ժ. Ի տէր յուսացայ. Ապրեցո",
+  "status": "done",
+  "at": "2026-11-20T15:02:11+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "f76b9c3296ae82dd"
+ },
  "p485.057": {
   "text": "ցին։ Մեսե. Երգեցէք տեառն. Մտէք ա-",
   "status": "done",
@@ -7,5 +15,13 @@
   "prefill": null,
   "geometry": "96dac4d5206d1422",
   "migrated_from": "p485~line_059"
+ },
+ "p485.080": {
+  "text": "զձեռսն եւ զոտսն։ Մեսե. Եկայք եւ տե-",
+  "status": "done",
+  "at": "2026-11-20T15:02:39+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "a595c87ec35860ae"
  }
 }
