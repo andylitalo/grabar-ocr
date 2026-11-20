@@ -1,4 +1,12 @@
 {
+ "p491.034": {
+  "text": "ւետարան Ղուկ. Թ. 51. Եւ եղեւ ՚ի կա-",
+  "status": "done",
+  "at": "2026-11-20T15:19:47+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "bee65a904fe7ce29"
+ },
  "p491.046": {
   "text": "պարտաւորեսցիս։ Մեսե. Աստուած աս-",
   "status": "done",
@@ -7,5 +15,13 @@
   "prefill": null,
   "geometry": "392b3f2e0c83d401",
   "migrated_from": "p491~line_046"
+ },
+ "p491.054": {
+  "text": "վ. 24. եւ ոչ լուան։ Ճաշու սաղ. ՀԳ.",
+  "status": "done",
+  "at": "2026-11-20T15:04:57+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "051a698f35a5dbf3"
  }
 }

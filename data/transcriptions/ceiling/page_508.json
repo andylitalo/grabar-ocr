@@ -1,1 +1,18 @@
-{}
+{
+ "p508.050": {
+  "text": "Առակ. Թ. 1. Իմաստութիւն շինեաց. վ.",
+  "status": "done",
+  "at": "2026-11-20T15:08:18+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "f23162eaa2682e2d"
+ },
+ "p508.052": {
+  "text": "Զաքար Գ. 7. Այսպէս ասէ տէր. վ. Դ.",
+  "status": "done",
+  "at": "2026-11-20T15:08:48+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "3b52365f26db00c2"
+ }
+}
