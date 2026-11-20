@@ -66,7 +66,9 @@ pixels are painted red (the rest of that letter stays black), and each piece is 
 The banner lists them ("24 (75 px of 23)": line 24 holds 75 px of line 23's letters),
 hovering the line repeats it, **O** steps through them, and the page list shows the count
 (⚠3). It's a warning, not a block: verify a page whose flags are fine as they are.
-Overlap in the blank gap between lines isn't flagged; it costs a crop nothing.
+Overlap in the blank gap between lines isn't flagged; it costs a crop nothing. A letter
+two boxes share goes to the one holding more of it (an exact tie: one of them, the same
+on every run), so taking in more of a neighbour's letter never clears a flag.
 
 ## Files
 

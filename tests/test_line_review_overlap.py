@@ -77,10 +77,47 @@ def test_less_than_min_px_is_not_flagged():
     assert overlap.foreign_ink([UPPER, LOWER], page(*UPPER_LETTERS, desc, *LOWER_LETTERS)) == []
 
 
-def test_a_letter_split_between_two_boxes_belongs_to_neither():
-    # Half in each box: neither owns it, so neither is flagged for it.
-    split = (200, 140, 215, 190)
-    assert overlap.foreign_ink([UPPER, LOWER], page(*UPPER_LETTERS, split, *LOWER_LETTERS)) == []
+def test_growing_the_box_over_more_of_the_letter_keeps_it_flagged():
+    # The lower box's top dragged up into the descender instead of down out of it: it now
+    # holds 420 of the letter's 1,020 px, too much for unclip's rule to give the letter
+    # to the upper line, but the crop shows more of it than before, so it stays flagged.
+    desc = (200, 110, 215, 178)
+    gray = page(*UPPER_LETTERS, desc, *LOWER_LETTERS)
+    f = overlap.foreign_ink([UPPER, line("line_002", 40, 150, 300, 230)], gray)
+    assert [(x["line"], x["other"], x["px"]) for x in f] == [("line_002", "line_001", 28 * 15)]
+
+
+def test_shrinking_the_box_out_of_the_letter_clears_the_flag():
+    desc = (200, 110, 215, 178)
+    gray = page(*UPPER_LETTERS, desc, *LOWER_LETTERS)
+    assert overlap.foreign_ink([UPPER, line("line_002", 40, 178, 300, 230)], gray) == []
+
+
+# A letter exactly half in each box: rows 150-160 in the upper box, 170-180 in the lower.
+TIED = (200, 150, 215, 181)
+
+
+def test_a_letter_split_exactly_in_half_flags_one_of_the_two():
+    f = overlap.foreign_ink([UPPER, LOWER], page(*UPPER_LETTERS, TIED, *LOWER_LETTERS))
+    assert len(f) == 1 and f[0]["px"] == 11 * 15
+    assert {f[0]["line"], f[0]["other"]} == {"line_001", "line_002"}
+
+
+def test_the_tiebreak_is_the_same_on_every_run_and_in_any_line_order():
+    gray = page(*UPPER_LETTERS, TIED, *LOWER_LETTERS)
+    pick = lambda ls: [(x["line"], x["other"]) for x in overlap.foreign_ink(ls, gray)]
+    assert pick([UPPER, LOWER]) == pick([UPPER, LOWER]) == pick([LOWER, UPPER])
+
+
+def test_the_tiebreak_differs_from_letter_to_letter():
+    # Seeded by the letter's position, not always the upper (or the first) line.
+    winners = set()
+    for x in range(190, 290, 6):
+        gray = page(*UPPER_LETTERS, (x, 150, x + 5, 181), *LOWER_LETTERS)
+        f = overlap.foreign_ink([UPPER, LOWER], gray)
+        if f:
+            winners.add(f[0]["other"])
+    assert winners == {"line_001", "line_002"}
 
 
 def test_flags_are_cached_until_the_edits_change(monkeypatch, tmp_path):
@@ -104,9 +141,10 @@ def test_flags_are_cached_until_the_edits_change(monkeypatch, tmp_path):
 
 # --- the review app -------------------------------------------------------------------
 
-def test_the_page_payload_and_page_list_carry_the_flags(monkeypatch, tmp_path):
+@pytest.fixture
+def one_page(monkeypatch, tmp_path):
+    """Page 500 in a temporary store: UPPER and LOWER, LOWER showing UPPER's descender."""
     import cv2
-    from dev.line_review import app as app_mod
     base = tmp_path / "baseline"
     (base / "page_500").mkdir(parents=True)
     seg = {"page": 500, "tool": "paddle-filled", "width": W, "height": H, "lines": [
@@ -126,10 +164,30 @@ def test_the_page_payload_and_page_list_carry_the_flags(monkeypatch, tmp_path):
     cv2.imwrite(str(tmp_path / "renders" / "page_500" / "render.png"),
                 page(*UPPER_LETTERS, (200, 110, 215, 178), *LOWER_LETTERS))
     storage.save_ops(500, [], [])
+    monkeypatch.setattr(storage, "_page_cache", {})
+
+
+def test_the_page_payload_and_page_list_carry_the_flags(one_page, monkeypatch):
+    from dev.line_review import app as app_mod
     client = TestClient(app_mod.app)
     d = client.get("/api/pages/500").json()
     assert [(f["line"], f["other"], f["px"]) for f in d["foreign_ink"]] == [(2, 1, 8 * 15)]
+    assert [(f["line_key"], f["other_key"]) for f in d["foreign_ink"]] == [("line_002", "line_001")]
     assert client.get("/api/pages").json()["flagged"] == {"500": 1}
+
+    # A warning never stops the page loading (nor a save returning its payload).
+    def broken(*a):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(overlap, "page_flags", broken)
+    r = client.get("/api/pages/500")
+    assert r.status_code == 200 and r.json()["foreign_ink"] == [] and len(r.json()["lines"]) == 2
+
+
+def test_warming_the_flags_leaves_the_page_cache_alone(one_page):
+    # Going through every page would push the reviewer's out of the small page cache.
+    overlap.warm()
+    assert overlap.flagged_counts() == {500: 1}
+    assert storage._page_cache == {}
 
 
 # --- the real book ------------------------------------------------------------------

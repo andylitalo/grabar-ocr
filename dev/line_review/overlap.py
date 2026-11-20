@@ -8,8 +8,11 @@ unclip re-verify of pp.453-516 was checked at (28 lines -> 10, all Paddle's own 
 docs/phase_9_line_segmentation_review.md).
 
 - **Whose letter:** ``unclip``'s ownership rule (a box holds most of the blob, or is the
-  only box touching it). A letter split between boxes, dust and rules belong to no line
-  and are never counted.
+  only box touching it); a letter that rule leaves to no one goes to the box holding the
+  most of it. Otherwise a box that took in a third of a neighbour's letter would own
+  nothing and clear its own flag, though its crop shows more of that letter than before.
+  An exact tie goes to one of the tied lines, picked by a hash of the letter's position,
+  so it's arbitrary but the same on every run. Specks, dust and rules are never counted.
 - **In the crop:** the polygon mask ``crops.line_crop`` whitens with (PIL fill, edge
   pixels included), so the count is exactly the foreign ink the crop shows.
 
@@ -23,6 +26,7 @@ import hashlib
 import json
 import logging
 import math
+import zlib
 
 import cv2
 import numpy as np
@@ -56,9 +60,7 @@ def foreign_ink(lines: list[dict], gray: np.ndarray) -> list[dict]:
         return []
     polys = [unclip._shape(l["boundary"]) for l in lines]
     page = unclip._Page(polys, gray)
-    owner = np.full(page.n, -1)
-    for j, p in enumerate(polys):
-        owner[page.owned(j, unclip._height(p))] = j
+    owner = _owners(page, polys, [l["key"] for l in lines])
     out = []
     for i, l in enumerate(lines):
         (sy, sx), m = _crop_mask(l["boundary"], gray.shape)
@@ -78,6 +80,26 @@ def foreign_ink(lines: list[dict], gray: np.ndarray) -> list[dict]:
                 out.append({"line": l["key"], "other": lines[j]["key"], "px": int(len(pts)),
                             "pixels": pts.tolist(), "spots": spots})
     return out
+
+
+def _owners(page: unclip._Page, polys: list, keys: list[str]) -> np.ndarray:
+    """The line index owning each blob (-1: none). ``unclip``'s rule first; a letter it
+    leaves to no one goes to the box holding the most of it, an exact tie to one of the
+    tied lines picked by a hash of the letter's position (not by line order, which an
+    edit can renumber). Only letter-sized blobs (``unclip.STRAY_AREA``): a speck in the
+    gap between two boxes is no one's (p.506)."""
+    owner = np.full(page.n, -1)
+    for j, p in enumerate(polys):
+        owner[page.owned(j, unclip._height(p))] = j
+    most = page.counts.max(axis=0)
+    h = page.stats[:, cv2.CC_STAT_HEIGHT]
+    for c in np.nonzero((owner < 0) & (most > 0) & (page.area >= unclip.STRAY_AREA))[0]:
+        tied = sorted(np.nonzero(page.counts[:, c] == most[c])[0], key=lambda j: keys[j])
+        x, y = page.stats[c][cv2.CC_STAT_LEFT], page.stats[c][cv2.CC_STAT_TOP]
+        j = tied[zlib.crc32(f"{x},{y}".encode()) % len(tied)]
+        if h[c] <= unclip.MAX_H * unclip._height(polys[j]):   # not a rule
+            owner[c] = j
+    return owner
 
 
 # --- per page, for the review app ------------------------------------------------------
@@ -119,6 +141,8 @@ def warm() -> None:
     for page in storage.list_pages():
         try:
             review = storage.load_review(page)
-            page_flags(page, review, storage.materialized(page, review))
+            # cache=False: going through every page would push the reviewer's out of
+            # storage's small page cache
+            page_flags(page, review, storage.materialized(page, review, cache=False))
         except Exception as e:  # a page that can't materialize shows its error when opened
             log.warning("p%d: foreign-ink flags not computed: %s", page, e)

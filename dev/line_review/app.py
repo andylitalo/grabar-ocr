@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import logging
 import threading
 from pathlib import Path
 
@@ -65,8 +66,26 @@ class RecheckRequest(BaseModel):
     text: str
 
 
+log = logging.getLogger(__name__)
+
 CONTRIBUTOR = "maintainer"  # set by --contributor; stored as ``by`` on each transcription
 SETS = (tr.TESTSET, "ceiling")  # line sets the transcription page can serve
+
+
+def _foreign_ink(page: int, review: dict, lines: list[dict], order: dict[str, int]) -> list[dict]:
+    """Lines whose crop shows another line's letters (overlap.py): a warning to look at.
+    ``line``/``other`` are reading-order numbers to show; ``line_key``/``other_key`` name
+    the lines, which an edit can renumber. A warning never stops the page loading or a
+    save returning: if it fails, the page shows no flags and the error is logged."""
+    if not lines:
+        return []
+    try:
+        flags = overlap.page_flags(page, review, lines)
+    except Exception:
+        log.exception("p%d: foreign-ink flags not computed", page)
+        return []
+    return [{**f, "line": order[f["line"]], "other": order[f["other"]],
+             "line_key": f["line"], "other_key": f["other"]} for f in flags]
 
 
 def _payload(page: int, review: dict) -> dict:
@@ -106,9 +125,7 @@ def _payload(page: int, review: dict) -> dict:
         "baseline_changed": storage.baseline_changed(review),
         "blank_marker": storage.blank_marker(page),
         "error": error,
-        # lines whose crop shows another line's letters (overlap.py): a warning to look at
-        "foreign_ink": [{**f, "line": order[f["line"]], "other": order[f["other"]]}
-                        for f in overlap.page_flags(page, review, lines)] if lines else [],
+        "foreign_ink": _foreign_ink(page, review, lines, order),
         "used_add_keys": sorted(storage.used_add_keys(review)),
     }
 

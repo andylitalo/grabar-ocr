@@ -32,7 +32,7 @@ const state = {
   hoverKey: null,
   scale: 1,
   flagged: {},          // page -> lines whose crop shows another line's letters
-  flagIndex: -1,        // O: the flagged line jumped to last
+  flagAt: null,         // O: {key, order} of the flagged line jumped to last
 };
 let drag = null;           // in-progress press/drag (display px)
 // In-progress reshape of the one selected line: drag a vertex, an edge, or the body.
@@ -282,6 +282,7 @@ function draw() {
     }
   }
 
+  const flagged = flaggedKeys();
   for (const l of state.data.lines) {
     const color = lineColor(l);
     const hover = l.key === state.hoverKey;
@@ -306,7 +307,7 @@ function draw() {
       }
     }
     if (l.key === state.splitKey) strokeBox(l.bbox, COLORS.split, 3, [4, 3]);
-    if (flaggedOrders().has(l.order)) {
+    if (flagged.has(l.key)) {
       tracePolygon(boundary);
       ctx.setLineDash([7, 4]);
       ctx.lineWidth = 3;
@@ -485,8 +486,9 @@ function renderHeader() {
 const pageLabel = (p) => `${STATUS_GLYPH[state.statuses[p] || "unreviewed"]} page ${p}` +
   (state.flagged[p] ? `  ⚠${state.flagged[p]}` : "");
 
-// Reading-order numbers of the lines whose crop shows another line's letters.
-const flaggedOrders = () => new Set((state.data?.foreign_ink || []).map((f) => f.line));
+// Keys of the lines whose crop shows another line's letters (keys, not reading-order
+// numbers: an edit can renumber the lines).
+const flaggedKeys = () => new Set((state.data?.foreign_ink || []).map((f) => f.line_key));
 
 function flagText(order) {
   return (state.data?.foreign_ink || []).filter((f) => f.line === order)
@@ -502,17 +504,23 @@ async function refreshFlags() {
   try {
     const { flagged } = await api("GET", "/api/pages");
     state.flagged = Object.fromEntries(Object.entries(flagged).map(([p, n]) => [Number(p), n]));
-    if (state.data) state.flagged[state.page] = flaggedOrders().size;
+    if (state.data) state.flagged[state.page] = flaggedKeys().size;
     refreshPageLabels();
   } catch (e) { /* the counts are a convenience */ }
 }
 
-// O: select the next flagged line and scroll it into view.
+// O: select the next flagged line after the one jumped to last (in reading order,
+// wrapping) and scroll it into view. By position, not by index into the list, so fixing
+// a flag doesn't make the next O skip one: the list has shrunk, but the next line after
+// the fixed one is still the next flag.
 function nextFlag() {
-  const orders = [...flaggedOrders()].sort((a, b) => a - b);
-  if (!orders.length) { setHint("No box on this page shows another line's letters."); return; }
-  state.flagIndex = (state.flagIndex + 1) % orders.length;
-  const l = state.data.lines.find((x) => x.order === orders[state.flagIndex]);
+  const keys = flaggedKeys();
+  const flagged = state.data.lines.filter((x) => keys.has(x.key));   // in reading order
+  if (!flagged.length) { setHint("No box on this page shows another line's letters."); return; }
+  const last = state.flagAt &&
+    (state.data.lines.find((x) => x.key === state.flagAt.key)?.order ?? state.flagAt.order);
+  const l = flagged.find((x) => x.order > (last || 0)) || flagged[0];
+  state.flagAt = { key: l.key, order: l.order };
   if (editable()) { state.selection = new Set([l.key]); }
   state.hoverKey = l.key;
   const top = canvas.getBoundingClientRect().top + window.scrollY + toDisp(l.bbox[1]);
@@ -532,7 +540,7 @@ function applyPayload(d) {
   state.ops = clone(d.ops);
   state.titles = clone(d.section_titles);
   state.statuses[state.page] = d.status;
-  state.flagged[state.page] = flaggedOrders().size;
+  state.flagged[state.page] = flaggedKeys().size;
   if ($("page-select").options.length) refreshPageLabels();
   const keys = new Set(d.lines.map((l) => l.key));
   state.selection = new Set([...state.selection].filter((k) => keys.has(k)));
@@ -917,7 +925,7 @@ async function showPage(page) {
   state.selection.clear();
   state.splitKey = null;
   state.hoverKey = null;
-  state.flagIndex = -1;
+  state.flagAt = null;
   applyPayload(await api("GET", `/api/pages/${page}`));
   refreshFlags();
   await new Promise((resolve) => {

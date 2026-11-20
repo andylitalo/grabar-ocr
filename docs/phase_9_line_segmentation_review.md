@@ -434,10 +434,13 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
 - **2026-11-20: boxes that show another line's letters are flagged (`overlap.py`).** To
   point review at them, as the zoomed sheet did for the unclip re-verify. A line is
   flagged when its crop (the same polygon mask `crops.line_crop` whitens with) holds 10 px
-  or more of letters another line owns, by unclip's ownership rule; overlap in the blank
-  gap between lines isn't flagged. The UI outlines the box, paints those pixels and rings
+  or more of letters another line owns, by unclip's ownership rule, or for a letter that
+  rule leaves to no one, the box holding the most of it (an exact tie to one of the tied
+  lines by a hash of the letter's position; specks under 150 px stay no one's). Without
+  that, a box dragged over a third of a neighbour's letter cleared its own flag. Overlap
+  in the blank gap between lines isn't flagged. The UI outlines the box, paints those pixels and rings
   each piece, lists them in the banner, steps through them with O, and counts them in the
   page list. A warning only: some are fine as they are. 10 px is the threshold the
   re-verify was checked at (maintainer: no noisier), and on pp.453-516 it flags exactly
-  the 10 lines left then, all Paddle's own boxes. Fresh pp.517-643: 168 flags on 79
+  the 10 lines left then, all Paddle's own boxes. Fresh pp.517-643: 173 flags on 81
   pages. About 0.05 s a page; the page list's counts fill in the background at startup.
