@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import threading
 from pathlib import Path
 
 import uvicorn
@@ -25,7 +26,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
 
-from . import crops, duplicates, lines
+from . import crops, duplicates, lines, overlap
 from . import materialize as mz
 from . import storage
 from . import transcribe as tr
@@ -105,6 +106,9 @@ def _payload(page: int, review: dict) -> dict:
         "baseline_changed": storage.baseline_changed(review),
         "blank_marker": storage.blank_marker(page),
         "error": error,
+        # lines whose crop shows another line's letters (overlap.py): a warning to look at
+        "foreign_ink": [{**f, "line": order[f["line"]], "other": order[f["other"]]}
+                        for f in overlap.page_flags(page, review, lines)] if lines else [],
         "used_add_keys": sorted(storage.used_add_keys(review)),
     }
 
@@ -121,7 +125,10 @@ def index() -> FileResponse:
 
 @app.get("/api/pages")
 def get_pages() -> dict:
-    return {"statuses": {str(p): s for p, s in storage.page_statuses().items()}}
+    # flagged: lines whose crop shows another line's letters, for the pages computed so
+    # far (overlap.warm fills the rest in the background).
+    return {"statuses": {str(p): s for p, s in storage.page_statuses().items()},
+            "flagged": {str(p): n for p, n in overlap.flagged_counts().items()}}
 
 
 @app.get("/api/pages/{page}/image.png")
@@ -293,6 +300,7 @@ def main() -> None:
                     help="name stored as `by` on each transcription")
     args = ap.parse_args()
     CONTRIBUTOR = args.contributor
+    threading.Thread(target=overlap.warm, daemon=True, name="overlap-warm").start()
     uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 
