@@ -397,8 +397,15 @@ budget and domain are kept for the real build; the hello-world service is not.
   set it off every month). Both email the billing admins and, through a Monitoring email
   channel, the maintainer's Gmail. The channel lives in `armenian-lectionary`, because
   Monitoring refused calls in the newly created project (`USER_PROJECT_DENIED`, although
-  the caller was owner; probably a delay before a new project's permissions take effect); budgets can use a channel from any project.
+  the caller was owner; a delay before a new project's permissions take effect: it worked about an hour later); budgets can use a channel from any project.
 - **Cloud Run** service `labeler-hello`, deployed with `gcloud run deploy --source`.
+- **Firebase** added in the console (2026-11-20). The CLI's `projects:addfirebase` failed
+  with a bare 403 until the account accepted Firebase's terms there. Analytics off. Adding
+  Firebase can't be undone and puts the project on the Blaze plan (same free allowances,
+  same billing account). **Never delete the Firebase project:** that deletes the Cloud
+  project with it. Clean up by deleting the Hosting site or the Cloud Run service.
+- **Hosting** site `grabar-ocr` (`grabar-ocr.web.app`), `/api/**` rewritten to
+  `labeler-hello`.
 
 **Findings:**
 
@@ -411,9 +418,11 @@ budget and domain are kept for the real build; the hello-world service is not.
   IAM principals, and never need roles. The lectionary could switch the same way.
 - **The `*.run.app` URL stays reachable,** bypassing Hosting. Ingress settings can't close
   it without also blocking Hosting, so the app's own token check guards every route.
-- **The `Authorization` header and cookies reach Cloud Run directly** (`/api/echo`). The
-  check through the Hosting rewrite, where every cookie but `__session` should be
-  stripped, comes in step 7.
+- **Through the Hosting rewrite** (`grabar-ocr.web.app/api/echo`), the `Authorization`
+  header arrives, and of the cookies `__session` and `other` only `__session` does, as
+  expected. `X-Forwarded-Host` carries the public host. API responses come back
+  `cache-control: private` with `x-cache: MISS`, so the CDN doesn't cache them; the real
+  API should still set `Cache-Control` explicitly on every response.
 - **Builds run as the default compute account.** New projects (since 2024) build as
   `<number>-compute@developer.gserviceaccount.com`, which needed
   `roles/cloudbuild.builds.builder` before `--source` deploys could read the uploaded
