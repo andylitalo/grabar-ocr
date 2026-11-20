@@ -85,8 +85,9 @@ for its uses.
      Firebase Auth / Identity Platform (email + password; sign-up off)
 ```
 
-- **Project:** a new GCP project (e.g. `grabar-ocr`) on the lectionary's billing account,
-  in us-central1. It needs the same per-project org-policy override the lectionary got.
+- **Project:** `grabar-ocr` on the lectionary's billing account, in us-central1. It keeps
+  the org's Workspace-only IAM rule; Cloud Run is made public with
+  `--no-invoker-iam-check` instead of an override (see the infrastructure smoke test).
 - **Frontend:** Firebase Hosting serves the static files and rewrites `/api/**` to Cloud
   Run. Its custom domains are generally available and the certificate is managed. Firebase
   Hosting strips every cookie except `__session`, so the browser sends the Firebase ID
@@ -374,10 +375,58 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
     No data moves before migration step 4b;
   - ~~draft the contributor agreement and privacy note~~: done, PR #20, awaiting the
     maintainer's review;
-  - later, a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
-    surface domain, certificate and org-policy surprises before the real build.
+  - a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
+    surface domain, certificate and org-policy surprises before the real build: in
+    progress, see the infrastructure smoke test below.
 - **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
   (after pilot data); whether pass B runs (after the draft).
+
+## Infrastructure smoke test (2026-11-20, in progress)
+
+A throwaway two-route API (`/api/health`, `/api/echo`, never committed) behind Firebase
+Hosting, to find the cloud surprises before the real build. The project, billing link,
+budget and domain are kept for the real build; the hello-world service is not.
+
+**Set up so far:**
+
+- **Project** `grabar-ocr` (number 46107812726), under the lectionary org, linked to
+  "Armenian Lectionary Billing".
+- **Budgets** on that billing account, each scoped to one project: "grabar-ocr monthly"
+  ($50, alerts at 50/90/100%) and the existing "Free Tier Safeguard" ($1, now
+  `armenian-lectionary` only; it had covered the whole account, so OCR spend would have
+  set it off every month). Both email the billing admins and, through a Monitoring email
+  channel, the maintainer's Gmail. The channel lives in `armenian-lectionary`, because
+  Monitoring refused calls in the newly created project (`USER_PROJECT_DENIED`, although
+  the caller was owner; probably a delay before a new project's permissions take effect); budgets can use a channel from any project.
+- **Cloud Run** service `labeler-hello`, deployed with `gcloud run deploy --source`.
+
+**Findings:**
+
+- **No org-policy override.** The org lets IAM roles go only to Workspace accounts
+  (`iam.allowedPolicyMemberDomains`), so `allUsers` can't be granted `run.invoker`.
+  Firebase Hosting forwards `/api/**` as an ordinary anonymous request (there is no
+  Hosting identity to grant invoker to), so the service must be public.
+  `--no-invoker-iam-check` makes it public without any IAM grant, and the org rule stays
+  in force: the service's IAM policy is empty. Contributors are Firebase Auth users, not
+  IAM principals, and never need roles. The lectionary could switch the same way.
+- **The `*.run.app` URL stays reachable,** bypassing Hosting. Ingress settings can't close
+  it without also blocking Hosting, so the app's own token check guards every route.
+- **The `Authorization` header and cookies reach Cloud Run directly** (`/api/echo`). The
+  check through the Hosting rewrite, where every cookie but `__session` should be
+  stripped, comes in step 7.
+- **Builds run as the default compute account.** New projects (since 2024) build as
+  `<number>-compute@developer.gserviceaccount.com`, which needed
+  `roles/cloudbuild.builds.builder` before `--source` deploys could read the uploaded
+  source. The legacy Cloud Build account (`<number>@cloudbuild.gserviceaccount.com`) still
+  holds that role but is used only if something selects it. **For the real build:** a
+  dedicated build account with only the roles it needs (`--build-service-account`), and a
+  dedicated runtime account for the service (Cloud SQL, its bucket, its secrets) instead of
+  the compute default. Then remove the builder role from the compute account and the
+  legacy account.
+- **No Container Registry in the real build.** Enabling Cloud Build also turned on
+  `containerregistry.googleapis.com` and added its service agent. Container Registry is
+  retired; images go to Artifact Registry (`cloud-run-source-deploy`). Disable the API and
+  confirm the agent's binding is gone, then check a `--source` deploy still works.
 
 ## Considered and not chosen
 
