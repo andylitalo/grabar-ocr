@@ -77,7 +77,7 @@ for its uses.
 ```
  browser ──HTTPS──> ocr.andylitalo.com: Firebase Hosting (static frontend, managed TLS)
                         │  /api/** rewrite
-                  Cloud Run: FastAPI (1 vCPU / 512 MiB, min 1, max 2 instances)
+                  Cloud Run: FastAPI (1 vCPU / 512 MiB, min 0, max 2 instances)
                    │              │                 │
           Cloud SQL Postgres   GCS, private     Secret Manager
           (accounts, claims,   (page images)    (DB password)
@@ -92,14 +92,16 @@ for its uses.
   Run. Its custom domains are generally available and the certificate is managed. Firebase
   Hosting strips every cookie except `__session`, so the browser sends the Firebase ID
   token as an `Authorization` header instead of using a cookie session.
-- **Cloud Run:** min 1 instance, so there is no cold start; max 2, so the bill is capped.
+- **Cloud Run:** min 0 instances (maintainer, 2026-11-20), so an idle site costs nothing
+  and the first request after a quiet spell waits for a cold start; max 2, so the bill is
+  capped. If the cold start proves irritating in R0, set min 1 (about $10 a month more).
 - **Cloud SQL:** smallest shared-core Postgres, with automated backups and point-in-time
   recovery. Reached from Cloud Run over its built-in connection, and from the Mac with
   the Cloud SQL Auth Proxy.
 - **Alerts:** an uptime check on `/health`; a $50/month budget alert. Labeler alerts: the
   app writes a structured log entry, and a log-based alert in Cloud Monitoring emails
   the maintainer a link to that person's report.
-- **Cost:** roughly $20–30 a month.
+- **Cost:** roughly $10–20 a month, mostly Cloud SQL (with min 1 instance, about $10 more).
 - **Not now: a load balancer + Cloud Armor** (~$25–30 a month more, plus setup). They
   protect against floods of junk requests; with max 2 instances such a flood would slow
   or stop the site, but can't reach the data, and the bill stays capped. Login attacks hit
@@ -430,9 +432,8 @@ budget and domain are kept for the real build; the hello-world service is not.
   API should still set `Cache-Control` explicitly on every response.
 - **Cold start ≈ 3.5 s** through `ocr.andylitalo.com` (a fresh instance, uptime 0.1 s);
   warm requests 0.16–0.17 s. For the hello-world image (python:3.12-slim + FastAPI); the
-  real app, with a DB pool, will be slower to start. That confirms min 1 instance for the
-  real service: a contributor's first save after a quiet spell would otherwise wait
-  seconds.
+  real app, with a DB pool, will be slower to start. The maintainer chose min 0 anyway and
+  will judge the wait in R0 (see Risks to test in R0).
 - **Builds run as the default compute account.** New projects (since 2024) build as
   `<number>-compute@developer.gserviceaccount.com`, which needed
   `roles/cloudbuild.builds.builder` before `--source` deploys could read the uploaded
@@ -515,9 +516,11 @@ Both should have display lines and a drop cap, and no answers already in the pub
 ## Risks to test in R0
 
 - **Operational setup.** The Firebase Hosting custom domain and certificate; the
-  org-policy override; Cloud SQL's smallest tier (it has no SLA) and the connection from
-  Cloud Run; cold start with min 1 instance; alert emails arriving; invite emails landing
-  in spam.
+  public Cloud Run service without an org-policy override; Cloud SQL's smallest tier (it
+  has no SLA) and the connection from Cloud Run; alert emails arriving; invite emails
+  landing in spam. Most of this was tried in the infrastructure smoke test.
+- **The cold start with min 0.** How long the real app takes to start, and whether waiting
+  for it on the first page load or save of a session is irritating. If it is, set min 1.
 - **The fold table over the full book's prefill.** The seeding report should be short.
 - **The labeling flow.** Context-view zoom and pan on a full page image; two browsers
   claiming the same page at once; optimistic submit while offline, then on
