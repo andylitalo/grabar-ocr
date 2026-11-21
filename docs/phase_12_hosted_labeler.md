@@ -406,6 +406,11 @@ budget and domain are kept for the real build; the hello-world service is not.
   project with it. Clean up by deleting the Hosting site or the Cloud Run service.
 - **Hosting** site `grabar-ocr` (`grabar-ocr.web.app`), `/api/**` rewritten to
   `labeler-hello`.
+- **Domain** `ocr.andylitalo.com`: Firebase's quick setup asked for one **CNAME**, `ocr` →
+  `grabar-ocr.web.app`, in Squarespace DNS. The certificate was issued within minutes.
+  Squarespace appends the domain to the host, so enter `ocr` (or `_acme-challenge.ocr`),
+  never the full name: the first try published `….andylitalo.com.andylitalo.com`. HTTP
+  redirects to HTTPS (301).
 
 **Findings:**
 
@@ -423,6 +428,11 @@ budget and domain are kept for the real build; the hello-world service is not.
   expected. `X-Forwarded-Host` carries the public host. API responses come back
   `cache-control: private` with `x-cache: MISS`, so the CDN doesn't cache them; the real
   API should still set `Cache-Control` explicitly on every response.
+- **Cold start ≈ 3.5 s** through `ocr.andylitalo.com` (a fresh instance, uptime 0.1 s);
+  warm requests 0.16–0.17 s. For the hello-world image (python:3.12-slim + FastAPI); the
+  real app, with a DB pool, will be slower to start. That confirms min 1 instance for the
+  real service: a contributor's first save after a quiet spell would otherwise wait
+  seconds.
 - **Builds run as the default compute account.** New projects (since 2024) build as
   `<number>-compute@developer.gserviceaccount.com`, which needed
   `roles/cloudbuild.builds.builder` before `--source` deploys could read the uploaded
