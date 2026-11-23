@@ -1,1 +1,18 @@
-{}
+{
+ "p523.017": {
+  "text": "դձ. Այսօր ժողովեալ։ Զկնի՝ սաղ. ՃԼԱ.",
+  "status": "done",
+  "at": "2026-11-23T20:09:36+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "706ccdd1b513a501"
+ },
+ "p523.034": {
+  "text": "Աւետարան Յովհ. ԺԱ. 1. Եւ էր ոմն",
+  "status": "done",
+  "at": "2026-11-23T20:09:57+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "a69fa7eb41250393"
+ }
+}

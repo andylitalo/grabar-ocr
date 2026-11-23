@@ -7,5 +7,13 @@
   "prefill": null,
   "geometry": "6e4b9148f8558684",
   "migrated_from": "p540~line_042"
+ },
+ "p540.073": {
+  "text": "Երկուշաբաթ. Սրբոցն՝ Ստեփանոսի Հը-",
+  "status": "done",
+  "at": "2026-11-23T20:15:50+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "44b2b8d5dfb8f919"
  }
 }
