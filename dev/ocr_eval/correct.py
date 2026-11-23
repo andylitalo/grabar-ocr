@@ -347,16 +347,22 @@ def main() -> None:
         images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
                   if a.prompt in WITH_IMAGES else [])
         total = {"in": 0, "out": 0}
+        best = None  # (corrected, fallbacks) of the attempt with the fewest fallbacks
         for attempt in (1, 2):  # a page with fallback lines is asked once more
             text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system, images))
             total["in"] += u["in"]   # every attempt is billed, not just the last
             total["out"] += u["out"]
             corrected, fallbacks = parse(text, keys, preds)
+            # Keep the better attempt: a retry can come back worse (p508, 2026-11-23: 1
+            # fallback, then 54 when the retry dropped a row and shifted the rest).
+            if best is None or fallbacks < best[1]:
+                best = (corrected, fallbacks)
             if not fallbacks:
                 break
             unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
             print(f"  p{page}: {fallbacks} fallback lines (try {attempt}); "
                   f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
+        corrected, fallbacks = best
         return page, corrected, fallbacks, {**u, **total}
 
     start = time.time()
