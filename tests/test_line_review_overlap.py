@@ -192,23 +192,21 @@ def test_warming_the_flags_leaves_the_page_cache_alone(one_page):
 
 # --- the real book ------------------------------------------------------------------
 
-# The 10 lines left after the unclip re-verify of pp.453-516 (2026-11-18), all Paddle's
-# own boxes: the threshold was chosen to flag exactly these.
-VERIFIED_FLAGS = {(459, "line_022"), (460, "line_024"), (467, "line_002"), (478, "line_031"),
-                  (487, "line_060"), (487, "line_073"), (500, "line_005"), (500, "line_007"),
-                  (509, "line_043"), (516, "line_006")}
+# The threshold (MIN_PX) was chosen on pp.453-516 after the unclip re-verify: it flagged
+# exactly the 10 lines left then, all Paddle's own boxes (2026-11-18; PR #24). The review
+# then fixed those 10 (2026-11-23), so no verified page shows another line's letters.
 
 
-def test_the_verified_pages_flag_the_known_ten():
+def test_no_verified_page_shows_another_lines_letters():
     import cv2
-    pages = range(453, 517)
-    if not all(storage.render_path(p).exists() for p in pages if storage.baseline_path(p).exists()):
+    pages = [p for p in storage.list_pages() if storage.verified_path(p).exists()]
+    if not pages or not all(storage.render_path(p).exists() for p in pages):
         pytest.skip("page renders not present")
-    found = set()
+    found = []
     for pg in pages:
-        if not storage.verified_path(pg).exists():
+        lines = storage.materialized(pg, storage.load_review(pg), cache=False)
+        if not lines:
             continue
-        review = storage.load_review(pg)
         gray = cv2.imread(str(storage.render_path(pg)), cv2.IMREAD_GRAYSCALE)
-        found |= {(pg, f["line"]) for f in overlap.foreign_ink(storage.materialized(pg, review), gray)}
-    assert found == VERIFIED_FLAGS
+        found += [(pg, f["line"], f["other"], f["px"]) for f in overlap.foreign_ink(lines, gray)]
+    assert found == []
