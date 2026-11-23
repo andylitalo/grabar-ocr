@@ -1,10 +1,11 @@
 {
- "p556~line_025": {
+ "p556.025": {
   "text": "դիպելն քոյ այսպիսեաց տօնից յԵրկրորդ",
   "status": "done",
   "at": "2026-10-09T13:58:29+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "f2acaf0925a61c73"
+  "geometry": "f2acaf0925a61c73",
+  "migrated_from": "p556~line_025"
  }
 }

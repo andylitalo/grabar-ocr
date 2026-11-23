@@ -1,0 +1,16 @@
+[
+ {
+  "id": "p604~line_023",
+  "reason": "shape changed",
+  "replaced_by": "p604.023",
+  "at": "2026-11-23T19:23:42+00:00",
+  "record": {
+   "text": "հարցիցն աստ տես։",
+   "status": "done",
+   "at": "2026-10-12T03:41:45+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "6d7b0a20d00aa244"
+  }
+ }
+]

@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p549~line_011",
+  "reason": "shape changed",
+  "replaced_by": "p549.011",
+  "at": "2026-11-23T19:23:12+00:00",
+  "record": {
+   "text": "և ուրբաթ և կիւրակէ՝ յառաջ քան զՅայտնու-",
+   "status": "done",
+   "at": "2026-10-09T05:09:23+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "caa0839f3565acc2"
+  }
+ },
+ {
+  "id": "p549~line_047",
+  "reason": "shape changed",
+  "replaced_by": "p549.047",
+  "at": "2026-11-23T19:23:12+00:00",
+  "record": {
+   "text": "",
+   "status": "bad-crop",
+   "at": "2026-10-09T05:10:13+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "7c0f1bbe6f1dad76"
+  }
+ }
+]

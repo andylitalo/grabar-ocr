@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p563~line_008",
+  "reason": "shape changed",
+  "replaced_by": "p563.008",
+  "at": "2026-11-23T19:23:19+00:00",
+  "record": {
+   "text": "ռաջին հատորն տես մինչեւ ՚ի տաս-",
+   "status": "done",
+   "at": "2026-10-09T13:55:56+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "652b12ff26de5d73"
+  }
+ },
+ {
+  "id": "p563~line_065",
+  "reason": "shape changed",
+  "replaced_by": "p563.065",
+  "at": "2026-11-23T19:23:19+00:00",
+  "record": {
+   "text": "— և Յակովկայ եւ Իրաւափառայ։",
+   "status": "done",
+   "at": "2026-10-09T14:09:49+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "4c9aecbf21fe6135"
+  }
+ }
+]

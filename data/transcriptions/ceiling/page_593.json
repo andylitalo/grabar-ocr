@@ -1,10 +1,11 @@
 {
- "p593~line_055": {
+ "p593.055": {
   "text": "Իսկ յայլ տարիսն որպէս եդեալքդ են",
   "status": "done",
   "at": "2026-10-09T05:00:30+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "89bb1bd57422982c"
+  "geometry": "89bb1bd57422982c",
+  "migrated_from": "p593~line_055"
  }
 }

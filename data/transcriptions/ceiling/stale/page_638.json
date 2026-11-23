@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p638~line_028",
+  "reason": "shape changed",
+  "replaced_by": "p638.027",
+  "at": "2026-11-23T19:24:04+00:00",
+  "record": {
+   "text": "աձ. Ըզքեզ արդար եւ ուղիղ դա-",
+   "status": "done",
+   "at": "2026-10-09T14:05:33+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "467039dcd90528aa"
+  }
+ },
+ {
+  "id": "p638~line_064",
+  "reason": "shape changed",
+  "replaced_by": "p638.063",
+  "at": "2026-11-23T19:24:04+00:00",
+  "record": {
+   "text": "Համբ. գկ. Տեսիլ փայլակնաձեւ",
+   "status": "done",
+   "at": "2026-10-09T14:09:24+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "e87d9adc22652232"
+  }
+ }
+]

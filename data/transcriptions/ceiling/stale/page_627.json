@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p627~line_028",
+  "reason": "shape changed",
+  "replaced_by": "p627.028",
+  "at": "2026-11-23T19:23:57+00:00",
+  "record": {
+   "text": "25. Եշ. ԲՁ. Եւգինէոսի, Մակարիոսի,",
+   "status": "done",
+   "at": "2026-10-09T14:08:11+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "b15e9a965c64da37"
+  }
+ },
+ {
+  "id": "p627~line_035",
+  "reason": "shape changed",
+  "replaced_by": "p627.035",
+  "at": "2026-11-23T19:23:57+00:00",
+  "record": {
+   "text": "րիչդ արարածոց։ Հմբ. գկ. Տեսիլ",
+   "status": "done",
+   "at": "2026-10-09T04:51:49+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "ab5a478317e388a3"
+  }
+ }
+]

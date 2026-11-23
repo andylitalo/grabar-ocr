@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p539~line_061",
+  "reason": "shape changed",
+  "replaced_by": "p539.061",
+  "at": "2026-11-23T19:23:08+00:00",
+  "record": {
+   "text": "ահ. աձ. Հրաշակերտ եւ զօրեղ.",
+   "status": "done",
+   "at": "2026-10-09T05:18:45+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "f8cdf222257c6b75"
+  }
+ },
+ {
+  "id": "p539~line_082",
+  "reason": "shape changed",
+  "replaced_by": "p539.082",
+  "at": "2026-11-23T19:23:08+00:00",
+  "record": {
+   "text": "խաչիւս. Կեցո։ Աղօթք, Պահպանեա։",
+   "status": "done",
+   "at": "2026-10-09T05:12:11+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "9ca295f1b603a3ff"
+  }
+ }
+]

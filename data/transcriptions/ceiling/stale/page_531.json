@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p531~line_042",
+  "reason": "shape changed",
+  "replaced_by": "p531.042",
+  "at": "2026-11-23T19:23:04+00:00",
+  "record": {
+   "text": "Փոխ, Տէր թագաւորեաց։ Շարական գկ.",
+   "status": "done",
+   "at": "2026-10-09T14:18:38+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "e0998d1f1987cfd4"
+  }
+ },
+ {
+  "id": "p531~line_052",
+  "reason": "shape changed",
+  "replaced_by": "p531.051",
+  "at": "2026-11-23T19:23:04+00:00",
+  "record": {
+   "text": "Իսկ յառաջ քան զերեկոյին ժամն դիցեն",
+   "status": "done",
+   "at": "2026-10-09T14:16:27+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "8afd1c82ff298e46"
+  }
+ }
+]

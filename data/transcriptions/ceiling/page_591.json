@@ -1,10 +1,11 @@
 {
- "p591~line_026": {
+ "p591.047": {
   "text": "երկերիւր հայրապետացն։",
   "status": "done",
   "at": "2026-10-09T05:17:57+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "608b1b3a6c426c28"
+  "geometry": "608b1b3a6c426c28",
+  "migrated_from": "p591~line_026"
  }
 }

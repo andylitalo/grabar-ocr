@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p632~line_061",
+  "reason": "shape changed",
+  "replaced_by": "p632.057",
+  "at": "2026-11-23T19:24:00+00:00",
+  "record": {
+   "text": "Պարսամայ, եւ Ոնոփրիոսի ճըգ-",
+   "status": "done",
+   "at": "2026-10-09T05:12:41+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "877123ac1b57bdb8"
+  }
+ },
+ {
+  "id": "p632~line_065",
+  "reason": "shape changed",
+  "replaced_by": "p632.061",
+  "at": "2026-11-23T19:24:00+00:00",
+  "record": {
+   "text": "20. Եշ. ԲԿ. Թէոդոսի թագաւորին եւ",
+   "status": "done",
+   "at": "2026-10-09T04:57:56+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "7ea171206b203585"
+  }
+ }
+]

@@ -1,10 +1,11 @@
 {
- "p560~line_017": {
+ "p560.017": {
   "text": "Երգէին մանկունքն։",
   "status": "done",
   "at": "2026-10-09T14:18:19+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "a8730c8bf2a18530"
+  "geometry": "a8730c8bf2a18530",
+  "migrated_from": "p560~line_017"
  }
 }

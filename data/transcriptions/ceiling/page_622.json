@@ -1,18 +1,11 @@
 {
- "p622~line_057": {
-  "text": "Ըզյարութիւն։ Բարեկենդան Ա-",
-  "status": "done",
-  "at": "2026-10-09T04:56:13+00:00",
-  "by": "maintainer",
-  "prefill": null,
-  "geometry": "d2330af8ff50fa4d"
- },
- "p622~line_064": {
+ "p622.063": {
   "text": "Մարտ",
   "status": "done",
   "at": "2026-10-09T05:12:15+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "ead7d850a845ea92"
+  "geometry": "ead7d850a845ea92",
+  "migrated_from": "p622~line_064"
  }
 }

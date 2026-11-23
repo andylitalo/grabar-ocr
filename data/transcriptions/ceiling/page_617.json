@@ -1,10 +1,11 @@
 {
- "p617~line_003": {
+ "p617.002": {
   "text": "րեկենդան Ծննդեան պահոցն։ Ե-",
   "status": "done",
   "at": "2026-10-09T14:16:10+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "325d4bed91224309"
+  "geometry": "325d4bed91224309",
+  "migrated_from": "p617~line_003"
  }
 }
