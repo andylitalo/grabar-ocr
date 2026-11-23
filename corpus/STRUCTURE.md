@@ -98,7 +98,7 @@ Sunday-number · saint/feast.
 
 **Do not re-derive the letter→date→page mapping — it is already indexed** in
 [`../../armenian_lectionary/docs/sources/second_volume_index.csv`](../../armenian_lectionary/docs/sources/second_volume_index.csv)
-(`taregir, easter_md_julian, page, cycle`; 35 letters Ա–Ք, pp.557–638) with its explanation in
+(`taregir, easter_md_julian, page, cycle`; 36 rows: 35 Easter letters Ա–Փ plus the leap-only Ք, pp.557–638) with its explanation in
 [`second_volume_index.md`](../../armenian_lectionary/docs/sources/second_volume_index.md).
 
 - **Cycle number** is a closed form of the letter position: `cycle(pos) = ((11 - pos) % 7) + 1`

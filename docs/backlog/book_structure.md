@@ -2,8 +2,10 @@
 
 **Status: planned (maintainer, 2026-11-23), nothing built.** This is the "cite" step of the
 staged order (`README.md`) and the plan for roadmap §5 W1 (`citable_corpus_roadmap.md`): every
-line gets a volume and a section, and after the corrected OCR, every dated entry gets its
-month and day. Sections are marked by hand and don't need OCR; entries and dates do.
+line gets a volume and a section, and after the book-wide engine run, every dated entry gets
+its month and day. Sections are marked by hand and don't need OCR; entries and dates do.
+W1's other parts (entry → line links, content hashes, dehyphenated entry text, ids stable
+across re-segmentation) are not planned here yet; see "Open questions".
 
 ## Where it fits
 
@@ -12,32 +14,45 @@ month and day. Sections are marked by hand and don't need OCR; entries and dates
    change to the layout tool, so it can start right after the gate.
 3. The region-keyed migration (`region_keyed_data.md`), including step 4b.
 4. **Assign every line its volume and section** (below), on the region-keyed records.
-5. The code moves, then the book-wide OCR run (Phase 11), then the hosted labeler (Phase 12),
-   whose page search already uses the section titles.
-6. **Entries, months and days** (below): months from the raw engine output as soon as the
-   book-wide engine run ends; days checked against the corrected text.
+5. The code moves, then the book-wide OCR run (Phase 11).
+6. **Months** (below), from the raw engine output as soon as the engine run ends. The
+   weekday check's failures go to the labeler as text errors.
+7. The hosted labeler (Phase 12), whose page search uses the section titles.
+8. **Days** read from the corrected text, and the Vol I entries.
 
 ## Volumes
 
-From the page ranges in `corpus/STRUCTURE.md`, written down as data, not inferred:
+From the page ranges in `corpus/STRUCTURE.md` and the pages themselves, written down as
+data, not inferred:
 
 - **Vol I** pp.453–551: the title page and dedication (pp.453–454), then the readings.
 - **p.552** blank.
-- **Vol II** pp.553–640: the preface (pp.553–556), then one section per taregir from p.557.
-- **The Great Paschal table** (p.641) and the **colophon** (pp.642–643).
+- **Vol II** pp.553–639: the preface (pp.553–556), then one section per taregir from p.557.
+  The last section, Ք, runs pp.638–639.
+- **The Great Paschal table**: its explanation (p.640, how to read the table, which
+  "is on the next page") and the table itself (p.641).
+- **The colophon** and the note on how the Vol II lists were set (pp.642–643).
 
-Front matter, the Paschal table and the colophon each get a named section of their own, so
-every line belongs to exactly one section.
+Front matter, the Vol II preface, the Paschal table and the colophon each get a named
+section of their own, so every line belongs to exactly one section.
 
 ## Vol II sections: the taregir letters (already marked)
 
 The review marked each taregir letter with the Title tool: `section_titles` `[{letter,
-box}]` on the page, in `data/verified_lines/`. Before using them, check them against
-`armenian-lectionary/docs/sources/second_volume_index.csv` (36 letters Ա–Ք, their pages
-pp.557–638, Julian Easter dates and cycle numbers):
+box}]` on the page, in `data/verified_lines/`. They're checked against
+`armenian-lectionary/docs/sources/second_volume_index.csv` (36 rows: the 35 letters Ա–Փ with
+their Julian Easter dates, plus the leap-only Ք, which has none; pages pp.557–638, and cycle
+numbers):
 
 - exactly one mark per letter, in alphabet order, each on the page the index gives;
-- no letter mark outside pp.557–638;
+- no letter mark outside pp.557–638.
+
+**Checked 2026-11-23 on the review branch (`data/layout-review-517-onwards`): 36 of 36
+match**, one mark each, no strays. Re-run the check when that data reaches `main`.
+
+The verified record keeps only the mark's `letter` and `box` (the review's `source_line`
+isn't carried over), so the section's first line is found by geometry: the first line after
+the mark in reading order.
 
 Once the text exists, the cycle number printed in each heading is a second check
 (`cycle(pos) = ((11 − pos) % 7) + 1`, from `STRUCTURE.md`).
@@ -48,21 +63,26 @@ Vol I's sections (feasts, seasons) open with header lines, not single letters. T
 by hand in the layout tool, which is quick:
 
 - **The tool:** with the **Title (T)** tool, **Shift-click** a line box to mark it as a Vol I
-  header; Shift-click again to unmark. A header that spans lines gets each of its lines
-  marked; the first starts the section. Nothing is typed: the header's text comes from the
-  OCR.
-- **What it saves:** one op naming the line, and on the verified line record a field such as
-  `section_head: true`. It's an annotation, like `section_titles`: it changes no geometry,
-  ids or reading order, so a verified page **stays verified** and the reproduce test still
-  holds. Adding the field to `data/verified_lines/` is a format change
-  (`rewrite_verified.py`).
-- **Through the migration:** the field rides on the line record, so the region conversion
-  carries it unchanged.
+  header; Shift-click again to unmark. (Today a click or a Shift-click in the Title tool
+  both open the letter prompt, so Shift-click is free to take.) A header that spans lines
+  gets each of its lines marked; the first starts the section. Nothing is typed: the
+  header's text comes from the OCR.
+- **What it saves: not an op.** The layout tool only edits pages that are `unreviewed` or
+  `fixing`, and `save_ops` sets the page back to `fixing`; ops also feed `materialize` and
+  the cache and overlap hashes. So the marks get their own save path, allowed on verified
+  pages: a page-level list of the marked lines' ids (e.g. `section_heads: [id, …]`),
+  written to the review and to `data/verified_lines/`. It changes no geometry, ids or
+  reading order, so a verified page **stays verified** and the reproduce test still holds.
+  Adding the field is a format change; `rewrite_verified.py` must keep it (add it to
+  `PAGE_FIELDS`) and the reproduce test must carry it.
+- **Through the migration:** the list names line ids, which the region conversion maps to
+  region ids along with everything else.
 - **Check:** every row of the Vol I table in `corpus/STRUCTURE.md` has a marked header on its
-  page, and every marked header falls in some row. Disagreements are listed for the
-  maintainer; the table was written from the old OCR and can be wrong.
-- **Naming:** a section's id is its first header line's id (its region id after the
-  migration). Its name is filled in from the corrected text later.
+  first page, and every marked header falls in some row. The table is coarse (some rows are
+  runs of days or rubrics, not one header) and was written from the old OCR, so
+  disagreements are listed for the maintainer, not treated as errors.
+- **Naming:** a section's name is filled in from the corrected text later. Its id: see
+  "Open questions".
 
 ## Assigning lines to sections (after the region migration)
 
@@ -78,41 +98,58 @@ last page, and its opening line) is committed as a small CSV that can be checked
 ## Entries, months and days (after the book-wide engine run)
 
 **Entries** are the citation unit. In Vol II an entry opens with a day numeral (`24.`); in
-Vol I with a feast header. The old OCR has about 1,700 dated Vol II entries.
+Vol I with a feast header. The old OCR has about 1,800 numbered Vol II entries (lines
+starting `N.` on pp.557–639).
 
 **Months come from the raw engine output, before correction** (maintainer, 2026-11-23). The
 engines read literally, while the corrector may normalize a garbled header or invent one,
-and the raw output exists as soon as the book-wide engine run ends, so dates don't wait for
+and the raw output exists as soon as the book-wide engine run ends, so months don't wait for
 correction or the labeler. The month is a header line between entries (`Յունուար։`) and
 applies to the entries after it; the day is printed on each entry.
 
-**A section's order verifies its headers.** Each taregir section has 13 month runs in a known
-order (January from the 6th, February … December, January 1–5, if every section runs
-Jan 6 → Jan 5: see the rules below), so the search
-never asks "which month is this?", only "is this the next one?":
+**A section's order verifies its headers.** Each common-year section has 13 month runs in a
+known order (January from the 6th, February … December, January 1–5: see the rules below;
+Ք has only January and February), so the search never asks "which month is this?", only "is this the next one?":
 
 1. **Header text.** Walking the section in reading order, the next header is a short,
-   standalone line whose raw text, in **either** engine after folding, is within an edit
-   distance of about 2 of the **expected next** month's name (nominative) and closer to it
-   than to any other month. The old OCR's `ՅՅՅունուար` (p.560) passes.
-2. **The day numbers restart there.** Within a month they rise; the header must sit at a
-   drop (30 → 2). A drop with no header near it means a misread numeral, not a new month.
+   standalone line whose raw text, in **either** engine, after stripping punctuation and
+   folding case, is close to the **expected next** month's name (nominative). The order
+   does the disambiguating, so "closer to it than to any other month" is not required
+   (Յունիս and Յուլիս are one letter apart). Set the distance on the first sections of
+   the new engine output, not the old OCR: on p.560 the old OCR's `ՅՅՅունուար` is 2 edits
+   from Յունուար, but the same page's `ԳԾԵՏրուաջ` (3 from Փետրուար), `ՄՄարշջջջ`,
+   `ԱԱԱԱԱրիՍւշշ` and `ՄՄայիսրստստստս` are far further. Month headers are set in a display
+   face, which reads worse than the body.
+2. **The weekdays fit.** The entries after the header pass the weekday check (below) in the
+   expected month, and would fail it in the current one.
 
-A header is **verified** when both hold. **A section whose 13 headers all verify, in order,
-is accepted without review**, and each entry's month is the one its two bracketing headers
-give. The report counts, per section, headers verified out of 13, and in total the sections
-and entries accepted this way. Only sections with an unverified header go to the maintainer,
-with the crops of the candidate lines; the expectation is a handful.
+A header is **verified** when both hold. The day numbers support it but can't decide it:
+within a month they rise, so **a drop with no header near it** (30 → 2) means a missing
+header or a misread numeral. A header, though, needn't sit at a drop: entries are sparse,
+and on p.560 (section Բ) February ends at the 14th and March starts at the 23rd.
+
+**Anchors.** Each section's first header follows its taregir mark (no previous run). Its
+Easter entry (`Զատիկ`, a Sunday) sits at the index's Julian Easter date, in the March run
+for Ա–Ժ and the April run for Ի–Փ, which pins those two headers.
+
+**A section whose headers all verify, in order, is accepted without review**, and each
+entry's month is the one its two bracketing headers give. The report counts, per section,
+headers verified out of the expected number, and in total the sections and entries accepted
+this way. Only sections with an unverified header go to the maintainer, with the crops of
+the candidate lines; the expectation is a handful.
 
 **Days, and the weekday check.** Each entry prints its weekday: `Կիր.` Sunday, `Բշ.` Monday,
-`Գշ.` Tuesday, `Դշ.` Wednesday, `Եշ.` Thursday, `Ուր.` Friday, `Շբ.` Saturday (the OCR
-confuses `շ` with `չ`: fold them; feast days spell the weekday out in capitals, e.g.
-`ԵՐԿՈՒՇԱԲԱԹ`). A section's taregir fixes its Julian Easter date, and Easter is a Sunday, so
-every date in the section has a computable weekday.
+`Գշ.` Tuesday, `Դշ.` Wednesday, `Եշ.` Thursday, `Ուր.` Friday, `Շբ.` Saturday. The OCR
+confuses `շ` with `չ`: fold them in the weekday token only, since the tone code after it
+(`ԲՉ.`, `ԱԿ.`) uses `Չ` as a letter. Feast days spell the weekday out in capitals
+(`ԿԻՐԱԿԷ`, `ԵՐԿՈՒՇԱԲԱԹ`, `ԵՐԵՔՇԱԲԱԹ`, `ՉՈՐԵՔՇԱԲԱԹ`, `ՀԻՆԳՇԱԲԱԹ`, `ՈՒՐԲԱԹ`, `ՇԱԲԱԹ`;
+confirm the spellings on the first sections). A section's taregir fixes its Julian Easter
+date, and Easter is a Sunday, so every date in the section has a computable weekday.
 
 - **With the month settled by verified headers, a failing weekday means the day numeral or
-  the weekday was misread.** That's a text error for the OCR review (the labeler), not a
-  date question. The day is read from the corrected text once it exists.
+  the weekday was misread** (the old OCR's `114.` for 14 on p.560). That's a text error for
+  the OCR review (the labeler), not a date question. The day is read from the corrected
+  text once it exists.
 - **The weekday also backs up the month**: an entry put in the wrong month almost never
   matches, so a section whose weekdays fail across a whole month points at a wrong header.
 
@@ -121,9 +158,10 @@ A last, independent check: `armenian-lectionary`'s `second_volume_cycles.json` m
 the assigned date confirms it. Read it only; never re-run the script that builds it.
 
 **Evidence** (p.560, old OCR, sections Ա → Բ): Dec 24 `Եչ` Thursday, 27 `Կիր` Sunday and
-30 `Դչ` Wednesday fit one calendar, and so do Jan 2 `Շբ` Saturday to Jan 5 `Գշ` Tuesday.
-"29. Դչ" (Wednesday) can't sit next to 30 Wednesday: the check flags the entry where the
-day or the weekday was misread.
+30 `Դչ` Wednesday fit Ա's calendar (Easter Mar 22), and so do Jan 2 `Շբ` Saturday to Jan 5
+`Գշ` Tuesday. "29. Դչ" (Wednesday) can't sit next to 30 Wednesday: the check flags the entry
+where the day or the weekday was misread. Section Բ (Easter Mar 23) opens with Jan 6
+`ԵՐԿՈՒՇԱԲԱԹ` Monday and prints Easter at `23. Կիր.` in its March run, as computed.
 
 **Rules to build in:**
 
@@ -135,10 +173,19 @@ day or the weekday was misread.
   sections.
 - **Each section's weekdays come from its own letter.** On p.560, Jan 2–5 close section Ա and
   Jan 6 opens Բ with a different calendar.
-- **Leap years.** A leap year uses a two-letter taregir (`ԹԸ`), with inline instructions
-  (preface §Third; `armenian-lectionary/docs/sources/second_volume_leap_rules.md`). Ք is
-  leap-only. Assume each section is laid out as a common year, except Ք as a leap year,
-  and confirm that on the first two sections before trusting the check in Jan–Feb.
+- **Leap years.** A leap year uses a two-letter taregir, a reverse-consecutive pair (`ԹԸ`):
+  the higher letter (Թ) serves Jan 6 → end of February and the lower (Ը, the year's Easter)
+  serves from March (preface §Third;
+  `armenian-lectionary/docs/sources/second_volume_leap_rules.md`). Because the extra day
+  falls at the end of February, the higher letter's Jan–Feb weekdays are the leap year's,
+  so **every section is laid out as a common year** and the weekday check holds for all of
+  it. The inline leap instructions are text, not layout; they may name months in the
+  genitive (`փետրուարի`) and must not be taken for headers (the "standalone line" rule).
+- **Ք is leap-only and short.** It serves only Jan 6 → end of February, for the leap year
+  whose Easter is Փ's (Apr 25), so it has only January and February runs, not 13.
+  Its weekdays are those of a common year with Easter on Apr 26 (Jan 6 a Tuesday:
+  `6. ԵՐԵՔՇԱԲԱԹ` on p.638). From Jan 31 it lists saints normally kept after the
+  Transfiguration («Ի Թադէոս առաքելոյս սկսեալ…»); they're still dated by their Ք entries.
 - **Store `(taregir, month, day)`, a Julian date within a year-type,** never a civil date.
   Converting it to a Gregorian date for a given year goes through the Paschal table when the
   date is used (`STRUCTURE.md`, gotcha 1).
@@ -146,6 +193,23 @@ day or the weekday was misread.
   (`Մարտի 25`, the month in the genitive), and are read at the entry step with the same
   12 names in their genitive forms.
 
-**Gate:** every Vol II entry has a month (from 13 verified headers, or the maintainer's choice
+**Gate:** every Vol II entry has a month (from verified headers, or the maintainer's choice
 for the section) and a day that passes the weekday check or was corrected in review; every
 entry resolves to a volume, section and page.
+
+## Open questions
+
+- **Vol I: section or entry?** A Vol I entry opens with a feast header, and so does a Vol I
+  section. Either every feast header is marked (a mark is an entry start, and the
+  `STRUCTURE.md` rows group them into sections), or only the section openers are marked
+  and the entry headers are found later from the text. The first is more marking but
+  needs no text; decide before the marking starts.
+- **Stable ids.** W1's gate wants citation ids that survive a forced re-segmentation. A
+  region id is a hash of a line's boundary, so it changes when the line is re-drawn, and
+  an id taken from a section's first header line would change with it. Natural keys
+  don't: a Vol II section is its letter, and a Vol II entry is `(taregir, month, day)`,
+  unique within a section (January's two runs cover disjoint days). Vol I needs a slug
+  or `(section, ordinal)`.
+- **Entries outside the laydown.** The preface, the Paschal table and the colophon have
+  sections but no entries; W1's gate ("every content line in 453–641 resolves to exactly
+  one entry") needs to exclude them, or give them page-level entries.
