@@ -451,10 +451,12 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   has no automatic check: it rests on the review. p.641, a table of taregir letters by
   year, reads row by row through an explicit `order` op: the column-first rule found a
   gutter in a gap the rows share and read the table's left block before its right one.
-  `migrate repair` on pp.517-643 set aside 79 typed ceiling lines to retype (75 reshaped
-  only by the auto-unclip) and dropped 5 untyped picks on removed lines (492 left). Until
-  step 3, the ceiling scores 42 typed lines instead of 160 (the 79, plus the 41 retyped
-  in #23 that still wait for the engines), so its numbers aren't comparable to 95.0%.
+  `migrate repair` on pp.517-643 set aside 79 ceiling records whose line changed shape
+  (75 reshaped only by the auto-unclip): 78 typed lines to retype and one "bad crop" mark
+  (`p549.047`) to judge again on the new crop. It dropped 5 untyped picks on removed lines
+  (492 left). Until step 3, the ceiling scores 42 typed lines instead of 120: of the 83
+  still typed, the 41 retyped in #23 wait for the engines. The committed report (160
+  lines) is older than both, so its numbers aren't comparable to 95.0%.
   Then the last 10 boxes the foreign-ink check flagged (all on pp.453-516) were reshaped
   and verified again, with 2 neighbours; no flags are left in 453-643, and no typed line
   or pick was affected.
