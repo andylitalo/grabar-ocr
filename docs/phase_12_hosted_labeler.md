@@ -98,9 +98,13 @@ for its uses.
 - **Cloud SQL:** smallest shared-core Postgres, with automated backups and point-in-time
   recovery. Reached from Cloud Run over its built-in connection, and from the Mac with
   the Cloud SQL Auth Proxy.
-- **Alerts:** an uptime check on `/health`; a $50/month budget alert. Labeler alerts: the
-  app writes a structured log entry, and a log-based alert in Cloud Monitoring emails
-  the maintainer a link to that person's report.
+- **Alerts:** an uptime check on `/api/health` through Hosting (only `/api/**` reaches
+  Cloud Run); a $50/month budget alert. With min 0, the check's requests can keep an
+  instance alive between them (Cloud Run may keep an idle instance for up to about 15
+  minutes) and so hide cold starts; R0 judges the cold start with the check running at
+  its real interval. Labeler alerts: the app writes a structured log entry, and a
+  log-based alert in Cloud Monitoring emails the maintainer a link to that person's
+  report.
 - **Cost:** roughly $10–20 a month, mostly Cloud SQL (with min 1 instance, about $10 more).
 - **Not now: a load balancer + Cloud Armor** (~$25–30 a month more, plus setup). They
   protect against floods of junk requests; with max 2 instances such a flood would slow
@@ -362,7 +366,7 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - No uptime guarantee; a short outage is fine if no data is lost.
 - Per-user rate limits; an account can be disabled.
 
-## Where this stands (pick-up note, 2026-11-17)
+## Where this stands (pick-up note, 2026-11-21)
 
 - **Planning is done; nothing is built.** Every decision is in this doc. Don't write
   `labeler_app/` code until the order of work below reaches step 5 and the maintainer says
@@ -399,8 +403,11 @@ budget and domain are kept for the real build; the hello-world service is not.
   set it off every month). Both email the billing admins and, through a Monitoring email
   channel, the maintainer's Gmail. The channel lives in `armenian-lectionary`, because
   Monitoring refused calls in the newly created project (`USER_PROJECT_DENIED`, although
-  the caller was owner; a delay before a new project's permissions take effect: it worked about an hour later); budgets can use a channel from any project.
-- **Cloud Run** service `labeler-hello`, deployed with `gcloud run deploy --source`.
+  the caller was owner). It worked about an hour later, so probably the new project's
+  permissions hadn't taken effect yet; the cause wasn't confirmed. Budgets can use a
+  channel from any project.
+- **Cloud Run** (test only, since deleted): service `labeler-hello`, deployed with
+  `gcloud run deploy --source`.
 - **Firebase** added in the console (2026-11-20). The CLI's `projects:addfirebase` failed
   with a bare 403 until the account accepted Firebase's terms there. Analytics off. Adding
   Firebase can't be undone and puts the project on the Blaze plan (same free allowances,
@@ -541,7 +548,8 @@ Both should have display lines and a drop cap, and no answers already in the pub
   has no SLA) and the connection from Cloud Run; alert emails arriving; invite emails
   landing in spam. Most of this was tried in the infrastructure smoke test.
 - **The cold start with min 0.** How long the real app takes to start, and whether waiting
-  for it on the first page load or save of a session is irritating. If it is, set min 1.
+  for it on the first page load or save of a session is irritating, with the uptime check
+  running (see Cloud). If it is, set min 1.
 - **The fold table over the full book's prefill.** The seeding report should be short.
 - **The labeling flow.** Context-view zoom and pan on a full page image; two browsers
   claiming the same page at once; optimistic submit while offline, then on
