@@ -407,48 +407,135 @@ human pass look only at lines where three of them don't all agree. That gets a f
 draft out quickly; the other lines wait for the full review. It refines the "likely
 correct" bucket above: a line goes there only if all three correctors give the same reading.
 
-**Models**, all on prompt v4, unchanged (`correct.py --model <name> --prompt v4`):
+**Target (maintainer):** the lines the first pass skips (the three agree) must be
+**99.9% error-free**; the lines it reviews may be less accurate.
+
+**Models and arms.** Every text model runs on prompt v4, unchanged (`correct.py --model
+<name> --prompt v4`). Opus 5.5 also runs two image arms (below).
 
 | name in `correct.py` | API id | price (in / out per MTok) | status |
 |---|---|--:|---|
-| `gemini-3.1-pro` | `gemini-3.1-pro-preview` | — | chosen corrector; fill its missing lines |
-| `gemini-4` | `gemini-4-argon` | — | scored 2026-10-14 ("Gemini 4 check"); fill its missing lines |
-| `gemini-4-carbon` | `gemini-4-carbon` | — | new |
-| `gemini-4-hydrogen` | `gemini-4-hydrogen` | — | new |
-| `gemini-4-neon` | `gemini-4-neon` | — | new |
+| `gemini-3.1-pro` | `gemini-3.1-pro-preview` | $2 / $12 | chosen corrector; filled 2026-11-23 (below) |
+| `gemini-4` | `gemini-4-argon` | listed $2–3.60 / $10–18 | scored 2026-10-14 ("Gemini 4 check"); fill its missing lines |
+| `gemini-4-carbon` | `gemini-4-carbon` | listed $1–2 / $5–20 | new |
+| `gemini-4-hydrogen` | `gemini-4-hydrogen` | listed $0.75–1.50 / $3.75–7.50 | new |
+| `gemini-4-neon` | `gemini-4-neon` | not listed | new |
 | `opus-5.5` | `claude-opus-5-5` | $4 / $20 | new (smoke test only, p.615) |
 | `gpt-6.2` | `gpt-6.2-sol` | $2 / $10 | new |
 
 These are all the Gemini 4 ids on the key as of 2026-11-23. Claude Fable 5.2 was left out
 for its price ($8 / $40). For OpenAI, `gpt-6.2-astra` costs $8 / $40, more than Opus 5.5,
 so the cheaper `gpt-6.2-sol` was chosen. Each new id answered a short call with the run's
-settings (2026-11-23).
+settings (2026-11-23). The Gemini 4 prices are ranges because Google's pricing pages gave
+conflicting figures on 2026-11-23 (some list promotional prices until 2026-11-30); check
+the key's billing page before a run. 3.1 Pro's price matches its 2026-11-23 run (3.88M in
+/ 0.23M out, about $10).
 
-**Cost estimate** (one v4 run over the ~102 pages with typed lines): Opus 5.5 about
-$10–15, GPT 6.2 Sol about $5–8. The Opus figure comes from the p.615 smoke test (~$0.08 per
-page under v2) plus v4's line images. Counted with Anthropic's token counter, a full v4 page
-is about 8–9k input tokens (instructions ~1.75k; Armenian ~0.9 tokens/character; a line
-image ~75 tokens), so the output dominates. GPT is scaled from its price, with no logged
-run behind it. The four Gemini 4 runs cost about $8–10 each (argon used 3.7M input
-tokens on 102 pages), which may reach the key's monthly cap.
+**Opus image arms** (maintainer, 2026-11-23). On Gemini a line image costs a lot (v4 is
+~35k input tokens a page), which is why v4 sends images only for disagreements. On Opus a
+line image is ~75 tokens, so imaging every line (~75 a page) adds only ~3–4k tokens a page.
+Most remaining errors sit on lines where both engines agree, and no corrector sees an image
+of them, so these arms test whether images fix that:
+
+- **`v4-all`**: v4 with the image of **every** line, not only the disagreements. Same
+  rules and output format. Its question: does seeing agreed lines fix the shared
+  agreed-line errors (tone codes, case, punctuation) without breaking correct lines?
+- **`image-only`**: the line images and the page layout, **no engine readings**. Opus
+  transcribes from the images alone, so its errors don't come from the Calfa engines. Its
+  question: is it accurate enough to be a useful independent vote in the trio? The drift
+  guard still catches row shifts, but a drifted line is recorded as **no reading** rather
+  than falling back to the OCR, which would make the vote depend on the engines again.
+
+Both are new prompt versions in `correct.py` (code PR first). `v4-all` is not v6: v6
+images only the agreed lines matching the patterns fixed in advance, and is scored against
+v4 on the human corrections ("v6 risk patterns" above); these arms are scored on the
+ceiling lines only.
+
+**Cost estimate** (one run over the 103 pages with typed lines): Opus 5.5 about $10–15
+per arm (`v4`, `v4-all`, `image-only` are about the same: output dominates), GPT 6.2 Sol
+about $5–8. The Opus figure comes from the p.615 smoke test (~$0.08 per page under v2)
+plus v4's line images. Counted with Anthropic's token counter, a full v4 page is about
+8–9k input tokens (instructions ~1.75k; Armenian ~0.9 tokens/character; a line image ~75
+tokens). GPT is scaled from its price, with no logged run behind it. Each Gemini 4 run
+costs about $8–10 (argon used 3.7M input tokens on 102 pages), which may reach the key's
+monthly cap.
 
 **Order:**
-1. Re-run both Calfa engines on the ceiling pages (under way 2026-11-23).
-2. Retype the ceiling lines set aside in the layout review, after those results
-   (Phase 9 "After the gate", step 3).
-3. Run the models above, 3.1 Pro and argon first (they only fill missing lines), then
-   `ceiling score`. Every model is then scored on the same lines from the same engine readings.
+1. ~~Re-run both Calfa engines and retype the set-aside ceiling lines.~~ Done 2026-11-23 on
+   `data/ceiling-retype-517-643` (Phase 9 "After the gate", step 3; not merged yet): 79
+   lines retyped, both engines read every verified line, 3.1 Pro v4 filled the 103 pages:
+   96.3% (93.3–98.8%) on 163 lines, 0 broken. Run the rest from `main` once it merges, and
+   after step 4 there (the strata) so every row uses the same weights.
+2. The non-Gemini models first, as they are the most likely to make different errors:
+   Opus 5.5 (`v4`, `v4-all`, `image-only`) and GPT 6.2 Sol (`v4`). Then argon's fill.
+3. The other Gemini 4 models (carbon, hydrogen, neon) only if a Gemini slot is still in
+   question: they're the most likely to share argon's errors.
+4. `ceiling score`, then the measurements below.
 
-**Measure before choosing the three** (on the typed ceiling lines, per candidate triple):
-- the wrong lines on which all three agree. The first pass never sees these lines, so
-  this is what the shortcut misses;
-- how many lines are left for the first pass.
+Every model then reads the same engine output on the same lines. One difference stays:
+3.1 Pro's and argon's v4 files were built over several runs and only fill missing lines,
+while each new model corrects every page in one run.
 
-**Expected weak spot:** all correctors read the same two engine outputs, so their errors
-overlap. Six of argon's seven errors were also 3.1 Pro's. Where both engines agree on a
-wrong reading and no corrector changes it, all three agree on the wrong line. That was 4–6
-of the 102 agreed lines in the 2026-10-09/14 runs. A non-Gemini model is the most likely to
-make different errors.
+**Choosing the three, by a rule fixed now** (maintainer). Picking the best of 35 triples
+on ~160 lines would fit the noise (each triple misses 0–4 lines), the same risk that made
+the v6 patterns fixed in advance. So the trio is **the best model from each maker**:
+Gemini (3.1 Pro or a Gemini 4), Anthropic (Opus 5.5: `v4`, `v4-all` or `image-only`) and
+OpenAI (GPT 6.2 Sol). Within a maker, "best" = most error-free lines + `՚ի` rule; ties go to
+fewer broken lines, then to the cheaper run.
+
+**Measure** (on the typed ceiling lines, weighted back to the book by the strata):
+- **coverage**: the share of lines the first pass skips;
+- **residual**: wrong lines among the skipped ones, with an upper bound (below);
+- **against the baseline**, the existing "likely correct" bucket (engines agree and 3.1
+  Pro left the line unchanged), and against the best pair. The trio costs about three
+  times one corrector, so it has to skip more lines, or the same lines with fewer errors.
+- **compare strings exactly**: consensus means the same string after only the scorer's
+  normalization (NFC, look-alike punctuation, spaces). Folding anything more would hide
+  real disagreements, such as a comma against a period.
+
+**How far the ceiling lines can confirm 99.9%.** With *n* skipped typed lines and no
+errors among them, the 95% upper bound on their error rate is about 3/*n* (the "rule of
+three"). The ~100 typed agreed lines can show ≤3%. Showing ≤0.1% takes about **3,000**
+skipped lines with no error: far more than the ceiling sample. Today the two Gemini
+correctors both miss 3 of the 102 agreed lines (p457 `դկ.` read `գկ.`, p494 `բձ.` read `բկ.`, p543 a comma read as a period),
+about 3%, thirty times the target. So the ceiling run is a screen, not proof: a trio that
+still misses any of these lines can't meet the target, and one that misses none is only
+bounded at ~3%. Proof has to come from the human review of the book-wide output: audit a
+random sample of skipped lines (about 3,000, or fewer if a few errors are accepted), as
+part of the Phase 12 review. Typing more ceiling lines narrows the bound slowly (300 more
+→ ~0.75%).
+
+**Expected weak spot:** all text correctors read the same two engine outputs, so their
+errors overlap. Recounted on the 157 lines both cover (data as of 2026-11-13, `39762ef`):
+3.1 Pro has 8 wrong lines and argon 6. 5 of argon's 6 are also 3.1 Pro's; the sixth is
+the line it broke (p617). (The "Gemini 4 check" listed 6 shared errors; one was the p490
+page-number line, deleted in the layout review since.) Where both engines agree on a wrong
+reading and no corrector changes it, all three agree on the wrong line: 3.1 Pro misses 6
+such lines of the 102 agreed ones, argon 3, and the 3 above are missed by both. Only the
+overlap gets past a consensus, so a trio's misses are at most the fewest any member makes.
+The image arms are the ones most likely to break this overlap.
+
+#### Routing rules beyond consensus (planned, 2026-11-23)
+
+Any of these sends a line to the first pass **even when the three agree**:
+
+- **Risk patterns** (fixed in advance, "v6 risk patterns" above): a line whose agreed text
+  matches the tone-code or weekday-code regex. These are the look-alike letter-numerals
+  both engines misread the same way, so agreement there carries less evidence. They catch
+  3 of 3.1 Pro's 6 agreed-line errors (p494, p457, p638), but flag ~30% of agreed lines
+  (32 of 102), so measure their cost in coverage too.
+- **Out-of-vocabulary words**: a word not found in a Grabar word list built from text
+  **outside** this book (the Grabar 1895 and Nor Ejmiatsin Bibles). Not from this book's
+  own readings: a misreading all the models share would enter the list and hide itself.
+  Letter-numerals and codes are skipped. This catches non-word errors (`եդեալդ`), not
+  real-word ones (`զողի` for `զոգի` may be a real word), so it adds certainty in one
+  direction only: an unknown word is a reason to look, a known one is not proof.
+- **Engine confidence** (not stored yet): the prediction files hold only text. Paddle's
+  `TextRecognition.predict` returns a line `rec_score` next to `rec_text`; Tesseract can
+  give word and symbol confidences (`ResultIterator`, LSTM choices). Record them in the
+  book-wide run (it runs once), and on the ceiling lines first, to find a threshold
+  below which a line or character is routed to the first pass. Measure each rule the same
+  way as the trio: coverage and residual against the baseline.
 
 #### Where this stands (pick-up note, 2026-11-13)
 
@@ -476,8 +563,9 @@ make different errors.
   test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
   broken line (160 lines; 96.2% on 157 in the report since the 2026-11-13 restore);
   staying with 3.1 Pro ("Gemini 4 check" above). The other Gemini 4 models, Opus 5.5
-  and GPT 6.2 Sol are planned to run after the engine re-run and the retypes, for a consensus
-  first pass ("Planned: corrector comparison" above).
+  (also with images of every line, and from images alone) and GPT 6.2 Sol are planned,
+  one model from each maker forming a consensus trio for the first pass ("Planned:
+  corrector comparison" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
@@ -528,6 +616,7 @@ display and drop-cap strata, which the ceiling sample under-covers.
 
 Fine-tuning on the Տօնացոյց and the book-wide re-OCR itself (next, after the layout review).
 
-The other Gemini 4 models (carbon, hydrogen, neon), Opus 5.5 and GPT 6.2 Sol have no
-scored runs yet; only `gemini-4-argon` was run on v4 (2026-10-14, "Gemini 4 check"). Their
-runs are planned in "Planned: corrector comparison for a consensus first pass".
+The other Gemini 4 models (carbon, hydrogen, neon), Opus 5.5 (including its `v4-all` and
+`image-only` arms) and GPT 6.2 Sol have no scored runs yet; only `gemini-4-argon` was run
+on v4 (2026-10-14, "Gemini 4 check"). Their runs are planned in "Planned: corrector
+comparison for a consensus first pass".
