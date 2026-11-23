@@ -65,7 +65,7 @@ package = false
 # package = false above means data_prep is not installed; put the repo root on
 # sys.path so `from data_prep.line_cropper import ...` resolves under pytest.
 pythonpath = ["."]
-testpaths = ["data_prep/tests"]
+testpaths = ["tests", "data_prep/tests"]
 
 [tool.black]
 line-length = 100
