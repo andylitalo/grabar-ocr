@@ -462,3 +462,10 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   Then the last 10 boxes the foreign-ink check flagged (all on pp.453-516) were reshaped
   and verified again, with 2 neighbours; no flags are left in 453-643, and no typed line
   or pick was affected.
+- **2026-11-23: "After the gate" step 3 done.** The 79 set-aside ceiling lines retyped
+  (76 the same as before; `p531.042` and `p533.058` disagreed on թ/Թ and are both
+  lowercase; the bad-crop `p549.047` now reads), plus `p467.049`: 163 typed. Both engines
+  now read every verified line (14,127) and v4 corrected the 103 pages with typed lines.
+  v4 + rule: **96.3% (93.3-98.8%) on 163 lines**, 0 broken, still weighted by the strata
+  drawn on the old lines; step 4 recomputes them.
+
