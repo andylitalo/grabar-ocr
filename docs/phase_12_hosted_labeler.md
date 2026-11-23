@@ -77,7 +77,7 @@ for its uses.
 ```
  browser ──HTTPS──> ocr.andylitalo.com: Firebase Hosting (static frontend, managed TLS)
                         │  /api/** rewrite
-                  Cloud Run: FastAPI (1 vCPU / 512 MiB, min 1, max 2 instances)
+                  Cloud Run: FastAPI (1 vCPU / 512 MiB, min 0, max 2 instances)
                    │              │                 │
           Cloud SQL Postgres   GCS, private     Secret Manager
           (accounts, claims,   (page images)    (DB password)
@@ -85,20 +85,27 @@ for its uses.
      Firebase Auth / Identity Platform (email + password; sign-up off)
 ```
 
-- **Project:** a new GCP project (e.g. `grabar-ocr`) on the lectionary's billing account,
-  in us-central1. It needs the same per-project org-policy override the lectionary got.
+- **Project:** `grabar-ocr` on the lectionary's billing account, in us-central1. It keeps
+  the org's Workspace-only IAM rule; Cloud Run is made public with
+  `--no-invoker-iam-check` instead of an override (see the infrastructure smoke test).
 - **Frontend:** Firebase Hosting serves the static files and rewrites `/api/**` to Cloud
   Run. Its custom domains are generally available and the certificate is managed. Firebase
   Hosting strips every cookie except `__session`, so the browser sends the Firebase ID
   token as an `Authorization` header instead of using a cookie session.
-- **Cloud Run:** min 1 instance, so there is no cold start; max 2, so the bill is capped.
+- **Cloud Run:** min 0 instances (maintainer, 2026-11-20), so an idle site costs nothing
+  and the first request after a quiet spell waits for a cold start; max 2, so the bill is
+  capped. If the cold start proves irritating in R0, set min 1 (about $10 a month more).
 - **Cloud SQL:** smallest shared-core Postgres, with automated backups and point-in-time
   recovery. Reached from Cloud Run over its built-in connection, and from the Mac with
   the Cloud SQL Auth Proxy.
-- **Alerts:** an uptime check on `/health`; a $50/month budget alert. Labeler alerts: the
-  app writes a structured log entry, and a log-based alert in Cloud Monitoring emails
-  the maintainer a link to that person's report.
-- **Cost:** roughly $20–30 a month.
+- **Alerts:** an uptime check on `/api/health` through Hosting (only `/api/**` reaches
+  Cloud Run); a $50/month budget alert. With min 0, the check's requests can keep an
+  instance alive between them (Cloud Run may keep an idle instance for up to about 15
+  minutes) and so hide cold starts; R0 judges the cold start with the check running at
+  its real interval. Labeler alerts: the app writes a structured log entry, and a
+  log-based alert in Cloud Monitoring emails the maintainer a link to that person's
+  report.
+- **Cost:** roughly $10–20 a month, mostly Cloud SQL (with min 1 instance, about $10 more).
 - **Not now: a load balancer + Cloud Armor** (~$25–30 a month more, plus setup). They
   protect against floods of junk requests; with max 2 instances such a flood would slow
   or stop the site, but can't reach the data, and the bill stays capped. Login attacks hit
@@ -359,7 +366,7 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - No uptime guarantee; a short outage is fine if no data is lost.
 - Per-user rate limits; an account can be disabled.
 
-## Where this stands (pick-up note, 2026-11-17)
+## Where this stands (pick-up note, 2026-11-21)
 
 - **Planning is done; nothing is built.** Every decision is in this doc. Don't write
   `labeler_app/` code until the order of work below reaches step 5 and the maintainer says
@@ -372,12 +379,102 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - **Can run beside the layout review, if the maintainer wants:**
   - ~~create the empty private repo~~: done 2026-11-17 (`andylitalo/grabar-ocr-private`).
     No data moves before migration step 4b;
-  - ~~draft the contributor agreement and privacy note~~: done, PR #20, awaiting the
-    maintainer's review;
-  - later, a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
-    surface domain, certificate and org-policy surprises before the real build.
+  - ~~draft the contributor agreement and privacy note~~: merged 2026-11-19 (PR #20,
+    `docs/labeler/`);
+  - ~~a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`~~: done
+    2026-11-21, see the infrastructure smoke test below. The project, domain, sign-in
+    settings and budgets are in place for the real build.
 - **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
   (after pilot data); whether pass B runs (after the draft).
+
+## Infrastructure smoke test (2026-11-20 → 21, passed)
+
+A throwaway API (`/api/health`, `/api/echo`, `/api/me`, never committed) behind Firebase
+Hosting, to find the cloud surprises before the real build. The project, billing link,
+budget and domain are kept for the real build; the hello-world service is not.
+
+**Set up, and kept for the real build:**
+
+- **Project** `grabar-ocr` (number 46107812726), under the lectionary org, linked to
+  "Armenian Lectionary Billing".
+- **Budgets** on that billing account, each scoped to one project: "grabar-ocr monthly"
+  ($50, alerts at 50/90/100%) and the existing "Free Tier Safeguard" ($1, now
+  `armenian-lectionary` only; it had covered the whole account, so OCR spend would have
+  set it off every month). Both email the billing admins and, through a Monitoring email
+  channel, the maintainer's Gmail. The channel lives in `armenian-lectionary`, because
+  Monitoring refused calls in the newly created project (`USER_PROJECT_DENIED`, although
+  the caller was owner). It worked about an hour later, so probably the new project's
+  permissions hadn't taken effect yet; the cause wasn't confirmed. Budgets can use a
+  channel from any project.
+- **Cloud Run** (test only, since deleted): service `labeler-hello`, deployed with
+  `gcloud run deploy --source`.
+- **Firebase** added in the console (2026-11-20). The CLI's `projects:addfirebase` failed
+  with a bare 403 until the account accepted Firebase's terms there. Analytics off. Adding
+  Firebase can't be undone and puts the project on the Blaze plan (same free allowances,
+  same billing account). **Never delete the Firebase project:** that deletes the Cloud
+  project with it. Clean up by deleting the Hosting site or the Cloud Run service.
+- **Hosting** site `grabar-ocr` (`grabar-ocr.web.app`). During the test `/api/**` was
+  rewritten to `labeler-hello`; afterwards it serves a static "not open yet" page.
+- **Domain** `ocr.andylitalo.com`: Firebase's quick setup asked for one **CNAME**, `ocr` →
+  `grabar-ocr.web.app`, in Squarespace DNS. The certificate was issued within minutes.
+  Squarespace appends the domain to the host, so enter `ocr` (or `_acme-challenge.ocr`),
+  never the full name: the first try published `….andylitalo.com.andylitalo.com`. HTTP
+  redirects to HTTPS (301).
+
+**Findings:**
+
+- **No org-policy override.** The org lets IAM roles go only to Workspace accounts
+  (`iam.allowedPolicyMemberDomains`), so `allUsers` can't be granted `run.invoker`.
+  Firebase Hosting forwards `/api/**` as an ordinary anonymous request (there is no
+  Hosting identity to grant invoker to), so the service must be public.
+  `--no-invoker-iam-check` makes it public without any IAM grant, and the org rule stays
+  in force: the service's IAM policy is empty. Contributors are Firebase Auth users, not
+  IAM principals, and never need roles. The lectionary could switch the same way.
+- **The `*.run.app` URL stays reachable,** bypassing Hosting. Ingress settings can't close
+  it without also blocking Hosting, so the app's own token check guards every route.
+- **Through the Hosting rewrite** (`grabar-ocr.web.app/api/echo`), the `Authorization`
+  header arrives, and of the cookies `__session` and `other` only `__session` does, as
+  expected. `X-Forwarded-Host` carries the public host. API responses come back
+  `cache-control: private` with `x-cache: MISS`, so the CDN doesn't cache them; the real
+  API should still set `Cache-Control` explicitly on every response.
+- **Cold start ≈ 3.5 s** through `ocr.andylitalo.com` (a fresh instance, uptime 0.1 s);
+  warm requests 0.16–0.17 s. For the hello-world image (python:3.12-slim + FastAPI); the
+  real app, with a DB pool, will be slower to start. The maintainer chose min 0 anyway and
+  will judge the wait in R0 (see Risks to test in R0).
+- **Builds run as the default compute account.** New projects (since 2024) build as
+  `<number>-compute@developer.gserviceaccount.com`, which needed
+  `roles/cloudbuild.builds.builder` before `--source` deploys could read the uploaded
+  source. The legacy Cloud Build account (`<number>@cloudbuild.gserviceaccount.com`) still
+  holds that role but is used only if something selects it. **For the real build:** a
+  dedicated build account with only the roles it needs (`--build-service-account`), and a
+  dedicated runtime account for the service (Cloud SQL, its bucket, its secrets) instead of
+  the compute default. Then remove the builder role from the compute account and the
+  legacy account.
+- **No Container Registry in the real build.** Enabling Cloud Build also turned on
+  `containerregistry.googleapis.com` and added its service agent. Container Registry is
+  retired; images go to Artifact Registry (`cloud-run-source-deploy`). Disable the API and
+  confirm the agent's binding is gone, then check a `--source` deploy still works.
+- **Sign-in with sign-up off works.** Authentication needed the Identity Platform upgrade
+  (free for email and password at this scale; can't be undone) before "Enable create
+  (sign-up)" could be unchecked; "Enable delete" is off too. A web app (`labeler-web`) is
+  registered; its API key is public by design. Checked 2026-11-21:
+  - a sign-up from outside, as a page would send it, is refused (`ADMIN_ONLY_OPERATION`);
+    in the browser, `auth/admin-restricted-operation`;
+  - an admin-created account (the invite path, via the Identity Toolkit admin API) signs
+    in, from curl and from the browser at `ocr.andylitalo.com`;
+  - the API verifies the ID token with `google.oauth2.id_token.verify_firebase_token`
+    (audience `grabar-ocr`) and reads the uid and email; no token or a tampered one gets
+    401.
+- **Not adopted: App Check.** The console suggests it; on the web it means reCAPTCHA, which
+  scores visitors with Google scripts and would need a line in the privacy note. With
+  sign-up off and no SMS, the abuse it guards against mostly can't happen. It stays the
+  first step if logs show sustained junk traffic (see Cloud).
+- **CLI sign-ins expire.** Both `gcloud` and `firebase` needed a fresh login after about a
+  day (the Workspace's session length), and fail non-interactively until then. Deploy
+  scripts for the real build should expect it.
+- **Cleanup:** the test account deleted; the hello-world service deleted; the hosting
+  rewrite removed. Artifact Registry keeps the hello-world images (a few cents a month)
+  until the real build's first deploy; delete them then.
 
 ## Considered and not chosen
 
@@ -447,9 +544,12 @@ Both should have display lines and a drop cap, and no answers already in the pub
 ## Risks to test in R0
 
 - **Operational setup.** The Firebase Hosting custom domain and certificate; the
-  org-policy override; Cloud SQL's smallest tier (it has no SLA) and the connection from
-  Cloud Run; cold start with min 1 instance; alert emails arriving; invite emails landing
-  in spam.
+  public Cloud Run service without an org-policy override; Cloud SQL's smallest tier (it
+  has no SLA) and the connection from Cloud Run; alert emails arriving; invite emails
+  landing in spam. Most of this was tried in the infrastructure smoke test.
+- **The cold start with min 0.** How long the real app takes to start, and whether waiting
+  for it on the first page load or save of a session is irritating, with the uptime check
+  running (see Cloud). If it is, set min 1.
 - **The fold table over the full book's prefill.** The seeding report should be short.
 - **The labeling flow.** Context-view zoom and pan on a full page image; two browsers
   claiming the same page at once; optimistic submit while offline, then on
