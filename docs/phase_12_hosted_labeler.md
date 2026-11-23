@@ -377,19 +377,19 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
     No data moves before migration step 4b;
   - ~~draft the contributor agreement and privacy note~~: done, PR #20, awaiting the
     maintainer's review;
-  - a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`, to
-    surface domain, certificate and org-policy surprises before the real build: in
-    progress, see the infrastructure smoke test below.
+  - ~~a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`~~: done
+    2026-11-21, see the infrastructure smoke test below. The project, domain, sign-in
+    settings and budgets are in place for the real build.
 - **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
   (after pilot data); whether pass B runs (after the draft).
 
-## Infrastructure smoke test (2026-11-20, in progress)
+## Infrastructure smoke test (2026-11-20 → 21, passed)
 
-A throwaway two-route API (`/api/health`, `/api/echo`, never committed) behind Firebase
+A throwaway API (`/api/health`, `/api/echo`, `/api/me`, never committed) behind Firebase
 Hosting, to find the cloud surprises before the real build. The project, billing link,
 budget and domain are kept for the real build; the hello-world service is not.
 
-**Set up so far:**
+**Set up, and kept for the real build:**
 
 - **Project** `grabar-ocr` (number 46107812726), under the lectionary org, linked to
   "Armenian Lectionary Billing".
@@ -406,8 +406,8 @@ budget and domain are kept for the real build; the hello-world service is not.
   Firebase can't be undone and puts the project on the Blaze plan (same free allowances,
   same billing account). **Never delete the Firebase project:** that deletes the Cloud
   project with it. Clean up by deleting the Hosting site or the Cloud Run service.
-- **Hosting** site `grabar-ocr` (`grabar-ocr.web.app`), `/api/**` rewritten to
-  `labeler-hello`.
+- **Hosting** site `grabar-ocr` (`grabar-ocr.web.app`). During the test `/api/**` was
+  rewritten to `labeler-hello`; afterwards it serves a static "not open yet" page.
 - **Domain** `ocr.andylitalo.com`: Firebase's quick setup asked for one **CNAME**, `ocr` →
   `grabar-ocr.web.app`, in Squarespace DNS. The certificate was issued within minutes.
   Squarespace appends the domain to the host, so enter `ocr` (or `_acme-challenge.ocr`),
@@ -447,6 +447,27 @@ budget and domain are kept for the real build; the hello-world service is not.
   `containerregistry.googleapis.com` and added its service agent. Container Registry is
   retired; images go to Artifact Registry (`cloud-run-source-deploy`). Disable the API and
   confirm the agent's binding is gone, then check a `--source` deploy still works.
+- **Sign-in with sign-up off works.** Authentication needed the Identity Platform upgrade
+  (free for email and password at this scale; can't be undone) before "Enable create
+  (sign-up)" could be unchecked; "Enable delete" is off too. A web app (`labeler-web`) is
+  registered; its API key is public by design. Checked 2026-11-21:
+  - a sign-up from outside, as a page would send it, is refused (`ADMIN_ONLY_OPERATION`);
+    in the browser, `auth/admin-restricted-operation`;
+  - an admin-created account (the invite path, via the Identity Toolkit admin API) signs
+    in, from curl and from the browser at `ocr.andylitalo.com`;
+  - the API verifies the ID token with `google.oauth2.id_token.verify_firebase_token`
+    (audience `grabar-ocr`) and reads the uid and email; no token or a tampered one gets
+    401.
+- **Not adopted: App Check.** The console suggests it; on the web it means reCAPTCHA, which
+  scores visitors with Google scripts and would need a line in the privacy note. With
+  sign-up off and no SMS, the abuse it guards against mostly can't happen. It stays the
+  first step if logs show sustained junk traffic (see Cloud).
+- **CLI sign-ins expire.** Both `gcloud` and `firebase` needed a fresh login after about a
+  day (the Workspace's session length), and fail non-interactively until then. Deploy
+  scripts for the real build should expect it.
+- **Cleanup:** the test account deleted; the hello-world service deleted; the hosting
+  rewrite removed. Artifact Registry keeps the hello-world images (a few cents a month)
+  until the real build's first deploy; delete them then.
 
 ## Considered and not chosen
 
