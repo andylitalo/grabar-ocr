@@ -536,6 +536,11 @@ extraction all need somewhere to hang, and today there is no stable anchor (§3.
   text (keep both — the line breaks are page evidence, the entry text is what you search
   and cite).
 
+**Plan (2026-11-23):** [`book_structure.md`](book_structure.md): Vol I headers marked by
+hand, Vol II's taregir letters (already marked) checked against the index, sections
+assigned after the region migration, and each entry's month and day from three checks
+(header, day-number restarts, the taregir's weekdays).
+
 **Gate:** every content line in 453–641 resolves to exactly one entry; every entry
 resolves to a volume + section + page; citation ids are stable across a forced
 re-segmentation of a 10-page sample.
