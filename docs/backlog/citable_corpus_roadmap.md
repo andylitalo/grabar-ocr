@@ -530,14 +530,22 @@ extraction all need somewhere to hang, and today there is no stable anchor (§3.
 - Add `volume`, `section` (taregir for Vol II, section slug for Vol I), `entry_id` and
   `entry_seq` to `lines.json`; have `pipeline.promote` populate them.
 - Commit the page→section map as data. Vol II already has one
-  (`armenian-lectionary/docs/sources/second_volume_index.csv`, 35 letters, pp.557–638);
+  (`armenian-lectionary/docs/sources/second_volume_index.csv`, 35 Easter letters plus the
+  leap-only Ք, pp.557–638);
   Vol I needs `corpus/STRUCTURE.md`'s prose table turned into a CSV.
 - Add a dehyphenation pass producing an entry-level `text` field beside the line-level
   text (keep both — the line breaks are page evidence, the entry text is what you search
   and cite).
 
-**Gate:** every content line in 453–641 resolves to exactly one entry; every entry
-resolves to a volume + section + page; citation ids are stable across a forced
+**Plan (2026-11-23):** [`book_structure.md`](book_structure.md): Vol I seasons (display
+headings) marked by hand, Vol II's taregir letters (already marked) checked against the index, sections
+assigned after the region migration, and each Vol II entry's month from its header,
+verified by section order and the weekdays the taregir's Easter fixes. Sections without
+entries get a nested outline; ids start as region ids, with natural keys added as known.
+
+**Gate:** every content line in 453–643 resolves to exactly one entry, or, in a section
+without entries, one node of its outline (`book_structure.md`); every entry resolves to a
+volume + section + page; natural-key citation ids are stable across a forced
 re-segmentation of a 10-page sample.
 
 ### W2 — Ground truth for *this* book *(gates the word "mint")*

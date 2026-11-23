@@ -267,8 +267,10 @@ After the whole review, move the rest before any new OCR:
 Code and the data it writes go in separate PRs when the data is large (AGENTS.md, "Data
 storage").
 
-Then the book-wide run starts by moving the data to region keys
-(`docs/backlog/region_keyed_data.md`).
+Then mark the Vol I season headings (Title tool, Shift-click a line), which needs no OCR,
+and the book-wide run starts by moving the data to region keys
+(`docs/backlog/region_keyed_data.md`). Sections, entries and dates:
+`docs/backlog/book_structure.md`.
 
 ## Out of scope
 
