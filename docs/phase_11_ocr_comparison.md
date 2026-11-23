@@ -400,6 +400,56 @@ every predictions file in the set, so since the 2026-10-31 re-score they're also
 `reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
 that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
+#### Planned: corrector comparison for a consensus first pass (maintainer, 2026-11-23)
+
+**Idea (maintainer):** run correctors with different error profiles, and have the first
+human pass look only at lines where three of them don't all agree. That gets a first
+draft out quickly; the other lines wait for the full review. It refines the "likely
+correct" bucket above: a line goes there only if all three correctors give the same reading.
+
+**Models**, all on prompt v4, unchanged (`correct.py --model <name> --prompt v4`):
+
+| name in `correct.py` | API id | price (in / out per MTok) | status |
+|---|---|--:|---|
+| `gemini-3.1-pro` | `gemini-3.1-pro-preview` | — | chosen corrector; fill its missing lines |
+| `gemini-4` | `gemini-4-argon` | — | scored 2026-10-14 ("Gemini 4 check"); fill its missing lines |
+| `gemini-4-carbon` | `gemini-4-carbon` | — | new |
+| `gemini-4-hydrogen` | `gemini-4-hydrogen` | — | new |
+| `gemini-4-neon` | `gemini-4-neon` | — | new |
+| `opus-5.5` | `claude-opus-5-5` | $4 / $20 | new (smoke test only, p.615) |
+| `gpt-6.2` | `gpt-6.2-sol` | $2 / $10 | new |
+
+These are all the Gemini 4 ids on the key as of 2026-11-23. Claude Fable 5.2 was left out
+for its price ($8 / $40). For OpenAI, `gpt-6.2-astra` costs $8 / $40, more than Opus 5.5,
+so the cheaper `gpt-6.2-sol` was chosen. Each new id answered a short call with the run's
+settings (2026-11-23).
+
+**Cost estimate** (one v4 run over the ~102 pages with typed lines): Opus 5.5 about
+$10–15, GPT 6.2 Sol about $5–8. The Opus figure comes from the p.615 smoke test (~$0.08 per
+page under v2) plus v4's line images. Counted with Anthropic's token counter, a full v4 page
+is about 8–9k input tokens (instructions ~1.75k; Armenian ~0.9 tokens/character; a line
+image ~75 tokens), so the output dominates. GPT is scaled from its price, with no logged
+run behind it. The four Gemini 4 runs cost about $8–10 each (argon used 3.7M input
+tokens on 102 pages), which may reach the key's monthly cap.
+
+**Order:**
+1. Re-run both Calfa engines on the ceiling pages (under way 2026-11-23).
+2. Retype the ceiling lines set aside in the layout review, after those results
+   (Phase 9 "After the gate", step 3).
+3. Run the models above, 3.1 Pro and argon first (they only fill missing lines), then
+   `ceiling score`. Every model is then scored on the same lines from the same engine readings.
+
+**Measure before choosing the three** (on the typed ceiling lines, per candidate triple):
+- the wrong lines on which all three agree. The first pass never sees these lines, so
+  this is what the shortcut misses;
+- how many lines are left for the first pass.
+
+**Expected weak spot:** all correctors read the same two engine outputs, so their errors
+overlap. Six of argon's seven errors were also 3.1 Pro's. Where both engines agree on a
+wrong reading and no corrector changes it, all three agree on the wrong line. That was 4–6
+of the 102 agreed lines in the 2026-10-09/14 runs. A non-Gemini model is the most likely to
+make different errors.
+
 #### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
@@ -425,7 +475,9 @@ that row covers 157 lines (96.2%, 1 broken), against v4's 160.
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
   test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
   broken line (160 lines; 96.2% on 157 in the report since the 2026-11-13 restore);
-  staying with 3.1 Pro ("Gemini 4 check" above).
+  staying with 3.1 Pro ("Gemini 4 check" above). The other Gemini 4 models, Opus 5.5
+  and GPT 6.2 Sol are planned to run after the engine re-run and the retypes, for a consensus
+  first pass ("Planned: corrector comparison" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
@@ -476,6 +528,6 @@ display and drop-cap strata, which the ceiling sample under-covers.
 
 Fine-tuning on the Տօնացոյց and the book-wide re-OCR itself (next, after the layout review).
 
-The later Gemini 4 models (argon, hydrogen) are out of scope for this PR only: it has
-just the one `gemini-4-argon` run on v4 from 2026-10-14 ("Gemini 4 check"). They're still
-to be tested, in a later PR.
+The other Gemini 4 models (carbon, hydrogen, neon), Opus 5.5 and GPT 6.2 Sol have no
+scored runs yet; only `gemini-4-argon` was run on v4 (2026-10-14, "Gemini 4 check"). Their
+runs are planned in "Planned: corrector comparison for a consensus first pass".

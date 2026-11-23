@@ -54,8 +54,12 @@ MODELS = {
     "opus-5.5": ("anthropic", "claude-opus-5-5"),
     "gemini-3.1-pro": ("gemini", "gemini-3.1-pro-preview"),
     "gemini-3.8-flash": ("gemini", "gemini-3.8-flash"),
-    "gemini-4": ("gemini", "gemini-4-argon"),
+    "gemini-4": ("gemini", "gemini-4-argon"),  # name kept: corr-gemini-4-v4 is argon's run
+    "gemini-4-carbon": ("gemini", "gemini-4-carbon"),
+    "gemini-4-hydrogen": ("gemini", "gemini-4-hydrogen"),
+    "gemini-4-neon": ("gemini", "gemini-4-neon"),
     "gpt-6.1": ("openai", "gpt-6.1-sol"),
+    "gpt-6.2": ("openai", "gpt-6.2-sol"),
 }
 MAX_TOKENS = 32_000
 GEMINI_THINKING_BUDGET = 512  # Phase 5b: same answers as dynamic thinking, ~10x faster

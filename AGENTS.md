@@ -22,7 +22,7 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 
 **Current phase docs** (all phases: `docs/phase_*.md`; the staged order: `docs/backlog/README.md`):
 - `docs/phase_9_line_segmentation_review.md` — **review done, gate passed 2026-11-23**; "After the gate" steps 1–3 done (#30), step 4 (recompute the strata) next
-- `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (95.0% error-free on 160 typed lines, re-scored 2026-11-13); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; the later Gemini 4 models (argon, hydrogen) are still to be tested, in a later PR
+- `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (95.0% error-free on 160 typed lines, re-scored 2026-11-13); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; a corrector comparison (the other Gemini 4 models, Opus 5.5, GPT 6.2 Sol) for a consensus first pass is planned after the engine re-run and retypes
 - `docs/phase_10_ocr_test_set.md` — deferred until the layout review is done
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
 - `docs/phase_12_hosted_labeler.md` — **planned, not built**: contributors correct the book-wide OCR at `ocr.andylitalo.com`; starts after the region-keyed migration and the book-wide run
