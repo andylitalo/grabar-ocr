@@ -104,9 +104,10 @@ Sunday-number · saint/feast.
 - **Cycle number** is a closed form of the letter position: `cycle(pos) = ((11 - pos) % 7) + 1`
   (anchored Ի=1). Use it — plus the section's stated Easter date — to **validate** that a page
   is attached to the right letter. (Validator: `armenian_lectionary/dev/second_volume_index.py`.)
-  - *Known defect:* the header of **p.557** (taregir **Ա**, Easter Mar 22, cycle 4) prints
-    the letter as `[Gg - Գ]` — a mislabel; its cycle (4) and its March-22 Easter row both
-    confirm it is **Ա**. Logged in `ERRATA.md`.
+  - *Known defect (ours, not the book's):* **p.557** prints **Ա** correctly under «ԳԻՐ
+    ՏԱՐՒՈՅՆ» ("Letter of the year"). The old OCR garbled that heading, and the translation
+    took its stray `Գ` as the letter (`[Gg - Գ]`). Its cycle (4) and its March-22 Easter row
+    both confirm **Ա**. Logged in `ERRATA.md` (E1).
 - **Leap years** carry a two-letter (reverse-consecutive) taregir and skip a saint that was
   already kept before Feb 29. Rules:
   [`second_volume_leap_rules.md`](../../armenian_lectionary/docs/sources/second_volume_leap_rules.md).
