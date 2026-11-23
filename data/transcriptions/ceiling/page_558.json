@@ -1,10 +1,11 @@
 {
- "p558~line_087": {
+ "p558.087": {
   "text": "րութիւն։",
   "status": "done",
   "at": "2026-10-09T14:10:11+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "6061fc2e7856cb81"
+  "geometry": "6061fc2e7856cb81",
+  "migrated_from": "p558~line_087"
  }
 }

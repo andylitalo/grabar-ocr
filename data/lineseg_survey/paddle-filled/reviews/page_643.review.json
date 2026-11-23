@@ -1,0 +1,36 @@
+{
+ "schema": 2,
+ "page": 643,
+ "status": "verified",
+ "baseline": {
+  "tool": "paddle-filled",
+  "sha256": "94da3df5b58f479f4093286d0d669b342f5b538a216e8cc9c67084a2a23fa1af"
+ },
+ "ops": [
+  {"op": "page_number", "line": "line_001", "value": "639", "auto": true},
+  {"op": "reshape", "line": "line_009", "boundary": [[480.0, 1024.0], [480.0, 1026.0], [546.0, 1026.0], [546.0, 1024.0], [1904.0, 1024.0], [1904.0, 958.0], [247.0, 958.0], [247.0, 1024.0]], "auto": true}
+ ],
+ "section_titles": [],
+ "ids": {
+  "line_002": "p643.001",
+  "line_003": "p643.002",
+  "line_004": "p643.003",
+  "line_005": "p643.004",
+  "line_006": "p643.005",
+  "line_007": "p643.006",
+  "line_008": "p643.007",
+  "line_009": "p643.008",
+  "line_010": "p643.009",
+  "line_011": "p643.010",
+  "line_012": "p643.011",
+  "line_013": "p643.012",
+  "line_014": "p643.013"
+ },
+ "retired": {},
+ "retired_keys": {},
+ "next_seq": 14,
+ "id_cuts": {},
+ "verified_at": "2026-11-23T19:15:39+00:00",
+ "updated_at": "2026-11-23T19:15:39+00:00",
+ "revision": 2
+}

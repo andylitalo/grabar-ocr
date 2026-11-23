@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p608~line_041",
+  "reason": "shape changed",
+  "replaced_by": "p608.044",
+  "at": "2026-11-23T19:23:45+00:00",
+  "record": {
+   "text": "երեք շաբաթ է։ Տես մինչեւ յԱս-",
+   "status": "done",
+   "at": "2026-10-09T14:00:14+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "9101ef55342a7179"
+  }
+ },
+ {
+  "id": "p608~line_058",
+  "reason": "shape changed",
+  "replaced_by": "p608.061",
+  "at": "2026-11-23T19:23:45+00:00",
+  "record": {
+   "text": "տուածածնի։ Միջոց ուտիքն երեք",
+   "status": "done",
+   "at": "2026-10-09T14:14:58+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "6cc938c9e3823708"
+  }
+ }
+]

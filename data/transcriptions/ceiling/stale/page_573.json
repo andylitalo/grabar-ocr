@@ -1,0 +1,16 @@
+[
+ {
+  "id": "p573~line_057",
+  "reason": "shape changed",
+  "replaced_by": "p573.059",
+  "at": "2026-11-23T19:23:24+00:00",
+  "record": {
+   "text": "հատորն։",
+   "status": "done",
+   "at": "2026-10-09T14:01:26+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "fc57905afec89ce5"
+  }
+ }
+]

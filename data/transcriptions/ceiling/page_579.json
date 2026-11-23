@@ -1,10 +1,11 @@
 {
- "p579~line_047": {
+ "p579.047": {
   "text": "9. Բշ. ԳԿ. Պահք։ Տօն Յղութեան",
   "status": "done",
   "at": "2026-10-09T05:28:19+00:00",
   "by": "maintainer",
   "prefill": null,
-  "geometry": "13274f8cfa64bc8f"
+  "geometry": "13274f8cfa64bc8f",
+  "migrated_from": "p579~line_047"
  }
 }

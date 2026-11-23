@@ -1,0 +1,23 @@
+{
+ "page": 643,
+ "baseline": {"tool": "paddle-filled", "sha256": "94da3df5b58f479f4093286d0d669b342f5b538a216e8cc9c67084a2a23fa1af"},
+ "verified_at": "2026-11-23T19:15:39+00:00",
+ "page_number": {"value": "639", "box": [976.0, 182.0, 1207.0, 283.0]},
+ "section_titles": [],
+ "lines": [
+  {"id": "p643.001", "order": 1, "key": "line_002", "boundary": [[391.0, 345.0], [1918.0, 345.0], [1918.0, 427.0], [391.0, 427.0]], "baseline": [[391.0, 406.5], [1918.0, 406.5]], "baseline_source": "synthetic", "bbox": [391.0, 345.0, 1918.0, 427.0], "source": "hyocr-paddle", "derived_from": ["line_002"], "initial": null},
+  {"id": "p643.002", "order": 2, "key": "line_003", "boundary": [[253.0, 436.0], [1916.0, 436.0], [1916.0, 511.0], [253.0, 511.0]], "baseline": [[253.0, 492.25], [1916.0, 492.25]], "baseline_source": "synthetic", "bbox": [253.0, 436.0, 1916.0, 511.0], "source": "hyocr-paddle", "derived_from": ["line_003"], "initial": null},
+  {"id": "p643.003", "order": 3, "key": "line_004", "boundary": [[249.0, 522.0], [1908.0, 519.0], [1908.0, 593.0], [249.0, 597.0]], "baseline": [[249.0, 577.5], [1908.0, 577.5]], "baseline_source": "synthetic", "bbox": [249.0, 519.0, 1908.0, 597.0], "source": "hyocr-paddle", "derived_from": ["line_004"], "initial": null},
+  {"id": "p643.004", "order": 4, "key": "line_005", "boundary": [[243.0, 606.0], [1914.0, 602.0], [1915.0, 684.0], [243.0, 688.0]], "baseline": [[243.0, 666.5], [1915.0, 666.5]], "baseline_source": "synthetic", "bbox": [243.0, 602.0, 1915.0, 688.0], "source": "hyocr-paddle", "derived_from": ["line_005"], "initial": null},
+  {"id": "p643.005", "order": 5, "key": "line_006", "boundary": [[249.0, 697.0], [614.0, 695.0], [615.0, 765.0], [249.0, 767.0]], "baseline": [[249.0, 749.0], [615.0, 749.0]], "baseline_source": "synthetic", "bbox": [249.0, 695.0, 615.0, 767.0], "source": "hyocr-paddle", "derived_from": ["line_006"], "initial": null},
+  {"id": "p643.006", "order": 6, "key": "line_007", "boundary": [[387.0, 773.0], [1910.0, 775.0], [1910.0, 855.0], [387.0, 853.0]], "baseline": [[387.0, 834.5], [1910.0, 834.5]], "baseline_source": "synthetic", "bbox": [387.0, 773.0, 1910.0, 855.0], "source": "hyocr-paddle", "derived_from": ["line_007"], "initial": null},
+  {"id": "p643.007", "order": 7, "key": "line_008", "boundary": [[244.0, 866.0], [1910.0, 862.0], [1910.0, 941.0], [244.0, 945.0]], "baseline": [[244.0, 924.25], [1910.0, 924.25]], "baseline_source": "synthetic", "bbox": [244.0, 862.0, 1910.0, 945.0], "source": "hyocr-paddle", "derived_from": ["line_008"], "initial": null},
+  {"id": "p643.008", "order": 8, "key": "line_009", "boundary": [[480.0, 1024.0], [480.0, 1026.0], [546.0, 1026.0], [546.0, 1024.0], [1904.0, 1024.0], [1904.0, 958.0], [247.0, 958.0], [247.0, 1024.0]], "baseline": [[247.0, 1009.0], [1904.0, 1009.0]], "baseline_source": "synthetic", "bbox": [247.0, 958.0, 1904.0, 1026.0], "source": "hyocr-paddle", "derived_from": ["line_009"], "initial": null},
+  {"id": "p643.009", "order": 9, "key": "line_010", "boundary": [[246.0, 1045.0], [1459.0, 1040.0], [1460.0, 1110.0], [246.0, 1115.0]], "baseline": [[246.0, 1096.25], [1460.0, 1096.25]], "baseline_source": "synthetic", "bbox": [246.0, 1040.0, 1460.0, 1115.0], "source": "hyocr-paddle", "derived_from": ["line_010"], "initial": null},
+  {"id": "p643.010", "order": 10, "key": "line_011", "boundary": [[380.0, 1120.0], [1914.0, 1120.0], [1914.0, 1204.0], [380.0, 1204.0]], "baseline": [[380.0, 1183.0], [1914.0, 1183.0]], "baseline_source": "synthetic", "bbox": [380.0, 1120.0, 1914.0, 1204.0], "source": "hyocr-paddle", "derived_from": ["line_011"], "initial": null},
+  {"id": "p643.011", "order": 11, "key": "line_012", "boundary": [[244.0, 1214.0], [1726.0, 1214.0], [1726.0, 1289.0], [244.0, 1289.0]], "baseline": [[244.0, 1270.25], [1726.0, 1270.25]], "baseline_source": "synthetic", "bbox": [244.0, 1214.0, 1726.0, 1289.0], "source": "hyocr-paddle", "derived_from": ["line_012"], "initial": null},
+  {"id": "p643.012", "order": 12, "key": "line_013", "boundary": [[402.0, 1551.0], [1750.0, 1552.0], [1750.0, 1611.0], [402.0, 1610.0]], "baseline": [[402.0, 1596.0], [1750.0, 1596.0]], "baseline_source": "synthetic", "bbox": [402.0, 1551.0, 1750.0, 1611.0], "source": "hyocr-paddle", "derived_from": ["line_013"], "initial": null},
+  {"id": "p643.013", "order": 13, "key": "line_014", "boundary": [[796.0, 1637.0], [1353.0, 1637.0], [1353.0, 1693.0], [796.0, 1693.0]], "baseline": [[796.0, 1679.0], [1353.0, 1679.0]], "baseline_source": "synthetic", "bbox": [796.0, 1637.0, 1353.0, 1693.0], "source": "hyocr-paddle", "derived_from": ["line_014"], "initial": null}
+ ],
+ "retired": {}
+}

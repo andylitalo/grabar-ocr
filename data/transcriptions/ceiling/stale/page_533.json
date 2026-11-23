@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p533~line_058",
+  "reason": "shape changed",
+  "replaced_by": "p533.058",
+  "at": "2026-11-23T19:23:05+00:00",
+  "record": {
+   "text": "Փոխ, Տէր Թագաւորեաց։ Շարական դձ.",
+   "status": "done",
+   "at": "2026-10-09T14:06:40+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "fe2a0a059c4241b9"
+  }
+ },
+ {
+  "id": "p533~line_089",
+  "reason": "shape changed",
+  "replaced_by": "p533.089",
+  "at": "2026-11-23T19:23:05+00:00",
+  "record": {
+   "text": "տրեաց բնակիլ։ Աւետարան Յովհ. Բ. 12.",
+   "status": "done",
+   "at": "2026-10-09T14:13:33+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "369e8e19cb069a97"
+  }
+ }
+]

@@ -1,6 +1,6 @@
 # Phase 9 — human review of line segmentation
 
-**Status:** building (step 1 done 2026-10-02) · **Created:** 2026-09-30 · **Owner:** —
+**Status:** review done, gate passed 2026-11-23; "After the gate" steps 2-4 open · **Created:** 2026-09-30 · **Owner:** —
 **Depends on:** `docs/phase_8_line_segmentation_survey.md`, which supplies the chosen
 baseline segmenter's output for pp.453–643 in the common `segmentation.json` format.
 **Baseline (chosen 2026-09-30):** `paddle-filled`: hyocr-paddle lines plus the kraken lines
@@ -444,3 +444,19 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   re-verify was checked at (maintainer: no noisier), and on pp.453-516 it flags exactly
   the 10 lines left then, all Paddle's own boxes. Fresh pp.517-643: 173 flags on 81
   pages. About 0.05 s a page; the page list's counts fill in the background at startup.
+- **2026-11-23: the layout review is done; gate passed.** pp.517-643 verified, so every
+  page in 453-643 is: 191 pages, 14,709 lines, 7 blank pages (each with a blank marker).
+  Checked in code: every line has an id, polygon, baseline and order position; no page's
+  baseline changed under its review; `test_verified_lines_reproduce` passes. Uncovered ink
+  has no automatic check: it rests on the review. p.641, a table of taregir letters by
+  year, reads row by row through an explicit `order` op: the column-first rule found a
+  gutter in a gap the rows share and read the table's left block before its right one.
+  `migrate repair` on pp.517-643 set aside 79 ceiling records whose line changed shape
+  (75 reshaped only by the auto-unclip): 78 typed lines to retype and one "bad crop" mark
+  (`p549.047`) to judge again on the new crop. It dropped 5 untyped picks on removed lines
+  (492 left). Until step 3, the ceiling scores 42 typed lines instead of 120: of the 83
+  still typed, the 41 retyped in #23 wait for the engines. The committed report (160
+  lines) is older than both, so its numbers aren't comparable to 95.0%.
+  Then the last 10 boxes the foreign-ink check flagged (all on pp.453-516) were reshaped
+  and verified again, with 2 neighbours; no flags are left in 453-643, and no typed line
+  or pick was affected.

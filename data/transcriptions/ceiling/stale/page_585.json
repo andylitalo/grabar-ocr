@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p585~line_027",
+  "reason": "shape changed",
+  "replaced_by": "p585.026",
+  "at": "2026-11-23T19:23:31+00:00",
+  "record": {
+   "text": "ճառելի։ Համբ. բձ. Ի գերեզման.",
+   "status": "done",
+   "at": "2026-10-09T14:15:38+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "5bf05a0016749aef"
+  }
+ },
+ {
+  "id": "p585~line_040",
+  "reason": "shape changed",
+  "replaced_by": "p585.039",
+  "at": "2026-11-23T19:23:31+00:00",
+  "record": {
+   "text": "19. Բշ. ԱԿ. Պահոց։ Մամասայ, եւայլն։",
+   "status": "done",
+   "at": "2026-10-09T05:28:55+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "e4bea2eac81aad6e"
+  }
+ }
+]

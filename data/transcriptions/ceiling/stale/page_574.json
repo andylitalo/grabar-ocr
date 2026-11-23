@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p574~line_006",
+  "reason": "shape changed",
+  "replaced_by": "p574.006",
+  "at": "2026-11-23T19:23:25+00:00",
+  "record": {
+   "text": "ւորացն։ Եթէ նահանջ ամի ԹԸ իցեն",
+   "status": "done",
+   "at": "2026-10-09T05:11:46+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "68dc7373b8a48af2"
+  }
+ },
+ {
+  "id": "p574~line_071",
+  "reason": "shape changed",
+  "replaced_by": "p574.071",
+  "at": "2026-11-23T19:23:25+00:00",
+  "record": {
+   "text": "Օրհնեալ ես տէր եւ փառաւորեալ։",
+   "status": "done",
+   "at": "2026-10-09T04:54:33+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "b9312bd9b30e2981"
+  }
+ }
+]

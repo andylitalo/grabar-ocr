@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p599~line_022",
+  "reason": "shape changed",
+  "replaced_by": "p599.022",
+  "at": "2026-11-23T19:23:40+00:00",
+  "record": {
+   "text": "1. Բշ. ԲԿ. Պահոց։ Հարց դկ. Օրհ-",
+   "status": "done",
+   "at": "2026-10-09T14:17:45+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "bae72855829d26cc"
+  }
+ },
+ {
+  "id": "p599~line_033",
+  "reason": "shape changed",
+  "replaced_by": "p599.032",
+  "at": "2026-11-23T19:23:40+00:00",
+  "record": {
+   "text": "Թլփատութիւն Քրիստոսի։",
+   "status": "done",
+   "at": "2026-10-09T05:26:51+00:00",
+   "by": "maintainer",
+   "prefill": null,
+   "geometry": "260df523e9e17cf2"
+  }
+ }
+]
