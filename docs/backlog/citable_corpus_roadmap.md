@@ -537,13 +537,15 @@ extraction all need somewhere to hang, and today there is no stable anchor (§3.
   text (keep both — the line breaks are page evidence, the entry text is what you search
   and cite).
 
-**Plan (2026-11-23):** [`book_structure.md`](book_structure.md): Vol I headers marked by
-hand, Vol II's taregir letters (already marked) checked against the index, sections
+**Plan (2026-11-23):** [`book_structure.md`](book_structure.md): Vol I seasons (display
+headings) marked by hand, Vol II's taregir letters (already marked) checked against the index, sections
 assigned after the region migration, and each Vol II entry's month from its header,
-verified by section order and the weekdays the taregir's Easter fixes.
+verified by section order and the weekdays the taregir's Easter fixes. Sections without
+entries get a nested outline; ids start as region ids, with natural keys added as known.
 
-**Gate:** every content line in 453–641 resolves to exactly one entry; every entry
-resolves to a volume + section + page; citation ids are stable across a forced
+**Gate:** every content line in 453–643 resolves to exactly one entry, or, in a section
+without entries, one node of its outline (`book_structure.md`); every entry resolves to a
+volume + section + page; natural-key citation ids are stable across a forced
 re-segmentation of a 10-page sample.
 
 ### W2 — Ground truth for *this* book *(gates the word "mint")*

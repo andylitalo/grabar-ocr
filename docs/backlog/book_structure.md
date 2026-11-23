@@ -4,13 +4,13 @@
 staged order (`README.md`) and the plan for roadmap §5 W1 (`citable_corpus_roadmap.md`): every
 line gets a volume and a section, and after the book-wide engine run, every dated entry gets
 its month and day. Sections are marked by hand and don't need OCR; entries and dates do.
-W1's other parts (entry → line links, content hashes, dehyphenated entry text, ids stable
-across re-segmentation) are not planned here yet; see "Open questions".
+Ids and the outline of sections without entries are below; W1's content hashes and
+dehyphenated entry text are not planned here yet.
 
 ## Where it fits
 
 1. Phase 9 "After the gate" (`docs/phase_9_line_segmentation_review.md`).
-2. **Mark the Vol I section headers** (below). Needs only the verified lines and a small
+2. **Mark the Vol I season headings** (below). Needs only the verified lines and a small
    change to the layout tool, so it can start right after the gate.
 3. The region-keyed migration (`region_keyed_data.md`), including step 4b.
 4. **Assign every line its volume and section** (below), on the region-keyed records.
@@ -18,7 +18,8 @@ across re-segmentation) are not planned here yet; see "Open questions".
 6. **Months** (below), from the raw engine output as soon as the engine run ends. The
    weekday check's failures go to the labeler as text errors.
 7. The hosted labeler (Phase 12), whose page search uses the section titles.
-8. **Days** read from the corrected text, and the Vol I entries.
+8. **Days** read from the corrected text; the Vol I entries and the outlines of the
+   sections without entries; natural keys as they become known.
 
 ## Volumes
 
@@ -57,16 +58,22 @@ the mark in reading order.
 Once the text exists, the cycle number printed in each heading is a second check
 (`cycle(pos) = ((11 − pos) % 7) + 1`, from `STRUCTURE.md`).
 
-## Vol I sections: header marks (maintainer, 2026-11-23)
+## Vol I sections: season headings, marked by hand
 
-Vol I's sections (feasts, seasons) open with header lines, not single letters. They're marked
-by hand in the layout tool, which is quick:
+**A Vol I section is a season, opened by a display heading** (maintainer, 2026-11-23): the
+large centered title under an ornamental band, such as «ԿԱՆՈՆ / ՀԱՄԲԱՐՁՄԱՆՆ ՔՐԻՍՏՈՍԻ
+ԱՍՏՈՒԾՈՅ ՄԵՐՈՅ» ("Canon of the Ascension of Christ our God"). The feast or day lines inside
+it (`ՀԻՆԳՇԱԲԱԹ. ՏՕՆ ՀԱՄԲԱՐՁՄԱՆ…`, opened by a drop cap) are **entries**, not sections, and
+aren't marked: they're found from the text at the entry step. The old OCR has such
+headings on pp.457, 497, 503, 515 and 531, and a canon title mid-page on p.462
+(Presentation); the marking finds the rest. They're marked by hand in the layout tool,
+which is quick:
 
 - **The tool:** with the **Title (T)** tool, **Shift-click** a line box to mark it as a Vol I
   header; Shift-click again to unmark. (Today a click or a Shift-click in the Title tool
-  both open the letter prompt, so Shift-click is free to take.) A header that spans lines
-  gets each of its lines marked; the first starts the section. Nothing is typed: the
-  header's text comes from the OCR.
+  both open the letter prompt, so Shift-click is free to take.) A heading that spans lines
+  (`ԿԱՆՈՆ` and the line under it) gets each of its lines marked; the first starts the
+  section. Nothing is typed: the heading's text comes from the OCR.
 - **What it saves: not an op.** The layout tool only edits pages that are `unreviewed` or
   `fixing`, and `save_ops` sets the page back to `fixing`; ops also feed `materialize` and
   the cache and overlap hashes. So the marks get their own save path, allowed on verified
@@ -77,23 +84,24 @@ by hand in the layout tool, which is quick:
   `PAGE_FIELDS`) and the reproduce test must carry it.
 - **Through the migration:** the list names line ids, which the region conversion maps to
   region ids along with everything else.
-- **Check:** every row of the Vol I table in `corpus/STRUCTURE.md` has a marked header on its
-  first page, and every marked header falls in some row. The table is coarse (some rows are
-  runs of days or rubrics, not one header) and was written from the old OCR, so
-  disagreements are listed for the maintainer, not treated as errors.
+- **Check:** list each marked heading's page beside the Vol I table in `corpus/STRUCTURE.md`.
+  The table's rows are finer than seasons (many are feasts or runs of days, i.e. entries)
+  and were written from the old OCR, so the list is for the maintainer to read, not a
+  pass/fail test. A season heading with no row, or a row naming a canon with no heading
+  near its page, is worth a look.
 - **Naming:** a section's name is filled in from the corrected text later. Its id: see
-  "Open questions".
+  "Ids" below.
 
 ## Assigning lines to sections (after the region migration)
 
 Walk the book in reading order (page, then each page's `order`). A section runs from its
-opening mark (a taregir letter, a Vol I header or a front-matter boundary) to the next one.
+opening mark (a taregir letter, a Vol I season heading or a front-matter boundary) to the next one.
 Every line gets `volume` and `section`. The page → section map (each section's first and
 last page, and its opening line) is committed as a small CSV that can be checked by hand.
 
-- **Gate:** every content line in pp.453–643 has exactly one section, and the map agrees
-  with `second_volume_index.csv` and the `STRUCTURE.md` table, or each disagreement is
-  explained.
+- **Gate:** every content line in pp.453–643 has exactly one section; the Vol II map agrees
+  with `second_volume_index.csv`, and the maintainer has read the Vol I list against the
+  `STRUCTURE.md` table.
 
 ## Entries, months and days (after the book-wide engine run)
 
@@ -109,7 +117,8 @@ applies to the entries after it; the day is printed on each entry.
 
 **A section's order verifies its headers.** Each common-year section has 13 month runs in a
 known order (January from the 6th, February … December, January 1–5: see the rules below;
-Ք has only January and February), so the search never asks "which month is this?", only "is this the next one?":
+Ք has only January and February), so the search never asks "which month is this?", only
+"is this the next one?":
 
 1. **Header text.** Walking the section in reading order, the next header is a short,
    standalone line whose raw text, in **either** engine, after stripping punctuation and
@@ -197,19 +206,37 @@ where the day or the weekday was misread. Section Բ (Easter Mar 23) opens with 
 for the section) and a day that passes the weekday check or was corrected in review; every
 entry resolves to a volume, section and page.
 
-## Open questions
+## Ids: region ids now, natural keys when we have them (maintainer, 2026-11-23)
 
-- **Vol I: section or entry?** A Vol I entry opens with a feast header, and so does a Vol I
-  section. Either every feast header is marked (a mark is an entry start, and the
-  `STRUCTURE.md` rows group them into sections), or only the section openers are marked
-  and the entry headers are found later from the text. The first is more marking but
-  needs no text; decide before the marking starts.
-- **Stable ids.** W1's gate wants citation ids that survive a forced re-segmentation. A
-  region id is a hash of a line's boundary, so it changes when the line is re-drawn, and
-  an id taken from a section's first header line would change with it. Natural keys
-  don't: a Vol II section is its letter, and a Vol II entry is `(taregir, month, day)`,
-  unique within a section (January's two runs cover disjoint days). Vol I needs a slug
-  or `(section, ordinal)`.
-- **Entries outside the laydown.** The preface, the Paschal table and the colophon have
-  sections but no entries; W1's gate ("every content line in 453–641 resolves to exactly
-  one entry") needs to exclude them, or give them page-level entries.
+Every section, outline node and entry gets an id from the region id of its first line as
+soon as it exists, so nothing waits. A region id is a hash of the line's boundary, so it
+changes if the line is re-drawn. **Natural keys are added beside it as they become
+known**, and are the ids to cite once they exist:
+
+- a Vol II section: its taregir letter (at section assignment);
+- a Vol II entry: `(taregir, month, day)` (after the months; unique within a section, since
+  January's two runs cover disjoint days);
+- a Vol I section, outline node or entry: a slug from its corrected heading, or
+  `(parent, ordinal)` where there is none (after correction).
+
+The region id stays as an alias, so an early reference still resolves. W1's
+re-segmentation test applies to the natural keys.
+
+## Sections without entries: a nested outline (maintainer, 2026-11-23)
+
+Not every section is a run of entries. The title pages, the Vol II preface (§First …
+§Seventh), the Paschal table and its explanation, and the colophon have their own shapes,
+and some have subsections. So a section's content is an **outline**: a tree of nodes, each
+with a `kind`, an optional heading and its lines, and children. The kinds and depth are
+chosen per section; no section has to share another's schema. A section made of entries
+is just an outline whose leaves are entries.
+
+- The outline is a small hand-checked file per section (or one file for all of them),
+  written from the corrected text; the kinds are named where they're first used
+  (`preface_part`, `table`, `note`, …) and listed in one place so they stay consistent.
+- Lines inside a node are given by their ids in reading order; a node's text is read from
+  its lines, never stored a second time.
+
+**Gate (W1's, updated to match in `citable_corpus_roadmap.md`):**
+every content line in pp.453–643 resolves to exactly one leaf: an entry, or a node of its
+section's outline; every leaf resolves to a volume, section and page.

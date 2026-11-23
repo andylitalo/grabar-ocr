@@ -529,7 +529,7 @@ Both should have display lines and a drop cap, and no answers already in the pub
 
 ## Order of work
 
-1. Phase 9's gate, then its "After the gate" steps, and the Vol I section headers marked
+1. Phase 9's gate, then its "After the gate" steps, and the Vol I season headings marked
    (`docs/backlog/book_structure.md`).
 2. The region-keyed migration (`docs/backlog/region_keyed_data.md`), including step 4b:
    the answers move to `grabar-ocr-private`. Then every line gets its volume and section
