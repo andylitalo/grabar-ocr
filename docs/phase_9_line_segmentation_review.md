@@ -455,3 +455,6 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   only by the auto-unclip) and dropped 5 untyped picks on removed lines (492 left). Until
   step 3, the ceiling scores 42 typed lines instead of 160 (the 79, plus the 41 retyped
   in #23 that still wait for the engines), so its numbers aren't comparable to 95.0%.
+  Then the last 10 boxes the foreign-ink check flagged (all on pp.453-516) were reshaped
+  and verified again, with 2 neighbours; no flags are left in 453-643, and no typed line
+  or pick was affected.
