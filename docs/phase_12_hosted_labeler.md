@@ -375,8 +375,8 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 - **Can run beside the layout review, if the maintainer wants:**
   - ~~create the empty private repo~~: done 2026-11-17 (`andylitalo/grabar-ocr-private`).
     No data moves before migration step 4b;
-  - ~~draft the contributor agreement and privacy note~~: done, PR #20, awaiting the
-    maintainer's review;
+  - ~~draft the contributor agreement and privacy note~~: merged 2026-11-19 (PR #20,
+    `docs/labeler/`);
   - ~~a throwaway "hello world" behind Firebase Hosting on `ocr.andylitalo.com`~~: done
     2026-11-21, see the infrastructure smoke test below. The project, domain, sign-in
     settings and budgets are in place for the real build.
