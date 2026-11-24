@@ -1,13 +1,15 @@
 """
 Phase A unit checks for the non-character verify path.
 
-Run directly (no framework needed):
+Run directly, or with pytest:
 
     uv run python tests/test_nonchar_verify.py
 
 The functions are also plain ``test_*`` so pytest can collect them. The truth
 round-trip uses a temp data dir; the detector-parity check runs against the real
-page_0487_auto crops, whose flag set is fixed by the gated detector.
+page_0487_auto crops, whose flag set is fixed by the gated detector. Those crops are
+git-ignored (``data/lines/``), so it is skipped where they are absent (a fresh clone or
+worktree): reported as a skip, not a pass.
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ import json
 import sys
 import tempfile
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
@@ -83,8 +87,7 @@ def test_detector_parity_page_0487() -> None:
     """line_nonchar_verdicts reproduces the known flag set and keeps line_009 char."""
     page_dir = storage.DATA_LINES / "page_0487_auto"
     if not page_dir.is_dir():
-        print("test_detector_parity_page_0487: SKIP (no page_0487_auto crops)")
-        return
+        pytest.skip(f"no page_0487_auto crops at {page_dir} (git-ignored; only in a checkout that made them)")
     v = pipeline.line_nonchar_verdicts("page_0487_auto")
     flagged = {k for k, d in v.items() if d["non_character"]}
     assert flagged == EXPECTED_FLAGGED, f"flag set drifted: {sorted(flagged)}"
@@ -159,7 +162,10 @@ def test_glyph_run_divider_flags_dividers_only() -> None:
 
 if __name__ == "__main__":
     test_truth_roundtrips()
-    test_detector_parity_page_0487()
+    try:
+        test_detector_parity_page_0487()
+    except pytest.skip.Exception as e:
+        print(f"test_detector_parity_page_0487: SKIP ({e.msg})")
     test_region_type_of_parses_only_region_ids()
     test_high_ink_rule_exempts_header_regions()
     test_classify_page_header_high_ink_vs_glyph_rule()
