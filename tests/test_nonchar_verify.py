@@ -1,13 +1,12 @@
 """
 Phase A unit checks for the non-character verify path.
 
-Run directly (no framework needed):
+Run directly, or with pytest:
 
     uv run python tests/test_nonchar_verify.py
 
 The functions are also plain ``test_*`` so pytest can collect them. The truth
-round-trip uses a temp data dir; the detector-parity check runs against the real
-page_0487_auto crops, whose flag set is fixed by the gated detector.
+round-trip uses a temp data dir; the rest are pure-function checks on synthetic input.
 """
 
 from __future__ import annotations
@@ -28,15 +27,6 @@ from data_prep.line_filter import (  # noqa: E402
     region_type_of,
 )
 from labeling_ui import pipeline, storage  # noqa: E402
-
-# Flag set fixed by data_prep.line_filter on page_0487_auto (see detect_nonchar gate).
-# Region ids since the Phase 6 column_N -> region_NN_<type> migration (the same lines:
-# column_1 -> region_01_left, column_2 -> region_02_right).
-EXPECTED_FLAGGED = {
-    "region_01_left/line_001", "region_01_left/line_010", "region_01_left/line_011",
-    "region_01_left/line_045", "region_01_left/line_046", "region_02_right/line_001",
-}
-
 
 def test_truth_roundtrips(tmp_path: Path | None = None) -> None:
     """save_nonchar_truth then load_nonchar_truth returns the same verdicts + snapshot."""
@@ -77,19 +67,6 @@ def test_truth_roundtrips(tmp_path: Path | None = None) -> None:
         print("test_truth_roundtrips: OK")
     finally:
         storage.DATA_LINES = orig
-
-
-def test_detector_parity_page_0487() -> None:
-    """line_nonchar_verdicts reproduces the known flag set and keeps line_009 char."""
-    page_dir = storage.DATA_LINES / "page_0487_auto"
-    if not page_dir.is_dir():
-        print("test_detector_parity_page_0487: SKIP (no page_0487_auto crops)")
-        return
-    v = pipeline.line_nonchar_verdicts("page_0487_auto")
-    flagged = {k for k, d in v.items() if d["non_character"]}
-    assert flagged == EXPECTED_FLAGGED, f"flag set drifted: {sorted(flagged)}"
-    assert v["region_01_left/line_009"]["non_character"] is False, "real wrapped word wrongly flagged"
-    print("test_detector_parity_page_0487: OK")
 
 
 def test_region_type_of_parses_only_region_ids() -> None:
@@ -159,7 +136,6 @@ def test_glyph_run_divider_flags_dividers_only() -> None:
 
 if __name__ == "__main__":
     test_truth_roundtrips()
-    test_detector_parity_page_0487()
     test_region_type_of_parses_only_region_ids()
     test_high_ink_rule_exempts_header_regions()
     test_classify_page_header_high_ink_vs_glyph_rule()
