@@ -152,6 +152,21 @@ def test_only_a_material_change_is_set_aside():
     assert list(stale) == ["d"]
 
 
+def test_an_older_crops_reading_survives_a_matching_new_reading():
+    """A reading set aside before the line was re-cut read another crop: a new reading of
+    the current crop that matches it is a different prediction, so both are kept
+    (2026-11-23: 20 v4 readings on pp.464-491 were dropped this way)."""
+    older = [{"text": "Ա", "reason": "replaced on rewrite", "replaced_by": "a", "at": "t1"},
+             {"text": "Բ", "reason": "shape changed", "replaced_by": "a", "at": "t2"}]
+    old = {"settings": {}, "lines": {}, "stale": {"a": older}}
+    stale, _ = common.set_aside(old, {"a": "Ա"})
+    assert stale["a"] == older
+    # Within one crop, a rewrite that restores the reading still cancels its entry.
+    current = older + [{"text": "Գ", "reason": "replaced on rewrite", "replaced_by": "a", "at": "t3"}]
+    stale, _ = common.set_aside({**old, "stale": {"a": current}}, {"a": "Գ"})
+    assert stale["a"] == older
+
+
 def test_drain_cancels_unsent_calls_and_keeps_the_ones_in_flight():
     from concurrent.futures import ThreadPoolExecutor
     calls, got = [], []
