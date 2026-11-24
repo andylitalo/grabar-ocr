@@ -465,7 +465,9 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
 - **2026-11-23: "After the gate" step 3 done.** The 79 set-aside ceiling lines retyped
   (76 the same as before; `p531.042` and `p533.058` disagreed on թ/Թ and are both
   lowercase; the bad-crop `p549.047` now reads), plus `p467.049`: 163 typed. Both engines
-  now read every verified line (14,127) and v4 corrected the 103 pages with typed lines.
-  v4 + rule: **96.3% (93.3-98.8%) on 163 lines**, 0 broken, still weighted by the strata
-  drawn on the old lines; step 4 recomputes them.
-
+  now read every verified line outside the Paschal table (14,127; p.641 is excluded) and
+  v4 corrected the 103 pages with typed lines. v4 + rule: **96.3% (93.3-98.8%) on 163
+  lines**, 0 broken, still weighted by the strata drawn on the old lines; step 4
+  recomputes them. That run's rewrite dropped 20 pre-review v4 readings (16 with the
+  rule) from `stale`, because the new crop read the same text; `set_aside` now keeps
+  readings of an older crop, and the 36 entries were restored from `main`.
