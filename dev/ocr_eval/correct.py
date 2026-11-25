@@ -293,6 +293,29 @@ def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple
     return out, fallbacks
 
 
+def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tries: int = 2,
+                 label: str = "") -> tuple[dict[str, str], int, dict]:
+    """Ask ``call`` (one model request: ``() -> (text, usage)``) for a page's corrections,
+    again while lines fall back, up to ``tries`` times. Keeps the attempt with the fewest
+    fallbacks, the earlier on a tie: a retry can come back worse (p508, 2026-11-23: 1
+    fallback, then 54 when the retry dropped a row and shifted the rest).
+    Returns (lines, fallbacks, usage), the usage summed over every attempt (all are billed)."""
+    attempts, total = [], {"in": 0, "out": 0}
+    for n in range(1, tries + 1):
+        text, u = call()
+        total["in"] += u["in"]
+        total["out"] += u["out"]
+        corrected, fallbacks = parse(text, keys, preds)
+        attempts.append((fallbacks, n, corrected))
+        if not fallbacks:
+            break
+        unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
+        print(f"  {label}: {fallbacks} fallback lines (try {n}); "
+              f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
+    fallbacks, _, corrected = min(attempts, key=lambda a: a[:2])
+    return corrected, fallbacks, {**u, **total}
+
+
 def missing_lines(keys: list[str], out: dict[str, str]) -> list[str]:
     """The page's lines with no correction yet."""
     return [k for k in keys if k not in out]
@@ -346,18 +369,11 @@ def main() -> None:
         keys = [l["key"] for l in page_lines]
         images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
                   if a.prompt in WITH_IMAGES else [])
-        total = {"in": 0, "out": 0}
-        for attempt in (1, 2):  # a page with fallback lines is asked once more
-            text, u = with_retries(lambda: CALL[provider](model, page_prompt(keys, preds), system, images))
-            total["in"] += u["in"]   # every attempt is billed, not just the last
-            total["out"] += u["out"]
-            corrected, fallbacks = parse(text, keys, preds)
-            if not fallbacks:
-                break
-            unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
-            print(f"  p{page}: {fallbacks} fallback lines (try {attempt}); "
-                  f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
-        return page, corrected, fallbacks, {**u, **total}
+        prompt = page_prompt(keys, preds)
+        corrected, fallbacks, u = correct_page(
+            lambda: with_retries(lambda: CALL[provider](model, prompt, system, images)),
+            keys, preds, label=f"p{page}")
+        return page, corrected, fallbacks, u
 
     start = time.time()
     finished = 0

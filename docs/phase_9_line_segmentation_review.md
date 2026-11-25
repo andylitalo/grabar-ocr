@@ -1,6 +1,6 @@
 # Phase 9 — human review of line segmentation
 
-**Status:** review done, gate passed 2026-11-23; "After the gate" steps 2-4 open · **Created:** 2026-09-30 · **Owner:** —
+**Status:** review done, gate passed 2026-11-23; "After the gate" step 3 done 2026-11-23 (#30); step 4 open, and it commits the report step 2 left uncommitted · **Created:** 2026-09-30 · **Owner:** —
 **Depends on:** `docs/phase_8_line_segmentation_survey.md`, which supplies the chosen
 baseline segmenter's output for pp.453–643 in the common `segmentation.json` format.
 **Baseline (chosen 2026-09-30):** `paddle-filled`: hyocr-paddle lines plus the kraken lines
@@ -257,7 +257,9 @@ After the whole review, move the rest before any new OCR:
    from their current output, comparing as `ceiling.sample` does.
    - Picks keep their ids. Only the `stratum` values and the `population` change.
    - Don't re-run `ceiling sample`: it would draw a new sample.
-   - So far one pick has flipped: `p467.061`, drawn as an agreement.
+   - After step 3, 40 of the 492 picks are in the other stratum: 29 drawn as
+     disagreements now agree and 11 drawn as agreements now disagree. 11 of the 40 are
+     typed (7 agree → disagree, e.g. `p467.061` and `p520.016`; 4 disagree → agree).
 
    Recomputing needs a small code change. The population sets each stratum's weight,
    so every rate moves. Re-score, record in the Phase 11 doc how the numbers moved,
@@ -462,3 +464,12 @@ OCR, transcription ground truth, entries, and the citation UI (see `docs/backlog
   Then the last 10 boxes the foreign-ink check flagged (all on pp.453-516) were reshaped
   and verified again, with 2 neighbours; no flags are left in 453-643, and no typed line
   or pick was affected.
+- **2026-11-23: "After the gate" step 3 done.** The 79 set-aside ceiling lines retyped
+  (76 the same as before; `p531.042` and `p533.058` disagreed on թ/Թ and are both
+  lowercase; the bad-crop `p549.047` now reads), plus `p467.049`: 163 typed. Both engines
+  now read every verified line outside the Paschal table (14,127; p.641 is excluded) and
+  v4 corrected the 103 pages with typed lines. v4 + rule: **96.3% (93.3-98.8%) on 163
+  lines**, 0 broken, still weighted by the strata drawn on the old lines; step 4
+  recomputes them. That run's rewrite dropped 20 pre-review v4 readings (16 with the
+  rule) from `stale`, because the new crop read the same text; `set_aside` now keeps
+  readings of an older crop, and the 36 entries were restored from `main`.

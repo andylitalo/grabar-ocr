@@ -1,1 +1,18 @@
-{}
+{
+ "p563.008": {
+  "text": "ռաջին հատորն տես մինչեւ ՚ի տաս-",
+  "status": "done",
+  "at": "2026-11-23T20:24:08+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "6b9c5d2a2c767c1b"
+ },
+ "p563.065": {
+  "text": "— և Յակովկայ եւ Իրաւափառայ։",
+  "status": "done",
+  "at": "2026-11-23T20:24:32+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "7d8d2e661f22991b"
+ }
+}

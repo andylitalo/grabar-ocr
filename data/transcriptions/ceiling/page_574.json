@@ -1,4 +1,12 @@
 {
+ "p574.006": {
+  "text": "ւորացն։ Եթէ նահանջ ամի ԹԸ իցեն",
+  "status": "done",
+  "at": "2026-11-23T20:26:27+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "89da11c8a1de6d29"
+ },
  "p574.031": {
   "text": "2. Կիր. ԴՁ. Հինգերորդ։ Հարց բկ.",
   "status": "done",
@@ -7,5 +15,13 @@
   "prefill": null,
   "geometry": "1fbe6f1cec4fca34",
   "migrated_from": "p574~line_031"
+ },
+ "p574.071": {
+  "text": "Օրհնեալ ես տէր եւ փառաւորեալ։",
+  "status": "done",
+  "at": "2026-11-23T20:27:10+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "da42bb81f832262c"
  }
 }

@@ -47,3 +47,18 @@ def test_correction_parse_strips_a_kept_label_and_rejects_shifted_lines():
     assert out["k1"] == "Բշ. Ճաշու սաղ."
     assert out["k2"] == "Եւ առաւօտու օրհնութիւն" and out["k3"] == "Տէր թագաւորեաց"
     assert fallbacks == 2
+
+
+def test_a_worse_retry_does_not_replace_the_first_answer():
+    """p508 (2026-11-23): 1 fallback, then a retry that skipped a row and shifted the rest."""
+    from dev.ocr_eval.correct import ENGINES, correct_page
+    keys = ["k1", "k2", "k3"]
+    texts = {"k1": "Բշ. Ճաշու սաղ.", "k2": "Եւ առաւօտու օրհնութիւն", "k3": "Տէր թագաւորեաց"}
+    preds = {e: dict(texts) for e in ENGINES}
+    answers = iter([f"1\t{texts['k1']}\n2\t{texts['k2']}",    # line 3 missing
+                    f"1\t{texts['k2']}\n2\t{texts['k3']}"])   # shifted: lines 1-3 fall back
+    usage = [{"in": 10, "out": 1, "served_by": "m"}, {"in": 20, "out": 2, "served_by": "m"}]
+    calls = iter(zip(answers, usage))
+    corrected, fallbacks, u = correct_page(lambda: next(calls), keys, preds)
+    assert fallbacks == 1 and corrected == texts
+    assert (u["in"], u["out"]) == (30, 3)  # both attempts are billed

@@ -243,6 +243,13 @@ def stale_entry(old: dict, text: str, reason: str, replaced_by, at: str, known: 
     return entry
 
 
+def current_crop(entries: list[dict]) -> int:
+    """Index of a line's first ``stale`` entry for its current crop: the one after its
+    last migrate set-aside (any reason but a rewrite), or 0 if it has none."""
+    return max((i + 1 for i, e in enumerate(entries) if e["reason"] not in REWRITE_REASONS),
+               default=0)
+
+
 def set_aside(old: dict, lines: dict) -> tuple[dict, dict]:
     """The ``stale`` and ``stale_settings`` sections for a rewrite of ``old`` (a
     predictions file) with ``lines``.
@@ -256,22 +263,28 @@ def set_aside(old: dict, lines: dict) -> tuple[dict, dict]:
 
     A run saves as it goes, so a line it hasn't reached yet is first set aside as
     dropped; once the run writes it, the entry becomes "replaced on rewrite", or goes
-    if the new text is the same reading (nothing is lost: it is the line)."""
+    if the new text is the same reading (nothing is lost: it is the line).
+
+    That applies only to readings of the line's current crop. Entries up to the line's
+    last migrate set-aside (``shape changed`` and the like) read an older crop, so a new
+    reading that matches one is a different prediction, and both are kept."""
     stale = {k: [dict(e) for e in v] for k, v in old.get("stale", {}).items()}
     known = dict(old.get("stale_settings", {}))
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for key, text in old.get("lines", {}).items():
         if key in lines and (lines[key] == text or reading(lines[key]) == reading(text)):
             continue
-        if any(reading(e["text"]) == reading(text) for e in stale.get(key, [])):
+        entries = stale.get(key, [])
+        if any(reading(e["text"]) == reading(text) for e in entries[current_crop(entries):]):
             continue
         dropped = key not in lines
         stale.setdefault(key, []).append(stale_entry(
             old, text, REWRITE_REASONS[0] if dropped else REWRITE_REASONS[1],
             None if dropped else key, now, known))
     for key in list(stale):
-        kept = []
-        for e in stale[key]:
+        cut = current_crop(stale[key])
+        kept = stale[key][:cut]  # older crops' readings: never cancelled by a new one
+        for e in stale[key][cut:]:
             if e["reason"] in REWRITE_REASONS and key in lines:
                 if lines[key] == e["text"] or reading(lines[key]) == reading(e["text"]):
                     continue

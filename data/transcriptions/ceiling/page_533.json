@@ -7,5 +7,21 @@
   "prefill": null,
   "geometry": "865c6e1aff37b8ca",
   "migrated_from": "p533~line_028"
+ },
+ "p533.058": {
+  "text": "Փոխ, Տէր թագաւորեաց։ Շարական դձ.",
+  "status": "done",
+  "at": "2026-11-23T20:12:35+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "7059e28d2595472d"
+ },
+ "p533.089": {
+  "text": "տրեաց բնակիլ։ Աւետարան Յովհ. Բ. 12.",
+  "status": "done",
+  "at": "2026-11-23T20:12:58+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "a5d8035c438faf24"
  }
 }

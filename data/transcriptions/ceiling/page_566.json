@@ -16,5 +16,13 @@
   "prefill": null,
   "geometry": "d1d3d398ea72a4b3",
   "migrated_from": "p566~line_048"
+ },
+ "p566.068": {
+  "text": "5. Կիր. ԴԿ. Բուն բարեկենդան։",
+  "status": "done",
+  "at": "2026-11-23T20:25:26+00:00",
+  "by": "maintainer",
+  "prefill": null,
+  "geometry": "d414d7b10aefab92"
  }
 }
