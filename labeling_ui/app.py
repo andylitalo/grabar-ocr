@@ -2,9 +2,8 @@
 app.py
 FastAPI server for the Grabar line-labeling tool.
 
-This is a local developer utility, not a model-serving endpoint, so FastAPI is
-appropriate here (BentoML remains the only serving layer for ML models). HTTP
-layer only: validates requests, delegates to `pipeline`/`storage`, serves the
+This is a local developer utility, not a model-serving endpoint. HTTP layer
+only: validates requests, delegates to `pipeline`/`storage`, serves the
 static frontend and images.
 
 Run:

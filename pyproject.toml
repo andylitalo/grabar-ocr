@@ -29,7 +29,7 @@ dev = [
     "pytest>=8.0",
 ]
 # Heavyweight training env. Mirrors the training pins in ml_vision/requirements.txt
-# (serving-only deps like bentoml/torchaudio excluded; numpy/pillow/opencv are in
+# (torchaudio excluded; numpy/pillow/opencv are in
 # the base deps above). Installed into a dedicated .venv_ml via:
 #   uv venv .venv_ml --python 3.11 && uv pip install --python .venv_ml ".[ml]"
 ml = [

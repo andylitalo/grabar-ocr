@@ -34,7 +34,6 @@ ENV/
 *.ckpt
 *.bin
 *.safetensors
-bentoml/
 
 # Secrets & credentials
 .env
@@ -42,7 +41,6 @@ bentoml/
 secrets/
 *.key
 *.pem
-infrastructure/manifests/secrets*.yaml
 
 # Google Cloud
 *.json
@@ -115,9 +113,6 @@ ml_vision/tessdata/
 
 # Tesseract fine-tuning scratch + tesstrain clone + staged GT (Phase 2b; large/derived)
 ml_vision/tessdata_ft/
-
-# BentoML local store
-~/bentoml/
 
 # Productionized corpus: the committed book deliverable (per-page md + per-line json
 # + manifest). Text only — no images/PDFs land here. Negate the global *.json rule so

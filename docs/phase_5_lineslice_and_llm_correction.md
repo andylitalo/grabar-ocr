@@ -197,8 +197,7 @@ opus/sonnet/gpt-5.5 remain v1):
   `llm_correct.py`) — OpenAI/Gemini rows are ESTIMATES; verify before quoting $.
 - Follow-ups: re-run opus/gpt-5.5 on v2 for an apples-to-apples table (currently v1); recover a
   little minimal-edit recall on prose pages if that mode is ever preferred.
-- Then wire the corrector into the BentoML serving path (OCR → LLM → DB), per
-  `master_blueprint.md`. Phase 4.5 line-slicing fix remains a separate gated sub-phase.
+- Then wire the corrector into the pipeline (OCR → LLM). Phase 4.5 line-slicing fix remains a separate gated sub-phase.
 
 ---
 
@@ -206,5 +205,4 @@ opus/sonnet/gpt-5.5 remain v1):
 1. Phase 4.5 slicing fix + gate (small, self-contained).
 2. Re-slice + label a larger corpus (more pages) as a fresh snapshot; re-freeze.
 3. Phase 5 LLM corrector + gate, evaluated on clean single-line crops.
-4. Only then wire the corrector into the serving path (BentoML OCR → LLM → DB),
-   per `docs/master_blueprint.md`.
+4. Only then wire the corrector into the pipeline (OCR → LLM).

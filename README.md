@@ -5,11 +5,7 @@ pp.453–643, two volumes, Bolorgir type), from page scans into a line-by-line, 
 with an English translation. Everything runs locally on a Mac, with paid LLM calls for
 correction and translation.
 
-> The original plan (Airflow on k3s, BentoML-served TrOCR, Postgres) was never built. It is
-> kept in [`docs/master_blueprint.md`](docs/master_blueprint.md) for the record.
-> `infrastructure/` is what's left of it.
-
-## Where things stand (2026-11-24)
+## Where things stand (2026-11-25)
 
 **1. A first corpus has shipped.** [`corpus/`](corpus/README.md) holds all 191 pages
 (184 with text, 7 blank) as Grabar plus English, page by page and line by line. It was made
@@ -26,7 +22,7 @@ can cite.
 | phase | what | status |
 |---|---|---|
 | [8](docs/phase_8_line_segmentation_survey.md) | line-segmentation survey | done: the `paddle-filled` baseline |
-| [9](docs/phase_9_line_segmentation_review.md) | human review of every line box | review done, gate passed 2026-11-23; "After the gate" step 3 in PR #30, step 4 (recompute the strata) next |
+| [9](docs/phase_9_line_segmentation_review.md) | human review of every line box | review done, gate passed 2026-11-23; "After the gate" steps 1–3 done (#30: retyped lines, v4 + rule 96.3% on 163, not yet committed as a report), step 4 (recompute the strata) next |
 | [10](docs/phase_10_ocr_test_set.md) | blank-typed OCR test set | built; deferred, Phase 11 chose on the ceiling sample instead |
 | [11](docs/phase_11_ocr_comparison.md) | OCR engine + corrector choice | decided: `hye-calfa-n` + `paddle-calfa-tiny` → Gemini 3.1 Pro **v4** → `՚ի` rule, **95.0%** of 160 typed lines error-free ([report](reports/phase11_ceiling.md)); a corrector comparison for a consensus first pass is planned in PR #29 |
 | [12](docs/phase_12_hosted_labeler.md) | hosted labeler at `ocr.andylitalo.com` | planned, not built; the infrastructure smoke test passed |
@@ -75,7 +71,6 @@ ml_vision/       TrOCR / Tesseract fine-tuning and LLM-correction scripts (Phase
 docs/            phase plans and findings, backlog/, labeler/ (contributor agreement, privacy note)
 reports/         committed scores and result write-ups
 tests/           pytest suite
-infrastructure/  leftover k3s / Helm stubs from the original blueprint (unused)
 ```
 
 ## Setup
