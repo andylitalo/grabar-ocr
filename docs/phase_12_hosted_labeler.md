@@ -135,8 +135,8 @@ for its uses.
   then delete the UI and update AGENTS.md, `pyproject.toml` and the docs.
 - **When:** the moves happen after the layout review is done, so the review's PRs never
   rebase a rename.
-- AGENTS.md's conventions name Kubernetes Secrets; this app uses Secret Manager. Update
-  the convention when the app is built.
+- AGENTS.md's conventions put secrets in a gitignored `.env`; this app uses Secret
+  Manager. Update the convention when the app is built.
 
 ### Lines and pages
 

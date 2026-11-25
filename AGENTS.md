@@ -1,18 +1,27 @@
 # Grabar OCR — Project Guide for Coding Agents
 
 ## Project Goal
-Digitize Classical Armenian (Grabar) texts written in Bolorgir script from scanned PDF books into a searchable, translated PostgreSQL database. Each record pairs an original line-crop image with its machine-transcribed Grabar text and an English translation produced by a frontier LLM (Claude 3.5 Sonnet or GPT-4o).
+Digitize the Classical Armenian (Grabar) **Տօնացոյց**, pp.453–643 (Bolorgir type, two
+volumes), from page scans into a line-by-line, citable text with an English translation.
+Every line keeps a stable id and its place on the page, so `armenian-lectionary` can cite
+entries by reference.
 
 ## Architecture in One Paragraph
-Scanned PDFs live in Google Cloud Storage. An Apache Airflow DAG running on a local k3s cluster (Ubuntu server, Ryzen 9, RTX 3090) pulls batches of PDFs, uses `data_prep/` scripts (PyMuPDF + YOLOv8 + horizontal projection) to isolate and slice the Classical Armenian column into individual line images, then sends those images to a BentoML service serving a fine-tuned TrOCR model with adaptive GPU batching. The transcribed Grabar text is forwarded to the Anthropic/OpenAI API for translation, and the final payload is written to PostgreSQL. The developer connects from an M1 Pro MacBook via Tailscale VPN.
+Everything runs locally on a Mac; LLM correction and translation are paid API calls. The
+first corpus (`corpus/`) was made by `pipeline/`: projection line slicing → Tesseract
+(`hye-calfa-n`) → Gemini correction → Gemini translation. The rebuild starts from
+human-verified line boxes (`dev/line_review/`, `data/verified_lines/`), reads them with
+the Calfa engines (`hye-calfa-n`, `paddle-calfa-tiny`) and corrects them with Gemini 3.1
+Pro v4 (`dev/ocr_eval/`). The book-wide run's outputs will live in GCS, and contributors
+will correct them in a hosted labeler (`docs/phase_12_hosted_labeler.md`).
 
 ## Gated-Phase Development Model
 All implementation is guided by phase documents in `docs/` (version-controlled — shared planning + findings). Each phase has a measurable **gate condition**. We do not write code for Phase N+1 until Phase N's gate is passed and its findings are recorded in the phase doc.
 
 This matters because early phases test assumptions (e.g., "does off-the-shelf TrOCR work at all on Bolorgir?"). If an assumption fails, the next phase changes — often significantly. Building ahead of validation wastes effort and obscures where the real problem is.
 
-**Current phase docs** (all phases: `docs/phase_*.md`; `docs/master_blueprint.md` is the original plan):
-- `docs/phase_9_line_segmentation_review.md` — **in progress**: human review of the line layout, page by page (`dev/line_review/`)
+**Current phase docs** (all phases: `docs/phase_*.md`; the staged order: `docs/backlog/README.md`):
+- `docs/phase_9_line_segmentation_review.md` — **review done, gate passed 2026-11-23**; "After the gate" steps 1–3 done (#30), step 4 (recompute the strata) next
 - `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (95.0% error-free on 160 typed lines, re-scored 2026-11-13); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; the later Gemini 4 models (argon, hydrogen) are still to be tested, in a later PR
 - `docs/phase_10_ocr_test_set.md` — deferred until the layout review is done
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
@@ -22,35 +31,31 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 
 ## Repository Layout
 ```
-data_prep/          Pre-processing: PDF → pages → column crops → line crops
-ml_vision/          TrOCR fine-tuning, evaluation, BentoML model save
-pipeline/           The pipeline that actually ships: modular crop→slice→ocr→correct→
-                    translate orchestrator (see pipeline/README.md). Runs local on the
-                    Mac; outputs to runs/<config-slug>/ (gitignored scratch).
 corpus/             Productionized deliverable: the digitized + translated book,
                     per-page md + per-line json + manifest (committed). Built from the
                     blessed runs by `python -m pipeline.promote` (see corpus/README.md).
+pipeline/           The pipeline that made corpus/: modular crop→slice→ocr→correct→
+                    translate orchestrator (see pipeline/README.md). Outputs to
+                    runs/<config-slug>/ (gitignored scratch).
+dev/line_review/    Phase 9 review UI: fix and verify line boxes, mint line ids, transcribe,
+                    `migrate repair`
+dev/lineseg_survey/ Phase 8 segmenter runners and scoring
+dev/ocr_eval/       Phase 10–11 engine runners, ceiling sample, LLM corrector, scoring
+dev/kraken_review/  The older review UI that dev/line_review grew from
+data_prep/          Pre-processing: PDF → pages → column crops → line crops
+ml_vision/          TrOCR / Tesseract fine-tuning, evaluation, LLM-correction scripts
 labeling_ui/        FastAPI app for human region-labeling / ground-truth (the crop=human path)
-services/           BentoML OCR API, LLM translation client, DB writer
-orchestration/      Airflow DAGs and custom GCS operators
-infrastructure/     k3s bootstrap scripts, Helm chart overrides, k8s manifests
 docs/               Phase planning docs + recorded findings (version-controlled)
 data/               Data, apart from code: committed ground truth and outputs (column boxes,
                     blank markers, line-seg survey + reviews in data/lineseg_survey/, verified
                     lines, transcriptions, OCR predictions); PDFs, renders and crops stay ignored
+reports/            Committed scores and result write-ups
+tests/              pytest suite (`uv run pytest`)
 ```
-
-> **What actually shipped vs. the original blueprint.** `README.md`/AGENTS.md describe an
-> aspirational cloud stack (Airflow on k3s, BentoML-served TrOCR, Postgres). That was never
-> built — `services/`, `orchestration/`, and `infrastructure/` are empty/template stubs.
-> The real, working pipeline is the local `pipeline/` package (Tesseract OCR + Gemini
-> correction + Gemini translation), and the finished book lives in `corpus/`.
 
 ## Key Conventions
 - Python 3.11+; type-annotate all function signatures; `pathlib.Path` over `os.path`
-- BentoML is the only serving layer for ML models — do not use raw FastAPI for model endpoints
-- Airflow DAGs use the TaskFlow API (`@task`) — no `BashOperator` for Python logic
-- Secrets (GCS credentials, API keys, DB passwords) go in Kubernetes Secrets — never in code or git
+- Secrets (API keys) go in a gitignored `.env` — never in code or git
 - GPU device selection via `CUDA_VISIBLE_DEVICES` env var — no hardcoded device indices
 - All training runs log to Weights & Biases; evaluation reports CER via `jiwer`
 

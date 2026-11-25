@@ -17,9 +17,6 @@ jiwer==3.0.4           # Character Error Rate (CER) and Word Error Rate (WER)
 Pillow==10.4.0
 opencv-python-headless==4.10.0.84
 
-# BentoML serving
-bentoml==1.3.4
-
 # Experiment tracking
 wandb==0.17.5
 

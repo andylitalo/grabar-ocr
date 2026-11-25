@@ -86,7 +86,7 @@ pages to its `NEW_PAGES`, or generalize it to glob `data/lines/page_*`). The
 ## Architecture
 
 - `app.py` — FastAPI HTTP layer (endpoints, static mount). Local dev utility,
-  not a model endpoint, so FastAPI is fine (BentoML stays the ML serving layer).
+  not a model endpoint.
 - `pipeline.py` — orchestration over the reused `data_prep` functions
   (`pdf_to_images`, `deskew`, `crop_lines`); renders/crops/segments.
 - `storage.py` — filesystem layer: paths, status computation, label mutations.

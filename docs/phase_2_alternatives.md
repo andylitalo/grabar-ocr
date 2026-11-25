@@ -45,7 +45,7 @@ Use ՚ (U+055A) for elision marks. Use ։ (U+0589) for full stops.
 | GPT-4o | ~$0.004 | **~$36** |
 | claude-sonnet-4-5 | ~$0.005 | **~$45** |
 
-**Infrastructure change if VLMs win:** Replace TrOCR BentoML endpoint with an async API client. Eliminates GPU dependency for OCR entirely — repurpose RTX 3090 for layout detection only.
+**Infrastructure change if VLMs win:** Replace TrOCR with an async API client. Eliminates GPU dependency for OCR entirely — repurpose RTX 3090 for layout detection only.
 
 **Throughput:** Gemini 2.0 Flash at 2000 RPM → 9,000 lines in ~4.5 minutes.
 

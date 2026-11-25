@@ -1,118 +1,107 @@
-# Grabar Digitization Pipeline
+# Grabar OCR
 
-An end-to-end pipeline for digitizing Classical Armenian (Grabar) texts from scanned books into a searchable, translated PostgreSQL database.
+Digitizing a Classical Armenian (Grabar) liturgical book, the **Տօնացոյց** (Tōnatsʻoytsʻ,
+pp.453–643, two volumes, Bolorgir type), from page scans into a line-by-line, citable text
+with an English translation. Everything runs locally on a Mac, with paid LLM calls for
+correction and translation.
 
-> **⚠️ This README is the original blueprint, not what shipped.** The cloud stack below
-> (GCS, Airflow on k3s, BentoML-served TrOCR, Postgres) was never built — `services/`,
-> `orchestration/`, and `infrastructure/` are stubs. What actually runs is the local
-> **`pipeline/`** package (Tesseract OCR → Gemini correction → Gemini translation); see
-> [`pipeline/README.md`](pipeline/README.md). The finished, committed book (pages 458–641,
-> per-page md + per-line json) lives in **`corpus/`**; see
-> [`corpus/README.md`](corpus/README.md). Regenerate it with
-> `python -m pipeline.promote --range 458-641`.
+## Where things stand (2026-11-25)
 
-## Pipeline Overview
+**1. A first corpus has shipped.** [`corpus/`](corpus/README.md) holds all 191 pages
+(184 with text, 7 blank) as Grabar plus English, page by page and line by line. It was made
+by the local [`pipeline/`](pipeline/README.md): projection line slicing → Tesseract
+(Calfa's `hye-calfa-n`) → Gemini 3.1 Pro minimal-edit correction → Gemini 3.5 Flash
+translation. It is a draft. Its lines are not yet stable or citable, and the known defects
+are in [`corpus/ERRATA.md`](corpus/ERRATA.md).
+
+**2. Now: rebuilding it on verified lines.** The order is set in
+[`docs/backlog/README.md`](docs/backlog/README.md): verified lines → OCR → correction →
+entries that [`armenian-lectionary`](https://github.com/andylitalo/armenian-lectionary)
+can cite.
+
+| phase | what | status |
+|---|---|---|
+| [8](docs/phase_8_line_segmentation_survey.md) | line-segmentation survey | done: the `paddle-filled` baseline |
+| [9](docs/phase_9_line_segmentation_review.md) | human review of every line box | review done, gate passed 2026-11-23; "After the gate" steps 1–3 done (#30: retyped lines, v4 + rule 96.3% on 163, not yet committed as a report), step 4 (recompute the strata) next |
+| [10](docs/phase_10_ocr_test_set.md) | blank-typed OCR test set | built; deferred, Phase 11 chose on the ceiling sample instead |
+| [11](docs/phase_11_ocr_comparison.md) | OCR engine + corrector choice | decided: `hye-calfa-n` + `paddle-calfa-tiny` → Gemini 3.1 Pro **v4** → `՚ի` rule, **95.0%** of 160 typed lines error-free ([report](reports/phase11_ceiling.md)); a corrector comparison for a consensus first pass is planned in PR #29 |
+| [12](docs/phase_12_hosted_labeler.md) | hosted labeler at `ocr.andylitalo.com` | planned, not built; the infrastructure smoke test passed |
+
+Next, in order:
+
+1. Finish Phase 9's "After the gate" steps, then mark the Vol I season headings.
+2. Move the data to region keys ([`docs/backlog/region_keyed_data.md`](docs/backlog/region_keyed_data.md)).
+   This moves the typed answers to a private repo, and the book-wide run's outputs go to
+   GCS rather than git.
+3. Run the chosen OCR and correction over the whole book.
+4. Contributors correct it in the hosted labeler. The target is 99.9% of lines correct.
+5. Build sections, entries and dates ([`docs/backlog/book_structure.md`](docs/backlog/book_structure.md)).
+
+Phases 0–7 (TrOCR and Tesseract fine-tuning, LLM post-correction, column detection, vision
+correction) were tested on another book, *Ժամագիրք Ատենի*. Their docs are in `docs/` and
+their results are in `reports/`.
+
+## How the work is run
+
+The work is split into **gated phases**. Each phase has a doc in `docs/phase_*.md` with a
+measurable gate, and the next phase starts only after the gate passes and the findings are
+written down. Read the current phase doc before changing code. [`AGENTS.md`](AGENTS.md) has
+the conventions, including the data-storage rules: what goes in git, separate code and data
+PRs, and diff-friendly formats.
+
+## Repository layout
 
 ```
-GCS Raw PDFs
-    │
-    ▼
-[data_prep] PyMuPDF → YOLOv8 layout detection → line crops
-    │
-    ▼
-GCS Intermediate Images
-    │
-    ▼
-[ml_vision] Fine-tuned TrOCR (BentoML / RTX 3090) → Grabar text
-    │
-    ▼
-[services/translator_client] Claude 3.5 Sonnet / GPT-4o → English translation
-    │
-    ▼
-[services/db_writer] PostgreSQL (k3s cluster)
+corpus/          the shipped book: per-page md + per-line json + manifest, and hand-kept
+                 STRUCTURE / GLOSSARY / ERRATA / TYPOS docs (corpus/README.md)
+pipeline/        the pipeline that made corpus/: crop → slice → ocr → correct → translate,
+                 with swappable stages (pipeline/README.md)
+dev/
+  line_review/     Phase 9 review UI: fix and verify line boxes, mint stable line ids,
+                   type transcriptions, `migrate repair`
+  lineseg_survey/  Phase 8 segmenter runners and scoring
+  ocr_eval/        Phase 10–11 engine runners, ceiling sample, LLM corrector, scoring
+  kraken_review/   the older review UI that line_review grew from
+data/            committed ground truth and small outputs: column boxes, blank markers,
+                 survey reviews, verified lines, transcriptions, OCR predictions
+                 (data/README.md). PDFs, renders and crops are gitignored.
+data_prep/       PDF → page renders → columns → line crops (Phases 0–6)
+labeling_ui/     FastAPI app for drawing regions and labeling lines (the "human" crop path)
+ml_vision/       TrOCR / Tesseract fine-tuning and LLM-correction scripts (Phases 1–5)
+docs/            phase plans and findings, backlog/, labeler/ (contributor agreement, privacy note)
+reports/         committed scores and result write-ups
+tests/           pytest suite
 ```
 
-All steps are orchestrated by **Apache Airflow** running on a local **k3s** Kubernetes cluster.
+## Setup
 
-## Repository Structure
+Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
-```
-grabar-digitization-pipeline/
-├── infrastructure/         # Kubernetes & server configs
-│   ├── k3s_setup/          # Bootstrap scripts for the Ubuntu server
-│   ├── helm_charts/        # Airflow, KServe, Postgres Helm values
-│   └── manifests/          # PVCs, ConfigMaps, Secrets (gitignored)
-├── orchestration/          # Apache Airflow
-│   ├── dags/               # Pipeline DAG definitions (TaskFlow API)
-│   ├── plugins/            # Custom operators (GCS ↔ local, etc.)
-│   └── tests/              # DAG unit tests
-├── ml_vision/              # TrOCR fine-tuning
-│   ├── notebooks/          # Exploration & debugging
-│   ├── scripts/            # Training & fine-tuning scripts
-│   ├── evaluation/         # CER evaluation scripts
-│   └── requirements.txt    # ML-specific deps (torch, transformers, bentoml)
-├── data_prep/              # Pre-processing scripts
-│   ├── pdf_slicer.py       # PDF → high-res images (PyMuPDF)
-│   ├── layout_detector.py  # Column detection & deskew (YOLOv8)
-│   └── line_cropper.py     # Column → single-line image crops
-├── services/               # Serving & integration
-│   ├── ocr_api/            # BentoML service wrapping fine-tuned TrOCR
-│   ├── translator_client/  # Formats Grabar text & calls Claude/GPT-4o
-│   └── db_writer/          # Writes final JSON payload to PostgreSQL
-└── docs/                   # Local planning docs (gitignored)
-```
-
-## Quick Start
-
-### Prerequisites
-- Ubuntu server with NVIDIA GPU, k3s, and Tailscale installed
-- `kubectl` and `helm` on your Mac
-- GCS bucket and service account JSON (kept out of git)
-- Python 3.11+
-
-### 1. Bootstrap the Server
 ```bash
-cd infrastructure/k3s_setup
-bash install_k3s.sh
-bash install_nvidia_plugin.sh
+uv sync --extra dev                       # base env (.venv): pipeline, review UIs, LLM clients
+uv run pytest                             # runs tests/
+
+# heavy ML env (torch, transformers, Tesseract runners), only for OCR and training
+uv venv .venv_ml --python 3.11 && uv pip install --python .venv_ml ".[ml]"
 ```
 
-### 2. Fine-Tune TrOCR
+Some engines have their own environments: `dev/lineseg_survey/.venv-hyocr` (Paddle,
+`hye-open-ocr`), `dev/lineseg_survey/.venv-surya` and `dev/ocr_eval/.venv-mlx`. See the
+READMEs in `dev/lineseg_survey/` and `dev/ocr_eval/`. API keys (`GEMINI_API_KEY`,
+`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) go in a gitignored `.env`.
+
+Source PDFs, page renders and crops are not in git. Tests that need them are skipped
+when they're missing.
+
+## Common commands
+
 ```bash
-cd ml_vision
-uv sync
-python scripts/train.py --dataset /path/to/golden_dataset --output ./checkpoints
-python evaluation/cer_eval.py --checkpoint ./checkpoints/best
+uv run python -m dev.line_review.app            # Phase 9 review UI, http://127.0.0.1:8092
+uv run python -m dev.line_review.migrate repair # move typed lines onto verified ids
+uv run python -m dev.ocr_eval.score             # re-score the Phase 11 engines and correctors
+.venv/bin/python -m pipeline.cli --pages 486    # run the original pipeline on a page
+.venv/bin/python -m pipeline.promote --range 453-643   # rebuild corpus/ from the pipeline runs
 ```
-
-### 3. Serve the Model
-```bash
-cd services/ocr_api
-bentoml build
-bentoml serve grabar_ocr_service:latest
-```
-
-### 4. Deploy Airflow
-```bash
-cd infrastructure/helm_charts
-helm repo add apache-airflow https://airflow.apache.org
-helm install airflow apache-airflow/airflow -f airflow-values.yaml
-```
-
-## First Three Steps (in order)
-
-1. **Build the Golden Dataset** — manually crop and transcribe 50–100 pages of Bolorgir text. No code needed; this is the training foundation.
-2. **Bootstrap the Server** — install Ubuntu, Tailscale, k3s, and the NVIDIA device plugin.
-3. **Fine-Tune TrOCR** — prove the GPU can read Bolorgir with a low CER before building any orchestration.
-
-## Hardware
-
-| Role | Machine | Key Specs |
-|------|---------|-----------|
-| Dev / SSH | M1 Pro MacBook | 32GB RAM, 1TB SSD |
-| Compute | Ubuntu Server | Ryzen 9, 128GB RAM, RTX 3090 24GB, 2TB NVMe |
-| Storage | Google Cloud Storage | Raw PDFs + intermediate images |
-| Translation | Anthropic / OpenAI API | Claude 3.5 Sonnet / GPT-4o |
 
 ## License
 
