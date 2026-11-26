@@ -15,8 +15,10 @@ on the corrections), Phase 10's test set (typed in this app's blank mode).
 
 Contributors log in at `ocr.andylitalo.com` and correct the OCR of the book, page by page:
 first the lines the machines aren't sure of, then a growing random sample of the rest
-("Progressive review"). The target is **99.9% of lines fully correct**: about 14 wrong
-lines in ~14,388 (~410k characters, ~190 pages). The v4 output is about 95% of lines
+("Progressive review"). The goal (maintainer, 2026-11-26) is as few wrong lines as the
+reviewers' time allows. The review stops when the book's 95% upper bound is **≤0.1%** of
+lines wrong (about 14 of ~14,388 lines; ~410k characters, ~190 pages), or when
+contributors run out. The v4 output is about 95% of lines
 (about 99.8% of characters) correct, so the work is finding the ~720 wrong lines without
 breaking the right ones.
 
@@ -62,20 +64,23 @@ blind pass covers what is still short of the target.
   its certainty score, and for `consensus` lines the group's current milestone.
 - Draft text per line: `resolved` → `verified` → `single` → the corrector reading
   (`consensus`, or for `flagged` the majority reading, else 3.1 Pro's).
-- **Published estimate** (each release): expected wrong lines = unreviewed `consensus`
-  lines × the consensus bound + unreviewed `flagged` lines × their measured error rate +
-  reviewed lines × the residual below (Phase 11, "Published estimate").
-- **Residual of reviewed lines** (before pass B): wrong lines left ≈ errors found ×
-  (1 − c) / c + correct lines broken. *c* is the team's catch rate on plants (about 63 plants
-  over the book); lines broken come from the gold lines. Gold lines are drawn from engine
-  disagreements, which are harder than average, so this errs pessimistic.
+- **Published estimate** (each release): a point estimate of wrong lines and a 95% upper
+  bound, one term per group, each from a random audit of that group's current text
+  (Phase 11, "Published estimate", which also gives the α split and the planned looks).
+- **Point estimate for reviewed flagged lines** before their audit (before pass B): wrong
+  lines left ≈ errors found × (1 − c) / c + correct lines broken. *c* is the team's catch
+  rate on plants; lines broken come from the gold lines. Gold lines are drawn from engine
+  disagreements, which are harder than average, so this errs pessimistic. It is a point
+  estimate only; its bound would have too much slack (Phase 11, "The flagged lines need
+  their own audit").
   - **Main risk: plant realism.** If plants are easier than real errors, *c* is too high.
     Check: the catch rate on gold lines whose prefill was really wrong is a second,
     honest *c*. A large gap between the two is a warning.
 - **After pass B:** capture–recapture. (Errors only A found × errors only B found) /
   errors both found estimates the errors both missed. It undercounts when the passes
-  share misses; the plants check it.
-- The estimate is published with its interval: "draft: ~X% of lines correct (interval …)".
+  share misses; the plants check it. It is a point estimate; the bound comes from the
+  flagged audit (stage 5).
+- Published as "about X% of lines wrong (95% upper bound Y%)".
 
 ### Progressive review (maintainer, 2026-11-25)
 
@@ -96,40 +101,43 @@ Every line also has a **certainty score**, the estimated chance its text is righ
 1. **Flagged lines, worst pages first.** Pass A claims pages in order of expected wrong
    lines (the sum of 1 − score over the page's flagged lines). The reviewer works through
    the page's **package** (below), not every line.
-2. **Hidden audit lines, from the first page on.** Each package hides a fixed share
-   (about 10%) of its page's consensus lines, chosen at random. Once every page has been
-   claimed, these are a random sample of the consensus lines across the whole book.
-3. **Consensus pages in random order.** After the flagged lines, pages are drawn at
-   random and their remaining consensus lines are reviewed. Each clean page tightens the
-   bound on the consensus lines nobody has reviewed.
-4. **Pass B**, blind, where accuracy is still short of the target, most uncertain first:
-   - **flagged lines.** After pass A they have one human and no machine agreement behind
-     them. At Phase 12's own figures (~720 wrong lines, a ~90% catch rate) one pass leaves
-     ~72 wrong, ~0.5% of the book, where 99.9% allows 14. Most of them are in the flagged
-     lines, since that is what flagging aims for. A pass-A text that matches two of the
-     three correctors is more certain than one no model gave, so the second kind comes
-     first;
-   - consensus lines of a group that failed its audit (below).
+2. **Hidden audit lines, from the first page on.** Each consensus line is an audit line
+   of the first round with probability 10%, by its own random number *u*, drawn at the
+   book-wide run (Phase 11, "The model behind the bound"). Each package hides its page's
+   audit lines. Once every page has been claimed, round 1 is done, and its lines are a
+   random sample of the consensus lines across the whole book.
+3. **More audit rounds over the consensus lines.** Each round raises the share (20%, 35%,
+   50%, 70%, 100%; Phase 11, "Looks and α") and covers every page, in random page
+   order. The bound is recomputed at the end of each round, never in between.
+4. **Pass B** over the flagged lines, blind, most uncertain first. After pass A they have
+   one human and no machine agreement behind them. At Phase 12's own figures (~720 wrong
+   lines, a ~90% catch rate) one pass leaves ~72 wrong, ~0.5% of the book, where 0.1%
+   allows 14. Most of them are in the flagged lines, since that is what flagging aims for.
+   A pass-A text that matches two of the three correctors is more certain than one no
+   model gave, so the second kind comes first.
+5. **The flagged audit**, after pass B. The flagged lines get their own random number
+   *u* and rounds (10%, 25%, 50%). Audit lines go into packages with their current text as
+   the prefill, with plants, and their changes are confirmed. This gives the flagged lines
+   their 95% bound; before it, they carry only a point estimate.
 
 **Packages.** A claim is still one page. Its package is that page's flagged lines, its
 hidden audit lines and its plants, all looking alike: the same pill, the same prefill
 style, and no model readings shown. Audit lines come only from the same page: a line
 from another page would give itself away by the jump.
 
-**Public milestones** for the consensus lines, each tested once at a line count fixed in
-advance (Phase 11):
+**Public milestones** for the consensus lines. These are labels on the group's 95% bound at
+the end of a round, not separate tests (Phase 11). The rounds needed are an illustration
+at a catch-rate lower limit of 0.82, with nothing found:
 
-| milestone | clean audited consensus lines | published as |
-|---|--:|---|
-| 0 | none | machine draft, estimate from the ceiling lines |
-| 1 | 300 | consensus lines ≤1% wrong |
-| 2 | 600 | consensus lines ≤0.5% wrong |
-| target | ~3,330 (3,000 at a perfect catch rate) | consensus lines ≤0.1% wrong, as good as two blind passes |
+| milestone | consensus bound | about when |
+|---|---|---|
+| 0 | none (machine draft, point estimate from the ceiling lines) | at once |
+| 1 | ≤1% wrong | round 1 (10%) |
+| 2 | ≤0.5% wrong | round 2 (20%) |
 
-**A group fails a milestone** when its bound is still above the milestone at that
-checkpoint: it can't yet be *shown* to be that good. Its lines are published at the last
-milestone passed. To reach the target, its unreviewed lines join the flagged queue (pass A,
-then pass B as above).
+**The stopping point** is the book's bound (both groups) at ≤0.1%. That needs roughly
+half the consensus lines audited and a nearly clean flagged audit, and it is reached
+only if the true rate is well below 0.1%. Short of it, the last bound published stands.
 
 **If contributors run short,** each stage still leaves a true published figure (the
 estimate below). The order of the stages is chosen so that each hour of review removes
@@ -147,10 +155,11 @@ the most expected wrong lines first, with the audit running from the start.
    strong model really made;
 4. every error the audit finds.
 
-A plant picks a type by its real frequency and goes only where that type can occur (a
-tone-code plant on a line with a tone code). Errors found by reviewers are the catchable
-ones, so plants built from them alone would be too easy: the realism check ("Audit")
-compares the catch rate on plants with the catch rate on real errors.
+A plant picks a type by its frequency in types 1–2, which were found without a reviewer,
+and goes only where that type can occur (a tone-code plant on a line with a tone code).
+Types 3–4 add to the list of types but not to the weights: errors found by reviewers are
+the catchable ones, so weighting by them would make plants too easy. The realism check
+("Audit") compares the catch rate on plants with the catch rate on real errors.
 
 ### Releases
 
@@ -282,7 +291,7 @@ compares the catch rate on plants with the catch rate on real errors.
   lines are spot checks, as they are told about plants.
 - **Report a line outside the package:** any grey line can be clicked and a correction
   reported. The text isn't accepted: the line becomes `flagged` and goes to a second
-  person, since one person's edit on a line three models agree on is as likely to break
+  person (for the bound it stays in the consensus group: Phase 11, rule 2), since one person's edit on a line three models agree on is as likely to break
   it as fix it. A report never counts toward the audit (it wasn't drawn at random), but
   it counts as a fix when confirmed. Many confirmed reports against a clean audit is a
   warning that the audit is off. Optional later: once a trusted labeler's reports are
@@ -341,14 +350,18 @@ collapsed.
     the same wrong way) go into audit packages on their pages, unmarked. They are real
     consensus errors with a known answer, so they measure the catch rate on the errors the
     audit is looking for, not only on plants.
-- **Audit lines** ("Progressive review"): plants also go on audit lines, copying the
-  consensus error types. The catch rate *c* is computed per error type and weighted by
-  the real mix of types; the audit bound is divided by its lower limit (Phase 11).
+- **Audit lines** ("Progressive review"): plants go on audit lines (each independently,
+  with a fixed probability), following the consensus error mix. A planted line counts
+  toward *c*, not toward the audit. *c* is the pooled catch rate on plants, and the bound
+  uses its lower limit (Phase 11, "Catch rate"). A change on an audit line counts as a
+  found error only once a trusted labeler confirms it.
 - **Plants:** a realistic corruption of the prefill, drawn from the engines' actual
   errors (a tone-code letter, a confusable letter pair, a dropped `՚`, a missing `։`).
   Applied on the server, so the browser sees just "prefill". Scored by whether that
   change was undone, so a plant needs no typed answer and can go on any line.
-  - About 1 per 3 real pages (never fewer than 1 per 5); about 3 per practice page.
+  - About 1 per 3 real pages (never fewer than 1 per 5); about 3 per practice page. The
+    bound's catch-rate limit depends mostly on the plant count: ~63 over the book give
+    0.74, one a page gives 0.82 (Phase 11, "Catch rate"). Set the rate at seeding.
   - Planted prefills are kept out of the engine's own error figures.
 - **Every miss** sends that page for an extra pass, even during pass A. So the draft
   has some `verified` pages.
@@ -463,7 +476,7 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
   - Public: `data/transcriptions/corrections/page_<N>.json`, one record per region:
     `typed_as`, `geometry`, `prefill {engine, text}`, `final {text, status}`, and every
     submission `{contributor, pass, text, raw_text, status, at, seconds}` under an opaque
-    contributor id. Also `certainty.json` (the estimate with its interval, counts per
+    contributor id. Also `certainty.json` (the estimate with its 95% upper bound, counts per
     status, each group's audited lines, errors found, bound and milestone) and each line's
     certainty score.
   - Credits: the release-notes list (names who opted in, anonymous ones as a count), not
@@ -502,7 +515,8 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
     2026-11-21, see the infrastructure smoke test below. The project, domain, sign-in
     settings and budgets are in place for the real build.
 - **Open, decided later:** the Vol II practice page; the gold-agreement alert threshold
-  (after pilot data); the audit share per page (about 10%, set at seeding).
+  (after pilot data); the plant rate (set at seeding; the audit round shares are fixed in
+  Phase 11).
 - **Progressive review added 2026-11-25** (consensus and flagged lines, page packages,
   hidden audit lines, milestones, pass B by certainty). Depends on Phase 11's trio and
   certainty score, still to be run.
@@ -619,8 +633,8 @@ So that later sessions don't reopen them:
 - **One pass + targeted second pass, with nothing checking the lines left out** → can't
   reach 99.9%: most remaining errors are on lines the engines agree on, which targeting
   misses. The progressive review (2026-11-25) targets too, but it checks the lines it
-  leaves out with a random audit, routes risky agreed lines in anyway, and sends a group
-  to review if its audit fails.
+  leaves out with a random audit, routes risky agreed lines in anyway, and keeps
+  auditing the group in rounds until its bound is low enough.
 - **A strict miss cascade** (miss → redo the page → onboarding → suspension) → teaching
   on every miss, an extra pass for the page, and alerts to the maintainer. One miss is
   mostly chance at this plant rate, redoing your own page tests memory, and pass B
@@ -669,12 +683,12 @@ Both should have display lines and a drop cap, and no answers already in the pub
 6. **R0:** the maintainer types the practice keys and gold lines, and labels real pages.
 7. **R1:** recalibration and the trusted queue.
 8. **R2:** invites.
-9. The machine draft is published with its estimate (milestone 0).
-10. Pass A over the flagged lines with hidden audit lines, worst pages first → E and F →
-    milestones 1 and 2 as the audit reaches them.
-11. Random consensus pages until the target bound, or until a group fails and joins the
-    flagged queue.
-12. Pass B by certainty, where accuracy is still short of the target.
+9. The machine draft is published with its point estimate (milestone 0).
+10. Pass A over the flagged lines with the round-1 audit lines, worst pages first → E and
+    F → the first consensus bound once every page has been claimed.
+11. Pass B by certainty, then the flagged audit's rounds.
+12. Further consensus audit rounds, until the book's bound is ≤0.1% or contributors run
+    out (the order of 11 and 12 follows whichever lowers the bound most per hour).
 
 ## Risks to test in R0
 
@@ -696,11 +710,11 @@ Both should have display lines and a drop cap, and no answers already in the pub
 
 - **Draft:** every `flagged` line has a human status (`invalid` lines resolved); every
   page has been claimed, so the audit covers the book; E and F have run and their queue is
-  empty; the published estimate is recorded here with its interval; the export is
-  committed and `corpus/` is built from it.
-- **Final:** every line is `verified` or `resolved`, or `consensus` in a group whose
-  audit bound is ≤0.1%; the published estimate (capture–recapture for lines with two
-  passes, checked by the plants) is at least 99.9% of lines correct.
+  empty; the published estimate is recorded here with the consensus group's 95% bound;
+  the export is committed and `corpus/` is built from it.
+- **Final:** the book's 95% upper bound (the consensus and flagged audits, Phase 11) is
+  ≤0.1% of lines wrong, or contributors have run out and the last bound is recorded
+  here.
 
 ## Out of scope
 
