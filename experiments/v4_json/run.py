@@ -6,14 +6,15 @@ prompt except the output-format sentence, same page text and line images, same c
 each line's answer. Only the request (a response schema) and the reading of the answer
 (JSON instead of `<number>\\t<text>` rows) differ.
 
-Like ``correct.py``, it fills only the lines its predictions file doesn't have yet, so a
-rerun into the committed file does nothing; ``--redo`` starts the file afresh, or
-``--engine`` writes a new one. A page with fallback lines is asked once more and the better
-attempt kept, as in ``correct.py``. (The measured run also re-asked lines that still fell
-back, ±3 lines; it fixed none of the 4, so this script leaves that out.)
+It writes ``corr-gemini-3.1-pro-v4-json-rerun`` by default, never the committed predictions
+of the measured run (``corr-gemini-3.1-pro-v4-json``). Like ``correct.py``, it fills only
+the lines its predictions file doesn't have yet; ``--redo`` starts the file afresh. A page
+with fallback lines is asked once more and the better attempt kept, as in ``correct.py``.
+(The measured run also re-asked lines that still fell back, ±3 lines; it fixed none of the
+4, so this script leaves that out.)
 
-    uv run python experiments/v4_json/run.py                       # ~103 pages, ~$10
-    uv run python experiments/v4_json/run.py --engine corr-gemini-3.1-pro-v4-json-rerun
+    uv run python experiments/v4_json/run.py                  # 103 pages, ~$10
+    uv run python experiments/v4_json/run.py --pages 453      # one page, a few cents
     uv run python -m dev.ocr_eval.rules corr-gemini-3.1-pro-v4-json-rerun
     uv run python -m dev.ocr_eval.ceiling score
 """
@@ -37,6 +38,8 @@ from dev.ocr_eval import common  # noqa: E402
 from dev.ocr_eval import correct as C  # noqa: E402
 
 MODEL = "gemini-3.1-pro"
+MEASURED = "corr-gemini-3.1-pro-v4-json"  # the committed predictions; never written here
+RERUN = MEASURED + "-rerun"
 FORMAT_JSON = ("- Return a JSON object with one key per line number, \"1\" up to the last line, in "
                "order, each the corrected text of that line, and nothing else.")
 FORMAT_TSV = ("- Return EXACTLY the same line numbers in the same order, formatted as "
@@ -101,12 +104,14 @@ def parse_json(text: str, keys: list[str], preds: dict) -> tuple[dict[str, str],
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--engine", default="corr-gemini-3.1-pro-v4-json",
+    ap.add_argument("--engine", default=RERUN,
                     help="predictions file to fill (in the ceiling set)")
     ap.add_argument("--redo", action="store_true", help="start the predictions file afresh")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--pages", type=int, nargs="*", help="only these pages (e.g. a one-page check)")
     a = ap.parse_args()
+    if a.engine == MEASURED:
+        raise SystemExit(f"{MEASURED} holds the measured run's predictions: write a new --engine")
     C._load_env()
     model = C.MODELS[MODEL][1]
     system = prompt()

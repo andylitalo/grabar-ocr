@@ -28,8 +28,9 @@ typed lines, 2026-11-25:
 
 ## Results
 
-On the 163 typed ceiling lines, both with the `՚ի` rule (`ceiling score`, strata as drawn;
-Phase 9 step 4 will recompute them):
+On the 163 typed ceiling lines, both with the `՚ի` rule (`ceiling score`, on the sample
+strata as currently drawn; Phase 9 step 4 recomputes them). *Broke* counts lines both
+engines agreed on and got right that the corrector made wrong.
 
 | | lines | wrong on disagree | wrong on agree | error-free | 95% interval | broke |
 |---|--:|--:|--:|--:|--:|--:|
@@ -45,15 +46,16 @@ Phase 9 step 4 will recompute them):
   | `p638.027` | v4-json | `աձ. Ըզքեզ …` (v4: `այ.`) |
   | `p519.032` | v4 | `… Ալէ. Կացցէ դըշ-` (v4-json dropped the `.`) |
   | `p489.078` | v4 | `… ահ. աձ Երգեսցուք …` (v4-json added a `.`) |
-  | `p478.063` | v4 | `սանել զնան. …` (v4-json: `զնա.`) |
-  | `p491.046` | v4 | `… Աստուած աս-` (v4-json: `Աոտուած`; the engines agreed and were right, so v4-json **broke** the line) |
+  | `p478.063` | v4 | `սանել զնան. …` (v4-json: `զնա.`; the engines agreed and were right, so v4-json **broke** the line) |
+  | `p491.046` | v4 | `… Աստուած աս-` (v4-json: `Աոտուած`, the engines' shared error, which v4 fixed) |
 
-- **Over all 8,556 lines both corrected, 219 differ (2.6%).** That is likely Gemini's
-  run-to-run variation; v4 hasn't been run twice on the same lines to measure it.
+- **Over all 8,556 lines both corrected, 219 differ (2.6%)** as scored (with the `՚ի`
+  rule, normalized). That is likely Gemini's run-to-run variation; v4 hasn't been run
+  twice on the same lines to measure it.
 - **Cost:** 3.82M input and 0.26M output tokens for 103 pages, the same as v4's run
   (3.88M / 0.23M), about $10.
 - **Fallbacks:** 4 lines (`p483.003`, `p508.011`, `p510.054`, `p520.023`), against v4's
-  5 on the same pages. No answer came back misaligned.
+  5 on the same 103 pages. No answer came back misaligned.
 
 ## Why the fallbacks didn't go away
 
@@ -69,9 +71,9 @@ Gemini's reconstruction is plausible but far from both readings (10 edits from t
 nearer one, where the drift check allows 6.9), so the check refuses it. That is the
 check doing its job: nothing can verify a rewrite that large, so these lines need a
 person, whatever the answer's format. v4 fell back on the same 4 lines (it kept Paddle's
-reading on each). The one misaligned answer seen in either run was v4's retry on p508,
-2026-11-23, which the heading line had triggered. A schema rules that out, but it hadn't
-happened on any first answer.
+reading on each). The only misaligned answer in either run was v4's *retry* on p508
+(2026-11-23), triggered by this heading line. A schema would prevent that, but no first
+answer was ever misaligned.
 
 ## Reproducing it
 
@@ -88,12 +90,13 @@ happened on any first answer.
   the measured run's. It leaves out the re-ask, which changed nothing.
 
   ```
-  uv run python experiments/v4_json/run.py --engine corr-gemini-3.1-pro-v4-json-rerun
+  uv run python experiments/v4_json/run.py
   uv run python -m dev.ocr_eval.rules corr-gemini-3.1-pro-v4-json-rerun
   uv run python -m dev.ocr_eval.ceiling score
   ```
 
-  `--pages 453` runs one page (a few cents) as a check.
+  It writes `corr-gemini-3.1-pro-v4-json-rerun` and refuses to write the measured run's
+  file. `--pages 453` runs one page (a few cents) as a check.
 
 - **The measured predictions** are committed as `corr-gemini-3.1-pro-v4-json.json` and
   `corr-gemini-3.1-pro-v4-json+rules.json` in `data/ocr_predictions/ceiling/`, so
