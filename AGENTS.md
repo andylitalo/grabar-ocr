@@ -25,7 +25,7 @@ This matters because early phases test assumptions (e.g., "does off-the-shelf Tr
 - `docs/phase_11_ocr_comparison.md` — **decided, paused**: Calfa engines + Gemini 3.1 Pro v4 correction chosen (95.0% error-free on 160 typed lines, re-scored 2026-11-13); next is the book-wide OCR run after the layout review ("Where this stands"). One Gemini 4 check (`gemini-4-argon`, 2026-10-14) wasn't adopted; a corrector comparison (the other Gemini 4 models; Opus 5.5 also with images of every line and from images alone; GPT 6.2 Sol) is planned, to pick one model per maker for a consensus first pass
 - `docs/phase_10_ocr_test_set.md` — deferred until the layout review is done
 - `docs/phase_8_line_segmentation_survey.md` — done: the `paddle-filled` line baseline
-- `docs/phase_12_hosted_labeler.md` — **planned, not built**: contributors correct the book-wide OCR at `ocr.andylitalo.com`; starts after the region-keyed migration and the book-wide run
+- `docs/phase_12_hosted_labeler.md` — **planned, not built**: contributors correct the book-wide OCR at `ocr.andylitalo.com`, uncertain lines first with a random audit of the rest ("Progressive review"); starts after the region-keyed migration and the book-wide run
 
 **Workflow:** read the current phase doc before touching any code. Update the doc with findings before moving on.
 
