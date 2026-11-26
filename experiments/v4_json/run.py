@@ -9,9 +9,10 @@ each line's answer. Only the request (a response schema) and the reading of the 
 It writes ``corr-gemini-3.1-pro-v4-json-rerun`` by default, never the committed predictions
 of the measured run (``corr-gemini-3.1-pro-v4-json``). Like ``correct.py``, it fills only
 the lines its predictions file doesn't have yet; ``--redo`` starts the file afresh. A page
-with fallback lines is asked once more and the better attempt kept, as in ``correct.py``.
-(The measured run also re-asked lines that still fell back, ±3 lines; it fixed none of the
-4, so this script leaves that out.)
+with fallback lines is asked once more and the better attempt kept, as in the measured run
+(today's ``correct.py`` asks again only when an answer is misaligned). The measured run
+also re-asked lines that still fell back, ±3 lines; it fixed none of the 4, so this script
+leaves that out.
 
     uv run python experiments/v4_json/run.py                  # 103 pages, ~$10
     uv run python experiments/v4_json/run.py --pages 453      # one page, a few cents
