@@ -28,6 +28,19 @@ broken across lines and for comparing letter shapes; the text of every line is i
 prompt in all versions.
 
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v5   # + neighbours
+
+**Fallback lines.** An answer is matched to the page's lines by number. A line the answer
+misses, echoes with both readings, or fills with another line's text (``drifted``) falls
+back to the OCR reading. A page with fallback lines is asked once more, keeping the better
+attempt; lines that still fall back are then re-asked on their own, each with
+``REASK_CONTEXT`` neighbours either side (``reask``; ``--no-reask`` turns this off).
+Which lines fell back, before and after the re-ask, is logged in
+``reports/phase11_correction_usage.json`` (git-ignored, so local only).
+
+v4-json is v4 with the answer as a JSON object (one key per line number) under a Gemini
+response schema that requires every line, in order; only the output format differs.
+
+    uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v4-json
 """
 
 from __future__ import annotations
@@ -128,9 +141,22 @@ CONTEXT_IMAGES = (
     "still return EVERY line of the page, from 1 to the last, including the lines without an "
     "image, in the format above."
 )
+# v4-json = v4 with only its output format changed: a JSON object, one key per line number,
+# which Gemini's response schema then requires in full and in order. A free-text answer can
+# drop or merge a row, renumber the rest (p508, 2026-11-23) or slip out of the format; a
+# schema rules out missing lines and malformed rows. It can't stop a neighbour's text in
+# the wrong slot, so the drift check still applies.
+FORMAT_TSV = ("- Return EXACTLY the same line numbers in the same order, formatted as "
+              "`<number>\\t<corrected text>`, one per line, and nothing else.")
+FORMAT_JSON = ("- Return a JSON object with one key per line number, \"1\" up to the last line, in "
+               "order, each the corrected text of that line, and nothing else.")
+assert SYSTEM.endswith(FORMAT_TSV), "the v4-json prompt replaces exactly v4's format rule"
+SYSTEM_JSON = SYSTEM[: -len(FORMAT_TSV)] + FORMAT_JSON
 PROMPTS = {"v2": SYSTEM, "v3": SYSTEM + COMMON_ERRORS, "v4": SYSTEM + COMMON_ERRORS + LINE_IMAGES,
-           "v5": SYSTEM + COMMON_ERRORS + CONTEXT_IMAGES}
-WITH_IMAGES = {"v4": "line", "v5": "context"}
+           "v5": SYSTEM + COMMON_ERRORS + CONTEXT_IMAGES,
+           "v4-json": SYSTEM_JSON + COMMON_ERRORS + LINE_IMAGES}
+WITH_IMAGES = {"v4": "line", "v5": "context", "v4-json": "line"}
+JSON_PROMPTS = {"v4-json"}  # answered as JSON under a response schema (Gemini only)
 CONTEXT_MARGIN = 1.3  # line heights above and below: one neighbour each side
 
 Images = list[tuple[int, bytes]]  # (line number, PNG) for the lines with two readings
@@ -147,7 +173,10 @@ def _load_env() -> None:
 # --- providers ---------------------------------------------------------------------
 
 
-def call_anthropic(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
+def call_anthropic(model: str, user: str, system: str = SYSTEM, images: Images = (),
+                   json_lines: int | None = None) -> tuple[str, dict]:
+    if json_lines is not None:
+        raise NotImplementedError("JSON answers (v4-json) are only wired for Gemini")
     import anthropic
 
     content: list[dict] = [{"type": "text", "text": user}]
@@ -173,7 +202,9 @@ def call_anthropic(model: str, user: str, system: str = SYSTEM, images: Images =
     return text, {"in": msg.usage.input_tokens, "out": msg.usage.output_tokens, "served_by": msg.model}
 
 
-def call_gemini(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
+def call_gemini(model: str, user: str, system: str = SYSTEM, images: Images = (),
+                json_lines: int | None = None) -> tuple[str, dict]:
+    """``json_lines``: answer as a JSON object with keys "1".."N", all required, in order."""
     from google import genai
     from google.genai import types
 
@@ -181,18 +212,27 @@ def call_gemini(model: str, user: str, system: str = SYSTEM, images: Images = ()
     for n, png in images:
         contents += [f"Line {n}", types.Part.from_bytes(data=png, mime_type="image/png")]
 
+    schema = {}
+    if json_lines is not None:
+        nums = [str(n) for n in range(1, json_lines + 1)]
+        schema = {"response_mime_type": "application/json", "response_schema": types.Schema(
+            type=types.Type.OBJECT, properties={n: types.Schema(type=types.Type.STRING) for n in nums},
+            required=nums, property_ordering=nums)}
     client = genai.Client(http_options=types.HttpOptions(timeout=HTTP_TIMEOUT_S * 1000))
     resp = client.models.generate_content(
         model=model, contents=contents,
         config=types.GenerateContentConfig(
             system_instruction=system, max_output_tokens=MAX_TOKENS,
-            thinking_config=types.ThinkingConfig(thinking_budget=GEMINI_THINKING_BUDGET)))
+            thinking_config=types.ThinkingConfig(thinking_budget=GEMINI_THINKING_BUDGET), **schema))
     um = resp.usage_metadata
     return resp.text or "", {"in": um.prompt_token_count or 0, "out": um.candidates_token_count or 0,
                              "served_by": resp.model_version}
 
 
-def call_openai(model: str, user: str, system: str = SYSTEM, images: Images = ()) -> tuple[str, dict]:
+def call_openai(model: str, user: str, system: str = SYSTEM, images: Images = (),
+                json_lines: int | None = None) -> tuple[str, dict]:
+    if json_lines is not None:
+        raise NotImplementedError("JSON answers (v4-json) are only wired for Gemini")
     from openai import OpenAI
 
     content: list[dict] = [{"type": "text", "text": user}]
@@ -268,20 +308,31 @@ def drifted(text: str, k: str, preds: dict[str, dict[str, str]]) -> bool:
     return nearest > max(4, MAX_CHANGE * max(len(normalize(r)) for r in readings))
 
 
-def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
-    """Corrected text per key; lines the model didn't return, returned still marked up as
-    `A: … ‖ B: …`, or returned as some other line's text (``drifted``) fall back to the
-    OCR (the agreed reading, else Paddle's).
-    Returns (lines, number of fallbacks)."""
+def _rows(text: str, fmt: str) -> dict[int, str]:
+    """The answer's text per line number: `<n>\\t<text>` rows (``tsv``), or a JSON object
+    keyed "1".."N" (``json``; an answer that isn't a JSON object gives no rows)."""
+    if fmt == "json":
+        try:
+            obj = json.loads(text)
+        except ValueError:
+            return {}
+        if not isinstance(obj, dict):
+            return {}
+        return {int(k): str(v).strip() for k, v in obj.items() if str(k).strip().isdigit()}
+    return {int(m.group(1)): m.group(2).strip() for m in map(LINE.match, text.splitlines()) if m}
+
+
+def parse_lines(text: str, keys: list[str], preds: dict[str, dict[str, str]],
+                fmt: str = "tsv") -> tuple[dict[str, str], list[str]]:
+    """Corrected text per key, and the keys that fell back. Lines the model didn't return,
+    returned still marked up as `A: … ‖ B: …`, or returned as some other line's text
+    (``drifted``) fall back to the OCR (the agreed reading, else Paddle's)."""
     got = {}
-    for row in text.splitlines():
-        m = LINE.match(row)
-        if m:
-            row_text = m.group(2).strip()
-            if "‖" not in row_text:  # one reading chosen but its label kept: `B: …`
-                row_text = re.sub(r"^[AB]:\s*", "", row_text)
-            got[int(m.group(1))] = row_text
-    out, fallbacks = {}, 0
+    for n, row_text in _rows(text, fmt).items():
+        if "‖" not in row_text:  # one reading chosen but its label kept: `B: …`
+            row_text = re.sub(r"^[AB]:\s*", "", row_text)
+        got[n] = row_text
+    out, bad = {}, []
     for n, k in enumerate(keys, 1):
         # A line that still carries the two-reading markers was echoed, not corrected.
         if (n in got and got[n] and "‖" not in got[n] and not re.match(r"^[AB]:", got[n])
@@ -289,31 +340,82 @@ def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple
             out[k] = got[n]
         else:
             out[k] = preds[ENGINES[1]].get(k, "")
-            fallbacks += 1
-    return out, fallbacks
+            bad.append(k)
+    return out, bad
+
+
+def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]],
+          fmt: str = "tsv") -> tuple[dict[str, str], int]:
+    """``parse_lines`` with the number of fallbacks instead of their keys."""
+    out, bad = parse_lines(text, keys, preds, fmt)
+    return out, len(bad)
 
 
 def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tries: int = 2,
-                 label: str = "") -> tuple[dict[str, str], int, dict]:
+                 label: str = "", fmt: str = "tsv") -> tuple[dict[str, str], list[str], dict]:
     """Ask ``call`` (one model request: ``() -> (text, usage)``) for a page's corrections,
     again while lines fall back, up to ``tries`` times. Keeps the attempt with the fewest
     fallbacks, the earlier on a tie: a retry can come back worse (p508, 2026-11-23: 1
     fallback, then 54 when the retry dropped a row and shifted the rest).
-    Returns (lines, fallbacks, usage), the usage summed over every attempt (all are billed)."""
+    Returns (lines, the keys that fell back, usage), the usage summed over every attempt
+    (all are billed)."""
     attempts, total = [], {"in": 0, "out": 0}
     for n in range(1, tries + 1):
         text, u = call()
         total["in"] += u["in"]
         total["out"] += u["out"]
-        corrected, fallbacks = parse(text, keys, preds)
-        attempts.append((fallbacks, n, corrected))
-        if not fallbacks:
+        corrected, bad = parse_lines(text, keys, preds, fmt)
+        attempts.append((len(bad), n, corrected, bad))
+        if not bad:
             break
-        unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
-        print(f"  {label}: {fallbacks} fallback lines (try {n}); "
-              f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
-    fallbacks, _, corrected = min(attempts, key=lambda a: a[:2])
-    return corrected, fallbacks, {**u, **total}
+        print(f"  {label}: {len(bad)} fallback lines (try {n}); "
+              f"{len(_rows(text, fmt))} rows for {len(keys)} lines", flush=True)
+    _, _, corrected, bad = min(attempts, key=lambda a: a[:2])
+    return corrected, bad, {**u, **total}
+
+
+REASK_CONTEXT = 3  # lines either side of a fallback line in its re-ask
+
+
+def reask_windows(keys: list[str], bad: list[str], context: int = REASK_CONTEXT) -> list[tuple[int, int]]:
+    """[start, end) index ranges around the fallback lines, ``context`` lines either side,
+    clipped to the page; ranges that overlap or touch are merged into one request."""
+    out: list[list[int]] = []
+    for i in sorted(keys.index(k) for k in bad):
+        lo, hi = max(0, i - context), min(len(keys), i + context + 1)
+        if out and lo <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], hi)
+        else:
+            out.append([lo, hi])
+    return [(lo, hi) for lo, hi in out]
+
+
+def reask(ask, keys: list[str], preds: dict[str, dict[str, str]], corrected: dict[str, str],
+          bad: list[str], *, fmt: str = "tsv", context: int = REASK_CONTEXT,
+          label: str = "") -> tuple[dict[str, str], list[str], dict]:
+    """Ask again for just the lines that fell back, each with ``context`` neighbours either
+    side so the meaning across lines is still there: ``ask(window keys) -> (text, usage)``
+    is one request for those lines, formatted like a page. Only a fallback line's answer is
+    taken (its neighbours keep the page's), and only if it passes the same checks; a line
+    that falls back again keeps the OCR. One request per window, no further retry.
+    Returns (lines, the keys that still fell back, usage summed over the requests)."""
+    corrected, still, total = dict(corrected), [], {"in": 0, "out": 0}
+    for lo, hi in reask_windows(keys, bad, context):
+        window = keys[lo:hi]
+        text, u = ask(window)
+        total["in"] += u["in"]
+        total["out"] += u["out"]
+        got, bad_w = parse_lines(text, window, preds, fmt)
+        for k in (k for k in window if k in bad):
+            if k in bad_w:
+                still.append(k)
+            else:
+                corrected[k] = got[k]
+    if bad:
+        print(f"  {label}: re-asked {len(bad)} fallback lines in "
+              f"{len(reask_windows(keys, bad, context))} requests; {len(still)} still fall back",
+              flush=True)
+    return corrected, still, total
 
 
 def missing_lines(keys: list[str], out: dict[str, str]) -> list[str]:
@@ -334,12 +436,21 @@ def main() -> None:
     ap.add_argument("--prompt", choices=list(PROMPTS), default="v2",
                     help="v2: Phase 5 rules; v3: + this book's common errors with examples; "
                          "v4: v3 + images of the lines where the engines disagree; "
-                         "v5: v4 with each image showing the neighbouring lines")
+                         "v5: v4 with each image showing the neighbouring lines; "
+                         "v4-json: v4 answered as JSON under a response schema (Gemini)")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
+    ap.add_argument("--no-reask", action="store_true",
+                    help="don't ask again for lines that still fall back after the page's retry "
+                         "(the behaviour before 2026-11-25)")
     a = ap.parse_args()
     _load_env()
     provider, model = MODELS[a.model]
+    fmt = "json" if a.prompt in JSON_PROMPTS else "tsv"
+    if fmt == "json" and provider != "gemini":
+        raise SystemExit(f"--prompt {a.prompt} answers under a Gemini response schema; "
+                         f"{a.model} is {provider}")
+    context = 0 if a.no_reask else REASK_CONTEXT
     common.use_set(SET)
     preds = {e: common.load_predictions(e)["lines"] for e in ENGINES}
     sample = tr.load_sample(SET)
@@ -352,7 +463,8 @@ def main() -> None:
     except common.Busy as e:
         raise SystemExit(str(e))
     settings = {"model": model, "provider": provider, "prompt_version": a.prompt,
-                "prompt": system, "inputs": list(ENGINES)}
+                "prompt": system, "inputs": list(ENGINES), "output": fmt,
+                "reask_context": context}
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
     # Corrections kept from earlier runs were made with these settings only if the old file
@@ -364,16 +476,28 @@ def main() -> None:
           f"({len(pages) - len(todo)} pages done)")
     per_page = {}  # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once
 
-    def do_page(page: int):
-        page_lines = lines.page_lines(page)
+    def ask(page_lines: list[dict]):
+        """One request for these lines (a page, or a re-ask window), formatted as a page."""
         keys = [l["key"] for l in page_lines]
+        page = lines.page_of(keys[0])
         images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
                   if a.prompt in WITH_IMAGES else [])
         prompt = page_prompt(keys, preds)
-        corrected, fallbacks, u = correct_page(
-            lambda: with_retries(lambda: CALL[provider](model, prompt, system, images)),
-            keys, preds, label=f"p{page}")
-        return page, corrected, fallbacks, u
+        json_lines = len(keys) if fmt == "json" else None
+        return with_retries(lambda: CALL[provider](model, prompt, system, images, json_lines))
+
+    def do_page(page: int):
+        page_lines = lines.page_lines(page)
+        by_key = {l["key"]: l for l in page_lines}
+        keys = list(by_key)
+        corrected, page_bad, u = correct_page(lambda: ask(page_lines), keys, preds,
+                                              label=f"p{page}", fmt=fmt)
+        bad = page_bad
+        if page_bad and context:
+            corrected, bad, u2 = reask(lambda window: ask([by_key[k] for k in window]), keys, preds,
+                                       corrected, page_bad, fmt=fmt, context=context, label=f"p{page}")
+            u = {**u, "in": u["in"] + u2["in"], "out": u["out"] + u2["out"]}
+        return page, corrected, (page_bad, bad), u
 
     start = time.time()
     finished = 0
@@ -382,14 +506,15 @@ def main() -> None:
         nonlocal finished
         finished += 1
         try:
-            page, corrected, fallbacks, u = fut.result()
+            page, corrected, (page_bad, bad), u = fut.result()
         except Exception as e:  # noqa: BLE001
             print(f"  page failed: {type(e).__name__}: {str(e)[:160]}", flush=True)
             return
         out.update(new_lines(corrected, out))
-        per_page[page] = (u, fallbacks)
-        print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
-              f"({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
+        per_page[page] = (u, (page_bad, bad))
+        print(f"  p{page}: {len(corrected)} lines, {len(bad)} fallback"
+              + (f" ({len(page_bad)} before the re-ask)" if page_bad != bad else "")
+              + f" ({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
         common._write(engine, settings, out, uniform=uniform)
 
     interrupted = True
@@ -404,9 +529,14 @@ def main() -> None:
 
 
 def _log_usage(engine: str, per_page: dict, interrupted: bool) -> None:
+    # Which lines fell back is logged by key: a fallback is saved as the OCR reading, and the
+    # predictions file can't tell it from a correction that kept that reading.
     usage = {"in": sum(u["in"] for u, _ in per_page.values()),
              "out": sum(u["out"] for u, _ in per_page.values()),
-             "fallback_lines": sum(f for _, f in per_page.values()), "pages": len(per_page),
+             "fallback_lines": sum(len(bad) for _, (_, bad) in per_page.values()),
+             "fallback_lines_before_reask": sum(len(pb) for _, (pb, _) in per_page.values()),
+             "fallback_keys": sorted(k for _, (_, bad) in per_page.values() for k in bad),
+             "pages": len(per_page),
              "served_by": sorted({u["served_by"] for u, _ in per_page.values()})}
     log = common.REPO_ROOT / "reports" / "phase11_correction_usage.json"
     runs = json.loads(log.read_text()) if log.exists() else []

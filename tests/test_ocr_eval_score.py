@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from dev.ocr_eval import score
 
 
@@ -59,6 +61,80 @@ def test_a_worse_retry_does_not_replace_the_first_answer():
                     f"1\t{texts['k2']}\n2\t{texts['k3']}"])   # shifted: lines 1-3 fall back
     usage = [{"in": 10, "out": 1, "served_by": "m"}, {"in": 20, "out": 2, "served_by": "m"}]
     calls = iter(zip(answers, usage))
-    corrected, fallbacks, u = correct_page(lambda: next(calls), keys, preds)
-    assert fallbacks == 1 and corrected == texts
+    corrected, bad, u = correct_page(lambda: next(calls), keys, preds)
+    assert bad == ["k3"] and corrected == texts
     assert (u["in"], u["out"]) == (30, 3)  # both attempts are billed
+
+
+# --- re-asking fallback lines, and JSON answers (2026-11-25) ---------------------------
+
+WORDS = ["Բշ. Ճաշու սաղ.", "Եւ առաւօտու օրհնութիւն", "Տէր թագաւորեաց", "Շարական գկ.",
+         "Առակ. Թ. Իմաստութիւն", "Սաղմոս Դաւթի", "Աւետարան ըստ Մատթէոսի", "Յերրորդում աւուր",
+         "Կոզմայի եւ Դամիանոսի", "Երկրորդ կիւրակէ"]
+
+
+def _page(n=10):
+    from dev.ocr_eval.correct import ENGINES
+    keys = [f"k{i}" for i in range(1, n + 1)]
+    texts = dict(zip(keys, WORDS[:n]))
+    return keys, texts, {e: dict(texts) for e in ENGINES}
+
+
+def test_reask_windows_take_neighbours_merge_and_stay_on_the_page():
+    from dev.ocr_eval.correct import reask_windows
+    keys = [f"k{i}" for i in range(1, 21)]
+    assert reask_windows(keys, ["k10"], 3) == [(6, 13)]             # 3 either side
+    assert reask_windows(keys, ["k1"], 3) == [(0, 4)]               # clipped at the top
+    assert reask_windows(keys, ["k20"], 3) == [(16, 20)]            # and at the bottom
+    assert reask_windows(keys, ["k5", "k9"], 3) == [(1, 12)]        # overlapping: one request
+    assert reask_windows(keys, ["k3", "k17"], 3) == [(0, 6), (13, 20)]
+
+
+def test_reask_takes_only_the_fallback_line_from_its_window():
+    from dev.ocr_eval.correct import reask
+    keys, texts, preds = _page()
+    corrected = dict(texts, k5="OCR reading kept")      # k5 fell back on the page
+    asked = []
+
+    def ask(window):
+        asked.append(window)
+        # the window's answer also "changes" a neighbour: that must be ignored
+        rows = [texts[k] + (" ՚ի" if k == "k4" else "") for k in window]
+        return "\n".join(f"{n}\t{t}" for n, t in enumerate(rows, 1)), {"in": 5, "out": 1}
+
+    out, still, u = reask(ask, keys, preds, corrected, ["k5"], context=3)
+    assert asked == [["k2", "k3", "k4", "k5", "k6", "k7", "k8"]]
+    assert out["k5"] == texts["k5"] and out["k4"] == texts["k4"]   # neighbour keeps the page's
+    assert still == [] and (u["in"], u["out"]) == (5, 1)
+
+
+def test_a_line_that_falls_back_again_keeps_the_ocr():
+    from dev.ocr_eval.correct import ENGINES, reask
+    keys, texts, preds = _page()
+    # The window's answer shifts by a row again: k5's slot holds k6's text.
+    answer = "\n".join(f"{n}\t{texts[k]}" for n, k in enumerate(["k2", "k3", "k4", "k6", "k7", "k8"], 1))
+    out, still, _ = reask(lambda w: (answer, {"in": 1, "out": 1}), keys, preds,
+                          dict(texts), ["k5"], context=3)
+    assert still == ["k5"] and out["k5"] == preds[ENGINES[1]]["k5"]
+
+
+def test_json_answers_are_checked_like_rows():
+    from dev.ocr_eval.correct import parse_lines
+    keys, texts, preds = _page(3)
+    answer = json.dumps({"1": "B: " + texts["k1"], "2": texts["k3"]}, ensure_ascii=False)
+    out, bad = parse_lines(answer, keys, preds, fmt="json")
+    # 1: label stripped; 2: another line's text (drifted); 3: missing
+    assert out["k1"] == texts["k1"] and bad == ["k2", "k3"]
+
+
+def test_an_answer_that_is_not_a_json_object_falls_back_everywhere():
+    from dev.ocr_eval.correct import parse_lines
+    keys, texts, preds = _page(3)
+    for answer in ['{"1": "' + texts["k1"], "[1, 2, 3]", f"1\t{texts['k1']}"]:
+        assert parse_lines(answer, keys, preds, fmt="json")[1] == keys
+
+
+def test_the_json_prompt_differs_from_v4_only_in_its_output_format():
+    from dev.ocr_eval.correct import FORMAT_JSON, FORMAT_TSV, PROMPTS
+    assert PROMPTS["v4-json"] == PROMPTS["v4"].replace(FORMAT_TSV, FORMAT_JSON)
+    assert PROMPTS["v4-json"] != PROMPTS["v4"]
