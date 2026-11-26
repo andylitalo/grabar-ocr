@@ -400,6 +400,69 @@ every predictions file in the set, so since the 2026-10-31 re-score they're also
 `reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
 that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
+#### Fallback lines: a re-ask, and no decision step (2026-11-25)
+
+A line **falls back** when v4's answer can't be trusted for it: the answer misses the line,
+echoes both readings, or holds text too far from both OCR readings (the drift check, meant
+for a skipped row that shifts every later line onto the wrong number). It then keeps
+Paddle's reading. In the re-run of 2026-11-23, 5 lines fell back on 103 pages, and a retry
+on p508 dropped a row and shifted 54 lines (fixed: the better attempt is kept). Three
+options were weighed (maintainer, 2026-11-24):
+
+1. **JSON answers under a response schema (v4-json):** tried, not adopted. It scored no
+   better than v4. The numbers, the reasons and how to reproduce them are in
+   `experiments/v4_json/README.md`.
+2. **Re-ask:** a line still misaligned after the page's retry is asked again on its own,
+   with 3 lines either side for context; only its own answer is taken, under the same
+   checks (`reask`, on by default; `--no-reask`). Built, together with telling the two
+   kinds of fallback apart (below). Which lines fell back, and why, is now logged in
+   `reports/phase11_correction_usage.json` (git-ignored: local only).
+3. **A decision step** (a cheap model picks A, B or neither; Gemini corrects only
+   "neither"): **not built.**
+   - **Minimal benefit; it targets the wrong problem.** On the 163 typed lines, v4 picks
+     between A and B correctly on 48 of 49 lines where one of them is right. Of v4's 6
+     errors, 4 are lines where both engines agree on the same wrong reading, which a step
+     that only sees disagreements can never reach (v4 fixes 2 of those 6 today, from the
+     page around them).
+   - **Scale:** about 5,000 separate requests over the book, one per disagreement, instead
+     of ~190 page requests.
+   - **Risk:** "neither" is 21% of disagreements (13 of 62), and v4 gets 12 of those 13
+     right using the whole page's text; corrected line by line, they lose that context. It
+     would also be a new pipeline, reopening the v4 decision.
+
+**What the fallbacks really were.** v4 fell back on 4 lines that could be identified,
+`p483.003`, `p508.011`, `p510.054` and `p520.023` (it kept Paddle's reading on each; its
+fifth, on p550, wasn't recorded). They aren't misaligned answers: each is a display
+heading that both engines read as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
+Gemini's answer is a plausible reconstruction (`Շաբաթ, տօն է սրբոյն Գրիգորի Լու-`), too
+far from both readings for the drift check to accept. So the check is doing its job,
+refusing a rewrite nothing can verify, and these lines need a person, not another request.
+None is a typed line. In the v4-json run a re-ask of every fallback line was tried on
+exactly these 4 lines and fixed none, and in v4's run the page retry fixed none either (on
+p508 it made things worse). Asking again only helps a misaligned answer, and no first
+answer in either run was misaligned; the one shift seen, p508's retry, was triggered by
+the heading line.
+
+**So the two kinds of fallback are now told apart** (`parse_reasons`). A line is
+*misaligned* when the answer misses it, echoes both readings, or holds the text of a line
+within 3 rows (a row dropped or repeated, the rest renumbered); only then is the page asked
+again, and still-misaligned lines re-asked. A line whose answer is too far from its own
+readings and its neighbours' is *too far*: it keeps the OCR, isn't asked again, and is
+logged under `needs_review`. For the book-wide run, those lines go to the human review.
+Checked three ways, 2026-11-25:
+
+- **Unit tests** for each reason, and that a too-far line alone isn't asked again while a
+  shifted answer is.
+- **Offline, on real pages (no API calls):** v4's stored answers for the 103 pages, broken
+  at 5 places a page by dropping a row (as on p508) or repeating one: every line after the
+  break came out `shifted` (21,341 each way; the dropped case also leaves the last line
+  `missing`), none `too_far`, none wrongly accepted, and every broken page was asked again.
+  Gemini's 4 heading answers came out `too_far`, their pages not asked again. A shift of
+  more than 3 rows would be called too far; none has been seen.
+- **Live, on the 5 pages that had fallbacks** (about $0.40): 1 request a page, the 4
+  headings flagged, p550 without a fallback this time. The old logic made 9-10 page
+  requests plus 4 re-asks for the same pages.
+
 #### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →

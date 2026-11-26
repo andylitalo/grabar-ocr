@@ -28,6 +28,17 @@ broken across lines and for comparing letter shapes; the text of every line is i
 prompt in all versions.
 
     uv run python -m dev.ocr_eval.correct --model gemini-3.1-pro --prompt v5   # + neighbours
+
+**Fallback lines.** An answer is matched to the page's lines by number. A line falls back to
+the OCR reading when the answer is *misaligned* there (it misses the line, echoes both
+readings, or holds a nearby line's text: a row was dropped and the rest renumbered) or is
+*too far* from both readings to trust (``parse_reasons``). Only misalignment is worth
+asking about again: the page is asked once more, keeping the better attempt, and lines
+still misaligned are then re-asked on their own, each with ``REASK_CONTEXT`` neighbours
+either side (``reask``; ``--no-reask`` turns this off). A too-far line is in practice a
+heading both engines garbled; it isn't asked again but flagged for review. Which lines fell
+back, and why, is logged in ``reports/phase11_correction_usage.json`` (git-ignored, so
+local only), the too-far ones under ``needs_review``.
 """
 
 from __future__ import annotations
@@ -39,6 +50,7 @@ import json
 import os
 import re
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -268,11 +280,16 @@ def drifted(text: str, k: str, preds: dict[str, dict[str, str]]) -> bool:
     return nearest > max(4, MAX_CHANGE * max(len(normalize(r)) for r in readings))
 
 
-def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
-    """Corrected text per key; lines the model didn't return, returned still marked up as
-    `A: … ‖ B: …`, or returned as some other line's text (``drifted``) fall back to the
-    OCR (the agreed reading, else Paddle's).
-    Returns (lines, number of fallbacks)."""
+# Why a line fell back. The first three mean the answer is misaligned with the page's lines,
+# which asking again can fix; ``too_far`` is an answer for this line that is too far from
+# both OCR readings to trust (in practice a heading both engines garbled, which Gemini
+# rewrites: pp.483, 508, 510, 520, 2026-11-25). Asking again doesn't fix that; a person
+# reviews it.
+MISALIGNED = ("missing", "echoed", "shifted")
+SHIFT_REACH = 3  # rows a shifted answer may be off by: its text is a line this near's
+
+
+def _answer_rows(text: str) -> dict[int, str]:
     got = {}
     for row in text.splitlines():
         m = LINE.match(row)
@@ -281,39 +298,118 @@ def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple
             if "‖" not in row_text:  # one reading chosen but its label kept: `B: …`
                 row_text = re.sub(r"^[AB]:\s*", "", row_text)
             got[int(m.group(1))] = row_text
-    out, fallbacks = {}, 0
+    return got
+
+
+def parse_reasons(text: str, keys: list[str],
+                  preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], dict[str, str]]:
+    """Corrected text per key, and why each line that fell back did (``MISALIGNED`` or
+    ``too_far``), in page order. A fallback keeps the OCR (the agreed reading, else Paddle's).
+
+    - ``missing``: no answer for the line;
+    - ``echoed``: the answer still carries the two readings (`A: … ‖ B: …`);
+    - ``shifted``: the answer is too far from this line's readings but close to a line's
+      within ``SHIFT_REACH`` rows (a row was dropped or merged and the rest renumbered);
+    - ``too_far``: too far from this line's readings and from its neighbours'."""
+    got = _answer_rows(text)
+    out, reasons = {}, {}
     for n, k in enumerate(keys, 1):
-        # A line that still carries the two-reading markers was echoed, not corrected.
-        if (n in got and got[n] and "‖" not in got[n] and not re.match(r"^[AB]:", got[n])
-                and not drifted(got[n], k, preds)):
-            out[k] = got[n]
+        t = got.get(n, "")
+        if not t:
+            reason = "missing"
+        elif "‖" in t or re.match(r"^[AB]:", t):
+            reason = "echoed"
+        elif not drifted(t, k, preds):
+            out[k] = t
+            continue
         else:
-            out[k] = preds[ENGINES[1]].get(k, "")
-            fallbacks += 1
-    return out, fallbacks
+            near = keys[max(0, n - 1 - SHIFT_REACH): n - 1] + keys[n: n + SHIFT_REACH]
+            reason = "shifted" if any(not drifted(t, j, preds) for j in near) else "too_far"
+        out[k] = preds[ENGINES[1]].get(k, "")
+        reasons[k] = reason
+    return out, reasons
+
+
+def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
+    """``parse_reasons`` with the number of fallbacks instead of their reasons."""
+    out, reasons = parse_reasons(text, keys, preds)
+    return out, len(reasons)
+
+
+def misaligned(reasons: dict[str, str]) -> list[str]:
+    return [k for k, r in reasons.items() if r in MISALIGNED]
 
 
 def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tries: int = 2,
-                 label: str = "") -> tuple[dict[str, str], int, dict]:
+                 label: str = "") -> tuple[dict[str, str], dict[str, str], dict]:
     """Ask ``call`` (one model request: ``() -> (text, usage)``) for a page's corrections,
-    again while lines fall back, up to ``tries`` times. Keeps the attempt with the fewest
-    fallbacks, the earlier on a tie: a retry can come back worse (p508, 2026-11-23: 1
-    fallback, then 54 when the retry dropped a row and shifted the rest).
-    Returns (lines, fallbacks, usage), the usage summed over every attempt (all are billed)."""
+    again while the answer is misaligned (``MISALIGNED`` lines), up to ``tries`` times; a
+    ``too_far`` line alone isn't a reason to ask again, since it comes back the same (and
+    asking again risks worse: p508, 2026-11-23, 1 fallback and then 54 when the retry
+    dropped a row). Keeps the attempt with the fewest fallbacks, then the fewest
+    misaligned ones, the earlier on a tie: every fallback keeps the OCR, whatever its
+    reason, so an attempt that is aligned but rewrites many lines too far isn't better.
+    Returns (lines, {key: reason} of the lines that fell back, usage), the usage summed
+    over every attempt (all are billed)."""
     attempts, total = [], {"in": 0, "out": 0}
     for n in range(1, tries + 1):
         text, u = call()
         total["in"] += u["in"]
         total["out"] += u["out"]
-        corrected, fallbacks = parse(text, keys, preds)
-        attempts.append((fallbacks, n, corrected))
-        if not fallbacks:
+        corrected, reasons = parse_reasons(text, keys, preds)
+        attempts.append((len(reasons), len(misaligned(reasons)), n, corrected, reasons))
+        if reasons:
+            print(f"  {label}: {len(reasons)} fallback lines (try {n}): "
+                  f"{dict(Counter(reasons.values()))}", flush=True)
+        if not misaligned(reasons):
             break
-        unparsed = [r for r in text.splitlines() if not LINE.match(r)][:3]
-        print(f"  {label}: {fallbacks} fallback lines (try {n}); "
-              f"{len(text.splitlines())} rows for {len(keys)} lines; unparsed: {unparsed}", flush=True)
-    fallbacks, _, corrected = min(attempts, key=lambda a: a[:2])
-    return corrected, fallbacks, {**u, **total}
+    *_, corrected, reasons = min(attempts, key=lambda a: a[:3])
+    return corrected, reasons, {**u, **total}
+
+
+REASK_CONTEXT = 3  # lines either side of a fallback line in its re-ask
+
+
+def reask_windows(keys: list[str], bad: list[str], context: int = REASK_CONTEXT) -> list[tuple[int, int]]:
+    """[start, end) index ranges around the fallback lines, ``context`` lines either side,
+    clipped to the page; ranges that overlap or touch are merged into one request."""
+    out: list[list[int]] = []
+    for i in sorted(keys.index(k) for k in bad):
+        lo, hi = max(0, i - context), min(len(keys), i + context + 1)
+        if out and lo <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], hi)
+        else:
+            out.append([lo, hi])
+    return [(lo, hi) for lo, hi in out]
+
+
+def reask(ask, keys: list[str], preds: dict[str, dict[str, str]], corrected: dict[str, str],
+          bad: list[str], *, context: int = REASK_CONTEXT,
+          label: str = "") -> tuple[dict[str, str], dict[str, str], dict]:
+    """Ask again for just these lines (the misaligned ones), each with ``context``
+    neighbours either side so the meaning across lines is still there: ``ask(window keys)
+    -> (text, usage)`` is one request for those lines, formatted like a page. Only an asked
+    line's answer is taken (its neighbours keep the page's), and only if it passes the same
+    checks; a line that falls back again keeps the OCR. One request per window, no retry.
+    Returns (lines, {key: reason} of the lines that still fell back, usage summed over the
+    requests)."""
+    corrected, still, total = dict(corrected), {}, {"in": 0, "out": 0}
+    windows = reask_windows(keys, bad, context)
+    for lo, hi in windows:
+        window = keys[lo:hi]
+        text, u = ask(window)
+        total["in"] += u["in"]
+        total["out"] += u["out"]
+        got, reasons_w = parse_reasons(text, window, preds)
+        for k in (k for k in window if k in bad):
+            if k in reasons_w:
+                still[k] = reasons_w[k]
+            else:
+                corrected[k] = got[k]
+    if bad:
+        print(f"  {label}: re-asked {len(bad)} misaligned lines in {len(windows)} requests; "
+              f"{len(still)} still fall back", flush=True)
+    return corrected, still, total
 
 
 def missing_lines(keys: list[str], out: dict[str, str]) -> list[str]:
@@ -337,9 +433,13 @@ def main() -> None:
                          "v5: v4 with each image showing the neighbouring lines")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
+    ap.add_argument("--no-reask", action="store_true",
+                    help="don't re-ask misaligned lines one at a time after the page's retry "
+                         "(the page retry itself still runs only for misaligned answers)")
     a = ap.parse_args()
     _load_env()
     provider, model = MODELS[a.model]
+    context = 0 if a.no_reask else REASK_CONTEXT
     common.use_set(SET)
     preds = {e: common.load_predictions(e)["lines"] for e in ENGINES}
     sample = tr.load_sample(SET)
@@ -352,28 +452,43 @@ def main() -> None:
     except common.Busy as e:
         raise SystemExit(str(e))
     settings = {"model": model, "provider": provider, "prompt_version": a.prompt,
-                "prompt": system, "inputs": list(ENGINES)}
+                "prompt": system, "inputs": list(ENGINES), "reask_context": context}
     old = common.load_predictions(engine)
     out = dict(old.get("lines", {})) if not a.redo else {}
     # Corrections kept from earlier runs were made with these settings only if the old file
     # says all its lines were and its settings are these; otherwise claim nothing.
     uniform = not out or (bool(old.get("uniform_settings")) and old.get("settings") == settings)
-    missing = {p: missing_lines([l["key"] for l in lines.page_lines(p)], out) for p in pages}
+    missing = {p: missing_lines([line["key"] for line in lines.page_lines(p)], out) for p in pages}
     todo = [p for p in pages if missing[p]]
     print(f"{engine}: {len(todo)} pages to correct, {sum(len(missing[p]) for p in todo)} lines "
           f"({len(pages) - len(todo)} pages done)")
-    per_page = {}  # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once
+    # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once. ``fallbacks``:
+    # {key: reason} of the lines that fell back after the page's attempts ("before") and
+    # after the re-ask ("after"; the same when nothing was re-asked).
+    per_page = {}
+
+    def ask(page: int, page_lines: list[dict]):
+        """One request for these lines (a page, or a re-ask window), formatted as a page."""
+        images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
+                  if a.prompt in WITH_IMAGES else [])
+        prompt = page_prompt([line["key"] for line in page_lines], preds)
+        return with_retries(lambda: CALL[provider](model, prompt, system, images))
 
     def do_page(page: int):
         page_lines = lines.page_lines(page)
-        keys = [l["key"] for l in page_lines]
-        images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
-                  if a.prompt in WITH_IMAGES else [])
-        prompt = page_prompt(keys, preds)
-        corrected, fallbacks, u = correct_page(
-            lambda: with_retries(lambda: CALL[provider](model, prompt, system, images)),
-            keys, preds, label=f"p{page}")
-        return page, corrected, fallbacks, u
+        by_key = {line["key"]: line for line in page_lines}
+        keys = list(by_key)
+        corrected, page_reasons, u = correct_page(lambda: ask(page, page_lines), keys, preds,
+                                                  label=f"p{page}")
+        reasons = page_reasons
+        bad = misaligned(page_reasons)
+        if bad and context:
+            corrected, still, u2 = reask(lambda window: ask(page, [by_key[k] for k in window]),
+                                         keys, preds, corrected, bad, context=context,
+                                         label=f"p{page}")
+            reasons = {k: r for k, r in page_reasons.items() if r not in MISALIGNED} | still
+            u = {**u, "in": u["in"] + u2["in"], "out": u["out"] + u2["out"]}
+        return page, corrected, {"before": page_reasons, "after": reasons}, u
 
     start = time.time()
     finished = 0
@@ -388,8 +503,12 @@ def main() -> None:
             return
         out.update(new_lines(corrected, out))
         per_page[page] = (u, fallbacks)
-        print(f"  p{page}: {len(corrected)} lines, {fallbacks} fallback "
-              f"({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
+        before, after = fallbacks["before"], fallbacks["after"]
+        review = [k for k, r in after.items() if r == "too_far"]
+        print(f"  p{page}: {len(corrected)} lines, {len(after)} fallback"
+              + (f" ({len(before)} before the re-ask)" if before != after else "")
+              + (f", needs review: {', '.join(review)}" if review else "")
+              + f" ({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
         common._write(engine, settings, out, uniform=uniform)
 
     interrupted = True
@@ -404,9 +523,16 @@ def main() -> None:
 
 
 def _log_usage(engine: str, per_page: dict, interrupted: bool) -> None:
+    # Which lines fell back is logged by key: a fallback is saved as the OCR reading, and the
+    # predictions file can't tell it from a correction that kept that reading.
+    final = {k: r for _, f in per_page.values() for k, r in f["after"].items()}
     usage = {"in": sum(u["in"] for u, _ in per_page.values()),
              "out": sum(u["out"] for u, _ in per_page.values()),
-             "fallback_lines": sum(f for _, f in per_page.values()), "pages": len(per_page),
+             "fallback_lines": len(final),
+             "fallback_lines_before_reask": sum(len(f["before"]) for _, f in per_page.values()),
+             "fallback_keys": dict(sorted(final.items())),   # key -> reason
+             "needs_review": sorted(k for k, r in final.items() if r == "too_far"),
+             "pages": len(per_page),
              "served_by": sorted({u["served_by"] for u, _ in per_page.values()})}
     log = common.REPO_ROOT / "reports" / "phase11_correction_usage.json"
     runs = json.loads(log.read_text()) if log.exists() else []
