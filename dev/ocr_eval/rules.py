@@ -5,8 +5,11 @@ shows each engine with and without the rules. No model calls.
 
 Rules (each from the maintainer's reading of the print, checked on the typed lines):
 - **apostrophe-i**: the preposition ի standing alone is printed ՚ի (confirmed
-  2026-10-09; 10 of 10 standalone ի in the first 87 typed lines). Both OCR engines often
-  drop the ՚, and the LLM correctors don't add it.
+  2026-10-09; 10 of 10 standalone ի in the first 87 typed lines). Tesseract never reads
+  the ՚, and Paddle reads it only sometimes (as ASCII `'`). The correctors add it only
+  sometimes: the base and v3 prompts never did, and on the 8,556 ceiling lines v4 writes
+  it on 126 lines where neither engine had it, while the rule still changes 575 of v4's
+  lines (2026-11-25).
 
     uv run python -m dev.ocr_eval.rules corr-gemini-3.1-pro-v3 paddle-calfa-tiny
 """
