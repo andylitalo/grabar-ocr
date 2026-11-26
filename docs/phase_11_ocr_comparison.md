@@ -463,6 +463,50 @@ Checked three ways, 2026-11-25:
   headings flagged, p550 without a fallback this time. The old logic made 9-10 page
   requests plus 4 re-asks for the same pages.
 
+#### Drop-cap lines: the body and the capital are read apart (decided 2026-11-26)
+
+On a line that opens with a drop capital, the crop holds the whole capital, so the
+engines read the text at a fraction of its size. With the capital taken out of the crop,
+their disagreement on these lines falls from 13.9% of characters to 2.9% (other lines:
+2.0%); the measurements are in `experiments/drop_caps/README.md`. Decided (maintainer):
+
+- **The body text is read from a crop without the capital** (that experiment's `body`
+  crop): both engines and the corrector read the body only.
+- **The capital is read on its own.** Tesseract reads it first, from the line's crop as
+  it is today; it got 103 of the 113 typed capitals that way, against 68 for Paddle. Then
+  Gemini and/or other models read the capital's crop to confirm it. The capital gets its own
+  status, apart from the body's: confirmed, or flagged for a person.
+- **Which lines have a drop cap** is found from the ink, not only from review ops: 166 of
+  the 372 found have no `initial` op, because the box-growing rule of 2026-11-17 took
+  their capital into the line. A person's `initial` op, and the letter typed with it,
+  always wins.
+- **Before the book-wide run:** check that every drop cap is found. The detector misses
+  most Հ capitals (their slanting stroke is short) and takes in 3 headings.
+
+How the capital's readings and status are recorded, and how the corrector sees a line
+whose capital is read apart, is settled when this is built. A proposal is in "Drop-cap
+capitals: readings and status (proposed)" below.
+
+#### Drop-cap capitals: readings and status (proposed)
+
+- **The capital is its own field on the line**, not part of the body's text: a line's
+  text is the capital's letter followed by the body. A wrong capital is then a one-letter
+  fix, and the body's checks (engine agreement, the drift check) don't count it.
+- **Each reader's capitals in their own predictions file**, keyed by line id like the line
+  predictions: `{line id: letter}` per reader (Tesseract, Gemini, …), with `?` where a
+  reader can't tell.
+- **A status per capital**, resolved from those files:
+  - `typed`: a person typed it (the `initial` letter in `data/verified_lines/`). It wins
+    over every reader.
+  - `agreed`: the readers agree.
+  - `flagged`: they differ, or one can't tell. The capital goes to a person.
+- **A flagged capital is its own task for a person:** its crop and the line, one key for
+  the letter. It doesn't hold up the body's review, and a typed answer goes in as the line's
+  `initial`, where the layout review already puts typed capitals.
+- **The capital's box** comes from the detector, or from the `initial` op where there is
+  one, and is recorded with the run's outputs, not in `data/verified_lines/` (which holds
+  what review checked).
+
 #### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →

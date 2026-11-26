@@ -53,6 +53,10 @@ for its uses.
   unlisted character, or a bad crop). The corpus manifest carries the status per line.
 - Draft text per line: `resolved` → `verified` → `single` → OCR prefill. Lines nobody has
   labeled stay as OCR and are marked so.
+- **A drop-cap line's capital has a status of its own**, apart from the line's: its
+  letter is read separately from the body text (`docs/phase_11_ocr_comparison.md`, "Drop-cap
+  lines", decided 2026-11-26). A capital the readers disagree on is a one-key task of its
+  own, not part of correcting the line. How its status is recorded is proposed there.
 - **Draft certainty** (before pass B): wrong lines left ≈ errors found × (1 − c) / c +
   correct lines broken. *c* is the team's catch rate on plants (about 63 plants over the
   book); lines broken come from the gold lines. Gold lines are drawn from engine
