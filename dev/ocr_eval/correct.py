@@ -50,6 +50,7 @@ import json
 import os
 import re
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -329,17 +330,10 @@ def parse_reasons(text: str, keys: list[str],
     return out, reasons
 
 
-def parse_lines(text: str, keys: list[str],
-                preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], list[str]]:
-    """``parse_reasons`` with just the keys that fell back."""
-    out, reasons = parse_reasons(text, keys, preds)
-    return out, list(reasons)
-
-
 def parse(text: str, keys: list[str], preds: dict[str, dict[str, str]]) -> tuple[dict[str, str], int]:
-    """``parse_lines`` with the number of fallbacks instead of their keys."""
-    out, bad = parse_lines(text, keys, preds)
-    return out, len(bad)
+    """``parse_reasons`` with the number of fallbacks instead of their reasons."""
+    out, reasons = parse_reasons(text, keys, preds)
+    return out, len(reasons)
 
 
 def misaligned(reasons: dict[str, str]) -> list[str]:
@@ -365,8 +359,8 @@ def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tri
         corrected, reasons = parse_reasons(text, keys, preds)
         attempts.append((len(reasons), len(misaligned(reasons)), n, corrected, reasons))
         if reasons:
-            counts = {r: list(reasons.values()).count(r) for r in dict.fromkeys(reasons.values())}
-            print(f"  {label}: {len(reasons)} fallback lines (try {n}): {counts}", flush=True)
+            print(f"  {label}: {len(reasons)} fallback lines (try {n}): "
+                  f"{dict(Counter(reasons.values()))}", flush=True)
         if not misaligned(reasons):
             break
     *_, corrected, reasons = min(attempts, key=lambda a: a[:3])
@@ -464,33 +458,37 @@ def main() -> None:
     # Corrections kept from earlier runs were made with these settings only if the old file
     # says all its lines were and its settings are these; otherwise claim nothing.
     uniform = not out or (bool(old.get("uniform_settings")) and old.get("settings") == settings)
-    missing = {p: missing_lines([l["key"] for l in lines.page_lines(p)], out) for p in pages}
+    missing = {p: missing_lines([line["key"] for line in lines.page_lines(p)], out) for p in pages}
     todo = [p for p in pages if missing[p]]
     print(f"{engine}: {len(todo)} pages to correct, {sum(len(missing[p]) for p in todo)} lines "
           f"({len(pages) - len(todo)} pages done)")
-    per_page = {}  # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once
+    # page -> (usage, fallbacks): a page handled twice (Ctrl-C) counts once. ``fallbacks``:
+    # {key: reason} of the lines that fell back after the page's attempts ("before") and
+    # after the re-ask ("after"; the same when nothing was re-asked).
+    per_page = {}
 
     def ask(page: int, page_lines: list[dict]):
         """One request for these lines (a page, or a re-ask window), formatted as a page."""
         images = (page_images(page, page_lines, preds, WITH_IMAGES[a.prompt])
                   if a.prompt in WITH_IMAGES else [])
-        prompt = page_prompt([l["key"] for l in page_lines], preds)
+        prompt = page_prompt([line["key"] for line in page_lines], preds)
         return with_retries(lambda: CALL[provider](model, prompt, system, images))
 
     def do_page(page: int):
         page_lines = lines.page_lines(page)
-        by_key = {l["key"]: l for l in page_lines}
+        by_key = {line["key"]: line for line in page_lines}
         keys = list(by_key)
         corrected, page_reasons, u = correct_page(lambda: ask(page, page_lines), keys, preds,
                                                   label=f"p{page}")
         reasons = page_reasons
-        if misaligned(page_reasons) and context:
+        bad = misaligned(page_reasons)
+        if bad and context:
             corrected, still, u2 = reask(lambda window: ask(page, [by_key[k] for k in window]),
-                                         keys, preds, corrected, misaligned(page_reasons),
-                                         context=context, label=f"p{page}")
+                                         keys, preds, corrected, bad, context=context,
+                                         label=f"p{page}")
             reasons = {k: r for k, r in page_reasons.items() if r not in MISALIGNED} | still
             u = {**u, "in": u["in"] + u2["in"], "out": u["out"] + u2["out"]}
-        return page, corrected, (page_reasons, reasons), u
+        return page, corrected, {"before": page_reasons, "after": reasons}, u
 
     start = time.time()
     finished = 0
@@ -499,15 +497,16 @@ def main() -> None:
         nonlocal finished
         finished += 1
         try:
-            page, corrected, (page_reasons, reasons), u = fut.result()
+            page, corrected, fallbacks, u = fut.result()
         except Exception as e:  # noqa: BLE001
             print(f"  page failed: {type(e).__name__}: {str(e)[:160]}", flush=True)
             return
         out.update(new_lines(corrected, out))
-        per_page[page] = (u, (page_reasons, reasons))
-        review = [k for k, r in reasons.items() if r == "too_far"]
-        print(f"  p{page}: {len(corrected)} lines, {len(reasons)} fallback"
-              + (f" ({len(page_reasons)} before the re-ask)" if page_reasons != reasons else "")
+        per_page[page] = (u, fallbacks)
+        before, after = fallbacks["before"], fallbacks["after"]
+        review = [k for k, r in after.items() if r == "too_far"]
+        print(f"  p{page}: {len(corrected)} lines, {len(after)} fallback"
+              + (f" ({len(before)} before the re-ask)" if before != after else "")
               + (f", needs review: {', '.join(review)}" if review else "")
               + f" ({finished}/{len(todo)}, {(time.time() - start) / finished:.0f} s/page)", flush=True)
         common._write(engine, settings, out, uniform=uniform)
@@ -526,11 +525,11 @@ def main() -> None:
 def _log_usage(engine: str, per_page: dict, interrupted: bool) -> None:
     # Which lines fell back is logged by key: a fallback is saved as the OCR reading, and the
     # predictions file can't tell it from a correction that kept that reading.
-    final = {k: r for _, (_, reasons) in per_page.values() for k, r in reasons.items()}
+    final = {k: r for _, f in per_page.values() for k, r in f["after"].items()}
     usage = {"in": sum(u["in"] for u, _ in per_page.values()),
              "out": sum(u["out"] for u, _ in per_page.values()),
              "fallback_lines": len(final),
-             "fallback_lines_before_reask": sum(len(pr) for _, (pr, _) in per_page.values()),
+             "fallback_lines_before_reask": sum(len(f["before"]) for _, f in per_page.values()),
              "fallback_keys": dict(sorted(final.items())),   # key -> reason
              "needs_review": sorted(k for k, r in final.items() if r == "too_far"),
              "pages": len(per_page),
