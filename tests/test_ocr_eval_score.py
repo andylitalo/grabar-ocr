@@ -164,3 +164,14 @@ def test_a_shifted_answer_is_asked_again():
     corrected, reasons, _ = correct_page(lambda: (next(answers), {"in": 1, "out": 1}), keys, preds)
     assert reasons == {} and corrected == texts
 
+
+
+def test_an_aligned_retry_with_more_fallbacks_does_not_win():
+    from dev.ocr_eval.correct import correct_page
+    keys, texts, preds = _page(10)
+    answers = iter([  # the last line missing, then every line rewritten too far
+        "\n".join(f"{n}\t{texts[k]}" for n, k in enumerate(keys[:-1], 1)),
+        "\n".join(f"{n}\t{HEADING_ANSWER}" for n in range(1, 11))])
+    corrected, reasons, _ = correct_page(lambda: (next(answers), {"in": 1, "out": 1}), keys, preds)
+    assert reasons == {"k10": "missing"}
+    assert all(corrected[k] == texts[k] for k in keys[:-1])

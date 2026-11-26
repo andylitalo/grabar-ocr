@@ -352,8 +352,9 @@ def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tri
     again while the answer is misaligned (``MISALIGNED`` lines), up to ``tries`` times; a
     ``too_far`` line alone isn't a reason to ask again, since it comes back the same (and
     asking again risks worse: p508, 2026-11-23, 1 fallback and then 54 when the retry
-    dropped a row). Keeps the attempt with the fewest misaligned lines, then the fewest
-    fallbacks, the earlier on a tie.
+    dropped a row). Keeps the attempt with the fewest fallbacks, then the fewest
+    misaligned ones, the earlier on a tie: every fallback keeps the OCR, whatever its
+    reason, so an attempt that is aligned but rewrites many lines too far isn't better.
     Returns (lines, {key: reason} of the lines that fell back, usage), the usage summed
     over every attempt (all are billed)."""
     attempts, total = [], {"in": 0, "out": 0}
@@ -362,7 +363,7 @@ def correct_page(call, keys: list[str], preds: dict[str, dict[str, str]], *, tri
         total["in"] += u["in"]
         total["out"] += u["out"]
         corrected, reasons = parse_reasons(text, keys, preds)
-        attempts.append((len(misaligned(reasons)), len(reasons), n, corrected, reasons))
+        attempts.append((len(reasons), len(misaligned(reasons)), n, corrected, reasons))
         if reasons:
             counts = {r: list(reasons.values()).count(r) for r in dict.fromkeys(reasons.values())}
             print(f"  {label}: {len(reasons)} fallback lines (try {n}): {counts}", flush=True)
@@ -439,8 +440,8 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--redo", action="store_true")
     ap.add_argument("--no-reask", action="store_true",
-                    help="don't ask again for lines that still fall back after the page's retry "
-                         "(the behaviour before 2026-11-25)")
+                    help="don't re-ask misaligned lines one at a time after the page's retry "
+                         "(the page retry itself still runs only for misaligned answers)")
     a = ap.parse_args()
     _load_env()
     provider, model = MODELS[a.model]
