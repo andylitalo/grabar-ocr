@@ -59,7 +59,9 @@ engines agreed on and got right that the corrector made wrong.
 
 ## Why the fallbacks didn't go away
 
-The 4 lines are display headings that both OCR engines read as nonsense, for example:
+The 4 lines open with a drop capital, and both OCR engines read them as nonsense, for
+example (the cause, the capital's height in the crop, was found later:
+`experiments/drop_caps/README.md`):
 
 | | `p508.011` |
 |---|---|
@@ -72,7 +74,7 @@ nearer one, where the drift check allows 6.9), so the check refuses it. That is 
 check doing its job: nothing can verify a rewrite that large, so these lines need a
 person, whatever the answer's format. v4 fell back on the same 4 lines (it kept Paddle's
 reading on each). The only misaligned answer in either run was v4's *retry* on p508
-(2026-11-23), triggered by this heading line. A schema would prevent that, but no first
+(2026-11-23), triggered by this line. A schema would prevent that, but no first
 answer was ever misaligned.
 
 ## Reproducing it
@@ -107,4 +109,6 @@ answer was ever misaligned.
 
 - `docs/phase_11_ocr_comparison.md`, "Fallback lines: a re-ask, and no decision step
   (2026-11-25)": the other two options weighed, including the decision step that wasn't
-  built, and the follow-up for the heading lines.
+  built, and the follow-up for these lines.
+- `experiments/drop_caps/README.md`: why the engines misread these lines, and that they
+  read correctly with the drop capital taken out of the crop.

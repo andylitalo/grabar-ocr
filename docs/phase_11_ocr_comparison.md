@@ -432,8 +432,8 @@ options were weighed (maintainer, 2026-11-24):
 
 **What the fallbacks really were.** v4 fell back on 4 lines that could be identified,
 `p483.003`, `p508.011`, `p510.054` and `p520.023` (it kept Paddle's reading on each; its
-fifth, on p550, wasn't recorded). They aren't misaligned answers: each is a display
-heading that both engines read as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
+fifth, on p550, wasn't recorded). They aren't misaligned answers: each opens with a drop
+capital, and both engines read it as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
 Gemini's answer is a plausible reconstruction (`Շաբաթ, տօն է սրբոյն Գրիգորի Լու-`), too
 far from both readings for the drift check to accept. So the check is doing its job,
 refusing a rewrite nothing can verify, and these lines need a person, not another request.
@@ -441,7 +441,10 @@ None is a typed line. In the v4-json run a re-ask of every fallback line was tri
 exactly these 4 lines and fixed none, and in v4's run the page retry fixed none either (on
 p508 it made things worse). Asking again only helps a misaligned answer, and no first
 answer in either run was misaligned; the one shift seen, p508's retry, was triggered by
-the heading line.
+that line. **Why the engines misread them** (found 2026-11-26,
+`experiments/drop_caps/README.md`): the crop holds the whole capital, so the text is
+shrunk to a fraction of its size; with the capital taken out, both engines read 3 of the 4 alike, and the
+fourth differs by one letter-numeral.
 
 **So the two kinds of fallback are now told apart** (`parse_reasons`). A line is
 *misaligned* when the answer misses it, echoes both readings, or holds the text of a line
@@ -457,10 +460,10 @@ Checked three ways, 2026-11-25:
   at 5 places a page by dropping a row (as on p508) or repeating one: every line after the
   break came out `shifted` (21,341 each way; the dropped case also leaves the last line
   `missing`), none `too_far`, none wrongly accepted, and every broken page was asked again.
-  Gemini's 4 heading answers came out `too_far`, their pages not asked again. A shift of
+  Gemini's 4 drop-cap answers came out `too_far`, their pages not asked again. A shift of
   more than 3 rows would be called too far; none has been seen.
 - **Live, on the 5 pages that had fallbacks** (about $0.40): 1 request a page, the 4
-  headings flagged, p550 without a fallback this time. The old logic made 9-10 page
+  drop-cap lines flagged, p550 without a fallback this time. The old logic made 9-10 page
   requests plus 4 re-asks for the same pages.
 
 #### Where this stands (pick-up note, 2026-11-13)
