@@ -400,6 +400,218 @@ every predictions file in the set, so since the 2026-10-31 re-score they're also
 `reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
 that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
+#### Planned: corrector comparison for a consensus first pass (maintainer, 2026-11-23)
+
+**Idea (maintainer):** run correctors with different error profiles, and have the first
+human pass look only at lines where three of them don't all agree. That gets a first
+draft out quickly; the other lines wait for the full review. It refines the "likely
+correct" bucket above: a line goes there only if all three correctors give the same reading.
+
+**Target (maintainer):** the lines the first pass skips (the three agree) must be
+**99.9% error-free**; the lines it reviews may be less accurate.
+
+**Models and arms.** Every text model runs on prompt v4, unchanged (`correct.py --model
+<name> --prompt v4`). Opus 5.5 also runs two image arms (below).
+
+| name in `correct.py` | API id | price (in / out per MTok) | status |
+|---|---|--:|---|
+| `gemini-3.1-pro` | `gemini-3.1-pro-preview` | $2 / $12 | chosen corrector; filled 2026-11-23 (below) |
+| `gemini-4` | `gemini-4-argon` | listed $2–3.60 / $10–18 | scored 2026-10-14 ("Gemini 4 check"); fill its missing lines |
+| `gemini-4-carbon` | `gemini-4-carbon` | listed $1–2 / $5–20 | new |
+| `gemini-4-hydrogen` | `gemini-4-hydrogen` | listed $0.75–1.50 / $3.75–7.50 | new |
+| `gemini-4-neon` | `gemini-4-neon` | not listed | new |
+| `opus-5.5` | `claude-opus-5-5` | $4 / $20 | new (smoke test only, p.615) |
+| `gpt-6.2` | `gpt-6.2-sol` | $2 / $10 | new |
+
+These are all the Gemini 4 ids on the key as of 2026-11-23. Claude Fable 5.2 was left out
+for its price ($8 / $40). For OpenAI, `gpt-6.2-astra` costs $8 / $40, more than Opus 5.5,
+so the cheaper `gpt-6.2-sol` was chosen. Each new id answered a short call with the run's
+settings (2026-11-23). The Gemini 4 prices are ranges because Google's pricing pages gave
+conflicting figures on 2026-11-23 (some list promotional prices until 2026-11-30); check
+the key's billing page before a run. 3.1 Pro's price matches its 2026-11-23 run (3.88M in
+/ 0.23M out, about $10).
+
+**Opus image arms** (maintainer, 2026-11-23). On Gemini a line image costs a lot (v4 is
+~35k input tokens a page), which is why v4 sends images only for disagreements. On Opus a
+line image is ~75 tokens, so imaging every line (~75 a page) adds only ~3–4k tokens a page.
+Most remaining errors sit on lines where both engines agree, and no corrector sees an image
+of them, so these arms test whether images fix that:
+
+- **`v4-all`**: v4 with the image of **every** line, not only the disagreements. Same
+  rules and output format. Its question: does seeing agreed lines fix the shared
+  agreed-line errors (tone codes, case, punctuation) without breaking correct lines?
+- **`image-only`**: the line images and the page layout, **no engine readings**. Opus
+  transcribes from the images alone, so its errors don't come from the Calfa engines. Its
+  question: is it accurate enough to be a useful independent vote in the trio? The drift
+  guard still catches row shifts, but a drifted line is recorded as **no reading** rather
+  than falling back to the OCR, which would make the vote depend on the engines again.
+
+Both are new prompt versions in `correct.py` (code PR first). `v4-all` is not v6: v6
+images only the agreed lines matching the patterns fixed in advance, and is scored against
+v4 on the human corrections ("v6 risk patterns" above); these arms are scored on the
+ceiling lines only.
+
+**Cost estimate** (one run over the 103 pages with typed lines): Opus 5.5 about $10–15
+per arm (`v4`, `v4-all`, `image-only` are about the same: output dominates), GPT 6.2 Sol
+about $5–8. The Opus figure comes from the p.615 smoke test (~$0.08 per page under v2)
+plus v4's line images. Counted with Anthropic's token counter, a full v4 page is about
+8–9k input tokens (instructions ~1.75k; Armenian ~0.9 tokens/character; a line image ~75
+tokens). GPT is scaled from its price, with no logged run behind it. Each Gemini 4 run
+costs about $8–10 (argon used 3.7M input tokens on 102 pages), which may reach the key's
+monthly cap.
+
+**Order:**
+1. ~~Re-run both Calfa engines and retype the set-aside ceiling lines.~~ Done 2026-11-23
+   (Phase 9 "After the gate", step 3; merged as #30): 79 lines retyped, both engines read
+   every verified line, 3.1 Pro v4 filled the 103 pages: 96.3% (93.3–98.8%) on 163 lines,
+   0 broken. Run the rest after Phase 9's step 4 (the strata: 40 of the 492 picks now
+   flip), so every row uses the same weights.
+2. The non-Gemini models first, as they are the most likely to make different errors:
+   Opus 5.5 (`v4`, `v4-all`, `image-only`) and GPT 6.2 Sol (`v4`). Then argon's fill.
+3. The other Gemini 4 models (carbon, hydrogen, neon) only if a Gemini slot is still in
+   question: they're the most likely to share argon's errors.
+4. `ceiling score`, then the measurements below.
+
+Every model then reads the same engine output on the same lines. One difference stays:
+3.1 Pro's and argon's v4 files were built over several runs and only fill missing lines,
+while each new model corrects every page in one run.
+
+**Choosing the three, by a rule fixed now** (maintainer). Picking the best of 35 triples
+on ~160 lines would fit the noise (each triple misses 0–4 lines), the same risk that made
+the v6 patterns fixed in advance. So the trio is **the best model from each maker**:
+Gemini (3.1 Pro or a Gemini 4), Anthropic (Opus 5.5: `v4`, `v4-all` or `image-only`) and
+OpenAI (GPT 6.2 Sol). Within a maker, "best" = most error-free lines + `՚ի` rule; ties go to
+fewer broken lines, then to the cheaper run.
+
+**Measure** (on the typed ceiling lines, weighted back to the book by the strata):
+- **coverage**: the share of lines the first pass skips;
+- **residual**: wrong lines among the skipped ones, with an upper bound (below);
+- **against the baseline**, the existing "likely correct" bucket (engines agree and 3.1
+  Pro left the line unchanged), and against the best pair. The trio costs about three
+  times one corrector, so it has to skip more lines, or the same lines with fewer errors.
+- **compare strings exactly**: consensus means the same string after only the scorer's
+  normalization (NFC, look-alike punctuation, spaces). Folding anything more would hide
+  real disagreements, such as a comma against a period.
+
+**How far the ceiling lines can confirm 99.9%.** With *n* skipped typed lines and no
+errors among them, the 95% upper bound on their error rate is about 3/*n* (the "rule of
+three"). The ~100 typed agreed lines can show ≤3%. Showing ≤0.1% takes about **3,000**
+skipped lines with no error: far more than the ceiling sample. Today the two Gemini
+correctors both miss 3 of the 102 agreed lines (p457 `դկ.` read `գկ.`, p494 `բձ.` read
+`բկ.`, p543 a comma read as a period), about 3%, thirty times the target. So the ceiling run is a screen, not proof: a trio that
+still misses any of these lines can't meet the target, and one that misses none is only
+bounded at ~3%. Proof has to come from auditing the human review of the book-wide output
+("Planned: certainty score and the consensus audit" below). Typing more ceiling lines
+narrows the bound slowly (300 more → ~0.75%).
+
+**Expected weak spot:** all text correctors read the same two engine outputs, so their
+errors overlap. Recounted on the 157 lines both cover (data as of 2026-11-13, `39762ef`):
+3.1 Pro has 8 wrong lines and argon 6. 5 of argon's 6 are also 3.1 Pro's; the sixth is
+the line it broke (p617). (The "Gemini 4 check" listed 6 shared errors; one was the p490
+page-number line, deleted in the layout review since.) Where both engines agree on a wrong
+reading and no corrector changes it, all three agree on the wrong line: 3.1 Pro misses 6
+such lines of the 102 agreed ones, argon 3, and the 3 above are missed by both. Only the
+overlap gets past a consensus, so a trio's misses are at most the fewest any member makes.
+The image arms are the ones most likely to break this overlap.
+
+#### Routing rules beyond consensus (planned, 2026-11-23)
+
+Any of these sends a line to the first pass **even when the three agree**:
+
+- **Risk patterns** (fixed in advance, "v6 risk patterns" above): a line whose agreed text
+  matches the tone-code or weekday-code regex. These are the look-alike letter-numerals
+  both engines misread the same way, so agreement there carries less evidence. They catch
+  3 of 3.1 Pro's 6 agreed-line errors (p494, p457, p638), but flag ~30% of agreed lines
+  (32 of 102), so measure their cost in coverage too.
+- **Out-of-vocabulary words**: a word not found in a Grabar word list built from text
+  **outside** this book (the Grabar 1895 and Nor Ejmiatsin Bibles). Not from this book's
+  own readings: a misreading all the models share would enter the list and hide itself.
+  Letter-numerals and codes are skipped. This catches non-word errors (`եդեալդ`), not
+  real-word ones (`զողի` for `զոգի` may be a real word), so it adds certainty in one
+  direction only: an unknown word is a reason to look, a known one is not proof.
+- **Engine confidence** (not stored yet): the prediction files hold only text. Paddle's
+  `TextRecognition.predict` returns a line `rec_score` next to `rec_text`; Tesseract can
+  give word and symbol confidences (`ResultIterator`, LSTM choices). Record them in the
+  book-wide run (it runs once), and on the ceiling lines first, to find a threshold
+  below which a line or character is routed to the first pass. Measure each rule the same
+  way as the trio: coverage and residual against the baseline.
+
+#### Planned: certainty score and the consensus audit (maintainer, 2026-11-25)
+
+The human side (page packages, audit lines, plants, pass B) is in
+`docs/phase_12_hosted_labeler.md`, "Progressive review". This section is the statistics
+it relies on.
+
+**Groups.** A *group* is a set of lines handled by one rule, not a random draw. To start
+there are two: **`consensus`** (the three correctors give the same string and no routing
+rule fires) and **`flagged`** (everything else). Random sampling is only how a group is
+audited. If the trio comparison doesn't beat the baseline, the same design runs with the
+existing "likely correct" bucket as the consensus group.
+
+**Certainty score, per line.** One number, the estimated chance the line's text is right.
+It orders the work (which pages are claimed first, which lines go to pass B first) and is
+published per line. It is not a status: statuses stay few, and a cell per voting pattern
+("Opus and GPT agree, Gemini differs") would have too few lines to measure.
+
+- **Inputs:** how many of the three give the chosen reading (3, 2 or 1) and which ones;
+  whether the engines agree; risk-pattern hits; out-of-vocabulary words; engine confidence;
+  how far apart the readings are (edit distance).
+- **Starting without answers:** Dawid & Skene (1979) estimate each voter's reliability from
+  the patterns of agreement alone. Here the voters are the three correctors and the two
+  engines, over the whole book. So a 2-of-3 line where the more reliable pair agrees scores
+  higher than one where the less reliable pair does.
+- **Refit as people work:** every reviewed line is a labelled example. Refit on the ceiling
+  lines plus the human corrections after every few hundred lines, and check calibration
+  (lines scored 0.9 should be right about 90% of the time).
+- **Never used for the audit:** the stage-3 audit draws consensus pages at random. Ordering
+  it by the score would make its bound meaningless.
+
+**The audit bound.** For a group, the audit is a random sample of its lines that people
+reviewed (Phase 12: hidden audit lines in each page package, then random pages). With *n*
+audited lines and *k* errors found, the bound is the one-sided 95% Clopper–Pearson upper
+limit on *k*/*n*, for *k* = 0 about 3/*n*:
+
+| clean audited lines | bound | milestone |
+|--:|--:|---|
+| 300 | ≤1.0% | **public milestone 1** |
+| 600 | ≤0.5% | **public milestone 2** |
+| 1,000 | ≤0.3% | |
+| 3,000 (≈3,330 at a 90% catch rate) | ≤0.1% | the target: as good as two blind human passes |
+
+Rules that keep it honest:
+
+1. **Random within each page, then all pages.** Each claimed page hides a fixed share of
+   its consensus lines, chosen at random (Phase 12). Pages are claimed by priority, so
+   until every page has been claimed the sample comes from the hardest pages first:
+   publish the interim figure as such. Once every page has been claimed, the audit is a
+   random sample stratified by page, valid for the whole book. Stage-3 audit pages are drawn
+   at random, and their lines are correlated within a page, so the bound treats pages as
+   clusters (a design effect from the between-page variance; no loss if errors don't
+   bunch by page).
+2. **Correct for what reviewers miss.** A found error count undercounts by the catch rate
+   *c*. Plants on audit lines, copying the error types consensus lines really have, and
+   the ceiling's agreed-but-wrong lines used as gold (Phase 12, "Audit") give *c* per error
+   type. Weight it by the real mix of types, and divide the bound by *c*'s lower limit.
+3. **Each milestone is tested once, at a line count fixed now** (300 for ≤1%, 600 for
+   ≤0.5%, ~3,330 for ≤0.1%). Each is a different claim made once, so each keeps its 95%.
+   Peeking after every line and stopping at the first good figure would overstate it. A
+   milestone that fails at its count is re-tested only with an always-valid confidence
+   sequence (Waudby-Smith & Ramdas, 2023), which allows checking as often as wanted.
+4. **A new routing rule needs fresh audit lines.** A rule found from the audit's errors can
+   pull lines out of the consensus group, but the rest of the group can't be re-scored on
+   the same sample: it would have lost exactly the errors that were found. Count only audit
+   lines drawn after the change.
+5. **Failing a milestone** means its bound is still above the milestone at that checkpoint:
+   the group can't yet be *shown* to be that good (its point estimate may still be good).
+   Its lines are published at the last milestone passed, and to reach the target its
+   unreviewed lines join the flagged queue. Every audited line was already reviewed, so
+   nothing is wasted.
+
+**Published estimate** (each release): expected wrong lines = unreviewed consensus lines ×
+the consensus bound + unreviewed flagged lines × the flagged error rate + reviewed lines ×
+the residual rate measured with plants and gold lines. It falls with every reviewed page,
+so stopping early still leaves a true figure.
+
 #### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
@@ -425,7 +637,10 @@ that row covers 157 lines (96.2%, 1 broken), against v4's 160.
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
   test). Gemini 4 (`gemini-4-argon`) was tried on v4 on 2026-10-14: 96.3% vs 95.0% but 1
   broken line (160 lines; 96.2% on 157 in the report since the 2026-11-13 restore);
-  staying with 3.1 Pro ("Gemini 4 check" above).
+  staying with 3.1 Pro ("Gemini 4 check" above). The other Gemini 4 models, Opus 5.5
+  (also with images of every line, and from images alone) and GPT 6.2 Sol are planned,
+  one model from each maker forming a consensus trio for the first pass ("Planned:
+  corrector comparison" above).
 
 ## Open OCR VLMs: feasibility (desk check, 2026-10-05)
 
@@ -476,6 +691,7 @@ display and drop-cap strata, which the ceiling sample under-covers.
 
 Fine-tuning on the Տօնացոյց and the book-wide re-OCR itself (next, after the layout review).
 
-The later Gemini 4 models (argon, hydrogen) are out of scope for this PR only: it has
-just the one `gemini-4-argon` run on v4 from 2026-10-14 ("Gemini 4 check"). They're still
-to be tested, in a later PR.
+The other Gemini 4 models (carbon, hydrogen, neon), Opus 5.5 (including its `v4-all` and
+`image-only` arms) and GPT 6.2 Sol have no scored runs yet; only `gemini-4-argon` was run
+on v4 (2026-10-14, "Gemini 4 check"). Their runs are planned in "Planned: corrector
+comparison for a consensus first pass".
