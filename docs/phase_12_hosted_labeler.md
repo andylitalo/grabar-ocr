@@ -16,14 +16,16 @@ on the corrections), Phase 10's test set (typed in this app's blank mode).
 Contributors log in at `ocr.andylitalo.com` and correct the OCR of the book, page by page:
 first the lines the machines aren't sure of, then a growing random sample of the rest
 ("Progressive review"). The goal (maintainer, 2026-11-26) is as few wrong lines as the
-reviewers' time allows. The review stops when the book's 95% upper bound is **≤0.1%** of
-lines wrong (about 14 of ~14,388 lines; ~410k characters, ~190 pages), or when
-contributors run out. The v4 output is about 95% of lines
+reviewers' time allows, counted as wrong lines in this book (~14,388 lines; ~410k
+characters, ~190 pages). A release is published at each **release bar** the book's 95%
+upper bound passes: **≤1%** (~143 lines), **≤0.5%** (~71) and **≤0.1%** (~14, the aim).
+The review stops at 0.1% or when contributors run out; 1% or 0.5% is an acceptable
+result. The v4 output is about 95% of lines
 (about 99.8% of characters) correct, so the work is finding the ~720 wrong lines without
 breaking the right ones.
 
 The first deliverable is the **machine draft**: every line, published at once with a
-measured accuracy estimate. Each later release (the milestones under "Progressive
+measured accuracy estimate. Each later release (the release bars under "Progressive
 review") publishes the text with its estimate, which improves as people review. A second,
 blind pass covers what is still short of the target.
 
@@ -61,7 +63,8 @@ blind pass covers what is still short of the target.
   it; see "Progressive review"), `single` (one pass), `verified` (two passes agree),
   `resolved` (a trusted labeler settled a disagreement or a flag), or `invalid` (an
   unlisted character, or a bad crop). The corpus manifest carries the status per line,
-  its certainty score, and for `consensus` lines the group's current milestone.
+  with `consensus` and `flagged` both shown as `machine` until the final release, when the
+  certainty score and group are added per line ("What is public, and what we trust").
 - Draft text per line: `resolved` → `verified` → `single` → the corrector reading
   (`consensus`, or for `flagged` the majority reading, else 3.1 Pro's).
 - **Published estimate** (each release): a point estimate of wrong lines and a 95% upper
@@ -95,9 +98,10 @@ Every line also has a **certainty score**, the estimated chance its text is righ
 
 **Stages:**
 
-0. **Machine draft, published at once.** Every line has its OCR text, its group and its
-   score, and the release says "machine text" with the per-group estimate from the
-   ceiling lines.
+0. **Machine draft, published at once.** The text only: every line's corrector reading,
+   marked "machine text", with the per-group point estimate from the ceiling lines in
+   aggregate. Each line's group and score stay private until the final release, since
+   they would show which lines in a package are audit lines.
 1. **Flagged lines, worst pages first.** Pass A claims pages in order of expected wrong
    lines (the sum of 1 − score over the page's flagged lines). The reviewer works through
    the page's **package** (below), not every line.
@@ -110,9 +114,10 @@ Every line also has a **certainty score**, the estimated chance its text is righ
    50%, 70%, 100%; Phase 11, "Looks and α") and covers every page, in random page
    order. The bound is recomputed at the end of each round, never in between.
 4. **Pass B** over the flagged lines, blind, most uncertain first. After pass A they have
-   one human and no machine agreement behind them. At Phase 12's own figures (~720 wrong
-   lines, a ~90% catch rate) one pass leaves ~72 wrong, ~0.5% of the book, where 0.1%
-   allows 14. Most of them are in the flagged lines, since that is what flagging aims for.
+   one human and no machine agreement behind them. Pass A reviews only the flagged lines,
+   so at a ~90% catch rate it leaves ~10% of their errors. If flagging works, most of the
+   ~720 wrong lines are flagged, so that is up to ~72 lines (~0.5% of the book) where
+   0.1% allows 14. The rest of the ~720 are consensus errors, left to the audit rounds.
    A pass-A text that matches two of the three correctors is more certain than one no
    model gave, so the second kind comes first.
 5. **The flagged audit**, after pass B. The flagged lines get their own random number
@@ -125,19 +130,23 @@ hidden audit lines and its plants, all looking alike: the same pill, the same pr
 style, and no model readings shown. Audit lines come only from the same page: a line
 from another page would give itself away by the jump.
 
-**Public milestones** for the consensus lines. These are labels on the group's 95% bound at
-the end of a round, not separate tests (Phase 11). The rounds needed are an illustration
-at a catch-rate lower limit of 0.82, with nothing found:
+**Release bars** are labels on the book's 95% bound at the end of a round, not separate
+tests (Phase 11, "Release bars and the budget split"). Each bar's count of wrong lines is
+split between the groups in proportion to their size, fixed before review starts, and a
+bar is passed when both groups are within their shares. The rounds needed are an
+illustration (6,500 consensus lines, ~7,900 flagged, a catch-rate lower limit of 0.82,
+nothing found):
 
-| milestone | consensus bound | about when |
-|---|---|---|
-| 0 | none (machine draft, point estimate from the ceiling lines) | at once |
-| 1 | ≤1% wrong | round 1 (10%) |
-| 2 | ≤0.5% wrong | round 2 (20%) |
+| bar | book | consensus share, round | flagged share, round |
+|---|--:|---|---|
+| machine draft | point estimate only | at once | at once |
+| ≤1% | 143 | 64, round 1 (10%) | 79, round 1 (10%) |
+| ≤0.5% | 71 | 32, round 2 (20%) | 39, round 2 (25%) |
+| ≤0.1% | 14 | 6, round 5 (70%) | 8, past the planned 50% (~60%) |
 
-**The stopping point** is the book's bound (both groups) at ≤0.1%. That needs roughly
-half the consensus lines audited and a nearly clean flagged audit, and it is reached
-only if the true rate is well below 0.1%. Short of it, the last bound published stands.
+No bar can be passed before the flagged audit's first round, which follows pass B; until
+then the consensus group's bound is published for that group only. The 0.1% bar is reached
+only if the true rate is well below 0.1%. Short of it, the last bar passed stands.
 
 **If contributors run short,** each stage still leaves a true published figure (the
 estimate below). The order of the stages is chosen so that each hour of review removes
@@ -346,10 +355,13 @@ collapsed.
 - **Gold lines:** 1–2 per page, typed blank by the maintainer and verified by Claude,
   drawn from engine disagreements first. The ceiling and test-set lines already typed
   are reused as gold. A page with no disagreement line gets a plant instead.
-  - **Consensus gold:** the ceiling's agreed-but-wrong lines (the lines both engines read
-    the same wrong way) go into audit packages on their pages, unmarked. They are real
-    consensus errors with a known answer, so they measure the catch rate on the errors the
-    audit is looking for, not only on plants.
+  - **Consensus gold:** ceiling lines in the `consensus` group whose reading is wrong
+    (the three correctors give the same wrong string and no routing rule fires) go into
+    audit packages on their pages, unmarked. They are real consensus errors with a known
+    answer, so they measure the catch rate on the errors the audit is looking for. Lines
+    both engines read wrong but a corrector fixed aren't consensus gold. Phase 11's
+    counts suggest only about 0–3 such lines, so plants carry most of the measurement and
+    consensus gold is a realism check, not a second *c*.
 - **Audit lines** ("Progressive review"): plants go on audit lines (each independently,
   with a fixed probability), following the consensus error mix. A planted line counts
   toward *c*, not toward the audit. *c* is the pooled catch rate on plants, and the bound
@@ -443,7 +455,7 @@ The repo is public on GitHub, so anything exported to it is world-readable.
 |---|---|
 | **Database** (live source of truth for all human work) | accounts, claims, every submission, line statuses, gold, plants, practice keys, alerts |
 | **Public git** (`grabar-ocr`) | the layout and regions; the corrections export (opaque contributor ids, no names); `certainty.json`. The prefill comes from the book-wide outputs (GCS + manifest, AGENTS.md "Data storage") |
-| **Private git** (`grabar-ocr-private`, a private GitHub repo cloned beside this one; maintainer, 2026-11-17) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, the audit draw, alert history, and the opaque id → credit name map. Scripts find it through a configured path |
+| **Private git** (`grabar-ocr-private`, a private GitHub repo cloned beside this one; maintainer, 2026-11-17) | answers: the ceiling and test-set transcriptions, gold lines, practice keys, the plant log, the audit seed and draw, alert history, and the opaque id → credit name map. Scripts find it through a configured path |
 | **GCS, private** | page images for the app |
 | **Firebase** | emails and passwords (Google's side) |
 
@@ -458,8 +470,22 @@ The repo is public on GitHub, so anything exported to it is world-readable.
     that the public export contains no private fields, and `.gitignore` excludes the
     private paths.
 - **The answers committed so far** (ceiling, test set) leave `main` at the region
-  migration (step 4b). Older commits still contain them; that risk is accepted, since
-  contributors are people the maintainer knows.
+  migration (step 4b), to `grabar-ocr-private`. Older commits still contain them; that
+  risk is accepted, since contributors are people the maintainer knows.
+
+#### What is public, and what we trust (maintainer, 2026-11-26)
+
+- **Public from stage 0:** the machine draft's text, and each release's aggregate figures
+  (per group: lines, audited lines, errors found, point estimate, bound; the bar passed).
+- **Private until the final release:** each line's group and certainty score; the manifest
+  shows unreviewed lines as `machine`. Either would mark the audit lines in a package.
+- **Private always** (`grabar-ocr-private`): the seed for the audit numbers *u* and the
+  draw itself, the plant log, gold and practice answers. With the seed and the public code,
+  anyone could recompute which lines are checks.
+- **Trusted, not enforced:** a plant changes the prefill on the server, so a planted line's
+  prefill differs from the public draft, and comparing the two would reveal every plant.
+  The same goes for gold answers in old commits. Contributors are invited, and are trusted
+  not to consult the published draft or the repo history while labeling.
 
 ### Seed and export
 
@@ -467,8 +493,9 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
 
 - **Seed:** the frozen layout's regions, the prefill, the risk signals per line (engines
   agree?, which reading v4 chose, did v4 change an agreed line, risk pattern hit?), the
-  three correctors' readings, each line's group and certainty score, the audit lines drawn
-  per page (a seeded random draw), gold lines and practice keys. It writes the seeding
+  three correctors' readings, each line's group and certainty score, each line's audit
+  number *u* (from a seed kept in `grabar-ocr-private`, never in this repo or the seeding
+  report), gold lines and practice keys. It writes the seeding
   report.
   - It refuses to run while answer files are still in the public tree (the guard that
     the move in step 4b has happened).
@@ -476,13 +503,15 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
   - Public: `data/transcriptions/corrections/page_<N>.json`, one record per region:
     `typed_as`, `geometry`, `prefill {engine, text}`, `final {text, status}`, and every
     submission `{contributor, pass, text, raw_text, status, at, seconds}` under an opaque
-    contributor id. Also `certainty.json` (the estimate with its 95% upper bound, counts per
-    status, each group's audited lines, errors found, bound and milestone) and each line's
-    certainty score.
+    contributor id. Unreviewed lines carry the status `machine`. Also `certainty.json` (the
+    estimate with its 95% upper bound, counts per status, each group's audited lines,
+    errors found and bound, and the release bar passed). Each line's group and certainty
+    score are added with the final release.
   - Credits: the release-notes list (names who opted in, anonymous ones as a count), not
     committed and not keyed by contributor id.
-  - Private, to `grabar-ocr-private`: plants (line, type, caught?), the audit draw (which
-    lines were audit lines; public, it would show contributors which lines are checks),
+  - Private, to `grabar-ocr-private`: plants (line, type, caught?), the audit seed and draw
+    (which lines were audit lines; public, it would show contributors which lines are
+    checks), each line's group and score until the final release,
     gold and practice answers, alert history, the opaque id → credit name map. Emails are
     never exported.
 
@@ -518,8 +547,9 @@ Both are scripts the maintainer runs from the Mac; no scheduled jobs.
   (after pilot data); the plant rate (set at seeding; the audit round shares are fixed in
   Phase 11).
 - **Progressive review added 2026-11-25** (consensus and flagged lines, page packages,
-  hidden audit lines, milestones, pass B by certainty). Depends on Phase 11's trio and
-  certainty score, still to be run.
+  hidden audit lines, pass B by certainty; release bars, the budget split and what is
+  public added 2026-11-26). Depends on Phase 11's trio and certainty score, still to be
+  run.
 
 ## Infrastructure smoke test (2026-11-20 → 21, passed)
 
@@ -683,12 +713,13 @@ Both should have display lines and a drop cap, and no answers already in the pub
 6. **R0:** the maintainer types the practice keys and gold lines, and labels real pages.
 7. **R1:** recalibration and the trusted queue.
 8. **R2:** invites.
-9. The machine draft is published with its point estimate (milestone 0).
+9. The machine draft (text only) is published with its point estimate.
 10. Pass A over the flagged lines with the round-1 audit lines, worst pages first → E and
     F → the first consensus bound once every page has been claimed.
 11. Pass B by certainty, then the flagged audit's rounds.
-12. Further consensus audit rounds, until the book's bound is ≤0.1% or contributors run
-    out (the order of 11 and 12 follows whichever lowers the bound most per hour).
+12. Further consensus audit rounds, until the 0.1% bar or contributors run out, with a
+    release at each bar passed (the order of 11 and 12 follows whichever group is furthest
+    from its share of the next bar).
 
 ## Risks to test in R0
 
@@ -712,9 +743,9 @@ Both should have display lines and a drop cap, and no answers already in the pub
   page has been claimed, so the audit covers the book; E and F have run and their queue is
   empty; the published estimate is recorded here with the consensus group's 95% bound;
   the export is committed and `corpus/` is built from it.
-- **Final:** the book's 95% upper bound (the consensus and flagged audits, Phase 11) is
-  ≤0.1% of lines wrong, or contributors have run out and the last bound is recorded
-  here.
+- **Final:** the 0.1% release bar is passed (each group's 95% bound within its share,
+  Phase 11), or contributors have run out and the last bar passed (1% or 0.5%) and bound
+  are recorded here. Each line's group and certainty score are published.
 
 ## Out of scope
 

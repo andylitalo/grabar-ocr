@@ -409,9 +409,9 @@ correct" bucket above: a line goes there only if all three correctors give the s
 
 **Target (maintainer):** the lines the first pass skips (the three agree) should be
 **99.9% error-free**; the lines it reviews may be less accurate. Since 2026-11-26 this is
-the stopping point, not a requirement: the review aims as low as reviewers' time allows
-and stops at a 95% upper bound of ≤0.1% ("Planned: certainty score and the consensus
-audit").
+the top release bar, not a requirement: the review aims as low as reviewers' time allows,
+publishes at bars of 1%, 0.5% and 0.1% of the book's lines (95% upper bound), and stops at
+0.1% ("Planned: certainty score and the consensus audit").
 
 **Models and arms.** Every text model runs on prompt v4, unchanged (`correct.py --model
 <name> --prompt v4`). Opus 5.5 also runs two image arms (below).
@@ -547,10 +547,12 @@ The human side (page packages, audit lines, plants, pass B, the flagged audit) i
 it relies on.
 
 **Goal (maintainer, 2026-11-26).** Get the book's share of wrong lines as low as the
-reviewers' time allows. The review stops when the book's **95% upper bound** is
-**≤0.1%** (about 14 of ~14,388 lines), or when contributors run out. Either way, the last
-published bound is a real 95% upper bound ("Looks and α" below). 0.1% may not be
-reached.
+reviewers' time allows. The goal is a **count of wrong lines in this book**, not a rate in
+some larger population, and a release is published at each **release bar** the book's
+**95% upper bound** passes: **≤1%** (~143 of ~14,388 lines), **≤0.5%** (~71) and
+**≤0.1%** (~14, the aim). The review stops at 0.1% or when contributors run out. Either
+way, the last published bound is a real 95% upper bound ("Looks and α" below). 0.1% may
+not be reached; 1% or 0.5% is an acceptable result.
 
 **Groups.** A *group* is a set of lines handled by one rule, not a random draw. To start
 there are two: **`consensus`** (the three correctors give the same string and no routing
@@ -560,8 +562,10 @@ doesn't beat the baseline, the same design runs with the existing "likely correc
 bucket as the consensus group.
 
 **Certainty score, per line.** One number, the estimated chance the line's text is right.
-It orders the work (which pages are claimed first, which lines go to pass B first) and is
-published per line. It is not a status: statuses stay few, and a cell per voting pattern
+It orders the work (which pages are claimed first, which lines go to pass B first). It is
+published per line only with the final release: until then it would point contributors to
+the audit lines, like each line's group (Phase 12, "What is public, and what we trust").
+It is not a status: statuses stay few, and a cell per voting pattern
 ("Opus and GPT agree, Gemini differs") would have too few lines to measure.
 
 - **Inputs:** how many of the three give the chosen reading (3, 2 or 1) and which ones;
@@ -725,13 +729,27 @@ is the bound on wrong lines left in the group, and its share of *N*:
 | 70% | ~4,550 | 6 (0.09%) | 8 (0.12%) | 11 (0.17%) |
 | 100% | ~6,500 | 3 (0.05%) | 4 (0.06%) | 5 (0.08%) |
 
-The book's 0.1% is ~14 lines for both groups together. So the consensus group alone needs
-about half its lines audited or more, and the flagged audit has to come back nearly clean.
-The bound reaches 0.1% only if the true rate is well below it.
+The book's 0.1% is ~14 lines for both groups together, so neither group can spend it
+alone. The bound reaches 0.1% only if the true rate is well below it.
 
-**Milestones** are labels on the consensus group's bound at a look, not separate tests:
-**1** when it is ≤1% of the group, **2** at ≤0.5%. At *c*<sub>L</sub> ≈ 0.82, milestone 1
-needs about the 10% round with nothing found, and milestone 2 the 20% round.
+**Release bars and the budget split, fixed now.** Each bar's count is split between the
+two groups in proportion to their size, and a bar is passed when each group's bound is
+within its share. The shares are computed once *N* is known from the book-wide run and
+frozen before review starts, like the round shares, so the split can't be chosen after
+seeing the bounds. Before the flagged audit's first round the flagged group has no bound,
+so no bar can be passed; the consensus group's own bound is published as a figure for that
+group only. An illustration, at the same *N* = 6,500 (45%) consensus and ~7,900 flagged
+lines, *c*<sub>L</sub> = 0.82 and nothing found:
+
+| bar | book | consensus share | reached at | flagged share | reached at |
+|---|--:|--:|---|--:|---|
+| ≤1% | 143 | 64 | round 1 (10%): 64 | 79 | round 1 (10%): 61 |
+| ≤0.5% | 71 | 32 | round 2 (20%): 30 | 39 | round 2 (25%): 23 |
+| ≤0.1% | 14 | 6 | round 5 (70%): 6 | 8 | past 50% (~60%) |
+
+So the 0.1% bar needs a flagged round beyond the planned 50%. Revisit the flagged round
+shares (and the α per look) when *N* is fixed, before review starts. The flagged figures
+use α = 0.005 per look: *D*<sub>U</sub> = ⌊ln 0.005 / ln(1 − *f*·0.82)⌋.
 
 Rules that keep it honest:
 
@@ -757,8 +775,9 @@ Rules that keep it honest:
 - **95% upper bound:** the consensus bound plus the flagged bound, each with its α share
   above. Lines broken by reviewers are inside both audits, as wrong lines in the current
   text.
-- It is published as "about X% of lines wrong (95% upper bound Y%)". Before the flagged
-  audit's first round, only the consensus group's bound is certified.
+- It is published as "about X% of lines wrong (95% upper bound Y%)", with the highest
+  release bar passed. Before the flagged audit's first round, only the consensus group's
+  bound is certified, and no bar is passed.
 
 #### Where this stands (pick-up note, 2026-11-13)
 
