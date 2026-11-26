@@ -407,8 +407,11 @@ human pass look only at lines where three of them don't all agree. That gets a f
 draft out quickly; the other lines wait for the full review. It refines the "likely
 correct" bucket above: a line goes there only if all three correctors give the same reading.
 
-**Target (maintainer):** the lines the first pass skips (the three agree) must be
-**99.9% error-free**; the lines it reviews may be less accurate.
+**Target (maintainer):** the lines the first pass skips (the three agree) should be
+**99.9% error-free**; the lines it reviews may be less accurate. Since 2026-11-26 this is
+the stopping point, not a requirement: the review aims as low as reviewers' time allows
+and stops at a 95% upper bound of ≤0.1% ("Planned: certainty score and the consensus
+audit").
 
 **Models and arms.** Every text model runs on prompt v4, unchanged (`correct.py --model
 <name> --prompt v4`). Opus 5.5 also runs two image arms (below).
@@ -498,11 +501,12 @@ errors among them, the 95% upper bound on their error rate is about 3/*n* (the "
 three"). The ~100 typed agreed lines can show ≤3%. Showing ≤0.1% takes about **3,000**
 skipped lines with no error: far more than the ceiling sample. Today the two Gemini
 correctors both miss 3 of the 102 agreed lines (p457 `դկ.` read `գկ.`, p494 `բձ.` read
-`բկ.`, p543 a comma read as a period), about 3%, thirty times the target. So the ceiling run is a screen, not proof: a trio that
-still misses any of these lines can't meet the target, and one that misses none is only
-bounded at ~3%. Proof has to come from auditing the human review of the book-wide output
-("Planned: certainty score and the consensus audit" below). Typing more ceiling lines
-narrows the bound slowly (300 more → ~0.75%).
+`բկ.`, p543 a comma read as a period), about 3%, thirty times the target. So the ceiling
+run is a screen, not proof: a trio that still misses any of these lines can't meet the
+target, and one that misses none is only bounded at ~3%. Proof has to come from auditing
+the human review of the book-wide output ("Planned: certainty score and the consensus
+audit" below). Typing more ceiling lines narrows the bound slowly (300 more agreed lines
+→ ~0.75%).
 
 **Expected weak spot:** all text correctors read the same two engine outputs, so their
 errors overlap. Recounted on the 157 lines both cover (data as of 2026-11-13, `39762ef`):
@@ -536,17 +540,24 @@ Any of these sends a line to the first pass **even when the three agree**:
   below which a line or character is routed to the first pass. Measure each rule the same
   way as the trio: coverage and residual against the baseline.
 
-#### Planned: certainty score and the consensus audit (maintainer, 2026-11-25)
+#### Planned: certainty score and the consensus audit (maintainer, 2026-11-25; bound reworked 2026-11-26)
 
-The human side (page packages, audit lines, plants, pass B) is in
+The human side (page packages, audit lines, plants, pass B, the flagged audit) is in
 `docs/phase_12_hosted_labeler.md`, "Progressive review". This section is the statistics
 it relies on.
+
+**Goal (maintainer, 2026-11-26).** Get the book's share of wrong lines as low as the
+reviewers' time allows. The review stops when the book's **95% upper bound** is
+**≤0.1%** (about 14 of ~14,388 lines), or when contributors run out. Either way, the last
+published bound is a real 95% upper bound ("Looks and α" below). 0.1% may not be
+reached.
 
 **Groups.** A *group* is a set of lines handled by one rule, not a random draw. To start
 there are two: **`consensus`** (the three correctors give the same string and no routing
 rule fires) and **`flagged`** (everything else). Random sampling is only how a group is
-audited. If the trio comparison doesn't beat the baseline, the same design runs with the
-existing "likely correct" bucket as the consensus group.
+audited. Groups are fixed at the book-wide run (rule 2 below). If the trio comparison
+doesn't beat the baseline, the same design runs with the existing "likely correct"
+bucket as the consensus group.
 
 **Certainty score, per line.** One number, the estimated chance the line's text is right.
 It orders the work (which pages are claimed first, which lines go to pass B first) and is
@@ -556,61 +567,198 @@ published per line. It is not a status: statuses stay few, and a cell per voting
 - **Inputs:** how many of the three give the chosen reading (3, 2 or 1) and which ones;
   whether the engines agree; risk-pattern hits; out-of-vocabulary words; engine confidence;
   how far apart the readings are (edit distance).
-- **Starting without answers:** Dawid & Skene (1979) estimate each voter's reliability from
-  the patterns of agreement alone. Here the voters are the three correctors and the two
-  engines, over the whole book. So a 2-of-3 line where the more reliable pair agrees scores
-  higher than one where the less reliable pair does.
+- **Starting from the ceiling lines.** The typed ceiling lines (163, weighted back to the
+  book by the strata) are answers from day one, so the score is fitted on them. For
+  the lines nobody has typed, a **one-coin** Dawid & Skene (1979) model is the prior. Each
+  voter (the three correctors and the two engines) has a single accuracy: the chance its
+  reading is the true one. The accuracies are estimated from the patterns of agreement over
+  the whole book. There is one coin per voter, not a confusion matrix, because a line's
+  readings are free strings, not a fixed set of classes. So a 2-of-3 line where the more
+  reliable pair agrees scores higher than one where the less reliable pair does. The true
+  text can be a reading no voter gave; how often that happens comes from the ceiling lines.
+- **Not for consensus lines.** Dawid–Skene picks the truth from among the readings. On a
+  consensus line every reading is the same, so it would score them all near 1, and a
+  consensus error is exactly the case where none of them is right. The voters aren't
+  independent either: the correctors read the engines' output. A consensus line's score is
+  the group's point estimate (1 − estimated wrong lines ÷ group size), from the ceiling
+  lines at first and from the audit later.
 - **Refit as people work:** every reviewed line is a labelled example. Refit on the ceiling
   lines plus the human corrections after every few hundred lines, and check calibration
   (lines scored 0.9 should be right about 90% of the time).
-- **Never used for the audit:** the stage-3 audit draws consensus pages at random. Ordering
-  it by the score would make its bound meaningless.
+- **Never used for the audit:** audit lines are drawn by a random number, not by the
+  score. Choosing them by the score would make the bound meaningless.
 
-**The audit bound.** For a group, the audit is a random sample of its lines that people
-reviewed (Phase 12: hidden audit lines in each page package, then random pages). With *n*
-audited lines and *k* errors found, the bound is the one-sided 95% Clopper–Pearson upper
-limit on *k*/*n*, for *k* = 0 about 3/*n*:
+**The model behind the bound.** Take a group of *N* lines, *D* of them wrong (*D* is
+unknown). At the book-wide run, before anyone reviews, every line gets a random number *u*
+between 0 and 1. A line is an **audit line** at share *f* when *u* < *f*, so each line is
+in the audit with probability *f*, on its own, whatever happens to the other lines
+(Poisson sampling). A change on an audit line counts as a **found error** only once a
+trusted labeler confirms it. A reviewer catches each wrong audit line with probability
+*c*. Then the number found, *K*, is Binomial(*D*, *f·c*). (Here *f* is the share after
+planted lines are taken out; see "Catch rate".)
 
-| clean audited lines | bound | milestone |
-|--:|--:|---|
-| 300 | ≤1.0% | **public milestone 1** |
-| 600 | ≤0.5% | **public milestone 2** |
-| 1,000 | ≤0.3% | |
-| 3,000 (≈3,330 at a 90% catch rate) | ≤0.1% | the target: as good as two blind human passes |
+Two things follow from drawing each line on its own:
+
+- **Clustering doesn't matter.** It makes no difference how errors bunch by page or by
+  type, so the bound needs no design effect.
+- **The population is finite.** The bound is on *D*, this book's own count of wrong lines,
+  not on a rate in some infinite population.
+
+**The bound.** Given *k* found and a lower limit *c*<sub>L</sub> for *c*:
+
+- *D*<sub>U</sub> = the largest *D* with P(Binomial(*D*, *f·c*<sub>L</sub>) ≤ *k*) >
+  α<sub>D</sub>. For *k* = 0 this is ⌊ln α<sub>D</sub> / ln(1 − *f·c*<sub>L</sub>)⌋.
+- **Wrong lines left in the group** ≤ *D*<sub>U</sub> − (every confirmed error found in
+  the group, including those found outside the audit).
+
+Why it holds:
+
+- P(*K* ≤ *k*) falls as *D* grows, and also as *c* grows. So if the true *c* ≥
+  *c*<sub>L</sub>, rejecting every *D* > *D*<sub>U</sub> is wrong with probability at most
+  α<sub>D</sub>. This is the usual test inversion: Clopper & Pearson (1934) in the binomial
+  case.
+- Errors found outside the audit are real and fixed, so subtracting them is always safe.
+  Review outside the audit can only lower the bound by what it actually finds.
+- The bound counts wrong lines in the current text, so the audit lines' own misses
+  (wrong, but not caught) are inside it.
+
+**Catch rate *c*.**
+
+- **Plants** are drawn in proportion to the consensus error types. The mix comes from
+  Phase 12's types 1–2: the ceiling's agreed-but-wrong lines, which were typed blind, and
+  the engines' mined confusions. Neither was found by a reviewer, so the mix doesn't lean
+  toward the errors reviewers catch. Because plants follow the mix, the pooled catch rate
+  estimates *c* for that mix directly, with no weighting step. *c*<sub>L</sub> is the
+  one-sided Clopper–Pearson lower limit of caught ÷ placed, at level α<sub>c</sub>. Types
+  that reviewers find later (Phase 12's types 3–4) are added to the list of types but not
+  to the weights.
+- **Where plants go:** on audit lines, each one independently with probability *q*, so
+  plants see the same reviewers and pages as the audit. A planted line counts toward *c*,
+  not toward the audit. A reviewer who finds the plant may stop looking for a real error
+  on that line ("satisfaction of search", Berbaum et al., in radiology). Real errors found
+  on planted lines are subtracted as fixes.
+- **The same *c* for flagged lines.** Plants on flagged lines follow the same mix. This
+  assumes flagged-line errors are no harder to catch than consensus-type ones, which
+  fooled every machine.
+- **Realism check, rule fixed now.** Gold lines with a wrong prefill are real errors with
+  known answers: the consensus gold, plus the disagreement gold (Phase 12, "Audit"). If
+  their catch rate is below the plants' *c*<sub>L</sub>, use the gold lines' own lower
+  limit as *c*<sub>L</sub>. With few gold lines this catches only gross unrealism, so plant
+  realism stays the main assumption.
+- **Plant count.** The plant count moves the bound more than anything else. At a true 90%
+  catch rate and the per-look α<sub>c</sub> below:
+
+  | plants over the book | 63 | 100 | 190 | 300 | 600 |
+  |---|--:|--:|--:|--:|--:|
+  | *c*<sub>L</sub> | 0.74 | 0.78 | 0.82 | 0.84 | 0.86 |
+
+  Phase 12's ~63 plants (1 per 3 pages) give 0.74, and one a page gives 0.82.
+
+**Assumptions** (the bound is only as good as these):
+
+1. Audit lines come from *u*, drawn before review. They are never chosen by score, by page
+   priority or by a reviewer.
+2. Plants are caught as often as real errors on the same lines (checked by the gold lines).
+3. **Catches are independent, given the reviewer.** Reviewers with different catch rates
+   are fine. The found count is then a sum of binomials with different rates, and at the
+   small counts near the bound it is less likely to be small than a single binomial at the
+   average rate (Hoeffding 1956), so the bound stays conservative. What breaks it is
+   catches that move together, such as an inattentive page that misses several errors at
+   once. Watch the plants for misses that bunch by page.
+4. Only confirmed finds count. An unconfirmed change on an audit line counts as not found.
+
+**The flagged lines need their own audit.** Pass A reviews every flagged line, so its
+finds *F*<sub>A</sub> give a bound in the same way (*f* = 1). Its slack grows with
+*F*<sub>A</sub>, though:
+
+- With ~585 found and *c*<sub>L</sub> = 0.85, the bound on what's left is ~133 lines,
+  where the point estimate is ~65. That is almost 1% of the book, and pass B can lower it
+  only by the errors it actually finds.
+- Pass A's changes also aren't confirmed one by one, so lines it broke or fixed wrongly
+  aren't counted.
+
+So the flagged group gets the same audit as the consensus group. It runs on the flagged
+lines' current text after pass B: its own *u*, packages with the current text as the
+prefill, plants, and confirmed finds (Phase 12, stage 5). Until that audit's first
+round, the flagged lines carry only a point estimate, and the book has no 95% bound, only
+the consensus group's.
+
+**Looks and α, fixed now.** The bound is computed only at planned **looks**, the end of
+each audit round. A round raises *f* to a share fixed in advance and covers every page, in
+random page order:
+
+- **Consensus group:** *f* = 10% (pass A's hidden audit lines), 20%, 35%, 50%, 70%, 100%.
+  Six looks.
+- **Flagged group,** after pass B: *f* = 10%, 25%, 50%. Three looks.
+
+A round counts only once every page's lines for it are reviewed. Until then, mid-round
+finds are subtracted but don't enter the formula, because the pages done so far aren't a
+random sample.
+
+α = 0.05 in all, split as follows:
+
+| bound | α | spread over | α per look |
+|---|--:|---|--:|
+| consensus *D* | 0.025 | 6 looks | 0.0042 |
+| flagged *D* | 0.015 | 3 looks | 0.005 |
+| *c* | 0.01 | all 9 looks | 0.0011 |
+
+By the union bound, every published bound holds at the same time with probability at least
+95%. So stopping at any look, for any reason (the bound reached 0.1%, or the people ran
+out), leaves the last bound valid. Peeking between looks would break that, which is why
+there are no other looks. An always-valid confidence sequence (Waudby-Smith & Ramdas,
+*JRSS B* 86(1), 2024) would allow a look at any time, at a similar cost; with planned
+looks it isn't needed. The round shares can still change after the book-wide run fixes
+*N*, but not once review starts.
+
+**What the rounds buy** (consensus group). This is an illustration with *N* = 6,500
+(~45% of 14,388: the 63% of ceiling lines both engines agree on, less the ~30% the risk
+patterns flag) and *c*<sub>L</sub> = 0.82. Recompute it from the book-wide run. Each cell
+is the bound on wrong lines left in the group, and its share of *N*:
+
+| round (*f*) | audited lines | 0 found | 1 found | 3 found |
+|--:|--:|--:|--:|--:|
+| 10% | ~650 | 64 (0.98%) | 88 (1.35%) | 129 (1.98%) |
+| 20% | ~1,300 | 30 (0.46%) | 42 (0.65%) | 61 (0.94%) |
+| 35% | ~2,275 | 16 (0.25%) | 22 (0.34%) | 31 (0.48%) |
+| 50% | ~3,250 | 10 (0.15%) | 14 (0.22%) | 19 (0.29%) |
+| 70% | ~4,550 | 6 (0.09%) | 8 (0.12%) | 11 (0.17%) |
+| 100% | ~6,500 | 3 (0.05%) | 4 (0.06%) | 5 (0.08%) |
+
+The book's 0.1% is ~14 lines for both groups together. So the consensus group alone needs
+about half its lines audited or more, and the flagged audit has to come back nearly clean.
+The bound reaches 0.1% only if the true rate is well below it.
+
+**Milestones** are labels on the consensus group's bound at a look, not separate tests:
+**1** when it is ≤1% of the group, **2** at ≤0.5%. At *c*<sub>L</sub> ≈ 0.82, milestone 1
+needs about the 10% round with nothing found, and milestone 2 the 20% round.
 
 Rules that keep it honest:
 
-1. **Random within each page, then all pages.** Each claimed page hides a fixed share of
-   its consensus lines, chosen at random (Phase 12). Pages are claimed by priority, so
-   until every page has been claimed the sample comes from the hardest pages first:
-   publish the interim figure as such. Once every page has been claimed, the audit is a
-   random sample stratified by page, valid for the whole book. Stage-3 audit pages are drawn
-   at random, and their lines are correlated within a page, so the bound treats pages as
-   clusters (a design effect from the between-page variance; no loss if errors don't
-   bunch by page).
-2. **Correct for what reviewers miss.** A found error count undercounts by the catch rate
-   *c*. Plants on audit lines, copying the error types consensus lines really have, and
-   the ceiling's agreed-but-wrong lines used as gold (Phase 12, "Audit") give *c* per error
-   type. Weight it by the real mix of types, and divide the bound by *c*'s lower limit.
-3. **Each milestone is tested once, at a line count fixed now** (300 for ≤1%, 600 for
-   ≤0.5%, ~3,330 for ≤0.1%). Each is a different claim made once, so each keeps its 95%.
-   Peeking after every line and stopping at the first good figure would overstate it. A
-   milestone that fails at its count is re-tested only with an always-valid confidence
-   sequence (Waudby-Smith & Ramdas, 2023), which allows checking as often as wanted.
-4. **A new routing rule needs fresh audit lines.** A rule found from the audit's errors can
-   pull lines out of the consensus group, but the rest of the group can't be re-scored on
-   the same sample: it would have lost exactly the errors that were found. Count only audit
-   lines drawn after the change.
-5. **Failing a milestone** means its bound is still above the milestone at that checkpoint:
-   the group can't yet be *shown* to be that good (its point estimate may still be good).
-   Its lines are published at the last milestone passed, and to reach the target its
-   unreviewed lines join the flagged queue. Every audited line was already reviewed, so
-   nothing is wasted.
+1. **No figures from pass A's interim audit.** Pages are claimed worst first, so the hidden
+   audit lines on the pages claimed so far aren't a random sample of the group until every
+   page has been claimed (the end of round 1). Before then, publish the point estimate
+   only.
+2. **The groups are fixed.** A new routing rule, a report, or a slow group can send
+   consensus lines for review, but they stay in the consensus group for the bound, and the
+   errors found on them are subtracted as fixes. The group is never re-scored without
+   them, so a rule found from the audit's own errors can't make the rest look better than
+   it is.
+3. **More review of consensus lines goes through audit rounds** (by *u*), not by
+   priority. That way each reviewed line tightens the bound, instead of only subtracting
+   what it finds.
 
-**Published estimate** (each release): expected wrong lines = unreviewed consensus lines ×
-the consensus bound + unreviewed flagged lines × the flagged error rate + reviewed lines ×
-the residual rate measured with plants and gold lines. It falls with every reviewed page,
-so stopping early still leaves a true figure.
+**Published estimate** (each release):
+
+- **Point estimate of wrong lines left:**
+  - consensus group: *k* / (*f·ĉ*) − every error found in it (not below 0);
+  - flagged group before its audit: Phase 12's errors found × (1 − *ĉ*)/*ĉ* + lines broken;
+  - flagged group after its audit: the same formula as the consensus group.
+- **95% upper bound:** the consensus bound plus the flagged bound, each with its α share
+  above. Lines broken by reviewers are inside both audits, as wrong lines in the current
+  text.
+- It is published as "about X% of lines wrong (95% upper bound Y%)". Before the flagged
+  audit's first round, only the consensus group's bound is certified.
 
 #### Where this stands (pick-up note, 2026-11-13)
 
