@@ -59,8 +59,8 @@ def test_a_worse_retry_does_not_replace_the_first_answer():
                     f"1\t{texts['k2']}\n2\t{texts['k3']}"])   # shifted: lines 1-3 fall back
     usage = [{"in": 10, "out": 1, "served_by": "m"}, {"in": 20, "out": 2, "served_by": "m"}]
     calls = iter(zip(answers, usage))
-    corrected, bad, u = correct_page(lambda: next(calls), keys, preds)
-    assert bad == ["k3"] and corrected == texts
+    corrected, reasons, u = correct_page(lambda: next(calls), keys, preds)
+    assert reasons == {"k3": "missing"} and corrected == texts
     assert (u["in"], u["out"]) == (30, 3)  # both attempts are billed
 
 
@@ -103,7 +103,7 @@ def test_reask_takes_only_the_fallback_line_from_its_window():
     out, still, u = reask(ask, keys, preds, corrected, ["k5"], context=3)
     assert asked == [["k2", "k3", "k4", "k5", "k6", "k7", "k8"]]
     assert out["k5"] == texts["k5"] and out["k4"] == texts["k4"]   # neighbour keeps the page's
-    assert still == [] and (u["in"], u["out"]) == (5, 1)
+    assert still == {} and (u["in"], u["out"]) == (5, 1)
 
 
 def test_a_line_that_falls_back_again_keeps_the_ocr():
@@ -113,4 +113,54 @@ def test_a_line_that_falls_back_again_keeps_the_ocr():
     answer = "\n".join(f"{n}\t{texts[k]}" for n, k in enumerate(["k2", "k3", "k4", "k6", "k7", "k8"], 1))
     out, still, _ = reask(lambda w: (answer, {"in": 1, "out": 1}), keys, preds,
                           dict(texts), ["k5"], context=3)
-    assert still == ["k5"] and out["k5"] == preds[ENGINES[1]]["k5"]
+    assert still == {"k5": "shifted"} and out["k5"] == preds[ENGINES[1]]["k5"]
+
+
+# --- why a line fell back: misaligned (ask again) or too far (a person reviews) -----------
+
+# p508.011 (2026-11-25): a heading both engines garbled, and Gemini's reconstruction.
+HEADING = {"tess-calfa-n": "Շաք.-է տատհուի 1ա-", "paddle-calfa-tiny": "աթ, տն էսրոյն րիդորիԼու"}
+HEADING_ANSWER = "Շաբաթ, տօն է սրբոյն Գրիգորի Լու-"
+
+
+def test_each_kind_of_fallback_gets_its_reason():
+    from dev.ocr_eval.correct import ENGINES, parse_reasons
+    keys, texts, preds = _page(6)
+    for e in ENGINES:
+        preds[e]["k6"] = HEADING[e]
+    rows = {1: texts["k1"],                                    # right
+            2: "A: " + texts["k2"] + " ‖ B: " + texts["k2"],   # echoed
+            # 3: missing
+            4: texts["k5"],                                    # k5's text in k4's slot: shifted
+            5: texts["k5"],                                    # right
+            6: HEADING_ANSWER}                                 # too far, and no neighbour's
+    answer = "\n".join(f"{n}\t{t}" for n, t in rows.items())
+    out, reasons = parse_reasons(answer, keys, preds)
+    assert reasons == {"k2": "echoed", "k3": "missing", "k4": "shifted", "k6": "too_far"}
+    assert out["k1"] == texts["k1"] and out["k6"] == preds[ENGINES[1]]["k6"]
+
+
+def test_a_too_far_line_alone_is_not_asked_again():
+    from dev.ocr_eval.correct import ENGINES, correct_page
+    keys, texts, preds = _page(3)
+    for e in ENGINES:
+        preds[e]["k3"] = HEADING[e]
+    calls = []
+
+    def call():
+        calls.append(1)
+        return f"1\t{texts['k1']}\n2\t{texts['k2']}\n3\t{HEADING_ANSWER}", {"in": 1, "out": 1}
+
+    _, reasons, _ = correct_page(call, keys, preds)
+    assert reasons == {"k3": "too_far"} and len(calls) == 1
+
+
+def test_a_shifted_answer_is_asked_again():
+    from dev.ocr_eval.correct import correct_page
+    keys, texts, preds = _page(4)
+    answers = iter([  # a row dropped and the rest renumbered, then a good answer
+        "\n".join(f"{n}\t{texts[k]}" for n, k in enumerate(["k1", "k3", "k4"], 1)),
+        "\n".join(f"{n}\t{texts[k]}" for n, k in enumerate(keys, 1))])
+    corrected, reasons, _ = correct_page(lambda: (next(answers), {"in": 1, "out": 1}), keys, preds)
+    assert reasons == {} and corrected == texts
+
