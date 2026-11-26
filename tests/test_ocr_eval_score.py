@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 from dev.ocr_eval import score
 
 
@@ -66,7 +64,7 @@ def test_a_worse_retry_does_not_replace_the_first_answer():
     assert (u["in"], u["out"]) == (30, 3)  # both attempts are billed
 
 
-# --- re-asking fallback lines, and JSON answers (2026-11-25) ---------------------------
+# --- re-asking the lines that fall back (2026-11-25) -----------------------------------
 
 WORDS = ["Բշ. Ճաշու սաղ.", "Եւ առաւօտու օրհնութիւն", "Տէր թագաւորեաց", "Շարական գկ.",
          "Առակ. Թ. Իմաստութիւն", "Սաղմոս Դաւթի", "Աւետարան ըստ Մատթէոսի", "Յերրորդում աւուր",
@@ -116,25 +114,3 @@ def test_a_line_that_falls_back_again_keeps_the_ocr():
     out, still, _ = reask(lambda w: (answer, {"in": 1, "out": 1}), keys, preds,
                           dict(texts), ["k5"], context=3)
     assert still == ["k5"] and out["k5"] == preds[ENGINES[1]]["k5"]
-
-
-def test_json_answers_are_checked_like_rows():
-    from dev.ocr_eval.correct import parse_lines
-    keys, texts, preds = _page(3)
-    answer = json.dumps({"1": "B: " + texts["k1"], "2": texts["k3"]}, ensure_ascii=False)
-    out, bad = parse_lines(answer, keys, preds, fmt="json")
-    # 1: label stripped; 2: another line's text (drifted); 3: missing
-    assert out["k1"] == texts["k1"] and bad == ["k2", "k3"]
-
-
-def test_an_answer_that_is_not_a_json_object_falls_back_everywhere():
-    from dev.ocr_eval.correct import parse_lines
-    keys, texts, preds = _page(3)
-    for answer in ['{"1": "' + texts["k1"], "[1, 2, 3]", f"1\t{texts['k1']}"]:
-        assert parse_lines(answer, keys, preds, fmt="json")[1] == keys
-
-
-def test_the_json_prompt_differs_from_v4_only_in_its_output_format():
-    from dev.ocr_eval.correct import FORMAT_JSON, FORMAT_TSV, PROMPTS
-    assert PROMPTS["v4-json"] == PROMPTS["v4"].replace(FORMAT_TSV, FORMAT_JSON)
-    assert PROMPTS["v4-json"] != PROMPTS["v4"]

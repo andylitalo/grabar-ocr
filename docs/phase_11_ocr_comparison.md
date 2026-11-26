@@ -400,7 +400,7 @@ every predictions file in the set, so since the 2026-10-31 re-score they're also
 `reports/phase11_ceiling.md`. After their pages 463–492 were restored (2026-11-13, above)
 that row covers 157 lines (96.2%, 1 broken), against v4's 160.
 
-#### Fallback lines: a re-ask, JSON answers, and no decision step (2026-11-25)
+#### Fallback lines: a re-ask, and no decision step (2026-11-25)
 
 A line **falls back** when v4's answer can't be trusted for it: the answer misses the line,
 echoes both readings, or holds text too far from both OCR readings (the drift check, meant
@@ -409,13 +409,14 @@ Paddle's reading. In the re-run of 2026-11-23, 5 lines fell back on 103 pages, a
 on p508 dropped a row and shifted 54 lines (fixed: the better attempt is kept). Three
 options were weighed (maintainer, 2026-11-24):
 
-1. **v4-json:** the same prompt and images, answered as a JSON object under a Gemini
-   response schema that requires every line number, in order (`--prompt v4-json`; only
-   the format sentence differs, which a test pins). Built and run on the same 103 pages.
+1. **JSON answers under a response schema (v4-json):** tried, not adopted. It scored no
+   better than v4. The numbers, the reasons and how to reproduce them are in
+   `experiments/v4_json/README.md`.
 2. **Re-ask:** a line that still falls back after the page's retry is asked again on its
    own, with 3 lines either side for context; only its own answer is taken, under the same
    checks (`reask`, on by default; `--no-reask`). Built. Which lines fell back, before and
-   after the re-ask, is now logged in `reports/phase11_correction_usage.json` (git-ignored: local only).
+   after the re-ask, is now logged in `reports/phase11_correction_usage.json` (git-ignored:
+   local only).
 3. **A decision step** (a cheap model picks A, B or neither; Gemini corrects only
    "neither"): **not built.**
    - **Minimal benefit; it targets the wrong problem.** On the 163 typed lines, v4 picks
@@ -429,28 +430,17 @@ options were weighed (maintainer, 2026-11-24):
      right using the whole page's text; corrected line by line, they lose that context. It
      would also be a new pipeline, reopening the v4 decision.
 
-**Result (v4-json on the 103 pages; 3.82M input / 0.26M output tokens, about v4's cost):**
-
-| | lines | error-free | broke |
-|---|--:|--:|--:|
-| v4 + `՚ի` rule | 163 | **96.3%** (93.3–98.8%) | 0 |
-| v4-json + `՚ի` rule | 163 | **95.7%** (92.0–98.8%) | 1 |
-
-The two differ on 7 typed lines, 4 in v4's favour and 3 in v4-json's, and on 219 of the
-8,556 lines both corrected (2.6%, likely Gemini's run-to-run variation; v4 hasn't been run
-twice to measure it). v4-json's broken line is `p491.046`, Աստուած → Աոտուած.
-**v4 stays the chosen corrector**; v4-json is kept as an option.
-
-**What the fallbacks really were.** v4-json had 4 fallback lines, on the same pages as v4's
-(pp.483, 508, 510, 520), and the re-ask fixed none of them. They aren't misaligned answers:
-each is a display heading that both engines read as nonsense (Paddle: `աթ, տն էսրոյն
-րիդորիԼու`), and Gemini's answer is a plausible reconstruction (`Շաբաթ, տօն է սրբոյն
-Գրիգորի Լու-`), too far from both readings for the drift check to accept. So the check is
-doing its job, refusing a rewrite nothing can verify, and these lines need a person, not
-another request. None is a typed line. v4 fell back on the same 4 lines (it kept Paddle's
-reading on each); its fifth, on p550, wasn't recorded. In the v4-json run no line was
-misaligned at all, and in v4's the only shift was p508's retry, which the heading line had
-triggered. JSON answers rule that shift out, but it hasn't happened on a first answer.
+**What the fallbacks really were.** v4 fell back on 4 lines that could be identified,
+`p483.003`, `p508.011`, `p510.054` and `p520.023` (it kept Paddle's reading on each; its
+fifth, on p550, wasn't recorded). They aren't misaligned answers: each is a display
+heading that both engines read as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
+Gemini's answer is a plausible reconstruction (`Շաբաթ, տօն է սրբոյն Գրիգորի Լու-`), too
+far from both readings for the drift check to accept. So the check is doing its job,
+refusing a rewrite nothing can verify, and these lines need a person, not another request.
+None is a typed line. In the v4-json run the re-ask was tried on exactly these 4 lines and
+fixed none: so far it has improved nothing and cost 4 small requests. It only helps a
+misaligned answer, and no first answer in either run was misaligned; the one shift seen,
+p508's retry, was triggered by the heading line.
 
 **Follow-up:** tell the two kinds of fallback apart. Retry the page, or re-ask, only for a
 misaligned answer (a missing line, both readings echoed, or another line's text); log a
