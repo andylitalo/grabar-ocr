@@ -483,11 +483,11 @@ their disagreement on these lines falls from 13.9% of characters to 2.9% (other 
 - **Before the book-wide run:** check that every drop cap is found. The detector misses
   most Հ capitals (their slanting stroke is short) and takes in 3 headings.
 
-How the capital's readings and status are recorded, and how the corrector sees a line
-whose capital is read apart, is settled when this is built. A proposal is in "Drop-cap
-capitals: readings and status (proposed)" below.
+How the capital's readings and status are recorded is decided in the next section. How
+the corrector sees a line whose capital is read apart (with or without the capital in front
+of the body) is settled when this is built.
 
-#### Drop-cap capitals: readings and status (proposed)
+#### Drop-cap capitals: readings and status (decided 2026-11-26)
 
 - **The capital is its own field on the line**, not part of the body's text: a line's
   text is the capital's letter followed by the body. A wrong capital is then a one-letter

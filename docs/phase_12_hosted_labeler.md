@@ -56,7 +56,8 @@ for its uses.
 - **A drop-cap line's capital has a status of its own**, apart from the line's: its
   letter is read separately from the body text (`docs/phase_11_ocr_comparison.md`, "Drop-cap
   lines", decided 2026-11-26). A capital the readers disagree on is a one-key task of its
-  own, not part of correcting the line. How its status is recorded is proposed there.
+  own, not part of correcting the line (see "The labeling screen"). How its status is
+  recorded (`typed`, `agreed`, `flagged`) is decided there.
 - **Draft certainty** (before pass B): wrong lines left ≈ errors found × (1 − c) / c +
   correct lines broken. *c* is the team's catch rate on plants (about 63 plants over the
   book); lines broken come from the gold lines. Gold lines are drawn from engine
@@ -189,6 +190,12 @@ for its uses.
   waits until every line is confirmed. If the server rejects a save (the claim was lost,
   say), the warning shows.
 - Desktop only.
+- **Flagged capitals** (decided 2026-11-26): a drop-cap capital the readers disagree on
+  (status `flagged`, `docs/phase_11_ocr_comparison.md`, "Drop-cap capitals") is a task of
+  its own, apart from correcting lines. The screen shows the capital's crop and its line,
+  and one key types the letter; Enter submits and advances to the next flagged capital.
+  The answer is saved as the line's `initial` (status `typed`). It doesn't hold up the
+  line's own review. **To do before the app is deployed** (order of work, step 5).
 
 ### Text rules
 
@@ -540,7 +547,8 @@ Both should have display lines and a drop cap, and no answers already in the pub
    (`book_structure.md`), which the page search uses.
 3. The moves: `dev/line_review` → `layout_app/`; `labeling_ui/` retired.
 4. The book-wide OCR run (Phase 11).
-5. Build `labeler_app/`, then the seed, with the layout frozen.
+5. Build `labeler_app/`, then the seed, with the layout frozen. The build includes the
+   flagged-capital task ("The labeling screen"), which must be in before R0.
 6. **R0:** the maintainer types the practice keys and gold lines, and labels real pages.
 7. **R1:** recalibration and the trusted queue.
 8. **R2:** invites.
