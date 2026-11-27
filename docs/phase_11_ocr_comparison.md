@@ -472,15 +472,14 @@ their disagreement on these lines falls from 13.9% of characters to 2.9% (other 
 
 - **The line is read from the `scaled` crop**: the capital shrunk to the body's capital
   height and set in front of the body. Both engines and the corrector read the whole line,
-  capital included. Re-scored from that experiment's outputs (2026-11-26), `scaled`
-  reads the body as well as `body` does once its capital is set aside. The experiment's
-  own tables charge `scaled` for its capital and `body` for nothing, which made `body`
-  look better:
+  capital included. For the body text, `scaled` and `body` are about equal once both are
+  scored like for like, with the capital left out of every reading (that experiment's
+  tables):
 
-  | measure (372 lines; 233 against v4) | `body` | `scaled` without its first character |
+  | measure (372 lines; 233 against v4) | `body` | `scaled`, like for like |
   |---|--:|--:|
-  | engines disagree, characters | 2.87% | 3.07% |
-  | against v4, Tesseract / Paddle | 3.85% / 2.45% | 3.79% / 2.39% |
+  | engines disagree, characters | 2.9% | 3.1% |
+  | against v4, Tesseract / Paddle | 3.9% / 2.5% | 3.8% / 2.4% |
 
   So the line keeps its capital, and the corrector doesn't have to guess one the reading
   lacks (it could write `Շաբաթ` from `աբաթ` alone). `scaled` reads all 4 lines v4 fell back
@@ -489,7 +488,9 @@ their disagreement on these lines falls from 13.9% of characters to 2.9% (other 
   is a stray letter now and then: a decorated capital's leftover piece (`Ենրկրորդ`), or a
   capital read as two characters (Paddle reads p490.077's Չ as `2 `). The Tesseract
   reading of `scaled` is 2 or more characters longer than of `body` on 39 of the 372 lines.
-  The capital's own check below catches these.
+  The capital's own check below catches these. Both crops share one more risk: where the
+  capital touches the next letter, the cut can take that letter with it (`p458.063`,
+  `րրորդ` for `րկրորդ`), which the corrector has to restore.
 - **The capital is also read on its own.** Tesseract reads it first, from the line's crop
   as it is today: it got 103 of the 113 typed capitals that way, against 80 from `scaled`
   (Paddle: 68 and 86). Then Gemini and/or other models confirm it. Paddle's capital in its
@@ -552,12 +553,32 @@ How the capital's readings and status are recorded is decided in the next sectio
   Phase 9 "After the gate"; since 2026-11-13 verify no longer moves them). Lines whose
   shape changed are set aside under `stale/` and come back untyped, to retype.
 - **Next (maintainer's order):** finish the layout review for the whole book → `migrate
-  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
-  engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
-  the bucket signals → human review of the output → v6 vs v4. The steps up to the
-  book-wide run, in order: Phase 9 "After the gate" (`repair`, retype, re-run, strata);
+  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → the
+  drop-cap work below → OCR (both engines, `--set` for the verified lines, drop-cap lines
+  from the `scaled` crop) + v4 + rule over the book (~$20 Gemini), logging the bucket
+  signals, and the capital check → human review of the output → v6 vs v4. The steps up
+  to the book-wide run, in order: Phase 9 "After the gate" (`repair`, retype, re-run, strata);
   `docs/backlog/region_keyed_data.md` "Migration" (with its deferred fixes); then the same
   doc's "Book-wide outputs: GCS and a manifest", before the first book-wide call.
+- **Drop-cap work before the book-wide run** ("Drop-cap lines" and "Drop-cap capitals"
+  above), on the final line boxes, so after the migration:
+  1. **Find the missed drop caps.** Re-run the detector on the whole book and look for the
+     ones it misses (Հ under 3 bands; lines whose crop is unusually tall for their text),
+     tuning it until a pass turns up no new ones. A drop cap still missed is read from the
+     whole crop, as today.
+  2. **Build the `scaled` crop** into the OCR step for every drop-cap line found
+     (`experiments/drop_caps/run.py` has the cut), and the capital's box with the run's
+     outputs.
+  3. **Measure Gemini's accuracy on capitals**: Gemini 3.1 Pro on the capital crops of the
+     113 typed capitals, scored like Tesseract (103 of 113) and Paddle on `scaled` (86).
+     Little cost, one small image per capital. Also score it as a confirmer: on the
+     capitals Tesseract and Paddle agree on (83, all real drop caps right) and on the 30
+     they don't. This decides whether Gemini confirms every capital, only flagged ones,
+     or none. Record the result here before the run.
+  4. **Build the capital check**: the per-reader predictions files, the statuses
+     (`typed`, `agreed`, `flagged`), and the capital put back into the line's text at its
+     position. Run it with the book-wide OCR. The flagged-capital task in the labeler is
+     a step of Phase 12's order of work, before the app is deployed.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
