@@ -36,9 +36,10 @@ readings, or holds a nearby line's text: a row was dropped and the rest renumber
 asking about again: the page is asked once more, keeping the better attempt, and lines
 still misaligned are then re-asked on their own, each with ``REASK_CONTEXT`` neighbours
 either side (``reask``; ``--no-reask`` turns this off). A too-far line is in practice a
-heading both engines garbled; it isn't asked again but flagged for review. Which lines fell
-back, and why, is logged in ``reports/phase11_correction_usage.json`` (git-ignored, so
-local only), the too-far ones under ``needs_review``.
+heading opening with a drop capital, which both engines misread because the capital makes
+the crop tall (``experiments/drop_caps/``); it isn't asked again but flagged for review. Which lines fell back, and why, is logged in
+``reports/phase11_correction_usage.json`` (git-ignored, so local only), the too-far ones
+under ``needs_review``.
 """
 
 from __future__ import annotations
@@ -282,9 +283,10 @@ def drifted(text: str, k: str, preds: dict[str, dict[str, str]]) -> bool:
 
 # Why a line fell back. The first three mean the answer is misaligned with the page's lines,
 # which asking again can fix; ``too_far`` is an answer for this line that is too far from
-# both OCR readings to trust (in practice a heading both engines garbled, which Gemini
-# rewrites: pp.483, 508, 510, 520, 2026-11-25). Asking again doesn't fix that; a person
-# reviews it.
+# both OCR readings to trust (in practice a heading opening with a drop capital, which both
+# engines misread and Gemini rewrites: pp.483, 508, 510, 520, 2026-11-25; the capital's
+# height in the crop is the cause, see experiments/drop_caps/). Asking again doesn't fix
+# that; a person reviews it.
 MISALIGNED = ("missing", "echoed", "shifted")
 SHIFT_REACH = 3  # rows a shifted answer may be off by: its text is a line this near's
 
