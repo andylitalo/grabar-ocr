@@ -467,6 +467,82 @@ Checked three ways, 2026-11-25:
   drop-cap lines flagged, p550 without a fallback this time. The old logic made 9-10 page
   requests plus 4 re-asks for the same pages.
 
+#### Drop-cap lines: the capital is shrunk to the text's size, and checked apart (decided 2026-11-26)
+
+On a line that opens with a drop capital, the crop holds the whole capital, so the
+engines read the text at a fraction of its size. With the capital taken out of the crop,
+their disagreement on these lines falls from 13.9% of characters to 2.9% (other lines:
+2.0%); the measurements are in `experiments/drop_caps/README.md`. Decided (maintainer):
+
+- **The line is read from the `scaled` crop**: the capital shrunk to the body's capital
+  height and set in front of the body. Both engines and the corrector read the whole line,
+  capital included. For the body text, `scaled` and `body` are about equal once both are
+  scored like for like, with the capital left out of every reading (that experiment's
+  tables):
+
+  | measure (372 lines; 233 against v4) | `body` | `scaled`, like for like |
+  |---|--:|--:|
+  | engines disagree, characters | 2.9% | 3.1% |
+  | against v4, Tesseract / Paddle | 3.9% / 2.5% | 3.8% / 2.4% |
+
+  So the line keeps its capital, and the corrector doesn't have to guess one the reading
+  lacks (it could write `Շաբաթ` from `աբաթ` alone). `scaled` reads all 4 lines v4 fell back
+  on whole, capital included (`Շաբաթ. տօն է սրբոյն Գրիգորի Լու-`), and on the Vol II day
+  headings it fixes the words after the capital (p599.028: `Եննդետն` → `Ծննդեան`). The cost
+  is a stray letter now and then: a decorated capital's leftover piece (`Ենրկրորդ`), or a
+  capital read as two characters (Paddle reads p490.077's Չ as `2 `). The Tesseract
+  reading of `scaled` is 2 or more characters longer than of `body` on 39 of the 372 lines.
+  The capital's own check below catches these. Both crops share one more risk: where the
+  capital touches the next letter, the cut can take that letter with it (`p458.063`,
+  `րրորդ` for `րկրորդ`), which the corrector has to restore.
+- **The capital is also read on its own.** Tesseract reads it first, from the line's crop
+  as it is today: it got 103 of the 113 typed capitals that way, against 80 from `scaled`
+  (Paddle: 68 and 86). Then Gemini and/or other models confirm it. Paddle's capital in its
+  `scaled` reading comes for free. With Tesseract's, it agrees on 83 of the 113, and every
+  real drop cap among those 83 is right (the 2 wrong are Vol II day headings,
+  `6. ՀԻՆԳՇԱԲԱԹ`, whose capital isn't the line's first character); 30 go to a person.
+  Paddle is right on 6 of Tesseract's 10 misses, including four Ս/Մ swaps. Gemini's
+  accuracy on capitals hasn't been measured yet: score it on the 113 typed capitals before
+  relying on it. The capital gets its own status, apart from the line's: confirmed, or
+  flagged for a person.
+- **Which lines have a drop cap** is found from the ink, not only from review ops: 166 of
+  the 372 found have no `initial` op, because the box-growing rule of 2026-11-17 took
+  their capital into the line. A person's `initial` op, and the letter typed with it,
+  always wins.
+- **Before the book-wide run:** check that every drop cap is found. The detector misses
+  most Հ capitals (their slanting stroke is short) and takes in 3 headings. Հ is the second
+  most common typed capital (29 of the 113), so the 166 found without an op are likely an
+  undercount. Look for misses among lines with Հ capitals under 3 bands and among lines
+  whose crop is unusually tall for their text. A drop cap that's missed is read as today,
+  from the whole crop: worse, but not lost.
+
+How the capital's readings and status are recorded is decided in the next section.
+
+#### Drop-cap capitals: readings and status (decided 2026-11-26)
+
+- **The capital is its own field on the line**: its letter, and its position in the line's
+  text (0 for a drop cap; after `6. ` in a Vol II day heading). The line's text comes from
+  the `scaled` crop with its capital in place. Where the capital's resolved letter differs
+  from the letter at that position, it replaces it. A wrong capital is then a one-letter
+  fix. The line's checks (engine agreement, the drift check) count the capital like any
+  other letter, since both readings and the corrector's answer contain it.
+- **Each reader's capitals in their own predictions file**, keyed by line id like the line
+  predictions: `{line id: letter}` per reader (Tesseract, Paddle, Gemini, …). The value is
+  `null` where a reader can't tell, and also where its reading has something other than an
+  Armenian capital at the capital's position (Tesseract reads p490.077's Չ as `(`).
+- **A status per capital**, resolved from those files:
+  - `typed`: a person typed it (the `initial` letter in `data/verified_lines/`). It wins
+    over every reader. A typed capital that every reader contradicts is listed for a quick
+    look, as a check for typos.
+  - `agreed`: the readers agree.
+  - `flagged`: they differ, or one can't tell. The capital goes to a person.
+- **A flagged capital is its own task for a person:** its crop and the line, one key for
+  the letter. It doesn't hold up the line's review, and a typed answer goes in as the line's
+  `initial`, where the layout review already puts typed capitals.
+- **The capital's box** comes from the detector, or from the `initial` op where there is
+  one, and is recorded with the run's outputs, not in `data/verified_lines/` (which holds
+  what review checked).
+
 #### Where this stands (pick-up note, 2026-11-13)
 
 - **Chosen:** hye-calfa-n + Paddle → Gemini 3.1 Pro, prompt v4 (drift guard, retry) →
@@ -481,12 +557,32 @@ Checked three ways, 2026-11-25:
   Phase 9 "After the gate"; since 2026-11-13 verify no longer moves them). Lines whose
   shape changed are set aside under `stale/` and come back untyped, to retype.
 - **Next (maintainer's order):** finish the layout review for the whole book → `migrate
-  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → OCR (both
-  engines, `--set` for the verified lines) + v4 + rule over the book (~$20 Gemini), logging
-  the bucket signals → human review of the output → v6 vs v4. The steps up to the
-  book-wide run, in order: Phase 9 "After the gate" (`repair`, retype, re-run, strata);
+  repair` → move the data to region keys (`docs/backlog/region_keyed_data.md`) → the
+  drop-cap work below → OCR (both engines, `--set` for the verified lines, drop-cap lines
+  from the `scaled` crop) + v4 + rule over the book (~$20 Gemini), logging the bucket
+  signals, and the capital check → human review of the output → v6 vs v4. The steps up
+  to the book-wide run, in order: Phase 9 "After the gate" (`repair`, retype, re-run, strata);
   `docs/backlog/region_keyed_data.md` "Migration" (with its deferred fixes); then the same
   doc's "Book-wide outputs: GCS and a manifest", before the first book-wide call.
+- **Drop-cap work before the book-wide run** ("Drop-cap lines" and "Drop-cap capitals"
+  above), on the final line boxes, so after the migration:
+  1. **Find the missed drop caps.** Re-run the detector on the whole book and look for the
+     ones it misses (Հ under 3 bands; lines whose crop is unusually tall for their text),
+     tuning it until a pass turns up no new ones. A drop cap still missed is read from the
+     whole crop, as today.
+  2. **Build the `scaled` crop** into the OCR step for every drop-cap line found
+     (`experiments/drop_caps/run.py` has the cut), and the capital's box with the run's
+     outputs.
+  3. **Measure Gemini's accuracy on capitals**: Gemini 3.1 Pro on the capital crops of the
+     113 typed capitals, scored like Tesseract (103 of 113) and Paddle on `scaled` (86).
+     Little cost, one small image per capital. Also score it as a confirmer: on the
+     capitals Tesseract and Paddle agree on (83, all real drop caps right) and on the 30
+     they don't. This decides whether Gemini confirms every capital, only flagged ones,
+     or none. Record the result here before the run.
+  4. **Build the capital check**: the per-reader predictions files, the statuses
+     (`typed`, `agreed`, `flagged`), and the capital put back into the line's text at its
+     position. Run it with the book-wide OCR. The flagged-capital task in the labeler is
+     a step of Phase 12's order of work, before the app is deployed.
 - **Open:** ceiling lines on pages re-verified with changed shapes need retyping (the stale
   text can prefill them); their stratum (agree/disagree) should be recomputed after the
   OCR re-run. Opus 5.5 and GPT 6.1 haven't been run as correctors (only the p615 smoke
