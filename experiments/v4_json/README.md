@@ -59,8 +59,9 @@ engines agreed on and got right that the corrector made wrong.
 
 ## Why the fallbacks didn't go away
 
-The 4 lines open with a drop capital, and both OCR engines read them as nonsense, for
-example (the cause, the capital's height in the crop, was found later:
+The 4 lines are headings that open with a drop capital, and both OCR engines read them as
+nonsense, for example (the cause, the height the capital adds to the crop, not the display
+type, was found later:
 `experiments/drop_caps/README.md`):
 
 | | `p508.011` |
@@ -111,4 +112,4 @@ answer was ever misaligned.
   (2026-11-25)": the other two options weighed, including the decision step that wasn't
   built, and the follow-up for these lines.
 - `experiments/drop_caps/README.md`: why the engines misread these lines, and that they
-  read correctly with the drop capital taken out of the crop.
+  read correctly once the crop is cut to the body text.

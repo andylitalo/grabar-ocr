@@ -432,8 +432,8 @@ options were weighed (maintainer, 2026-11-24):
 
 **What the fallbacks really were.** v4 fell back on 4 lines that could be identified,
 `p483.003`, `p508.011`, `p510.054` and `p520.023` (it kept Paddle's reading on each; its
-fifth, on p550, wasn't recorded). They aren't misaligned answers: each opens with a drop
-capital, and both engines read it as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
+fifth, on p550, wasn't recorded). They aren't misaligned answers: each is a heading that
+opens with a drop capital, both engines read it as nonsense (Paddle: `աթ, տն էսրոյն րիդորիԼու`), and
 Gemini's answer is a plausible reconstruction (`Շաբաթ, տօն է սրբոյն Գրիգորի Լու-`), too
 far from both readings for the drift check to accept. So the check is doing its job,
 refusing a rewrite nothing can verify, and these lines need a person, not another request.
@@ -442,9 +442,10 @@ exactly these 4 lines and fixed none, and in v4's run the page retry fixed none 
 p508 it made things worse). Asking again only helps a misaligned answer, and no first
 answer in either run was misaligned; the one shift seen, p508's retry, was triggered by
 that line. **Why the engines misread them** (found 2026-11-26,
-`experiments/drop_caps/README.md`): the crop holds the whole capital, so the text is
-shrunk to a fraction of its size; with the capital taken out, both engines read 3 of the 4 alike, and the
-fourth differs by one letter-numeral.
+`experiments/drop_caps/README.md`): the crop holds the whole capital, so the engines,
+which scale a crop to a fixed height, read the text shrunk (the capital's shape doesn't
+matter: whitened in place it costs nearly as much). With the crop cut to the body text,
+both engines read 3 of the 4 alike, and the fourth differs by one letter-numeral.
 
 **So the two kinds of fallback are now told apart** (`parse_reasons`). A line is
 *misaligned* when the answer misses it, echoes both readings, or holds the text of a line

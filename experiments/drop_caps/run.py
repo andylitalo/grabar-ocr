@@ -9,10 +9,11 @@ outputs go to ``runs/drop_caps/`` (git-ignored):
     uv run python experiments/drop_caps/run.py score
 
 ``crops`` finds drop caps from the ink of every verified line (no review op needed) and
-writes three crops of each: ``orig`` (``crops.line_crop``, what the engines read today),
+writes four crops of each: ``orig`` (``crops.line_crop``, what the engines read today),
+``blank`` (the capital whitened, the crop otherwise as ``orig``: as tall, as wide),
 ``body`` (the capital whitened and the crop cut to the body text) and ``scaled`` (the body
 with the capital shrunk to the body's capital height and set in front). ``tess`` and
-``paddle`` read all three with the Phase 11 settings. ``score`` prints the tables in the
+``paddle`` read all four with the Phase 11 settings. ``score`` prints the tables in the
 README. Tesseract and Paddle are deterministic, so a rerun reproduces them.
 """
 
@@ -27,9 +28,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 OUT = REPO / "runs" / "drop_caps"
-VARIANTS = ("orig", "body", "scaled")
+VARIANTS = ("orig", "blank", "body", "scaled")
+NO_CAP = ("blank", "body")  # the crops whose readings lack the capital
 
-# Detection. A drop cap is the tallest blob in the left LEFT of the crop, at least
+# Detection. A drop cap is the tallest blob in the left LEFT share of the crop, at least
 # CAP_RATIO times the text band (median blob top to median blob bottom, about the
 # x-height). A letter with an ascender and a descender is about 2.6 bands; the shortest
 # real drop caps found are 3.2.
@@ -117,9 +119,10 @@ def find_cap(img):
             "body_rows": (int(rows.min()), int(rows.max()) + 1)}
 
 
-def body_and_scaled(img, cap: dict):
-    """(body, scaled) crops: the capital whitened and its empty columns closed up to GAP px;
-    and the same with the capital scaled to the body's capital height (top of the body's
+def variants(img, cap: dict):
+    """(blank, body, scaled) crops: the capital whitened in place, crop otherwise unchanged;
+    the capital whitened, its empty columns closed up to GAP px and the crop cut to the body
+    text's rows; and the same with the capital scaled to the body's capital height (top of the body's
     ink to its baseline) set in the gap."""
     import cv2
     import numpy as np
@@ -128,6 +131,7 @@ def body_and_scaled(img, cap: dict):
     a = np.asarray(img).copy()
     halo = cv2.dilate(cap["cap_mask"].astype(np.uint8), np.ones((3, 3), np.uint8), iterations=2)
     a[halo.astype(bool) & ~cap["body_mask"]] = 255  # the capital and its grey edge
+    blank = Image.fromarray(a.copy())
     W, H = img.size
     y1, y2 = cap["body_rows"]
     r1, r2 = max(0, y1 - PAD), min(H, y2 + PAD)
@@ -155,7 +159,7 @@ def body_and_scaled(img, cap: dict):
         ink = np.nonzero((x < INK).any(axis=0))[0]
         return Image.fromarray(x[:, max(0, ink.min() - PAD):ink.max() + 1 + PAD] if len(ink) else x)
 
-    return trim([left, gap, right]), trim([left, gap, cap_col, gap, right])
+    return blank, trim([left, gap, right]), trim([left, gap, cap_col, gap, right])
 
 
 def cmd_crops() -> None:
@@ -186,11 +190,11 @@ def cmd_crops() -> None:
                 if op is not None:
                     missed.append(line["id"])
                 continue
-            body, scaled = body_and_scaled(img, cap)
-            for v, im in zip(VARIANTS, (img, body, scaled)):
+            blank, body, scaled = variants(img, cap)
+            for v, im in zip(VARIANTS, (img, blank, body, scaled)):
                 im.save(OUT / v / f"{line['id']}.png")
             x1, y1, x2, y2 = cap["cap_box"]
-            found.append({"id": line["id"], "op": op is not None, "op_auto": bool(op and op.get("auto")),
+            found.append({"id": line["id"], "op": op is not None,
                           "initial": line.get("initial"), "cap_box": [x1, y1, x2, y2],
                           "cap_bands": round((y2 - y1) / cap["band"], 2),
                           "crop_h": img.height, "body_h": body.height})
@@ -250,40 +254,78 @@ def cmd_score() -> None:
     p = json.loads((OUT / "paddle-calfa-tiny.json").read_text())
     n = lambda s: normalize(s, spaces=False)  # noqa: E731  (the scorer's normalization)
 
-    def disagree(keys, v):
-        chars = sum(edits(n(t[v][k]), n(p[v][k])) for k in keys)
-        total = sum(max(len(n(t[v][k])), 1) for k in keys)
-        lines = sum(n(t[v][k]) != n(p[v][k]) for k in keys)
+    def disagree(keys, v, cut=0):
+        """Share of lines read differently, and edits as a share of Tesseract's characters;
+        ``cut`` drops that many leading characters from both readings first."""
+        a = {k: n(t[v][k])[cut:] for k in keys}
+        b = {k: n(p[v][k])[cut:] for k in keys}
+        chars = sum(edits(a[k], b[k]) for k in keys)
+        total = sum(max(len(a[k]), 1) for k in keys)
+        lines = sum(a[k] != b[k] for k in keys)
         return f"{100 * lines / len(keys):5.1f}% | {100 * chars / total:5.1f}%"
 
-    others = [k for k in common.load_predictions("tess-calfa-n")["lines"] if k not in found]
+    # The comparison lines are read from the committed ceiling predictions, not re-run.
     T, P = (common.load_predictions(e)["lines"] for e in ("tess-calfa-n", "paddle-calfa-tiny"))
+    others = [k for k in T if k not in found]
     o_chars = sum(edits(n(T[k]), n(P[k])) for k in others) / sum(max(len(n(T[k])), 1) for k in others)
     print(f"other lines (n={len(others)}): {100 * sum(n(T[k]) != n(P[k]) for k in others) / len(others):.1f}% "
           f"of lines, {100 * o_chars:.1f}% of characters")
+    same = [k for k in found if n(T[k]) == n(t["orig"][k]) and n(P[k]) == n(p["orig"][k])]
+    print(f"orig re-run = committed ceiling reading: Tesseract "
+          f"{sum(n(T[k]) == n(t['orig'][k]) for k in found)}, Paddle "
+          f"{sum(n(P[k]) == n(p['orig'][k]) for k in found)}, both {len(same)} of {len(found)}")
+
     groups = {"all": list(found), "with an initial op": [k for k in found if found[k]["op"]],
               "without": [k for k in found if not found[k]["op"]]}
     for g, keys in groups.items():
         print(f"\n{g} (n={len(keys)}) | lines | characters")
         for v in VARIANTS:
             print(f"  {v:6s} | {disagree(keys, v)}")
+    # blank and body readings lack the capital; for a like-for-like row, drop the first
+    # character of the orig and scaled readings too (the capital, when it was read as one).
+    print("\nall, the capital left out of every reading | lines | characters")
+    for v in VARIANTS:
+        print(f"  {v:6s} | {disagree(list(found), v, cut=0 if v in NO_CAP else 1)}")
+
+    # How much the capital enlarges the crop: orig crop height over body crop height.
+    keys = sorted(found, key=lambda k: found[k]["crop_h"] / found[k]["body_h"])
+    print("\nby crop height / body crop height (quarters) | orig chars | blank | body")
+    for i in range(4):
+        q = keys[i * len(keys) // 4:(i + 1) * len(keys) // 4]
+        lo, hi = (found[q[j]]["crop_h"] / found[q[j]]["body_h"] for j in (0, -1))
+        print(f"  {lo:.2f}-{hi:.2f} (n={len(q)}) | " + " | ".join(
+            disagree(q, v).split("|")[1].strip() for v in ("orig", "blank", "body")))
+    for g in ("with an initial op", "without"):
+        print(f"  median ratio, {g}: "
+              f"{statistics.median(found[k]['crop_h'] / found[k]['body_h'] for k in groups[g]):.2f}")
+    print(f"  median capital height in text bands: with op "
+          f"{statistics.median(found[k]['cap_bands'] for k in groups['with an initial op']):.2f}, "
+          f"without {statistics.median(found[k]['cap_bands'] for k in groups['without']):.2f}")
 
     v4 = common.load_predictions("corr-gemini-3.1-pro-v4+rules")["lines"]
     keys = [k for k in found if k in v4]
-    print(f"\nCER against v4's corrected text ({len(keys)} lines; body without its first letter)")
+    print(f"\nCER against v4's corrected text ({len(keys)} lines; blank and body against v4 "
+          f"without its first letter) | the capital left out of every reading and of v4")
     for v in VARIANTS:
-        ref = (lambda k: n(v4[k])[1:]) if v == "body" else (lambda k: n(v4[k]))
+        ref = (lambda k: n(v4[k])[1:]) if v in NO_CAP else (lambda k: n(v4[k]))
         row = [100 * sum(edits(ref(k), n(R[v][k])) for k in keys) / sum(len(ref(k)) for k in keys)
                for R in (t, p)]
-        print(f"  {v:6s} | Tesseract {row[0]:4.1f}% | Paddle {row[1]:4.1f}%")
+        cut = 0 if v in NO_CAP else 1
+        bare = [100 * sum(edits(n(v4[k])[1:], n(R[v][k])[cut:]) for k in keys)
+                / sum(len(n(v4[k])[1:]) for k in keys) for R in (t, p)]
+        print(f"  {v:6s} | Tesseract {row[0]:4.1f}% | Paddle {row[1]:4.1f}% "
+              f"| Tesseract {bare[0]:4.1f}% | Paddle {bare[1]:4.1f}%")
+    fallback = [k for k in keys if n(v4[k]) == n(P[k]) and n(P[k]) != n(T[k])
+                and k in ("p483.003", "p508.011", "p510.054", "p520.023")]
+    print(f"  fallback lines where v4's text is Paddle's orig reading: {fallback}")
 
     typed = [k for k in found if found[k]["initial"]]
     print(f"\nfirst letter = the typed initial ({len(typed)} lines)")
     for v in ("orig", "scaled"):
-        print(f"  {v:6s} | Tesseract {sum(n(t[v][k])[:1] == found[k]['initial'] for k in typed)} "
-              f"| Paddle {sum(n(p[v][k])[:1] == found[k]['initial'] for k in typed)}")
+        print(f"  {v:6s} | Tesseract {sum(n(t[v][k])[:1] == n(found[k]['initial']) for k in typed)} "
+              f"| Paddle {sum(n(p[v][k])[:1] == n(found[k]['initial']) for k in typed)}")
 
-    print("\ntyped ceiling lines (edits from the typed line)")
+    print("\ntyped ceiling lines (edits from the typed line; blank and body lack the capital)")
     for k in found:
         if (ref := ceiling.reference(k)) is not None:
             print(f"  {k}: " + " | ".join(f"{v} T{edits(n(ref), n(t[v][k]))} P{edits(n(ref), n(p[v][k]))}"
