@@ -54,8 +54,8 @@ for its uses.
 - Draft text per line: `resolved` → `verified` → `single` → OCR prefill. Lines nobody has
   labeled stay as OCR and are marked so.
 - **A drop-cap line's capital has a status of its own**, apart from the line's: its
-  letter is read separately from the body text (`docs/phase_11_ocr_comparison.md`, "Drop-cap
-  lines", decided 2026-11-26). A capital the readers disagree on is a one-key task of its
+  letter is read and checked apart from the rest of the line (`docs/phase_11_ocr_comparison.md`,
+  "Drop-cap lines", decided 2026-11-26). A capital the readers disagree on is a one-key task of its
   own, not part of correcting the line (see "The labeling screen"). How its status is
   recorded (`typed`, `agreed`, `flagged`) is decided there.
 - **Draft certainty** (before pass B): wrong lines left ≈ errors found × (1 − c) / c +
